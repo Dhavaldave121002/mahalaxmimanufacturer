@@ -1,174 +1,75 @@
-@import "tailwindcss";
-
-@theme {
-  --color-brand-indigo: #4F46E5;
-  --color-brand-indigo-hover: #4338CA;
-  --color-brand-violet: #7C3AED;
-  --color-brand-light-indigo: #EEF2FF;
-  --color-brand-navy: #0F172A;
-  --color-brand-bg: #F8FAFC;
-  --color-brand-amber: #F59E0B;
-  --color-brand-emerald: #10B981;
-  --color-brand-surface: #FFFFFF;
-  --color-brand-border: #E2E8F0;
-  --color-brand-muted: #64748B;
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
-  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --primary-navy: #14213D;
+    --royal-indigo: #4F46E5;
+    --light-indigo: #EEF2FF;
+    --warm-ivory: #F8F7F4;
+    --muted-champagne: #C6AA80;
+    --success-green: #059669;
+    --error-red: #DC2626;
+  }
+
   body {
-    background-color: var(--color-brand-bg);
-    color: var(--color-brand-navy);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    background-color: #F8F7F4;
+    color: #14213D;
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   }
 }
 
-/* ── Glass Morphism ── */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.7);
-}
-.glass-dropdown {
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid #E2E8F0;
+@layer utilities {
+  .glass-header {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .badge-mill {
+    background: linear-gradient(135deg, #14213D 0%, #1B2C52 100%);
+    color: #C6AA80;
+    border: 1px solid rgba(198, 170, 128, 0.3);
+  }
+
+  .badge-wholesale {
+    background-color: #EEF2FF;
+    color: #4F46E5;
+    border: 1px solid #C7D2FE;
+  }
 }
 
-/* ── Shadows ── */
-.subtle-shadow {
-  box-shadow: 0 1px 3px 0 rgba(15,23,42,0.04), 0 1px 2px -1px rgba(15,23,42,0.04);
-}
-.premium-card-shadow {
-  box-shadow: 0 4px 24px -4px rgba(15,23,42,0.08), 0 2px 8px -2px rgba(15,23,42,0.04);
-  transition: box-shadow 0.3s cubic-bezier(0.16,1,0.3,1), transform 0.3s cubic-bezier(0.16,1,0.3,1);
-}
-.premium-card-shadow:hover {
-  box-shadow: 0 16px 40px -8px rgba(79,70,229,0.18), 0 4px 16px -4px rgba(79,70,229,0.10);
-}
-
-/* ── Keyframe Animations ── */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.94); }
-  to   { opacity: 1; transform: scale(1); }
-}
-@keyframes badgePop {
-  0%   { transform: scale(0.6); opacity: 0; }
-  70%  { transform: scale(1.12); }
-  100% { transform: scale(1); opacity: 1; }
-}
-@keyframes cartBounce {
-  0%,100% { transform: scale(1); }
-  30%     { transform: scale(1.25); }
-  60%     { transform: scale(0.92); }
-}
-@keyframes heroSlide {
-  from { opacity: 0; transform: scale(1.05); }
-  to   { opacity: 1; transform: scale(1); }
-}
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-@keyframes pulseSoft {
-  0%,100% { opacity: 1; }
-  50%     { opacity: 0.55; }
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-@keyframes slideDrawerIn {
-  from { transform: translateX(100%); }
-  to   { transform: translateX(0); }
-}
-@keyframes overlayIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* ── Animation Classes ── */
-.animate-fade-in       { animation: fadeIn 0.22s ease-out both; }
-.animate-fade-in-up    { animation: fadeInUp 0.4s cubic-bezier(0.16,1,0.3,1) both; }
-.animate-slide-right   { animation: slideInRight 0.3s cubic-bezier(0.16,1,0.3,1) both; }
-.animate-slide-left    { animation: slideInLeft 0.3s cubic-bezier(0.16,1,0.3,1) both; }
-.animate-scale-in      { animation: scaleIn 0.25s cubic-bezier(0.16,1,0.3,1) both; }
-.animate-badge-pop     { animation: badgePop 0.38s cubic-bezier(0.34,1.56,0.64,1) both; }
-.animate-cart-bounce   { animation: cartBounce 0.45s cubic-bezier(0.34,1.56,0.64,1); }
-.animate-hero-slide    { animation: heroSlide 0.75s cubic-bezier(0.16,1,0.3,1) both; }
-.animate-pulse-soft    { animation: pulseSoft 2.4s ease-in-out infinite; }
-.animate-spin-slow     { animation: spin 1.5s linear infinite; }
-.animate-drawer-in     { animation: slideDrawerIn 0.35s cubic-bezier(0.16,1,0.3,1) both; }
-.animate-overlay-in    { animation: overlayIn 0.25s ease both; }
-
-/* ── Product Card ── */
-.product-card {
-  transition: box-shadow 0.28s cubic-bezier(0.16,1,0.3,1),
-              transform 0.28s cubic-bezier(0.16,1,0.3,1),
-              border-color 0.2s ease;
-}
-.product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 24px 52px -12px rgba(79,70,229,0.22), 0 4px 12px -4px rgba(15,23,42,0.08);
-  border-color: #C7D2FE !important;
-}
-.product-card:hover .product-img {
-  transform: scale(1.07);
-}
-.product-img {
-  transition: transform 0.55s cubic-bezier(0.16,1,0.3,1);
-}
-
-/* ── Hero Carousel ── */
-.hero-slide-enter { animation: heroSlide 0.65s cubic-bezier(0.16,1,0.3,1) both; }
-
-/* ── Shimmer Loading ── */
-.shimmer {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-/* ── Line Clamp Utilities ── */
-.line-clamp-1 { overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
-.line-clamp-2 { overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-.line-clamp-3 { overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
-
-/* ── Scrollbar ── */
-::-webkit-scrollbar        { width: 5px; height: 5px; }
-::-webkit-scrollbar-track  { background: #F1F5F9; }
-::-webkit-scrollbar-thumb  { background: #CBD5E1; border-radius: 9999px; }
-::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
-
-/* ── Focus Rings ── */
-*:focus-visible {
-  outline: 2px solid #4F46E5;
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* ── Smooth page transitions ── */
-main > * {
-  animation: fadeInUp 0.45s cubic-bezier(0.16,1,0.3,1) both;
+/* Custom print styles for GST Invoices and Packing Slips */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-only-container, .print-only-container * {
+    visibility: visible;
+  }
+  .print-only-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
 }

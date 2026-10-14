@@ -1,129 +1,99 @@
-# Mahalaxmi Enterprises — Direct Mill Rates & Wholesale Essentials
-## Premium E-Commerce Storefront + Admin Dashboard
+# mahalaxmimanufacturer
+# Mahalaxmi Enterprises — B2B Wholesale Marketplace & B2C E-Commerce Platform
 
-A production-quality, responsive e-commerce web application built with **React 18+**, **Vite**, **Tailwind CSS**, and **Lucide React**, designed specifically for **Mahalaxmi Enterprises**.
+> **Direct Mill Rates & Wholesale Essentials**
 
----
-
-### 🌟 Features Overview
-
-#### 1. Curated Storefront Experience (`/`)
-- **Premium Announcement Bar**: Direct mill rates & B2B enquiry shortcuts.
-- **Header with Instant Autocomplete Search**: Real-time product search with category pills, live price hints, and thumbnail preview.
-- **Editorial Hero Section**: High-impact textile photography with value pillars (*"Everyday Essentials. Better Quality. Direct Mill Rates."*).
-- **Trust & Value Strip**: Direct mill rates, quality-focused products, wholesale & retail, and convenient Pan-India shipping.
-- **4 Dedicated Category Cards**:
-  1. *Home and Kitchen* (`#F59E0B`) — Kitchen Towels, Aprons, Table Linens
-  2. *Household* (`#10B981`) — Cleaning Cloths, Microfiber Dusters, Storage, Laundry Essentials
-  3. *Textile* (`#3B82F6`) — 300 TC Bedsheets, Curtains, Premium Linen, Fabrics
-  4. *Cotton Products* (`#8B5CF6`) — 550 GSM Bath Towels, Canvas Bags, Cotton Essentials, Direct Mill Goods
-- **Curated Best Sellers**: Refined 4–6 card grid featuring direct mill rates, genuine discounts, and stock availability.
-- **Wholesale & Bulk Buying Section**: Transparent tier discounting matrix (10+, 50+, 100+ units) with an interactive B2B enquiry modal.
-- **Brand Story Section**: Highlighting loom provenance in Solapur, Coimbatore, and Surat.
-- **Footer**: Full customer care links, policies, and GST compliance info.
-
-#### 2. Dedicated Category Pages (`/collections/:categorySlug`)
-- Custom category banner and contextual description.
-- Subcategory filtering pills and breadcrumb navigation.
-- Real-time price slider, in-stock only toggle, and sorting options (*Featured*, *Best Selling*, *Price Low to High*, *Price High to Low*, *A-Z*).
-- Empty-state design with one-click filter reset.
-
-#### 3. Product Details Page (`/products/:slug`)
-- High-resolution gallery with thumbnail selector.
-- Live bulk pricing tier table with click-to-apply quantities.
-- Real-time stock counter and low-stock indicators.
-- Technical textile specifications (GSM, thread count, dimensions, pack configuration).
-- Care & wash instructions.
-- Add to Cart and Buy Now.
-- Related products recommendations from the same loom category.
-
-#### 4. Cart & Checkout (`/checkout`)
-- **Right-Side Sliding Cart Drawer**: Dynamic quantity controls, bulk tier recalculation, and coupon code support (`MILLDIRECT10`, `BULK15`, `MAHALAXMI5`).
-- **Comprehensive Checkout**: Delivery address form with validation, Cash on Delivery (COD), and Instant UPI options.
-- **Order Confirmation Page** (`/order-confirmation/:orderId`): Itemized invoice, consignment tracking number, and print-ready summary.
-
-#### 5. Executive Admin Dashboard (`/admin`)
-- **Overview & KPIs**: Live revenue counter, total order count, active SKUs, low-stock warnings, and recent order log.
-- **Product Management**: Full CRUD modal for adding/editing products, setting bulk tiers, fabrics, and stock.
-- **Category Management**: Edit category banners, colors, subcategories, and homepage visibility.
-- **Homepage Studio**: Live-sync editor for hero copy, announcements, and brand story.
-- **Order Management**: Status workflow (*Processing* ➔ *Delivered* / *Cancelled*) and tracking number assignment.
-- **Inventory Controller**: Quick `+` / `-` stock adjustments, threshold alerts, and instant sync with the storefront.
+Mahalaxmi Enterprises is an India-focused B2B wholesale marketplace and B2C direct mill commerce platform for textiles, double bedsheets, 600 GSM bath towels, heavy canvas bags, and commercial kitchen & household goods.
 
 ---
 
-### 🚀 Running Locally
+## Key Features
 
-The local development server is currently active:
+1. **Brand Identity & Curated Design System**
+   - Deep Navy (`#14213D`), Royal Indigo (`#4F46E5`), Light Indigo (`#EEF2FF`), Warm Ivory (`#F8F7F4`), Muted Champagne (`#C6AA80`), Success Green (`#059669`).
+   - High-contrast typography (*Plus Jakarta Sans* & *Inter*), micro-animations, and responsive layouts across desktop, tablet, and mobile.
+
+2. **Core Product Catalog Divisions**
+   - **Textile:** 300 TC Combed Cotton Bedsheets, 280 GSM Room Darkening Linen Curtains, 400 TC Hotel Percale Duvet Covers, and Raw Greige Fabric Bales.
+   - **Cotton Products:** 600 GSM Zero-Twist Bath Towels, 380 GSM Duck Canvas Tote Bags, Waffle Baby Swaddles, and Industrial Comber Noil Bales.
+   - **Home and Kitchen:** Chef-Pro Herringbone Bar Towels (12-pack), 260 GSM Heavy Cotton Drill Aprons, and Banquet Stain-Resistant Satin Damask Table Linen.
+   - **Household:** Commercial 350 GSM Microfiber Cleaning Cloths (24-pack in 4 colors), Telescopic Dusters, and 80L Heavy Canvas Storage Organizers.
+
+3. **B2B Wholesale Engine & RFQ Management (`/wholesale`)**
+   - Multi-tier automatic volume discounts (10+, 50+, 200+ units).
+   - **Live Bulk Savings Simulator** on homepage with dynamic price/savings projection.
+   - **Bulk SKU Order Pad:** Matrix entry grid for quick multi-product orders.
+   - **Commercial RFQ:** Submit custom requests for 500+ units with target pricing.
+   - **Quotation Conversion:** One-click conversion of approved quotes into B2B orders with 30-day payment credit.
+
+4. **Conversion-Focused Cart & Checkout (`/cart`, `/checkout`)**
+   - Indian PIN Code delivery checker with instant delivery speed calculation.
+   - Commercial discount coupon engine (`MILLDIRECT10`, `BULK500`, `MAHALAXMI20`).
+   - Automated GST calculation (CGST + SGST or IGST based on buyer state).
+   - Dual checkout personas (Individual Consumer vs Registered Business with GSTIN for Input Tax Credit).
+   - Payment methods: UPI QR, Bank Transfer / NEFT Escrow, Cash on Delivery (COD), and 30-Day B2B Trade Credit.
+
+5. **Order Tracking & Rule 46 GST Invoicing (`/orders`)**
+   - 5-stage shipment timeline with waybill consignment tracking.
+   - Official Rule 46 CGST Tax Invoice generator with printable and PDF-ready layout.
+   - 1-click reorder functionality.
+
+6. **Operations & Admin Dashboard (`/admin`)**
+   - Real-time gross revenue, order volume, and B2B vs B2C split.
+   - Full product CRUD, wholesale tier editor, and instant stock adjustments (+50 / -10).
+   - Order fulfillment control and consignment dispatch assignment.
+   - RFQ review desk for merchandisers.
+   - Catalog CSV import and export tools.
+
+---
+
+## Tech Stack
+
+- **Frontend:** React 18+, TypeScript, Vite, Tailwind CSS v3.4, Lucide React, React Router DOM.
+- **State Management:** Reactive Context Engine with persistent local storage.
+- **Design System:** Custom Tailwind color tokens and glassmorphism utilities.
+
+---
+
+## Getting Started
+
+### 1. Clone the repository
 ```bash
-# To run the development server:
-npm run dev -- --host
+git clone https://github.com/Dhavaldave121002/mahalaxmimanufacturer.git
+cd mahalaxmimanufacturer
 ```
-Open **[http://localhost:5173](http://localhost:5173)** in your browser.
 
-To build the production bundle:
+### 2. Install dependencies
+```bash
+npm install
+```
+
+### 3. Start local development server
+```bash
+npm run dev
+```
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### 4. Build for production
 ```bash
 npm run build
 ```
 
 ---
 
-### 📁 Project Structure
+## Deployment to Vercel
 
+```bash
+npx vercel
 ```
-mahalaxmi-enterprises/
-├── index.html
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-└── src/
-    ├── App.jsx
-    ├── main.jsx
-    ├── index.css
-    ├── context/
-    │   └── StoreContext.jsx       # State management with LocalStorage sync
-    ├── data/
-    │   └── mockData.js           # Centralized realistic catalog & order mock data
-    ├── router/
-    │   └── Router.jsx             # Client-side SPA router with URL history
-    ├── components/
-    │   ├── common/
-    │   │   └── ToastContainer.jsx
-    │   ├── storefront/
-    │   │   ├── AnnouncementBar.jsx
-    │   │   ├── Navbar.jsx
-    │   │   ├── HeroSection.jsx
-    │   │   ├── TrustValueStrip.jsx
-    │   │   ├── CategoryGrid.jsx
-    │   │   ├── ProductCard.jsx
-    │   │   ├── CuratedBestSellers.jsx
-    │   │   ├── WholesaleBulkSection.jsx
-    │   │   ├── BrandStorySection.jsx
-    │   │   ├── FinalShoppingCta.jsx
-    │   │   ├── Footer.jsx
-    │   │   └── CartDrawer.jsx
-    │   └── admin/
-    │       ├── AdminLayout.jsx
-    │       ├── AdminOverview.jsx
-    │       ├── AdminProducts.jsx
-    │       ├── AdminCategories.jsx
-    │       ├── AdminHomepage.jsx
-    │       ├── AdminOrders.jsx
-    │       └── AdminInventory.jsx
-    └── pages/
-        ├── storefront/
-        │   ├── HomePage.jsx
-        │   ├── CategoryPage.jsx
-        │   ├── ShopAllPage.jsx
-        │   ├── ProductDetailPage.jsx
-        │   ├── CheckoutPage.jsx
-        │   ├── OrderConfirmationPage.jsx
-        │   ├── AboutPage.jsx
-        │   └── WishlistPage.jsx
-        └── admin/
-            └── AdminPage.jsx
-```
+Or connect your GitHub repository directly to Vercel with default Vite build settings:
+- **Build Command:** `npm run build`
+- **Output Directory:** `dist`
+- **Install Command:** `npm install`
 
-# mahalaxmi-enterprises
-"# mahalaxmi-enterprises" 
-"# mahalaxmi-enterprises" 
+---
+
+## License
+
+All rights reserved © Mahalaxmi Enterprises.
+Direct Mill Rates & Wholesale Essentials.

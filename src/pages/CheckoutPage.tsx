@@ -1,0 +1,556 @@
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
+import { Address, PaymentMethod } from '../types';
+import {
+  ShieldCheck,
+  CheckCircle2,
+  Building2,
+  User as UserIcon,
+  MapPin,
+  CreditCard,
+  QrCode,
+  Truck,
+  ArrowRight,
+  AlertCircle,
+  Clock,
+  Lock
+} from 'lucide-react';
+import { Badge } from '../components/common/Badge';
+
+export const CheckoutPage: React.FC = () => {
+  const navigate = useNavigate();
+  const {
+    cart,
+    cartSubtotal,
+    cartTax,
+    cartShipping,
+    cartTotal,
+    appliedCoupon,
+    couponDiscount,
+    currentUser,
+    updateUserProfile,
+    addSavedAddress,
+    createOrder,
+    deliveryInfo
+  } = useApp();
+
+  // Redirect if cart is empty
+  if (cart.length === 0) {
+    navigate('/cart');
+    return null;
+  }
+
+  // Checkout Form States
+  const [isB2B, setIsB2B] = useState<boolean>(currentUser.role !== 'consumer' || !!currentUser.gstNumber);
+  const [companyName, setCompanyName] = useState(currentUser.companyName || '');
+  const [gstNumber, setGstNumber] = useState(currentUser.gstNumber || '');
+
+  // Address selection
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [newAddress, setNewAddress] = useState<Omit<Address, 'id'>>({
+    fullName: currentUser.name,
+    phone: currentUser.phone,
+    street: '',
+    landmark: '',
+    city: deliveryInfo?.city || 'Surat',
+    state: deliveryInfo?.state || 'Gujarat',
+    pincode: deliveryInfo?.pincode || '395002',
+    addressType: isB2B ? 'COMMERCIAL' : 'HOME'
+  });
+
+  // Payment Method
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Address to use
+  const activeAddress = currentUser.addresses[selectedAddressIndex] || {
+    id: 'temp-1',
+    fullName: currentUser.name,
+    phone: currentUser.phone,
+    street: 'Plot 402, Ring Road Textile Hub',
+    city: 'Surat',
+    state: 'Gujarat',
+    pincode: '395002',
+    addressType: 'COMMERCIAL' as const
+  };
+
+  const handleAddNewAddress = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAddress.street || !newAddress.pincode) return;
+    addSavedAddress(newAddress);
+    setShowNewAddressForm(false);
+    setSelectedAddressIndex(0);
+  };
+
+  const handlePlaceOrder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    // Save company and GST if entered
+    if (isB2B && gstNumber) {
+      updateUserProfile({
+        companyName,
+        gstNumber: gstNumber.toUpperCase(),
+        isGstVerified: true
+      });
+    }
+
+    setTimeout(() => {
+      const order = createOrder({
+        paymentMethod,
+        shippingAddress: activeAddress,
+        billingAddress: activeAddress
+      });
+      setIsSubmitting(false);
+      navigate(`/orders?success=${order.id}`);
+    }, 1200);
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 pb-20">
+      {/* Title */}
+      <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-navy tracking-tight">
+            Secure Commercial Checkout
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Order Reference: {cart.length} items • Direct Surat Mill Dispatch • 100% Legal GST Invoice
+          </p>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 font-semibold">
+          <Lock className="w-3.5 h-3.5" />
+          <span>256-Bit SSL Encrypted</span>
+        </div>
+      </div>
+
+      <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Checkout Steps (B2B/GST, Shipping Address, Payment Method) */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Step 1: Buyer Entity & GST Registration */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-subtle space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center">
+                  1
+                </span>
+                <h3 className="font-extrabold text-sm text-navy">Buyer Identity & GST Invoice Status</h3>
+              </div>
+              <Badge variant={isB2B ? 'primary' : 'outline'} size="sm">
+                {isB2B ? 'B2B Trade Invoice' : 'Individual Consumer'}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setIsB2B(false)}
+                className={`p-3 rounded-xl border text-left transition flex items-center gap-3 ${
+                  !isB2B
+                    ? 'border-indigo bg-indigo-light text-navy ring-1 ring-indigo'
+                    : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <UserIcon className="w-5 h-5 text-indigo shrink-0" />
+                <div>
+                  <p className="text-xs font-bold">Individual / Retail Buyer</p>
+                  <p className="text-[10px] text-slate-500">Standard retail receipt</p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsB2B(true)}
+                className={`p-3 rounded-xl border text-left transition flex items-center gap-3 ${
+                  isB2B
+                    ? 'border-indigo bg-indigo-light text-navy ring-1 ring-indigo'
+                    : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <Building2 className="w-5 h-5 text-indigo shrink-0" />
+                <div>
+                  <p className="text-xs font-bold">Registered Business (B2B)</p>
+                  <p className="text-[10px] text-slate-500">Claim 5% / 12% GST Input Tax Credit</p>
+                </div>
+              </button>
+            </div>
+
+            {/* B2B GST Details input */}
+            {isB2B && (
+              <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Registered Company / Trade Name *
+                  </label>
+                  <input
+                    type="text"
+                    required={isB2B}
+                    value={companyName}
+                    onChange={e => setCompanyName(e.target.value)}
+                    placeholder="e.g. Royal Grand Hotels & Resorts Ltd."
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:border-indigo outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    GSTIN Number (15 Digits) *
+                  </label>
+                  <input
+                    type="text"
+                    required={isB2B}
+                    maxLength={15}
+                    value={gstNumber}
+                    onChange={e => setGstNumber(e.target.value.toUpperCase())}
+                    placeholder="e.g. 24AABCP1357K1ZT"
+                    className="w-full text-xs font-mono uppercase px-3 py-2 border border-slate-300 rounded-xl focus:border-indigo outline-none"
+                  />
+                  <p className="text-[10px] text-emerald-700 mt-1 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Auto-validated for instant GSTR-2B Input Tax Credit
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Step 2: Shipping Destination Address */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-subtle space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center">
+                  2
+                </span>
+                <h3 className="font-extrabold text-sm text-navy">Delivery & Consignment Address</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowNewAddressForm(!showNewAddressForm)}
+                className="text-xs font-bold text-indigo hover:underline"
+              >
+                {showNewAddressForm ? 'Cancel' : '+ Add New Address'}
+              </button>
+            </div>
+
+            {/* Saved Addresses List */}
+            {!showNewAddressForm && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {currentUser.addresses.map((addr, idx) => (
+                  <div
+                    key={addr.id}
+                    onClick={() => setSelectedAddressIndex(idx)}
+                    className={`p-4 rounded-xl border cursor-pointer transition text-xs space-y-1 ${
+                      selectedAddressIndex === idx
+                        ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-navy">{addr.fullName}</span>
+                      <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">
+                        {addr.addressType}
+                      </span>
+                    </div>
+                    {addr.companyName && <p className="text-slate-500 font-medium">{addr.companyName}</p>}
+                    <p className="text-slate-700">{addr.street}</p>
+                    <p className="text-slate-700">{addr.city}, {addr.state} - {addr.pincode}</p>
+                    <p className="text-slate-500">Contact: {addr.phone}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add New Address Form Modal/inline */}
+            {showNewAddressForm && (
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3 text-xs">
+                <h4 className="font-bold text-navy">Enter New Delivery Destination</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    required
+                    placeholder="Receiver Full Name"
+                    value={newAddress.fullName}
+                    onChange={e => setNewAddress({ ...newAddress, fullName: e.target.value })}
+                    className="p-2 border border-slate-300 rounded-lg outline-none"
+                  />
+                  <input
+                    type="tel"
+                    required
+                    placeholder="Phone Number"
+                    value={newAddress.phone}
+                    onChange={e => setNewAddress({ ...newAddress, phone: e.target.value })}
+                    className="p-2 border border-slate-300 rounded-lg outline-none"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Street Address, Building, Floor"
+                    value={newAddress.street}
+                    onChange={e => setNewAddress({ ...newAddress, street: e.target.value })}
+                    className="sm:col-span-2 p-2 border border-slate-300 rounded-lg outline-none"
+                  />
+                  <input
+                    type="text"
+                    required
+                    placeholder="City / District"
+                    value={newAddress.city}
+                    onChange={e => setNewAddress({ ...newAddress, city: e.target.value })}
+                    className="p-2 border border-slate-300 rounded-lg outline-none"
+                  />
+                  <input
+                    type="text"
+                    maxLength={6}
+                    required
+                    placeholder="6-digit PIN code"
+                    value={newAddress.pincode}
+                    onChange={e => setNewAddress({ ...newAddress, pincode: e.target.value })}
+                    className="p-2 border border-slate-300 rounded-lg outline-none font-mono"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddNewAddress}
+                  className="px-4 py-2 bg-indigo text-white font-bold rounded-lg text-xs hover:bg-indigo-dark transition"
+                >
+                  Save and Use Address
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Step 3: Payment Method Selection */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-subtle space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center">
+                3
+              </span>
+              <h3 className="font-extrabold text-sm text-navy">Payment Method</h3>
+            </div>
+
+            <div className="space-y-3">
+              {/* UPI Option */}
+              <label
+                onClick={() => setPaymentMethod('UPI')}
+                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                  paymentMethod === 'UPI'
+                    ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo'
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo/10 text-indigo rounded-lg">
+                    <QrCode className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-navy">Instant UPI / Dynamic QR Code</p>
+                    <p className="text-[10px] text-slate-500">Google Pay, PhonePe, Paytm, BHIM (Zero Gateway Surcharge)</p>
+                  </div>
+                </div>
+                <input
+                  type="radio"
+                  name="payment"
+                  checked={paymentMethod === 'UPI'}
+                  onChange={() => setPaymentMethod('UPI')}
+                  className="accent-indigo"
+                />
+              </label>
+
+              {/* Net Banking / RTGS Option */}
+              <label
+                onClick={() => setPaymentMethod('NET_BANKING')}
+                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                  paymentMethod === 'NET_BANKING'
+                    ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo'
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo/10 text-indigo rounded-lg">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-navy">Bank Transfer / NEFT / RTGS</p>
+                    <p className="text-[10px] text-slate-500">Direct Mill Escrow Account (Ideal for bulk payments ₹50,000+)</p>
+                  </div>
+                </div>
+                <input
+                  type="radio"
+                  name="payment"
+                  checked={paymentMethod === 'NET_BANKING'}
+                  onChange={() => setPaymentMethod('NET_BANKING')}
+                  className="accent-indigo"
+                />
+              </label>
+
+              {/* COD Option */}
+              <label
+                onClick={() => setPaymentMethod('COD')}
+                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                  paymentMethod === 'COD'
+                    ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo'
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo/10 text-indigo rounded-lg">
+                    <Truck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-navy">Cash on Delivery (COD)</p>
+                    <p className="text-[10px] text-slate-500">Pay cash or UPI upon delivery at your doorstep</p>
+                  </div>
+                </div>
+                <input
+                  type="radio"
+                  name="payment"
+                  checked={paymentMethod === 'COD'}
+                  onChange={() => setPaymentMethod('COD')}
+                  className="accent-indigo"
+                />
+              </label>
+
+              {/* 30-Day B2B Credit Option (Enabled for verified accounts) */}
+              <label
+                onClick={() => {
+                  if (currentUser.role !== 'consumer') {
+                    setPaymentMethod('CREDIT_30_DAYS');
+                  }
+                }}
+                className={`p-4 rounded-xl border flex items-center justify-between transition ${
+                  currentUser.role === 'consumer'
+                    ? 'opacity-50 cursor-not-allowed border-slate-200 bg-slate-50'
+                    : paymentMethod === 'CREDIT_30_DAYS'
+                    ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo cursor-pointer'
+                    : 'border-slate-200 hover:bg-slate-50 cursor-pointer'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo/10 text-indigo rounded-lg">
+                    <Building2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold text-navy">30-Day B2B Trade Credit</p>
+                      {currentUser.role === 'consumer' ? (
+                        <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded font-semibold">
+                          Requires B2B Account
+                        </span>
+                      ) : (
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-bold">
+                          Approved (Limit: ₹{currentUser.availableCredit?.toLocaleString('en-IN')})
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-500">Pay invoice within 30 days of dispatch</p>
+                  </div>
+                </div>
+                <input
+                  type="radio"
+                  name="payment"
+                  disabled={currentUser.role === 'consumer'}
+                  checked={paymentMethod === 'CREDIT_30_DAYS'}
+                  onChange={() => setPaymentMethod('CREDIT_30_DAYS')}
+                  className="accent-indigo"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Order Review, Calculations & Action Button */}
+        <div className="lg:col-span-4 space-y-5">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-subtle space-y-4 sticky top-36">
+            <h3 className="font-bold text-sm text-navy pb-3 border-b border-slate-100">
+              Order Items Review ({cart.length})
+            </h3>
+
+            {/* Compact Items List */}
+            <div className="max-h-56 overflow-y-auto space-y-3 pr-1 text-xs">
+              {cart.map(item => (
+                <div key={item.id} className="flex items-center gap-3 justify-between">
+                  <img
+                    src={item.product.images[0]}
+                    alt={item.product.name}
+                    className="w-12 h-12 object-cover rounded-lg border border-slate-100 shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-navy truncate">{item.product.name}</p>
+                    <p className="text-[11px] text-slate-500">
+                      Qty: <span className="font-bold">{item.quantity}</span> × ₹{item.unitPrice}
+                    </p>
+                  </div>
+                  <span className="font-bold text-navy whitespace-nowrap">
+                    ₹{item.totalPrice.toLocaleString('en-IN')}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Price Calculations */}
+            <div className="space-y-2 text-xs text-slate-600 pt-3 border-t border-slate-100">
+              <div className="flex justify-between">
+                <span>Taxable Items Subtotal:</span>
+                <span className="font-semibold text-navy">₹{cartSubtotal.toLocaleString('en-IN')}</span>
+              </div>
+
+              {couponDiscount > 0 && (
+                <div className="flex justify-between text-emerald-700 font-semibold">
+                  <span>Coupon Discount ({appliedCoupon}):</span>
+                  <span>-₹{couponDiscount.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between">
+                <span>Tax Levy (CGST + SGST / IGST):</span>
+                <span className="font-semibold text-navy">₹{Math.round(cartTax.totalTax).toLocaleString('en-IN')}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Freight Logistics:</span>
+                <span className="font-semibold text-navy">
+                  {cartShipping === 0 ? 'FREE' : `₹${cartShipping}`}
+                </span>
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 flex justify-between items-baseline text-navy">
+                <span className="text-sm font-bold">Total Amount to Pay:</span>
+                <span className="text-2xl font-black text-indigo">
+                  ₹{cartTotal.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            {/* Place Order CTA Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full py-4 rounded-xl font-bold text-xs transition shadow-premium flex items-center justify-center gap-2 ${
+                isSubmitting
+                  ? 'bg-slate-400 cursor-not-allowed text-white'
+                  : 'bg-indigo hover:bg-indigo-dark text-white'
+              }`}
+            >
+              {isSubmitting ? (
+                <>
+                  <Clock className="w-4 h-4 animate-spin" />
+                  <span>Processing Order & GST Invoice...</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Confirm & Place Order (₹{cartTotal.toLocaleString('en-IN')})</span>
+                </>
+              )}
+            </button>
+
+            <p className="text-[10px] text-slate-400 text-center leading-tight">
+              By confirming, you agree to Mahalaxmi Enterprises Direct Mill Terms of Commercial Supply.
+            </p>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+};
