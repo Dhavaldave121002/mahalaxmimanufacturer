@@ -16,7 +16,8 @@ import {
   Sparkles,
   Percent,
   Lock,
-  Check
+  Check,
+  Zap
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
@@ -335,6 +336,25 @@ export const CartPage: React.FC = () => {
                 Tap to apply available mill coupons:
               </span>
               <div className="flex flex-col gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleApplyCoupon(undefined, 'LAUNCH150')}
+                  className={`p-2 rounded-xl text-left border text-xs transition flex items-center justify-between ${
+                    appliedCoupon === 'LAUNCH150'
+                      ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 font-bold ring-1 ring-emerald-500'
+                      : 'border-amber-300 bg-amber-50/70 hover:bg-amber-100/60 text-slate-900'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
+                    <span className="font-black text-amber-950">LAUNCH150</span>
+                    <span className="text-[10px] text-amber-800 font-semibold">• Flat ₹150 Launch Bonus</span>
+                  </div>
+                  <span className="text-[10px] font-black text-amber-900 bg-amber-200/70 px-2 py-0.5 rounded">
+                    {appliedCoupon === 'LAUNCH150' ? 'Applied ✓' : '1-Click Apply'}
+                  </span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => handleApplyCoupon(undefined, 'MILLDIRECT10')}

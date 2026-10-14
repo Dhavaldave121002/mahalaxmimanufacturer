@@ -189,10 +189,10 @@ export const Header: React.FC = () => {
               DIRECT MILL RATE
             </span>
             <span className="text-slate-200 text-[11px] hidden sm:inline">
-              🚚 Free Dispatch above ₹1,499 • ⚡ Instant 10% UPI Discount: <strong className="text-champagne font-mono">MILLDIRECT10</strong> • 🏢 GST Input Credit Invoicing
+              🚚 Free Dispatch above ₹1,499 • ⚡ Launch Bonus: <strong className="text-champagne font-mono font-black">LAUNCH150</strong> (Flat ₹150 Off) • 🏢 100% GST ITC Invoicing
             </span>
             <span className="text-slate-200 text-[11px] sm:hidden">
-              Direct Mill Rates & Wholesale Essentials
+              ⚡ Launch Bonus: <strong className="text-champagne font-mono font-black">LAUNCH150</strong> (Flat ₹150 Off)
             </span>
           </div>
 

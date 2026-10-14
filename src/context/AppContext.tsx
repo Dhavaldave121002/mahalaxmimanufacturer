@@ -470,7 +470,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const applyCoupon = (code: string) => {
     const clean = code.trim().toUpperCase();
-    if (clean === 'MILLDIRECT10') {
+    if (clean === 'LAUNCH150' || clean === 'FIRSTORDER') {
+      const disc = Math.min(150, cartSubtotal);
+      setAppliedCoupon(clean);
+      setCouponDiscount(disc);
+      return { success: true, message: '🎉 Launch Offer Applied! Flat ₹150 OFF on your first mill order.' };
+    } else if (clean === 'MILLDIRECT10') {
       const disc = Math.round(cartSubtotal * 0.1);
       setAppliedCoupon(clean);
       setCouponDiscount(disc);
