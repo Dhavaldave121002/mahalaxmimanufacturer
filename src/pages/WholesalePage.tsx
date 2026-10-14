@@ -26,7 +26,8 @@ import {
   FileText,
   Check,
   X,
-  ExternalLink
+  ExternalLink,
+  Globe
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
@@ -44,8 +45,8 @@ export const WholesalePage: React.FC = () => {
     acceptAndConvertQuotation
   } = useApp();
 
-  // Active Tab: 'pad' | 'rfq' | 'quotes' | 'itc' | 'ratecard'
-  const [activeTab, setActiveTab] = useState<'pad' | 'rfq' | 'quotes' | 'itc' | 'ratecard'>('pad');
+  // Active Tab: 'pad' | 'rfq' | 'quotes' | 'itc' | 'ratecard' | 'export'
+  const [activeTab, setActiveTab] = useState<'pad' | 'rfq' | 'quotes' | 'itc' | 'ratecard' | 'export'>('pad');
 
   // Bulk SKU Order Pad State
   const [padRows, setPadRows] = useState<{ productId: string; quantity: number }[]>([
@@ -371,6 +372,18 @@ export const WholesalePage: React.FC = () => {
         >
           <Download className="w-4 h-4" />
           <span>Surat Mill Price Sheet</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('export')}
+          className={`pb-3.5 text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 whitespace-nowrap shrink-0 ${
+            activeTab === 'export'
+              ? 'border-indigo text-indigo'
+              : 'border-transparent text-slate-500 hover:text-navy'
+          }`}
+        >
+          <Globe className="w-4 h-4 text-emerald-600" />
+          <span>Global Export & Container Desk</span>
         </button>
       </div>
 
@@ -1093,6 +1106,144 @@ export const WholesalePage: React.FC = () => {
                 <strong>Certification:</strong> Rates are Ex-Factory Surat Loom Gate. Valid for verified GST registered buyers. Freight computed per weight slab via SafeXpress or V-Trans.
               </p>
               <span className="text-slate-400 shrink-0 font-mono">Mahalaxmi Enterprises © Surat, Gujarat</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          TAB 6: GLOBAL EXPORT & CONTAINER FREIGHT DESK
+          ======================================================== */}
+      {activeTab === 'export' && (
+        <div className="space-y-8 animate-in fade-in">
+          {/* Global Header */}
+          <div className="bg-gradient-to-r from-navy-900 via-navy to-indigo-dark text-white rounded-3xl p-6 sm:p-10 border border-slate-700 shadow-premium space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="bg-emerald-500/20 text-emerald-300 text-xs font-black px-3 py-1 rounded-full border border-emerald-400/30 flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5" />
+                <span>OFFICIAL INDIAN TEXTILE EXPORT DESK</span>
+              </span>
+              <span className="bg-white/10 text-slate-200 text-xs font-bold px-3 py-1 rounded-full">
+                Hazira Port Surat (INHZA) • JNPT Nhava Sheva (INNSA)
+              </span>
+            </div>
+
+            <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+              Direct Mill Exports to USA, UK, UAE, Europe, Canada &amp; Worldwide
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
+              Serving international hotel procurement directors, overseas retail distributors, and department stores worldwide. We supply 20ft &amp; 40ft High Cube containers (FCL) and consolidated pallet cargo (LCL) directly from our Surat powerloom plants with full export documentation (Certificate of Origin, Bill of Lading, Commercial Invoice, Packing List, Phyto-sanitary &amp; OEKO-TEX Standard 100 compliance).
+            </p>
+
+            {/* Quick Export Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-700/80 text-xs">
+              <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
+                <p className="text-champagne font-black text-base">FOB / CIF / DDP</p>
+                <p className="text-slate-300 text-[11px]">Global Incoterms 2020</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
+                <p className="text-champagne font-black text-base">20ft / 40ft HQ</p>
+                <p className="text-slate-300 text-[11px]">Full Ocean Container Load</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
+                <p className="text-champagne font-black text-base">3-5 Days Air</p>
+                <p className="text-slate-300 text-[11px]">DHL/FedEx Express Cargo</p>
+              </div>
+              <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
+                <p className="text-champagne font-black text-base">USD • AED • EUR • GBP</p>
+                <p className="text-slate-300 text-[11px]">Multi-Currency Invoicing</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Export Product Matrix & HS Codes */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-subtle space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+              <div>
+                <h3 className="font-extrabold text-lg text-navy">International Export Tariff Master (HS Codes)</h3>
+                <p className="text-xs text-slate-500">Harmonized System codes for fast overseas customs clearance at major international ports.</p>
+              </div>
+              <a
+                href="https://wa.me/919876543210?text=Hello%20Mahalaxmi%20Export%20Desk%2C%20I%20am%20an%20international%20buyer%20requesting%20FOB%2FCIF%20container%20quotation"
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition shadow-sm w-fit"
+              >
+                <span>💬 WhatsApp International Mill Desk</span>
+              </a>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs min-w-[640px]">
+                <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="py-3 px-4">HS Code</th>
+                    <th className="py-3 px-4">Export Commodity</th>
+                    <th className="py-3 px-4">Standard Specifications</th>
+                    <th className="py-3 px-4">Export Packaging</th>
+                    <th className="py-3 px-4">FOB Surat/Hazira (USD)</th>
+                    <th className="py-3 px-4 text-center">Inquiry</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  <tr className="hover:bg-slate-50/60">
+                    <td className="py-3 px-4 font-mono font-bold text-indigo">6302.21.00</td>
+                    <td className="py-3 px-4 font-semibold text-navy">300/400 TC Combed Cotton Bedsheet Sets</td>
+                    <td className="py-3 px-4 text-slate-600">100% Combed Cotton, Sateen &amp; Percale Weave, Queen/King</td>
+                    <td className="py-3 px-4 text-slate-600">PVC Book Fold or Photo-Card Export Carton</td>
+                    <td className="py-3 px-4 font-black text-navy">$5.80 - $7.20 / Set</td>
+                    <td className="py-3 px-4 text-center">
+                      <a href="https://wa.me/919876543210?text=Requesting%20FOB%20quote%20for%20HS%206302.21%20Bedsheets" target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/60">
+                    <td className="py-3 px-4 font-mono font-bold text-indigo">6302.60.00</td>
+                    <td className="py-3 px-4 font-semibold text-navy">500-650 GSM Hotel Terry Bath Linen</td>
+                    <td className="py-3 px-4 text-slate-600">Double Ring Spun 100% Cotton, Optical White &amp; Vat Dyed</td>
+                    <td className="py-3 px-4 text-slate-600">Polybagged &amp; Compressed High-Density Bales</td>
+                    <td className="py-3 px-4 font-black text-navy">$2.70 - $3.40 / Pc</td>
+                    <td className="py-3 px-4 text-center">
+                      <a href="https://wa.me/919876543210?text=Requesting%20FOB%20quote%20for%20HS%206302.60%20Terry%20Towels" target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/60">
+                    <td className="py-3 px-4 font-mono font-bold text-indigo">6307.10.10</td>
+                    <td className="py-3 px-4 font-semibold text-navy">350 GSM Microfiber Cleaning Cloths</td>
+                    <td className="py-3 px-4 text-slate-600">80/20 Polyester-Polyamide, Ultrasonic Seamless Cut</td>
+                    <td className="py-3 px-4 text-slate-600">50-Pk Master Cartons, Barcoded for Retail</td>
+                    <td className="py-3 px-4 font-black text-navy">$0.32 - $0.45 / Pc</td>
+                    <td className="py-3 px-4 text-center">
+                      <a href="https://wa.me/919876543210?text=Requesting%20FOB%20quote%20for%20HS%206307.10%20Microfiber" target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/60">
+                    <td className="py-3 px-4 font-mono font-bold text-indigo">4202.92.00</td>
+                    <td className="py-3 px-4 font-semibold text-navy">380 GSM Heavy Cotton Canvas Tote Bags</td>
+                    <td className="py-3 px-4 text-slate-600">Eco-Friendly Natural Canvas, Cross-Stitched Reinforced Handles</td>
+                    <td className="py-3 px-4 text-slate-600">100 Pcs per Corrugated Export Box</td>
+                    <td className="py-3 px-4 font-black text-navy">$0.65 - $0.85 / Bag</td>
+                    <td className="py-3 px-4 text-center">
+                      <a href="https://wa.me/919876543210?text=Requesting%20FOB%20quote%20for%20HS%204202.92%20Canvas%20Bags" target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Global Compliance & Accreditations */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-200 text-xs">
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                <span className="font-bold text-navy block text-sm mb-1">OEKO-TEX &amp; GOTS Standard</span>
+                <p className="text-slate-600 text-[11px]">Free from harmful chemicals, azo dyes, and skin allergens. Fully certified for EU &amp; US retail.</p>
+              </div>
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                <span className="font-bold text-navy block text-sm mb-1">DGFT Validated IEC</span>
+                <p className="text-slate-600 text-[11px]">Official Import-Export Code issued by Directorate General of Foreign Trade, Government of India.</p>
+              </div>
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                <span className="font-bold text-navy block text-sm mb-1">Sample Swatch Air Express</span>
+                <p className="text-slate-600 text-[11px]">Global 72-hour fabric swatch kit dispatch via DHL Express with lab test wash reports.</p>
+              </div>
             </div>
           </div>
         </div>
