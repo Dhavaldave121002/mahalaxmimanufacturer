@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
+import { WhatsAppWidget } from './components/common/WhatsAppWidget';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 
 // Pages
 import { HomePage } from './pages/HomePage';
@@ -30,7 +32,7 @@ export const App: React.FC = () => {
     <AppProvider>
       <BrowserRouter>
         <ScrollToTop />
-        <div className="min-h-screen flex flex-col bg-ivory text-navy selection:bg-indigo selection:text-white">
+        <div className="min-h-screen flex flex-col bg-ivory text-navy selection:bg-indigo selection:text-white pb-16 md:pb-0">
           <Header />
           <main className="flex-1">
             <Routes>
@@ -49,6 +51,8 @@ export const App: React.FC = () => {
             </Routes>
           </main>
           <Footer />
+          <WhatsAppWidget />
+          <MobileBottomNav />
         </div>
       </BrowserRouter>
     </AppProvider>
