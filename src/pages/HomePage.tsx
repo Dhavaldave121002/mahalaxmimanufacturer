@@ -26,7 +26,10 @@ import {
   Percent,
   Check,
   Tag,
-  Star
+  Star,
+  CreditCard,
+  Box,
+  TrendingUp
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
@@ -96,9 +99,19 @@ export const HomePage: React.FC = () => {
     'hotels' | 'retailers' | 'resellers' | 'institutions' | 'home'
   >('hotels');
 
-  // Interactive Bulk Calculator state
   const [calcQuantity, setCalcQuantity] = useState<number>(100);
   const [calcItem, setCalcItem] = useState<'bedsheet' | 'towel' | 'microfiber'>('bedsheet');
+  const [calculatorMode, setCalculatorMode] = useState<'savings' | 'reseller'>('savings');
+  const [resellerSellingPrice, setResellerSellingPrice] = useState<number>(999);
+
+  // Live Simulated Dispatch Feed
+  const liveDispatches = [
+    { city: 'Ahmedabad, GJ', item: '120 Pcs 300 TC Bedsheets', time: '4m ago', buyer: 'Patel Handlooms' },
+    { city: 'Udaipur, RJ', item: '250 Pcs Hotel Spa Towels', time: '18m ago', buyer: 'Royal Palace Resort' },
+    { city: 'Surat, GJ', item: '60 Pcs Microfiber Duster Kits', time: '29m ago', buyer: 'CleanTech Facility' },
+    { city: 'Mumbai, MH', item: '40 Pcs Kitchen Napkins', time: '42m ago', buyer: 'Heritage Cafe' },
+    { city: 'Bangalore, KA', item: '85 Pcs Heavy Canvas Bags', time: '55m ago', buyer: 'EcoHub Merchandising' }
+  ];
 
   // Business Enquiry Quick Form state
   const [enquiryForm, setEnquiryForm] = useState({
@@ -150,6 +163,11 @@ export const HomePage: React.FC = () => {
   const totalBulkCost = calcQuantity * calcData.bulkRate;
   const totalSavings = totalRetailCost - totalBulkCost;
   const percentageSavings = Math.round((totalSavings / totalRetailCost) * 100);
+
+  // Reseller calculations
+  const resellerRevenue = calcQuantity * resellerSellingPrice;
+  const resellerGrossProfit = resellerRevenue - totalBulkCost;
+  const resellerRoi = Math.round((resellerGrossProfit / totalBulkCost) * 100);
 
   return (
     <div className="space-y-12 pb-16">
@@ -239,6 +257,68 @@ export const HomePage: React.FC = () => {
                   }`}
                 />
               ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================================
+          LIVE SURAT MILL DISPATCH STRIP & COMMERCIAL PERKS
+          ======================================================== */}
+      <section className="bg-slate-900 text-slate-300 text-xs py-2.5 px-4 overflow-hidden border-y border-slate-800 -mt-12 mb-2">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 shrink-0 text-champagne font-black text-[11px] uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            <span>LIVE SURAT MILL DISPATCH:</span>
+          </div>
+          <div className="flex items-center gap-6 overflow-x-auto hide-scrollbar whitespace-nowrap text-[11px]">
+            {liveDispatches.map((d, i) => (
+              <span key={i} className="flex items-center gap-1.5 shrink-0">
+                <Truck className="w-3.5 h-3.5 text-indigo-400" />
+                <strong className="text-white">{d.buyer} ({d.city})</strong>: {d.item} • <span className="text-slate-400">{d.time}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Commercial Perks & Bank Offers Strip (Amazon / Flipkart Pro style) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-subtle">
+          <div className="flex items-center gap-3 p-2">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo shrink-0">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-navy">5% Instant Bank Discount</p>
+              <p className="text-[11px] text-slate-500">RuPay & Commercial Cards (MILLB2B)</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-2">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
+              <Truck className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-navy">Same-Day Mill Dispatch</p>
+              <p className="text-[11px] text-slate-500">Surat Ring Road Textile Hub</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-2">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-navy shrink-0">
+              <ShieldCheck className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-navy">100% GSTR-2B ITC Claim</p>
+              <p className="text-[11px] text-slate-500">Verified GST Invoice with HSN</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-2">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo shrink-0">
+              <Zap className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-navy">Zero Commission Rates</p>
+              <p className="text-[11px] text-slate-500">Pure factory prices without 25% app fee</p>
             </div>
           </div>
         </div>
@@ -502,13 +582,35 @@ export const HomePage: React.FC = () => {
 
             <div className="lg:col-span-6">
               <div className="bg-white text-navy rounded-2xl p-6 shadow-card border border-slate-200">
+                {/* Mode Selector: Wholesale Savings vs Reseller Profit */}
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <Calculator className="w-4 h-4 text-indigo" />
-                    <h3 className="font-bold text-sm text-navy">Live Bulk Savings Simulator</h3>
+                  <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setCalculatorMode('savings')}
+                      className={`px-3 py-1.5 rounded-lg transition ${
+                        calculatorMode === 'savings'
+                          ? 'bg-navy text-white shadow-sm'
+                          : 'text-slate-600 hover:text-navy'
+                      }`}
+                    >
+                      Bulk Buyer Savings
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCalculatorMode('reseller')}
+                      className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 ${
+                        calculatorMode === 'reseller'
+                          ? 'bg-emerald-600 text-white shadow-sm'
+                          : 'text-slate-600 hover:text-navy'
+                      }`}
+                    >
+                      <TrendingUp className="w-3.5 h-3.5" />
+                      <span>Reseller / Store Profit</span>
+                    </button>
                   </div>
                   <span className="text-[11px] bg-indigo-light text-indigo px-2 py-0.5 rounded font-bold">
-                    Interactive
+                    Live Rates
                   </span>
                 </div>
 
@@ -516,30 +618,39 @@ export const HomePage: React.FC = () => {
                   <label className="text-xs font-bold text-slate-600 block">Select Product Line:</label>
                   <div className="grid grid-cols-3 gap-2">
                     <button
-                      onClick={() => setCalcItem('bedsheet')}
+                      onClick={() => {
+                        setCalcItem('bedsheet');
+                        setResellerSellingPrice(999);
+                      }}
                       className={`p-2 rounded-xl text-xs font-semibold border transition text-center ${
                         calcItem === 'bedsheet'
-                          ? 'border-indigo bg-indigo-light text-indigo'
+                          ? 'border-indigo bg-indigo-light text-indigo font-bold'
                           : 'border-slate-200 hover:border-slate-300 text-slate-700'
                       }`}
                     >
                       300 TC Bedsheet
                     </button>
                     <button
-                      onClick={() => setCalcItem('towel')}
+                      onClick={() => {
+                        setCalcItem('towel');
+                        setResellerSellingPrice(499);
+                      }}
                       className={`p-2 rounded-xl text-xs font-semibold border transition text-center ${
                         calcItem === 'towel'
-                          ? 'border-indigo bg-indigo-light text-indigo'
+                          ? 'border-indigo bg-indigo-light text-indigo font-bold'
                           : 'border-slate-200 hover:border-slate-300 text-slate-700'
                       }`}
                     >
                       600 GSM Towel
                     </button>
                     <button
-                      onClick={() => setCalcItem('microfiber')}
+                      onClick={() => {
+                        setCalcItem('microfiber');
+                        setResellerSellingPrice(699);
+                      }}
                       className={`p-2 rounded-xl text-xs font-semibold border transition text-center ${
                         calcItem === 'microfiber'
-                          ? 'border-indigo bg-indigo-light text-indigo'
+                          ? 'border-indigo bg-indigo-light text-indigo font-bold'
                           : 'border-slate-200 hover:border-slate-300 text-slate-700'
                       }`}
                     >
@@ -569,22 +680,64 @@ export const HomePage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mt-5 bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2 text-xs">
-                  <div className="flex justify-between text-slate-600">
-                    <span>Standard Retail Cost:</span>
-                    <span className="line-through">₹{totalRetailCost.toLocaleString('en-IN')}</span>
+                {calculatorMode === 'reseller' && (
+                  <div className="mt-3 p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-1.5 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-emerald-950">Your Selling Price to Customers:</span>
+                      <span className="font-black text-emerald-800 text-sm">₹{resellerSellingPrice} / pc</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={calcData.bulkRate + 50}
+                      max={calcData.mrp}
+                      step="25"
+                      value={resellerSellingPrice}
+                      onChange={e => setResellerSellingPrice(Number(e.target.value))}
+                      className="w-full accent-emerald-600 cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[10px] text-emerald-700">
+                      <span>Direct Mill Cost: ₹{calcData.bulkRate}</span>
+                      <span>MRP Ceiling: ₹{calcData.mrp}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-slate-900 font-bold">
-                    <span>Direct Mill Bulk Rate:</span>
-                    <span className="text-indigo text-sm font-black">₹{totalBulkCost.toLocaleString('en-IN')}</span>
+                )}
+
+                {/* Calculation Output Card */}
+                {calculatorMode === 'savings' ? (
+                  <div className="mt-4 bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2 text-xs">
+                    <div className="flex justify-between text-slate-600">
+                      <span>Standard Retail Cost:</span>
+                      <span className="line-through">₹{totalRetailCost.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-900 font-bold">
+                      <span>Direct Mill Bulk Rate:</span>
+                      <span className="text-indigo text-sm font-black">₹{totalBulkCost.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-emerald-700 font-extrabold text-sm">
+                      <span>Your Total Cash Savings:</span>
+                      <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-black">
+                        ₹{totalSavings.toLocaleString('en-IN')} ({percentageSavings}% Off)
+                      </span>
+                    </div>
                   </div>
-                  <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-emerald-700 font-extrabold text-sm">
-                    <span>Your Total Cash Savings:</span>
-                    <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-black">
-                      ₹{totalSavings.toLocaleString('en-IN')} ({percentageSavings}% Off)
-                    </span>
+                ) : (
+                  <div className="mt-4 bg-emerald-50 rounded-xl p-4 border border-emerald-300 space-y-2 text-xs">
+                    <div className="flex justify-between text-slate-700">
+                      <span>Your Total Sourcing Cost (Mill):</span>
+                      <span className="font-bold text-navy">₹{totalBulkCost.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-700">
+                      <span>Total Revenue from Customers:</span>
+                      <span className="font-bold text-navy">₹{resellerRevenue.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="pt-2 border-t border-emerald-300 flex justify-between items-center text-emerald-950 font-black text-sm">
+                      <span>Your Net Reseller Profit:</span>
+                      <span className="bg-emerald-600 text-white px-2.5 py-1 rounded-lg text-base font-black">
+                        ₹{resellerGrossProfit.toLocaleString('en-IN')} ({resellerRoi}% ROI)
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

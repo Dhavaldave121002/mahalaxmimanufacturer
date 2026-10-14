@@ -533,6 +533,43 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Material': 'Three-ply non-woven & cotton composite with PVC window'
     },
     tags: ['storage', 'laundry hamper', 'quilt bag', 'home storage', 'wardrobe organizer']
+  },
+  {
+    id: 'prod-swatch-box-01',
+    name: 'Mahalaxmi Official Mill Fabric Swatch & Quality Assurance Sample Kit (100% Refundable)',
+    slug: 'mill-fabric-swatch-sample-kit',
+    sku: 'MLE-SWATCH-KIT-01',
+    category: 'textile',
+    categoryName: 'Textile',
+    subcategory: 'Fabrics',
+    shortDescription: '12 curated fabric swatches including 300 TC Combed Cotton, 600 GSM Terry, Canvas & Microfiber with Mill Quality Certificate.',
+    description: 'Designed specifically for B2B procurement managers, hotel executives, and retail shop owners. Feel the hand-touch, inspect GSM weights, test bleach tolerance, and verify weave density before committing to large commercial orders. Includes ₹199 discount code applicable on your first wholesale order.',
+    images: [
+      'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?q=80&w=1000&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop'
+    ],
+    mrp: 499,
+    retailPrice: 199,
+    wholesaleTiers: [
+      { minQty: 1, maxQty: 5, pricePerUnit: 199, savingsPercent: 60, label: 'Standard Sample Box' },
+      { minQty: 6, pricePerUnit: 149, savingsPercent: 70, label: 'Multi-Location Audit Kit' }
+    ],
+    moq: 1,
+    stock: 150,
+    rating: 4.9,
+    reviewCount: 420,
+    isBestSeller: true,
+    isDirectMillDeal: true,
+    isTrending: true,
+    hsnCode: '630790',
+    gstRate: 5,
+    specifications: {
+      'Contents': '12 Fabric Swatches (15x15 cm each)',
+      'Included Materials': '300 TC Combed Sateen, 210 TC Percale, 600 GSM Combed Terry, 380 GSM Canvas, 350 GSM Microfiber',
+      'Documentation': 'Mill Technical Test Report & Fabric Weight (GSM) Certificate',
+      'Rebate Policy': '₹199 Cash Coupon included for your next order > ₹5,000'
+    },
+    tags: ['swatch', 'sample', 'fabric sample', 'mill kit', 'b2b testing']
   }
 ];
 

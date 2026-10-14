@@ -23,7 +23,9 @@ import {
   Check,
   Eye,
   Flame,
-  Timer
+  Timer,
+  Sparkles,
+  Box
 } from 'lucide-react';
 import { StickyPurchaseBar } from '../components/common/StickyPurchaseBar';
 import { FrequentlyBoughtTogether } from '../components/common/FrequentlyBoughtTogether';
@@ -78,6 +80,20 @@ export const ProductDetailPage: React.FC = () => {
   const currentLineTotal = currentUnitPrice * quantity;
   const standardRetailTotal = product.retailPrice * quantity;
   const wholesaleSavings = standardRetailTotal - currentLineTotal;
+
+  // Next tier progress calculation
+  const nextTier = useMemo(() => {
+    if (!product.wholesaleTiers || product.wholesaleTiers.length === 0) return null;
+    const sorted = [...product.wholesaleTiers].sort((a, b) => a.minQty - b.minQty);
+    return sorted.find(t => t.minQty > quantity) || null;
+  }, [product, quantity]);
+
+  const pcsNeededForNextTier = nextTier ? nextTier.minQty - quantity : 0;
+  const nextTierSavingsPerPc = nextTier ? currentUnitPrice - nextTier.pricePerUnit : 0;
+
+  // GST ITC calculation
+  const gstAmount = Math.round(currentLineTotal * (product.gstRate / (100 + product.gstRate)));
+  const netEffectiveCost = currentLineTotal - gstAmount;
 
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedVariant);
@@ -261,6 +277,24 @@ export const ProductDetailPage: React.FC = () => {
                 <span className="font-bold">You save ₹{wholesaleSavings.toLocaleString('en-IN')} vs retail</span>
               </div>
             )}
+
+            {/* GSTR-2B Input Tax Credit Callout */}
+            <div className="p-3 bg-indigo-50/70 border border-indigo-200/80 rounded-xl text-xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <Building2 className="w-4 h-4 text-indigo shrink-0" />
+                <div>
+                  <span className="font-bold text-navy block">
+                    GST Registered Business? Claim ₹{gstAmount.toLocaleString('en-IN')} via GSTR-2B ITC
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    Net effective landed cost: <strong className="text-navy">₹{netEffectiveCost.toLocaleString('en-IN')}</strong> (₹{Math.round(netEffectiveCost / quantity)}/pc)
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] font-black bg-indigo/10 text-indigo px-2 py-1 rounded whitespace-nowrap">
+                100% ITC REBATE
+              </span>
+            </div>
           </div>
 
           {/* Wholesale Quantity Pricing Tiers Grid */}
@@ -300,6 +334,35 @@ export const ProductDetailPage: React.FC = () => {
                   );
                 })}
               </div>
+
+              {/* Live Tier Progress Bar */}
+              {nextTier && (
+                <div className="p-3 bg-gradient-to-r from-indigo-50 to-amber-50/60 rounded-xl border border-indigo-200/70 text-xs space-y-1.5 mt-2">
+                  <div className="flex justify-between items-center text-navy font-bold">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo fill-indigo" />
+                      Next Wholesale Rate Unlock
+                    </span>
+                    <span className="text-indigo font-black">
+                      Add {pcsNeededForNextTier} more pcs
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-indigo to-champagne h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${Math.min(100, Math.round((quantity / nextTier.minQty) * 100))}%`
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center text-[11px] text-slate-600">
+                    <span>Current: {quantity} pcs</span>
+                    <span>
+                      Add {pcsNeededForNextTier} pcs to pay <strong>₹{nextTier.pricePerUnit}/pc</strong> (Extra ₹{nextTierSavingsPerPc}/pc savings)
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -400,14 +463,27 @@ export const ProductDetailPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Custom RFQ Button for Large Institutional Orders */}
-            <div className="pt-1">
+            {/* Custom RFQ & Swatch Box Order */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const swatchProd = products.find(p => p.id === 'prod-swatch-box-01') || products[0];
+                  addToCart(swatchProd, 1);
+                  navigate('/cart');
+                }}
+                className="w-full py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-navy font-bold rounded-xl text-xs transition flex items-center justify-center gap-2"
+              >
+                <Box className="w-3.5 h-3.5 text-amber-600" />
+                <span>Order Fabric Swatch (₹199)</span>
+              </button>
+
               <Link
                 to={`/wholesale?sku=${product.sku}&product=${encodeURIComponent(product.name)}`}
                 className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-2 border border-slate-200"
               >
                 <Building2 className="w-3.5 h-3.5 text-indigo" />
-                <span>Need 500+ Units? Request Dedicated Mill Sales Quotation</span>
+                <span>Need 500+ Units? RFQ</span>
               </Link>
             </div>
           </div>

@@ -436,6 +436,22 @@ export const CartPage: React.FC = () => {
                 </span>
               </div>
               <p className="text-[10px] text-slate-400 text-right">Inclusive of all taxes & shipping</p>
+
+              {/* B2B GST Input Tax Credit (ITC) Callout */}
+              <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs space-y-1 mt-2">
+                <div className="flex justify-between items-center font-bold text-emerald-950">
+                  <span className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    Business GST Credit (ITC):
+                  </span>
+                  <span className="text-emerald-700 font-black">
+                    ₹{Math.round(cartTax.totalTax).toLocaleString('en-IN')} Back
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-600">
+                  Enter GSTIN at checkout to claim 100% GSTR-2B input tax credit. Net landed cost: <strong className="text-navy">₹{Math.round(cartTotal - cartTax.totalTax).toLocaleString('en-IN')}</strong>.
+                </p>
+              </div>
             </div>
 
             {/* Checkout Button */}
