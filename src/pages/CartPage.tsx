@@ -11,7 +11,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Truck,
-  RotateCcw
+  RotateCcw,
+  Timer,
+  Sparkles,
+  Percent,
+  Lock,
+  Check
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
@@ -36,11 +41,26 @@ export const CartPage: React.FC = () => {
 
   const [couponInput, setCouponInput] = useState('');
   const [couponMsg, setCouponMsg] = useState<{ text: string; success: boolean } | null>(null);
+  const [timeLeft, setTimeLeft] = useState(899); // 14 mins 59 secs
 
-  const handleApplyCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!couponInput.trim()) return;
-    const res = applyCoupon(couponInput);
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  const handleApplyCoupon = (e?: React.FormEvent, code?: string) => {
+    if (e) e.preventDefault();
+    const targetCode = code || couponInput;
+    if (!targetCode.trim()) return;
+    const res = applyCoupon(targetCode);
     setCouponMsg({ text: res.message, success: res.success });
     if (res.success) {
       setCouponInput('');
@@ -96,6 +116,61 @@ export const CartPage: React.FC = () => {
         >
           Clear Entire Cart
         </button>
+      </div>
+
+      {/* High-Conversion Scarcity & Cart Reservation Banner */}
+      <div className="bg-amber-50/90 border border-amber-300/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2.5 text-amber-950">
+          <div className="p-1.5 bg-amber-200/70 rounded-lg text-amber-800">
+            <Timer className="w-4 h-4 animate-pulse" />
+          </div>
+          <div>
+            <span className="font-extrabold text-slate-900">
+              High Demand: Direct Mill Rates Reserved for:
+            </span>{' '}
+            <span className="font-black text-rose-700 font-mono text-sm tracking-wider">
+              {formatTime(timeLeft)}
+            </span>
+            <p className="text-[11px] text-amber-800">
+              Complete checkout before timer expires to guarantee Surat mill batch pricing.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-800 bg-white/90 border border-emerald-200 px-3 py-1.5 rounded-xl shrink-0">
+          <Lock className="w-3.5 h-3.5 text-emerald-600" />
+          <span>Inventory Locked</span>
+        </div>
+      </div>
+
+      {/* Interactive Free Shipping Progress Bar */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-subtle space-y-2">
+        <div className="flex items-center justify-between text-xs font-bold">
+          <div className="flex items-center gap-2 text-navy">
+            <Truck className="w-4 h-4 text-indigo" />
+            <span>
+              {cartSubtotal >= 1499 ? (
+                <span className="text-emerald-700">🎉 Congratulations! You unlocked FREE Direct Mill Freight</span>
+              ) : (
+                <span>
+                  Add <strong className="text-indigo">₹{(1499 - cartSubtotal).toLocaleString('en-IN')}</strong> more for FREE Direct Mill Freight
+                </span>
+              )}
+            </span>
+          </div>
+          <span className="text-xs font-mono font-bold text-slate-500">
+            {Math.min(100, Math.round((cartSubtotal / 1499) * 100))}%
+          </span>
+        </div>
+
+        {/* Progress meter bar */}
+        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+          <div
+            className={`h-full transition-all duration-500 rounded-full ${
+              cartSubtotal >= 1499 ? 'bg-emerald-500' : 'bg-gradient-to-r from-indigo to-indigo-light'
+            }`}
+            style={{ width: `${Math.min(100, Math.round((cartSubtotal / 1499) * 100))}%` }}
+          ></div>
+        </div>
       </div>
 
       {/* Main Grid: Item List (Left) + Pricing Summary (Right) */}
@@ -249,15 +324,74 @@ export const CartPage: React.FC = () => {
             )}
 
             {couponMsg && (
-              <p className={`text-[11px] ${couponMsg.success ? 'text-emerald-700' : 'text-error'}`}>
+              <p className={`text-[11px] font-semibold ${couponMsg.success ? 'text-emerald-700' : 'text-error'}`}>
                 {couponMsg.text}
               </p>
             )}
 
-            <div className="text-[10px] text-slate-400 space-y-0.5 pt-1">
-              <p>• <span className="font-semibold text-slate-600">MILLDIRECT10:</span> 10% instant off on all orders</p>
-              <p>• <span className="font-semibold text-slate-600">BULK500:</span> ₹500 off on orders above ₹3,000</p>
-              <p>• <span className="font-semibold text-slate-600">MAHALAXMI20:</span> 20% off on bulk wholesale (₹10k+)</p>
+            {/* Quick 1-Click Coupon Chips */}
+            <div className="pt-2 border-t border-slate-100 space-y-1.5">
+              <span className="text-[11px] font-bold text-slate-700 block">
+                Tap to apply available mill coupons:
+              </span>
+              <div className="flex flex-col gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleApplyCoupon(undefined, 'MILLDIRECT10')}
+                  className={`p-2 rounded-xl text-left border text-xs transition flex items-center justify-between ${
+                    appliedCoupon === 'MILLDIRECT10'
+                      ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 font-bold'
+                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Percent className="w-3.5 h-3.5 text-indigo" />
+                    <span className="font-bold">MILLDIRECT10</span>
+                    <span className="text-[10px] text-slate-500">• 10% Flat Instant Off</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-indigo">
+                    {appliedCoupon === 'MILLDIRECT10' ? 'Applied ✓' : 'Apply'}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleApplyCoupon(undefined, 'BULK500')}
+                  className={`p-2 rounded-xl text-left border text-xs transition flex items-center justify-between ${
+                    appliedCoupon === 'BULK500'
+                      ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 font-bold'
+                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="font-bold">BULK500</span>
+                    <span className="text-[10px] text-slate-500">• Flat ₹500 Off (&gt;₹3,000)</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-indigo">
+                    {appliedCoupon === 'BULK500' ? 'Applied ✓' : 'Apply'}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleApplyCoupon(undefined, 'MAHALAXMI20')}
+                  className={`p-2 rounded-xl text-left border text-xs transition flex items-center justify-between ${
+                    appliedCoupon === 'MAHALAXMI20'
+                      ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 font-bold'
+                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="font-bold">MAHALAXMI20</span>
+                    <span className="text-[10px] text-slate-500">• 20% Off Wholesale (&gt;₹10,000)</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-indigo">
+                    {appliedCoupon === 'MAHALAXMI20' ? 'Applied ✓' : 'Apply'}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -307,22 +441,40 @@ export const CartPage: React.FC = () => {
             {/* Checkout Button */}
             <button
               onClick={() => navigate('/checkout')}
-              className="w-full py-3.5 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-bold text-xs transition shadow-premium flex items-center justify-center gap-2"
+              className="w-full py-4 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-black text-sm transition shadow-premium flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
             >
               <span>Proceed to Fast Checkout</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
-            {/* B2B Trust Notice */}
-            <div className="pt-2 text-[11px] text-slate-500 space-y-1">
-              <p className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>GSTIN Invoice generated automatically upon payment.</span>
-              </p>
-              <p className="flex items-center gap-1.5">
-                <RotateCcw className="w-3.5 h-3.5 text-indigo shrink-0" />
-                <span>7-Day Return & Replacement for manufacturing flaws.</span>
-              </p>
+            {/* Payment & Security Trust Badges Strip */}
+            <div className="pt-3 border-t border-slate-100 space-y-2.5">
+              <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                <Lock className="w-3 h-3 text-emerald-600" />
+                <span>256-Bit Bank-Grade SSL Secure Checkout</span>
+              </div>
+
+              {/* Supported Payment Channels */}
+              <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] font-bold text-slate-600">
+                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">UPI / QR</span>
+                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">Google Pay</span>
+                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">PhonePe</span>
+                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">RuPay</span>
+                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">NetBanking</span>
+                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">Cash on Delivery</span>
+              </div>
+
+              {/* B2B Trust Notice */}
+              <div className="pt-2 text-[11px] text-slate-500 space-y-1">
+                <p className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>GSTIN Tax Invoice generated automatically for 100% ITC claim.</span>
+                </p>
+                <p className="flex items-center gap-1.5">
+                  <RotateCcw className="w-3.5 h-3.5 text-indigo shrink-0" />
+                  <span>7-Day Return & Replacement for manufacturing flaws.</span>
+                </p>
+              </div>
             </div>
           </div>
         </div>

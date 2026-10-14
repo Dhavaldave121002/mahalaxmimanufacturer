@@ -20,8 +20,13 @@ import {
   Clock,
   Share2,
   Heart,
-  Check
+  Check,
+  Eye,
+  Flame,
+  Timer
 } from 'lucide-react';
+import { StickyPurchaseBar } from '../components/common/StickyPurchaseBar';
+import { FrequentlyBoughtTogether } from '../components/common/FrequentlyBoughtTogether';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -197,6 +202,30 @@ export const ProductDetailPage: React.FC = () => {
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 In Stock ({product.stock} units available at mill)
               </span>
+            </div>
+
+            {/* High-Conversion Scarcity & Urgency Triggers */}
+            <div className="mt-3.5 p-3 bg-amber-50/70 border border-amber-200/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2 text-amber-900 font-medium">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="flex items-center gap-1 font-bold text-slate-800">
+                  <Eye className="w-3.5 h-3.5 text-indigo" />
+                  24 buyers active
+                </span>
+                <span className="text-slate-300">•</span>
+                <span className="flex items-center gap-1 font-semibold text-rose-700">
+                  <Flame className="w-3.5 h-3.5 text-rose-600 fill-current" />
+                  Only {Math.min(product.stock, 14)} packs left in Surat Mill lot
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-slate-700 font-medium text-[11px] bg-white/80 px-2 py-1 rounded-lg border border-amber-200/50">
+                <Timer className="w-3.5 h-3.5 text-indigo shrink-0" />
+                <span>Dispatch within <strong>2h 15m</strong> for same-day shipping</span>
+              </div>
             </div>
           </div>
 
@@ -416,6 +445,14 @@ export const ProductDetailPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Frequently Bought Together Bundle Cross-Sell */}
+      {relatedProducts.length > 0 && (
+        <FrequentlyBoughtTogether
+          currentProduct={product}
+          bundleProducts={relatedProducts.slice(0, 2)}
+        />
+      )}
+
       {/* Product Information Tabs: Specs, Care Instructions, Wholesale Terms, Reviews */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-subtle space-y-6">
         <div className="flex border-b border-slate-200 overflow-x-auto gap-8">
@@ -599,6 +636,17 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* High-Conversion Sticky Bottom Purchase Bar */}
+      <StickyPurchaseBar
+        product={product}
+        selectedVariant={selectedVariant}
+        quantity={quantity}
+        currentUnitPrice={currentUnitPrice}
+        onAddToCart={handleAddToCart}
+        onBuyNow={handleBuyNow}
+        addedAnimation={addedAnimation}
+      />
     </div>
   );
 };

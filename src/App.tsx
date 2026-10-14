@@ -4,6 +4,7 @@ import { AppProvider } from './context/AppContext';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { WhatsAppWidget } from './components/common/WhatsAppWidget';
+import { LiveSalesNotification } from './components/common/LiveSalesNotification';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 
 // Pages
@@ -51,6 +52,7 @@ export const App: React.FC = () => {
             </Routes>
           </main>
           <Footer />
+          <LiveSalesNotification />
           <WhatsAppWidget />
           <MobileBottomNav />
         </div>
