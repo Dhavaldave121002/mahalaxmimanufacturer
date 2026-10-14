@@ -180,8 +180,10 @@ export const HomePage: React.FC = () => {
             {/* Background Image with smooth transitions */}
             <div className="absolute inset-0">
               <img
-                src={heroSlides[currentSlide].image}
-                alt="Banner"
+                src={heroSlides[currentSlide].image.replace('w=1200', 'w=1000')}
+                alt={heroSlides[currentSlide].title}
+                fetchPriority="high"
+                decoding="async"
                 className="w-full h-full object-cover opacity-35 transition-opacity duration-1000 scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/90 to-transparent"></div>
@@ -232,6 +234,7 @@ export const HomePage: React.FC = () => {
             {/* Carousel Navigation Arrows */}
             <button
               onClick={() => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)}
+              aria-label="Previous hero banner slide"
               className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20"
               title="Previous slide"
             >
@@ -240,6 +243,7 @@ export const HomePage: React.FC = () => {
 
             <button
               onClick={() => setCurrentSlide(prev => (prev + 1) % heroSlides.length)}
+              aria-label="Next hero banner slide"
               className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20"
               title="Next slide"
             >
@@ -252,6 +256,7 @@ export const HomePage: React.FC = () => {
                 <button
                   key={idx}
                   onClick={() => setCurrentSlide(idx)}
+                  aria-label={`Go to slide ${idx + 1}: ${heroSlides[idx].title}`}
                   className={`h-2 rounded-full transition-all ${
                     currentSlide === idx ? 'w-8 bg-champagne' : 'w-2 bg-white/40'
                   }`}
@@ -665,6 +670,9 @@ export const HomePage: React.FC = () => {
                     <span className="font-black text-indigo text-sm">{calcQuantity} Units</span>
                   </div>
                   <input
+                    id="calc-order-quantity"
+                    name="orderQuantity"
+                    aria-label="Order Quantity in Units"
                     type="range"
                     min="10"
                     max="500"
@@ -673,7 +681,7 @@ export const HomePage: React.FC = () => {
                     onChange={e => setCalcQuantity(Number(e.target.value))}
                     className="w-full accent-indigo cursor-pointer"
                   />
-                  <div className="flex justify-between text-[10px] text-slate-400">
+                  <div className="flex justify-between text-[10px] text-slate-500">
                     <span>10 Units (Retailer)</span>
                     <span>100 Units (Hotelier)</span>
                     <span>500 Units (Distributor)</span>
@@ -687,6 +695,9 @@ export const HomePage: React.FC = () => {
                       <span className="font-black text-emerald-800 text-sm">₹{resellerSellingPrice} / pc</span>
                     </div>
                     <input
+                      id="calc-reseller-price"
+                      name="resellerPrice"
+                      aria-label="Your Customer Selling Price"
                       type="range"
                       min={calcData.bulkRate + 50}
                       max={calcData.mrp}
@@ -1035,8 +1046,10 @@ export const HomePage: React.FC = () => {
                 <form onSubmit={handleEnquirySubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Your Full Name *</label>
+                      <label htmlFor="rfq-fullname" className="text-[11px] font-bold text-slate-700 block mb-1">Your Full Name *</label>
                       <input
+                        id="rfq-fullname"
+                        name="fullName"
                         type="text"
                         required
                         value={enquiryForm.fullName}
@@ -1046,8 +1059,10 @@ export const HomePage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Company / Business Name *</label>
+                      <label htmlFor="rfq-businessname" className="text-[11px] font-bold text-slate-700 block mb-1">Company / Business Name *</label>
                       <input
+                        id="rfq-businessname"
+                        name="businessName"
                         type="text"
                         required
                         value={enquiryForm.businessName}
@@ -1060,8 +1075,10 @@ export const HomePage: React.FC = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Contact Phone Number *</label>
+                      <label htmlFor="rfq-phone" className="text-[11px] font-bold text-slate-700 block mb-1">Contact Phone Number *</label>
                       <input
+                        id="rfq-phone"
+                        name="phone"
                         type="tel"
                         required
                         value={enquiryForm.phone}
@@ -1071,8 +1088,10 @@ export const HomePage: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Business Email Address *</label>
+                      <label htmlFor="rfq-email" className="text-[11px] font-bold text-slate-700 block mb-1">Business Email Address *</label>
                       <input
+                        id="rfq-email"
+                        name="email"
                         type="email"
                         required
                         value={enquiryForm.email}
@@ -1085,8 +1104,10 @@ export const HomePage: React.FC = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Business Type</label>
+                      <label htmlFor="rfq-businesstype" className="text-[11px] font-bold text-slate-700 block mb-1">Business Type</label>
                       <select
+                        id="rfq-businesstype"
+                        name="businessType"
                         value={enquiryForm.businessType}
                         onChange={e => setEnquiryForm({ ...enquiryForm, businessType: e.target.value as any })}
                         className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:border-indigo outline-none bg-white"
@@ -1099,8 +1120,10 @@ export const HomePage: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-slate-700 block mb-1">Expected Monthly Volume</label>
+                      <label htmlFor="rfq-volume" className="text-[11px] font-bold text-slate-700 block mb-1">Expected Monthly Volume</label>
                       <select
+                        id="rfq-volume"
+                        name="volume"
                         value={enquiryForm.expectedMonthlyVolume}
                         onChange={e => setEnquiryForm({ ...enquiryForm, expectedMonthlyVolume: e.target.value })}
                         className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:border-indigo outline-none bg-white"
@@ -1114,8 +1137,10 @@ export const HomePage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold text-slate-700 block mb-1">Requirement Details & SKUs</label>
+                    <label htmlFor="rfq-notes" className="text-[11px] font-bold text-slate-700 block mb-1">Requirement Details & SKUs</label>
                     <textarea
+                      id="rfq-notes"
+                      name="notes"
                       rows={2}
                       value={enquiryForm.notes}
                       onChange={e => setEnquiryForm({ ...enquiryForm, notes: e.target.value })}
@@ -1126,6 +1151,7 @@ export const HomePage: React.FC = () => {
 
                   <button
                     type="submit"
+                    aria-label="Send Commercial RFQ to Mill Sales Desk"
                     className="w-full py-3.5 bg-indigo hover:bg-indigo-dark text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm"
                   >
                     <Send className="w-4 h-4" />

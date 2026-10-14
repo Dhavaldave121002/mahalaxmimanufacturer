@@ -39,6 +39,7 @@ export const WhatsAppWidget: React.FC = () => {
             </div>
             <button
               onClick={() => setIsOpen(false)}
+              aria-label="Close WhatsApp chat dialog"
               className="p-1.5 hover:bg-white/20 rounded-full transition"
             >
               <X className="w-4 h-4" />
@@ -52,23 +53,26 @@ export const WhatsAppWidget: React.FC = () => {
               <p>
                 Namaste! 🙏 Welcome to Mahalaxmi Enterprises. Looking for direct mill rates on bedsheets, 600 GSM towels, or commercial wholesale?
               </p>
-              <span className="text-[9px] text-slate-400 block text-right">Just now</span>
+              <span className="text-[9px] text-slate-500 block text-right">Just now</span>
             </div>
 
             <div className="flex flex-wrap gap-1.5 pt-1">
               <button
+                type="button"
                 onClick={() => setMessage('Can I get the wholesale price list PDF for bedsheets & towels?')}
                 className="px-2.5 py-1 bg-white border border-slate-200 hover:border-emerald-500 rounded-full text-[11px] text-slate-700 transition"
               >
                 📄 Wholesale Price List PDF
               </button>
               <button
+                type="button"
                 onClick={() => setMessage('I want to place a bulk order for 100+ pieces with GST invoice.')}
                 className="px-2.5 py-1 bg-white border border-slate-200 hover:border-emerald-500 rounded-full text-[11px] text-slate-700 transition"
               >
                 📦 100+ Pcs Bulk Order
               </button>
               <button
+                type="button"
                 onClick={() => setMessage('What is the minimum order quantity for direct mill rates?')}
                 className="px-2.5 py-1 bg-white border border-slate-200 hover:border-emerald-500 rounded-full text-[11px] text-slate-700 transition"
               >
@@ -80,6 +84,9 @@ export const WhatsAppWidget: React.FC = () => {
           {/* Chat Input */}
           <form onSubmit={handleSend} className="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
             <input
+              id="whatsapp-message-input"
+              name="whatsappMessage"
+              aria-label="Type message for WhatsApp sales desk"
               type="text"
               value={message}
               onChange={e => setMessage(e.target.value)}
@@ -88,6 +95,7 @@ export const WhatsAppWidget: React.FC = () => {
             />
             <button
               type="submit"
+              aria-label="Send WhatsApp message"
               className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition shadow-sm"
               title="Chat on WhatsApp"
             >
@@ -100,6 +108,7 @@ export const WhatsAppWidget: React.FC = () => {
       {/* Floating Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Chat on WhatsApp with direct mill sales desk"
         className="group flex items-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-premium transition-all duration-300 hover:scale-105"
         title="Chat on WhatsApp with Mill Merchandiser"
       >

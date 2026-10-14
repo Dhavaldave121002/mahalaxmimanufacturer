@@ -30,6 +30,7 @@ export const MobileBottomNav: React.FC = () => {
           <Link
             key={idx}
             to={item.path}
+            aria-label={item.hasBadge && cartTotalItemsCount > 0 ? `${item.label}, ${cartTotalItemsCount} items in cart` : item.label}
             className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition relative ${
               isActive ? 'text-indigo font-bold' : 'text-slate-500 hover:text-navy font-medium'
             }`}

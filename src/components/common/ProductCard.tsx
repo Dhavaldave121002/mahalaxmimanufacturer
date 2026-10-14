@@ -31,7 +31,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div className="group relative bg-white rounded-3xl border border-slate-200/90 hover:border-indigo/50 overflow-hidden shadow-subtle hover:shadow-premium transition-all duration-300 flex flex-col">
       {/* Top Image Container */}
-      <Link to={`/product/${product.slug}`} className="relative aspect-[4/3] overflow-hidden bg-slate-100 block">
+      <Link to={`/product/${product.slug}`} aria-label={`View details of ${product.name}`} className="relative aspect-[4/3] overflow-hidden bg-slate-100 block">
         <img
           src={product.images[0]}
           alt={product.name}
@@ -129,6 +129,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <div className="mt-2.5 flex items-center gap-1.5">
             <button
               onClick={handleQuickAdd}
+              aria-label={`Add ${product.name} to cart`}
               className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm ${
                 added
                   ? 'bg-emerald-600 text-white'
@@ -157,6 +158,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               rel="noreferrer"
               className="p-2.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white rounded-xl transition border border-emerald-200 shrink-0"
               title="Quick Order via WhatsApp"
+              aria-label={`Order ${product.name} directly on WhatsApp`}
             >
               <MessageCircle className="w-4 h-4" />
             </a>
@@ -165,6 +167,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               to={`/product/${product.slug}`}
               className="p-2.5 border border-slate-200 hover:border-indigo hover:text-indigo rounded-xl text-slate-600 transition shrink-0"
               title="View full specifications & wholesale tiers"
+              aria-label={`View specifications and wholesale tiers for ${product.name}`}
             >
               <ArrowUpRight className="w-4 h-4" />
             </Link>
