@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+
+# Google & Bing Sitemaps
+Sitemap: https://mahalaxmimanufacturer.vercel.app/sitemap.xml
