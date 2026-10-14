@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import {
@@ -20,7 +21,12 @@ import {
   CheckCircle2,
   Flame,
   Zap,
-  Tag
+  Tag,
+  FileSpreadsheet,
+  Download,
+  Calculator,
+  Truck,
+  ChevronRight
 } from 'lucide-react';
 import { Badge } from '../common/Badge';
 
@@ -47,9 +53,25 @@ export const Header: React.FC = () => {
   const [pinInput, setPinInput] = useState(deliveryPincode);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const mobileSearchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Detect scroll offset: collapse top announcement & category rails when scrolled
+  useEffect(() => {
+    const handleScroll = () => {
+      const offset = window.scrollY;
+      if (offset > 40) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Automatically close any open search or menus on page navigation
   useEffect(() => {
@@ -57,6 +79,18 @@ export const Header: React.FC = () => {
     setRoleMenuOpen(false);
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  // Lock body scroll when mobile menu or pin modal is open
+  useEffect(() => {
+    if (mobileMenuOpen || pinModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen, pinModalOpen]);
 
   // Click outside and escape key dismiss
   useEffect(() => {
@@ -162,9 +196,11 @@ export const Header: React.FC = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full shadow-subtle">
-      {/* 1. Top Offer Announcement & Persona Switcher Bar */}
-      <div className="bg-navy text-white text-xs py-1.5 px-4 sm:px-6">
+    <header className={`sticky top-0 z-40 w-full transition-all duration-300 ${isScrolled ? 'shadow-md' : 'shadow-subtle'}`}>
+      {/* 1. Top Offer Announcement & Persona Switcher Bar (Collapses on Scroll) */}
+      <div className={`bg-navy text-white text-xs transition-all duration-300 overflow-hidden ${
+        isScrolled ? 'max-h-0 py-0 opacity-0 pointer-events-none' : 'max-h-16 py-1.5 px-4 sm:px-6 opacity-100'
+      }`}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <span className="bg-champagne/20 text-champagne px-2.5 py-0.5 rounded font-black text-[10px] tracking-wider uppercase border border-champagne/30 flex items-center gap-1">
@@ -258,8 +294,10 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Main Flipkart / Amazon Style Header Bar */}
-      <div className="glass-header border-b border-slate-200/80 px-3 sm:px-6 py-2.5 sm:py-3 relative z-30 w-full">
+      {/* 2. Main Flipkart / Amazon Style Header Bar (ALWAYS PINNED) */}
+      <div className={`glass-header border-b border-slate-200/80 px-3 sm:px-6 relative z-30 w-full transition-all duration-300 ${
+        isScrolled ? 'py-2 shadow-sm' : 'py-2.5 sm:py-3 shadow-none'
+      }`}>
         <div className="max-w-7xl mx-auto">
           {/* Main Bar Row (Logo, Pincode, Search on desktop, Actions) */}
           <div className="flex items-center justify-between gap-2 sm:gap-6">
@@ -597,9 +635,13 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Flipkart / Meesho Style Visual Category Circles Rail */}
+      {/* 3. Flipkart / Meesho Style Visual Category Circles Rail (Collapses on Scroll) */}
       {!['/cart', '/checkout'].includes(location.pathname) && (
-        <div className="bg-white border-b border-slate-200 py-2 sm:py-2.5 overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x">
+        <div className={`bg-white border-b border-slate-200 overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x transition-all duration-300 ${
+          isScrolled
+            ? 'max-h-0 py-0 opacity-0 overflow-hidden pointer-events-none border-none'
+            : 'max-h-28 py-2 sm:py-2.5 opacity-100'
+        }`}>
           <div className="flex items-center gap-4 sm:gap-8 px-4 w-max min-w-full justify-start sm:justify-center">
             {categoryBubbles.map((cat, i) => (
               <Link
@@ -627,15 +669,20 @@ export const Header: React.FC = () => {
       )}
 
       {/* PIN Code Modal */}
-      {pinModalOpen && (
-        <div className="fixed inset-0 z-50 bg-navy/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-premium animate-in fade-in zoom-in-95">
+      {/* Pincode Modal Portaled to document.body */}
+      {pinModalOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0"
+            onClick={() => setPinModalOpen(false)}
+          />
+          <div className="relative bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl z-10 animate-fade-in">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-indigo" />
                 <h3 className="font-extrabold text-navy">Check Delivery PIN</h3>
               </div>
-              <button onClick={() => setPinModalOpen(false)} className="text-slate-400 hover:text-navy">
+              <button onClick={() => setPinModalOpen(false)} className="text-slate-400 hover:text-navy p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -672,62 +719,254 @@ export const Header: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Mobile Menu Drawer */}
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-navy/60 backdrop-blur-sm flex">
-          <div className="bg-white w-4/5 max-w-sm h-full flex flex-col p-6 shadow-premium overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center text-champagne font-bold text-sm">
-                  M
+      {/* Mobile Menu Drawer Portaled directly to document.body */}
+      {mobileMenuOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[100] flex">
+          {/* Full Screen Dim Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Drawer Container (Slides from left, full height, no bottom collision) */}
+          <div className="relative w-[85%] max-w-[320px] h-full bg-white z-[101] shadow-2xl flex flex-col overflow-hidden animate-slide-right">
+            {/* 1. Executive Drawer Header */}
+            <div className="bg-gradient-to-r from-navy via-navy-800 to-indigo-dark text-white p-5 space-y-3 shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-champagne text-navy flex items-center justify-center font-black text-base shadow-sm">
+                    M
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm tracking-tight leading-tight">MAHALAXMI</h4>
+                    <p className="text-[10px] text-champagne font-bold tracking-wider uppercase">Direct Mill Weaves</p>
+                  </div>
                 </div>
-                <span className="font-black text-navy text-lg">MAHALAXMI</span>
+
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+                  aria-label="Close menu"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <button onClick={() => setMobileMenuOpen(false)} className="p-1 text-slate-400 hover:text-navy">
-                <X className="w-6 h-6" />
-              </button>
+
+              {/* User Persona & Pincode Chips */}
+              <div className="pt-2 border-t border-slate-700/60 flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-300 font-medium">Hello, {currentUser.name}</span>
+                  <span className="bg-champagne/20 text-champagne text-[10px] font-bold px-2 py-0.5 rounded-full border border-champagne/30">
+                    {currentUser.businessType || 'Wholesale Buyer'}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setPinModalOpen(true);
+                  }}
+                  className="flex items-center justify-between bg-black/20 hover:bg-black/30 px-3 py-1.5 rounded-xl text-[11px] text-slate-300 transition border border-white/10"
+                >
+                  <div className="flex items-center gap-1.5 truncate">
+                    <MapPin className="w-3.5 h-3.5 text-champagne shrink-0" />
+                    <span className="truncate">Deliver to: {deliveryPincode} ({deliveryInfo?.city || 'Surat'})</span>
+                  </div>
+                  <span className="text-champagne font-bold shrink-0 ml-1">Change</span>
+                </button>
+              </div>
             </div>
 
-            <div className="py-4 space-y-4 text-sm font-semibold text-navy">
-              <Link to="/catalog" onClick={() => setMobileMenuOpen(false)} className="block py-1 hover:text-indigo">
-                Shop All Products
-              </Link>
-              <Link to="/category/textile" onClick={() => setMobileMenuOpen(false)} className="block py-1 hover:text-indigo">
-                Textile (Bedsheets, Curtains, Fabrics)
-              </Link>
-              <Link to="/category/cotton-products" onClick={() => setMobileMenuOpen(false)} className="block py-1 hover:text-indigo">
-                Cotton Products (Towels, Bags)
-              </Link>
-              <Link to="/category/home-kitchen" onClick={() => setMobileMenuOpen(false)} className="block py-1 hover:text-indigo">
-                Home & Kitchen (Towels, Aprons)
-              </Link>
-              <Link to="/category/household" onClick={() => setMobileMenuOpen(false)} className="block py-1 hover:text-indigo">
-                Household (Microfiber, Dusters)
-              </Link>
-              <Link to="/wholesale" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-indigo font-bold">
-                Wholesale Deals & Bulk Orders
-              </Link>
-              <Link to="/orders" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-slate-700">
-                Track My Order
-              </Link>
-              <Link to="/account" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-slate-700">
-                Business & Profile Settings
-              </Link>
-              <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="block py-1 text-champagne font-bold">
-                Admin & Operations Dashboard
-              </Link>
+            {/* 2. Scrollable Navigation Menu */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-6 text-xs text-navy overscroll-contain">
+              {/* B2B Wholesale Power Suite (Featured) */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo block px-2">
+                  ⚡ WHOLESALE & MILL POWER TOOLS
+                </span>
+                <div className="bg-indigo-light/50 rounded-2xl p-1.5 border border-indigo-100 space-y-0.5">
+                  <Link
+                    to="/wholesale"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white transition text-navy font-bold"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FileSpreadsheet className="w-4 h-4 text-indigo shrink-0" />
+                      <span>Bulk Multi-SKU Pad</span>
+                    </div>
+                    <span className="text-[10px] bg-indigo text-white px-2 py-0.5 rounded font-bold">Fast Entry</span>
+                  </Link>
+
+                  <Link
+                    to="/wholesale"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white transition text-navy font-bold"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Building2 className="w-4 h-4 text-indigo shrink-0" />
+                      <span>Request Custom RFQ</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  </Link>
+
+                  <Link
+                    to="/wholesale"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white transition text-navy font-bold"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Calculator className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>GSTIN & ITC Calculator</span>
+                    </div>
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Tax Savings</span>
+                  </Link>
+
+                  <Link
+                    to="/wholesale"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white transition text-navy font-bold"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Download className="w-4 h-4 text-indigo shrink-0" />
+                      <span>Surat Mill Price Sheet</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-mono">PDF</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Primary Product Categories */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-2">
+                  🛍️ DIRECT MILL CATEGORIES
+                </span>
+                <Link
+                  to="/catalog"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-slate-800 font-semibold"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Layers className="w-4 h-4 text-slate-500 shrink-0" />
+                    <span>Shop All Products</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+
+                <Link
+                  to="/category/textile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-slate-800 font-semibold"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-base">🧵</span>
+                    <span>Textiles (Bedsheets, Curtains)</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+
+                <Link
+                  to="/category/cotton-products"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-slate-800 font-semibold"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-base">🌿</span>
+                    <span>Cotton Products (Towels, Bags)</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+
+                <Link
+                  to="/category/home-kitchen"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-slate-800 font-semibold"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-base">🍳</span>
+                    <span>Home & Kitchen (Towels, Aprons)</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+
+                <Link
+                  to="/category/household"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-slate-800 font-semibold"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-base">🧹</span>
+                    <span>Household (Microfiber, Dusters)</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+              </div>
+
+              {/* Account, Orders & Support */}
+              <div className="space-y-1 pt-2 border-t border-slate-100">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block px-2">
+                  📦 ACCOUNT & CONSIGNMENTS
+                </span>
+                <Link
+                  to="/orders"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-slate-800 font-semibold"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Truck className="w-4 h-4 text-indigo shrink-0" />
+                    <span>Track My Consignment</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+
+                <Link
+                  to="/account"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-slate-800 font-semibold"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <UserIcon className="w-4 h-4 text-slate-500 shrink-0" />
+                    <span>Business & GST Settings</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+
+                <Link
+                  to="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-navy font-bold"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-champagne-dark shrink-0" />
+                    <span>Admin Operations Dashboard</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+              </div>
             </div>
 
-            <div className="mt-auto pt-6 border-t border-slate-200 text-xs text-slate-500">
-              <p className="font-bold text-navy">Mahalaxmi Enterprises</p>
-              <p>Direct Mill Rates & Wholesale Essentials</p>
-              <p className="mt-1">Surat Textile Park • GSTIN: 24AAECM8921P1ZA</p>
+            {/* 3. Drawer Bottom Contact Strip */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs shrink-0 space-y-2">
+              <a
+                href="https://wa.me/919876543210?text=Hello%20Mahalaxmi%20Enterprises%2C%20I%20want%20to%20order%20wholesale%20fabrics"
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-sm text-center"
+              >
+                <span>💬 WhatsApp Surat Mill Desk</span>
+              </a>
+
+              <div className="text-[10px] text-slate-400 text-center">
+                Surat Textile Park • GSTIN: 24AAECM8921P1ZA
+              </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );
