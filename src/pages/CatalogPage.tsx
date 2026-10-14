@@ -401,6 +401,141 @@ export const CatalogPage: React.FC = () => {
           )}
         </main>
       </div>
+
+      {/* Mobile Filters Bottom Sheet Modal */}
+      {mobileFilterOpen && (
+        <div className="fixed inset-0 z-50 bg-navy/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom duration-300">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-indigo" />
+                <h3 className="font-extrabold text-sm text-navy">Filter Products</h3>
+              </div>
+              <button
+                onClick={() => setMobileFilterOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-navy rounded-full transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body (Scrollable) */}
+            <div className="p-4 overflow-y-auto space-y-5 text-xs flex-1">
+              {/* Category Filter */}
+              <div className="space-y-2">
+                <label className="font-bold text-slate-800 block">Category</label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    onClick={() => { setSelectedCategory(''); setSelectedSubcategory(''); }}
+                    className={`text-left p-2 rounded-xl border text-xs transition ${
+                      selectedCategory === ''
+                        ? 'bg-indigo-light text-indigo font-bold border-indigo'
+                        : 'border-slate-200 text-slate-600'
+                    }`}
+                  >
+                    All Categories
+                  </button>
+                  {CATEGORIES_CONFIG.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        setSelectedCategory(cat.id);
+                        setSelectedSubcategory('');
+                      }}
+                      className={`text-left p-2 rounded-xl border text-xs transition truncate ${
+                        selectedCategory === cat.id
+                          ? 'bg-indigo-light text-indigo font-bold border-indigo'
+                          : 'border-slate-200 text-slate-600'
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subcategories */}
+              {availableSubcategories.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <label className="font-bold text-slate-800 block">Subcategory</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {availableSubcategories.map((sub, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedSubcategory(selectedSubcategory === sub ? '' : sub)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-medium transition ${
+                          selectedSubcategory === sub
+                            ? 'bg-navy text-white font-bold'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {sub}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Price Filter */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex justify-between font-bold text-slate-800">
+                  <span>Max Price</span>
+                  <span className="text-indigo">₹{maxPrice.toLocaleString('en-IN')}</span>
+                </div>
+                <input
+                  type="range"
+                  min="200"
+                  max="3000"
+                  step="50"
+                  value={maxPrice}
+                  onChange={e => setMaxPrice(Number(e.target.value))}
+                  className="w-full accent-indigo cursor-pointer h-2 bg-slate-200 rounded-lg"
+                />
+              </div>
+
+              {/* Fast Filters (Checkboxes) */}
+              <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={inStockOnly}
+                    onChange={e => setInStockOnly(e.target.checked)}
+                    className="w-4 h-4 rounded text-indigo focus:ring-indigo/20 accent-indigo"
+                  />
+                  <span className="font-medium text-slate-800">In-Stock Only (Surat Mill Ready)</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={directMillOnly}
+                    onChange={e => setDirectMillOnly(e.target.checked)}
+                    className="w-4 h-4 rounded text-indigo focus:ring-indigo/20 accent-indigo"
+                  />
+                  <span className="font-medium text-slate-800">Direct Mill Factory Runs Only</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center gap-3">
+              <button
+                onClick={clearAllFilters}
+                className="flex-1 py-2.5 px-4 bg-white border border-slate-300 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-100 transition text-center"
+              >
+                Reset All
+              </button>
+              <button
+                onClick={() => setMobileFilterOpen(false)}
+                className="flex-1 py-2.5 px-4 bg-indigo text-white rounded-xl font-bold text-xs hover:bg-indigo-dark transition text-center shadow-sm"
+              >
+                Apply ({filteredProducts.length} Items)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

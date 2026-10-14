@@ -49,6 +49,7 @@ export const Header: React.FC = () => {
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const mobileSearchContainerRef = useRef<HTMLDivElement>(null);
 
   // Automatically close any open search or menus on page navigation
   useEffect(() => {
@@ -60,7 +61,10 @@ export const Header: React.FC = () => {
   // Click outside and escape key dismiss
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const insideDesktop = searchContainerRef.current?.contains(target);
+      const insideMobile = mobileSearchContainerRef.current?.contains(target);
+      if (!insideDesktop && !insideMobile) {
         setSearchOpen(false);
       }
     };
@@ -255,74 +259,242 @@ export const Header: React.FC = () => {
       </div>
 
       {/* 2. Main Flipkart / Amazon Style Header Bar */}
-      <div className="glass-header border-b border-slate-200/80 px-4 sm:px-6 py-3 relative z-30">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 sm:gap-6">
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 text-slate-700 hover:text-navy hover:bg-slate-100 rounded-lg transition"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
+      <div className="glass-header border-b border-slate-200/80 px-3 sm:px-6 py-2.5 sm:py-3 relative z-30 w-full">
+        <div className="max-w-7xl mx-auto">
+          {/* Main Bar Row (Logo, Pincode, Search on desktop, Actions) */}
+          <div className="flex items-center justify-between gap-2 sm:gap-6">
+            {/* Logo & Hamburger Menu */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="md:hidden p-1.5 text-slate-700 hover:text-navy hover:bg-slate-100 rounded-lg transition"
+                aria-label="Open mobile menu"
+              >
+                <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
 
-            <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 rounded-2xl bg-navy flex items-center justify-center text-champagne font-black text-xl shadow-subtle group-hover:scale-105 transition-transform border border-navy-800">
-                M
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1">
-                  <span className="font-black text-xl tracking-tight text-navy leading-none">
-                    MAHALAXMI
-                  </span>
-                  <span className="text-[9px] bg-indigo text-white font-extrabold px-1.5 py-0.2 rounded uppercase">
-                    MILLS
+              <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-navy flex items-center justify-center text-champagne font-black text-base sm:text-xl shadow-subtle group-hover:scale-105 transition-transform border border-navy-800 shrink-0">
+                  M
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1">
+                    <span className="font-black text-base sm:text-xl tracking-tight text-navy leading-none">
+                      MAHALAXMI
+                    </span>
+                    <span className="text-[8px] sm:text-[9px] bg-indigo text-white font-extrabold px-1 sm:px-1.5 py-0.2 rounded uppercase">
+                      MILLS
+                    </span>
+                  </div>
+                  <span className="text-[8px] sm:text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mt-0.5">
+                    Direct Mill Rates
                   </span>
                 </div>
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mt-0.5">
-                  Direct Mill Rates
-                </span>
-              </div>
-            </Link>
-          </div>
+              </Link>
+            </div>
 
-          {/* Location Delivery Selector (Amazon-style) */}
-          <div className="hidden lg:flex items-center shrink-0">
-            <button
-              onClick={() => setPinModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs hover:bg-slate-100 transition border border-slate-200/60 text-left bg-white/70"
-            >
-              <MapPin className="w-4 h-4 text-indigo shrink-0" />
-              <div>
-                <p className="text-[10px] text-slate-400 uppercase font-semibold">Deliver to</p>
-                <p className="font-bold text-navy text-xs flex items-center gap-1">
-                  {deliveryInfo?.city || 'Surat'} {deliveryPincode}
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
-                </p>
-              </div>
-            </button>
-          </div>
+            {/* Desktop Location Delivery Selector (Amazon-style) */}
+            <div className="hidden lg:flex items-center shrink-0">
+              <button
+                onClick={() => setPinModalOpen(true)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs hover:bg-slate-100 transition border border-slate-200/60 text-left bg-white/70"
+              >
+                <MapPin className="w-4 h-4 text-indigo shrink-0" />
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Deliver to</p>
+                  <p className="font-bold text-navy text-xs flex items-center gap-1">
+                    {deliveryInfo?.city || 'Surat'} {deliveryPincode}
+                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                  </p>
+                </div>
+              </button>
+            </div>
 
-          {/* Amazon/Flipkart Mega Search Bar */}
-          <div className="flex-1 max-w-2xl relative z-40" ref={searchContainerRef}>
-            <form onSubmit={handleSearchSubmit} className="flex rounded-xl overflow-hidden shadow-subtle border border-slate-300 focus-within:border-indigo focus-within:ring-2 focus-within:ring-indigo/20 transition bg-white">
-              {/* Category Dropdown (Amazon style) */}
-              <div className="hidden sm:flex items-center bg-slate-100 border-r border-slate-300 px-2 text-xs text-slate-700 font-semibold cursor-pointer">
-                <select
-                  value={searchCategory}
-                  onChange={e => setSearchCategory(e.target.value)}
-                  className="bg-transparent border-none outline-none pr-1 cursor-pointer"
+            {/* Desktop-only Mega Search Bar (Hidden on mobile) */}
+            <div className="hidden md:block flex-1 max-w-2xl relative z-40" ref={searchContainerRef}>
+              <form onSubmit={handleSearchSubmit} className="flex rounded-xl overflow-hidden shadow-subtle border border-slate-300 focus-within:border-indigo focus-within:ring-2 focus-within:ring-indigo/20 transition bg-white">
+                <div className="hidden sm:flex items-center bg-slate-100 border-r border-slate-300 px-2 text-xs text-slate-700 font-semibold cursor-pointer">
+                  <select
+                    value={searchCategory}
+                    onChange={e => setSearchCategory(e.target.value)}
+                    className="bg-transparent border-none outline-none pr-1 cursor-pointer"
+                  >
+                    <option value="all">All Departments</option>
+                    <option value="textile">Textile</option>
+                    <option value="cotton-products">Cotton Products</option>
+                    <option value="home-kitchen">Home & Kitchen</option>
+                    <option value="household">Household</option>
+                  </select>
+                </div>
+
+                <div className="relative flex-1 flex items-center">
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={e => {
+                      setSearchInput(e.target.value);
+                      setSearchOpen(true);
+                    }}
+                    onFocus={() => setSearchOpen(true)}
+                    placeholder="Search 300 TC bedsheets, 600 GSM bath towels, microfiber wipers, canvas bags..."
+                    className="w-full text-navy text-xs sm:text-sm pl-4 pr-3 py-2.5 outline-none placeholder:text-slate-400"
+                  />
+                  {searchInput && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearchInput('');
+                        setSearchOpen(false);
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-navy mr-1 rounded-full transition"
+                      title="Clear search"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className="px-5 bg-indigo hover:bg-indigo-dark text-white text-xs font-bold transition flex items-center justify-center shrink-0"
                 >
-                  <option value="all">All Departments</option>
-                  <option value="textile">Textile</option>
-                  <option value="cotton-products">Cotton Products</option>
-                  <option value="home-kitchen">Home & Kitchen</option>
-                  <option value="household">Household</option>
-                </select>
-              </div>
+                  <Search className="w-4 h-4" />
+                  <span className="ml-1.5 hidden md:inline">Search</span>
+                </button>
+              </form>
 
-              {/* Text Input */}
-              <div className="relative flex-1 flex items-center">
+              {/* Desktop Autocomplete Dropdown */}
+              {searchOpen && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-float border border-slate-200/90 py-3.5 z-50 overflow-hidden animate-in fade-in ring-1 ring-black/5">
+                  {searchInput.trim() ? (
+                    <div>
+                      <div className="px-4 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        Matching Mill Products
+                      </div>
+                      {filteredSuggestions.length > 0 ? (
+                        filteredSuggestions.map(item => (
+                          <Link
+                            key={item.id}
+                            to={`/product/${item.slug}`}
+                            onClick={() => {
+                              setSearchOpen(false);
+                              addRecentSearch(item.name);
+                            }}
+                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition"
+                          >
+                            <img
+                              src={item.images[0]}
+                              alt={item.name}
+                              className="w-10 h-10 object-cover rounded-lg border border-slate-200"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-navy truncate">{item.name}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-xs font-black text-indigo">₹{item.retailPrice}</span>
+                                <span className="text-[11px] text-slate-400 line-through">₹{item.mrp}</span>
+                                <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 rounded font-bold">
+                                  {item.subcategory}
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="px-4 py-6 text-center text-xs text-slate-500">
+                          No direct matches found. Press Enter to view all results.
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="px-4 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                        Recent & Popular Searches
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 px-4">
+                        {recentSearches.map((term, i) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setSearchInput(term);
+                              addRecentSearch(term);
+                              setSearchOpen(false);
+                              navigate(`/catalog?q=${encodeURIComponent(term)}`);
+                            }}
+                            className="px-3 py-1 bg-slate-100 hover:bg-indigo-light hover:text-indigo text-slate-700 rounded-full text-xs transition"
+                          >
+                            {term}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Quick Action Buttons */}
+            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+              {/* Mobile PIN Code Quick Badge */}
+              <button
+                onClick={() => setPinModalOpen(true)}
+                className="lg:hidden flex items-center gap-1 px-2 py-1 text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+                title="Delivery Pincode"
+              >
+                <MapPin className="w-3 h-3 text-indigo shrink-0" />
+                <span className="max-w-[65px] truncate">{deliveryInfo?.city || 'Surat'}</span>
+              </button>
+
+              {/* Wholesale RFQ Link */}
+              <Link
+                to="/wholesale"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-indigo-light text-indigo hover:bg-indigo hover:text-white rounded-xl text-xs font-bold transition shadow-sm"
+              >
+                <Building2 className="w-4 h-4" />
+                <span>Bulk Order Pad</span>
+              </Link>
+
+              {/* Account Link */}
+              <Link
+                to="/account"
+                className="flex items-center gap-1.5 p-1 sm:p-1.5 hover:bg-slate-100 rounded-xl transition text-slate-700 hover:text-navy"
+                title="My Account"
+              >
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200 flex items-center justify-center text-navy font-bold text-xs">
+                  {currentUser.name.charAt(0)}
+                </div>
+                <div className="hidden xl:block text-left text-xs">
+                  <p className="text-[10px] text-slate-400 font-medium">Hello, {currentUser.name.split(' ')[0]}</p>
+                  <p className="font-bold text-navy">Orders & GST</p>
+                </div>
+              </Link>
+
+              {/* Cart Link */}
+              <Link
+                to="/cart"
+                className="flex items-center gap-2 bg-navy hover:bg-navy-800 text-white px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl transition shadow-premium group"
+                title="View Cart"
+              >
+                <div className="relative">
+                  <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-champagne" />
+                  {cartTotalItemsCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-error text-white font-black text-[9px] sm:text-[10px] w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center ring-2 ring-navy animate-pulse">
+                      {cartTotalItemsCount}
+                    </span>
+                  )}
+                </div>
+                <div className="hidden sm:block text-left text-xs">
+                  <p className="text-[10px] text-slate-300 font-semibold">Your Cart</p>
+                  <p className="font-black text-white">₹{cartSubtotal.toLocaleString('en-IN')}</p>
+                </div>
+              </Link>
+            </div>
+          </div>
+
+          {/* Row 2: Full-Width Search Bar for Mobile Screens (<md) */}
+          <div className="md:hidden mt-2 relative z-40 w-full" ref={mobileSearchContainerRef}>
+            <form onSubmit={handleSearchSubmit} className="flex rounded-xl overflow-hidden shadow-sm border border-slate-300 focus-within:border-indigo focus-within:ring-2 focus-within:ring-indigo/20 transition bg-white w-full">
+              <div className="relative flex-1 flex items-center min-w-0">
+                <Search className="w-4 h-4 text-slate-400 ml-3 shrink-0" />
                 <input
                   type="text"
                   value={searchInput}
@@ -331,8 +503,8 @@ export const Header: React.FC = () => {
                     setSearchOpen(true);
                   }}
                   onFocus={() => setSearchOpen(true)}
-                  placeholder="Search 300 TC bedsheets, 600 GSM bath towels, microfiber wipers, canvas bags..."
-                  className="w-full text-navy text-xs sm:text-sm pl-4 pr-3 py-2.5 outline-none placeholder:text-slate-400"
+                  placeholder="Search bedsheets, towels, curtains, totes..."
+                  className="w-full text-navy text-xs pl-2.5 pr-2 py-2 outline-none placeholder:text-slate-400 min-w-0"
                 />
                 {searchInput && (
                   <button
@@ -341,7 +513,7 @@ export const Header: React.FC = () => {
                       setSearchInput('');
                       setSearchOpen(false);
                     }}
-                    className="p-1.5 text-slate-400 hover:text-navy mr-1 rounded-full transition"
+                    className="p-1 text-slate-400 hover:text-navy mr-1 rounded-full transition"
                     title="Clear search"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -349,22 +521,20 @@ export const Header: React.FC = () => {
                 )}
               </div>
 
-              {/* Search Submit Button */}
               <button
                 type="submit"
-                className="px-5 bg-indigo hover:bg-indigo-dark text-white text-xs font-bold transition flex items-center justify-center shrink-0"
+                className="px-4 bg-indigo hover:bg-indigo-dark text-white text-xs font-bold transition flex items-center justify-center shrink-0"
               >
-                <Search className="w-4 h-4" />
-                <span className="ml-1.5 hidden md:inline">Search</span>
+                <span>Search</span>
               </button>
             </form>
 
-            {/* Autocomplete Dropdown - 100% Solid background & High Z-Index */}
+            {/* Mobile Autocomplete Dropdown */}
             {searchOpen && (
-              <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-float border border-slate-200/90 py-3.5 z-50 overflow-hidden animate-in fade-in ring-1 ring-black/5">
+              <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl shadow-float border border-slate-200/90 py-3 z-50 overflow-hidden animate-in fade-in ring-1 ring-black/5 w-full">
                 {searchInput.trim() ? (
                   <div>
-                    <div className="px-4 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <div className="px-3.5 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                       Matching Mill Products
                     </div>
                     {filteredSuggestions.length > 0 ? (
@@ -376,37 +546,34 @@ export const Header: React.FC = () => {
                             setSearchOpen(false);
                             addRecentSearch(item.name);
                           }}
-                          className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 transition"
+                          className="flex items-center gap-3 px-3.5 py-2 hover:bg-slate-50 transition border-b border-slate-50 last:border-0"
                         >
                           <img
                             src={item.images[0]}
                             alt={item.name}
-                            className="w-10 h-10 object-cover rounded-lg border border-slate-200"
+                            className="w-9 h-9 object-cover rounded-lg border border-slate-200 shrink-0"
                           />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-bold text-navy truncate">{item.name}</p>
                             <div className="flex items-center gap-2 mt-0.5">
                               <span className="text-xs font-black text-indigo">₹{item.retailPrice}</span>
-                              <span className="text-[11px] text-slate-400 line-through">₹{item.mrp}</span>
-                              <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 rounded font-bold">
-                                {item.subcategory}
-                              </span>
+                              <span className="text-[10px] text-slate-400 line-through">₹{item.mrp}</span>
                             </div>
                           </div>
                         </Link>
                       ))
                     ) : (
-                      <div className="px-4 py-6 text-center text-xs text-slate-500">
-                        No direct matches found. Press Enter to view all results.
+                      <div className="px-3 py-4 text-center text-xs text-slate-500">
+                        No matches. Tap Search to view all results.
                       </div>
                     )}
                   </div>
                 ) : (
                   <div>
-                    <div className="px-4 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    <div className="px-3.5 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
                       Recent & Popular Searches
                     </div>
-                    <div className="flex flex-wrap gap-1.5 px-4">
+                    <div className="flex flex-wrap gap-1 px-3">
                       {recentSearches.map((term, i) => (
                         <button
                           key={i}
@@ -416,7 +583,7 @@ export const Header: React.FC = () => {
                             setSearchOpen(false);
                             navigate(`/catalog?q=${encodeURIComponent(term)}`);
                           }}
-                          className="px-3 py-1 bg-slate-100 hover:bg-indigo-light hover:text-indigo text-slate-700 rounded-full text-xs transition"
+                          className="px-2.5 py-1 bg-slate-100 hover:bg-indigo-light hover:text-indigo text-slate-700 rounded-full text-xs transition"
                         >
                           {term}
                         </button>
@@ -427,58 +594,13 @@ export const Header: React.FC = () => {
               </div>
             )}
           </div>
-
-          {/* Quick Action Buttons */}
-          <div className="flex items-center gap-3 shrink-0">
-            {/* Wholesale RFQ Link */}
-            <Link
-              to="/wholesale"
-              className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 bg-indigo-light text-indigo hover:bg-indigo hover:text-white rounded-xl text-xs font-bold transition shadow-sm"
-            >
-              <Building2 className="w-4 h-4" />
-              <span>Bulk Order Pad</span>
-            </Link>
-
-            {/* Account Link */}
-            <Link
-              to="/account"
-              className="flex items-center gap-2 p-1.5 hover:bg-slate-100 rounded-xl transition text-slate-700 hover:text-navy"
-            >
-              <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-navy font-bold text-xs">
-                {currentUser.name.charAt(0)}
-              </div>
-              <div className="hidden xl:block text-left text-xs">
-                <p className="text-[10px] text-slate-400 font-medium">Hello, {currentUser.name.split(' ')[0]}</p>
-                <p className="font-bold text-navy">Orders & GST</p>
-              </div>
-            </Link>
-
-            {/* Cart Link */}
-            <Link
-              to="/cart"
-              className="flex items-center gap-2.5 bg-navy hover:bg-navy-800 text-white px-4 py-2.5 rounded-xl transition shadow-premium group"
-            >
-              <div className="relative">
-                <ShoppingCart className="w-5 h-5 text-champagne" />
-                {cartTotalItemsCount > 0 && (
-                  <span className="absolute -top-2.5 -right-2.5 bg-error text-white font-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center ring-2 ring-navy animate-pulse">
-                    {cartTotalItemsCount}
-                  </span>
-                )}
-              </div>
-              <div className="hidden sm:block text-left text-xs">
-                <p className="text-[10px] text-slate-300 font-semibold">Your Cart</p>
-                <p className="font-black text-white">₹{cartSubtotal.toLocaleString('en-IN')}</p>
-              </div>
-            </Link>
-          </div>
         </div>
       </div>
 
       {/* 3. Flipkart / Meesho Style Visual Category Circles Rail */}
       {!['/cart', '/checkout'].includes(location.pathname) && (
-        <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 overflow-x-auto hide-scrollbar relative z-10">
-          <div className="max-w-7xl mx-auto flex items-center gap-6 sm:gap-8 min-w-max">
+        <div className="bg-white border-b border-slate-200 py-2 sm:py-2.5 overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x">
+          <div className="flex items-center gap-4 sm:gap-8 px-4 w-max min-w-full justify-start sm:justify-center">
             {categoryBubbles.map((cat, i) => (
               <Link
                 key={i}
