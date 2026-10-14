@@ -59,21 +59,21 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
         </div>
 
         {/* Printable Document Area */}
-        <div className="p-4 sm:p-8 overflow-y-auto bg-white text-navy print-only-container">
+        <div className="p-3 sm:p-8 overflow-y-auto bg-white text-navy print-only-container">
           {/* Header */}
-          <div className="border-b-2 border-navy pb-6 mb-6">
-            <div className="flex justify-between items-start">
+          <div className="border-b-2 border-navy pb-4 sm:pb-6 mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-black tracking-tight text-navy">
+                  <span className="text-xl sm:text-2xl font-black tracking-tight text-navy">
                     MAHALAXMI<span className="text-indigo">.</span>
                   </span>
-                  <span className="text-xs font-bold uppercase tracking-widest bg-navy text-champagne px-2 py-0.5 rounded">
+                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest bg-navy text-champagne px-2 py-0.5 rounded">
                     ENTERPRISES
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-1 font-medium">Direct Mill Rates & Wholesale Essentials</p>
-                <div className="text-xs text-slate-600 mt-2 space-y-0.5">
+                <div className="text-[11px] sm:text-xs text-slate-600 mt-2 space-y-0.5">
                   <p>Plot No. 42-45, Ring Road Textile Park Phase II</p>
                   <p>Surat, Gujarat - 395002, India</p>
                   <p><span className="font-semibold text-slate-800">GSTIN:</span> 24AAECM8921P1ZA | <span className="font-semibold text-slate-800">PAN:</span> AAECM8921P</p>
@@ -81,45 +81,45 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 </div>
               </div>
 
-              <div className="text-right">
-                <span className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 bg-ivory text-navy border border-slate-300 rounded mb-2">
+              <div className="text-left sm:text-right w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-200">
+                <span className="inline-block text-[10px] sm:text-xs font-bold uppercase tracking-widest px-2.5 py-1 bg-ivory text-navy border border-slate-300 rounded mb-1.5 sm:mb-2">
                   {type === 'INVOICE' ? 'TAX INVOICE' : 'PACKING SLIP / DISPATCH NOTE'}
                 </span>
-                <p className="text-sm font-bold text-navy">Invoice No: {order.orderNumber.replace('ORD', 'INV')}</p>
-                <p className="text-xs text-slate-500 mt-0.5">Invoice Date: {new Date(order.createdAt).toLocaleDateString('en-IN')}</p>
-                <p className="text-xs text-slate-500">Order ID: {order.orderNumber}</p>
-                <p className="text-xs text-slate-500">Payment: {order.paymentMethod} ({order.paymentStatus})</p>
+                <p className="text-xs sm:text-sm font-bold text-navy">Invoice No: {order.orderNumber.replace('ORD', 'INV')}</p>
+                <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Invoice Date: {new Date(order.createdAt).toLocaleDateString('en-IN')}</p>
+                <p className="text-[11px] sm:text-xs text-slate-500">Order ID: {order.orderNumber}</p>
+                <p className="text-[11px] sm:text-xs text-slate-500">Payment: {order.paymentMethod} ({order.paymentStatus})</p>
                 {order.trackingNumber && (
-                  <p className="text-xs text-indigo font-semibold mt-1">Waybill: {order.trackingNumber} ({order.courierName})</p>
+                  <p className="text-[11px] sm:text-xs text-indigo font-semibold mt-1">Waybill: {order.trackingNumber} ({order.courierName})</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Bill To & Ship To Grid */}
-          <div className="grid grid-cols-2 gap-8 mb-6 pb-6 border-b border-slate-200 text-xs">
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-8 mb-4 sm:mb-6 pb-4 sm:pb-6 border-b border-slate-200 text-xs">
+            <div className="bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200">
               <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] mb-2 text-indigo">
                 Billed To ({isB2B ? 'Registered Business' : 'Consumer Buyer'}):
               </h4>
-              <p className="font-semibold text-slate-900 text-sm">{order.customer.companyName || order.customer.name}</p>
+              <p className="font-semibold text-slate-900 text-xs sm:text-sm">{order.customer.companyName || order.customer.name}</p>
               {order.customer.companyName && <p className="text-slate-600">Attn: {order.customer.name}</p>}
               <p className="text-slate-700 mt-1">{order.billingAddress.street}</p>
               {order.billingAddress.landmark && <p className="text-slate-600">Landmark: {order.billingAddress.landmark}</p>}
               <p className="text-slate-700">{order.billingAddress.city}, {order.billingAddress.state} - {order.billingAddress.pincode}</p>
               <p className="text-slate-700">Phone: {order.customer.phone} | Email: {order.customer.email}</p>
               {order.customer.gstNumber && (
-                <p className="font-bold text-navy mt-1.5 bg-indigo-light/50 p-1 rounded inline-block">
+                <p className="font-bold text-navy mt-1.5 bg-indigo-light/50 p-1 rounded inline-block text-[11px]">
                   Buyer GSTIN: {order.customer.gstNumber}
                 </p>
               )}
             </div>
 
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <div className="bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200">
               <h4 className="font-bold text-slate-900 uppercase tracking-wider text-[11px] mb-2 text-slate-700">
                 Shipped To (Delivery Destination):
               </h4>
-              <p className="font-semibold text-slate-900 text-sm">{order.shippingAddress.fullName}</p>
+              <p className="font-semibold text-slate-900 text-xs sm:text-sm">{order.shippingAddress.fullName}</p>
               {order.shippingAddress.companyName && <p className="text-slate-600">{order.shippingAddress.companyName}</p>}
               <p className="text-slate-700 mt-1">{order.shippingAddress.street}</p>
               <p className="text-slate-700">{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}</p>
@@ -129,34 +129,34 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           </div>
 
           {/* Line Items Table */}
-          <div className="overflow-x-auto mb-6">
-            <table className="w-full text-left text-xs border border-slate-200">
+          <div className="overflow-x-auto mb-4 sm:mb-6 border border-slate-200 rounded-lg">
+            <table className="w-full text-left text-xs min-w-[540px]">
               <thead className="bg-slate-100 text-slate-700 border-b border-slate-300">
                 <tr>
-                  <th className="py-2.5 px-3 font-semibold text-center w-8">#</th>
-                  <th className="py-2.5 px-3 font-semibold">Item & Specification</th>
-                  <th className="py-2.5 px-2 font-semibold text-center">HSN</th>
-                  <th className="py-2.5 px-2 font-semibold text-center">Qty</th>
-                  <th className="py-2.5 px-3 font-semibold text-right">Unit Rate (₹)</th>
-                  <th className="py-2.5 px-2 font-semibold text-center">GST %</th>
-                  <th className="py-2.5 px-3 font-semibold text-right">Taxable Amt (₹)</th>
+                  <th className="py-2 px-2.5 font-semibold text-center w-8">#</th>
+                  <th className="py-2 px-2.5 font-semibold">Item & Specification</th>
+                  <th className="py-2 px-2 font-semibold text-center">HSN</th>
+                  <th className="py-2 px-2 font-semibold text-center">Qty</th>
+                  <th className="py-2 px-2.5 font-semibold text-right">Unit Rate (₹)</th>
+                  <th className="py-2 px-2 font-semibold text-center">GST %</th>
+                  <th className="py-2 px-2.5 font-semibold text-right">Taxable Amt (₹)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
                 {order.items.map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/50">
-                    <td className="py-2.5 px-3 text-center text-slate-500">{idx + 1}</td>
-                    <td className="py-2.5 px-3">
+                    <td className="py-2 px-2.5 text-center text-slate-500">{idx + 1}</td>
+                    <td className="py-2 px-2.5">
                       <p className="font-semibold text-slate-900">{item.productName}</p>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[10px] text-slate-500">
                         SKU: {item.sku} {item.variantDescription ? `| ${item.variantDescription}` : ''}
                       </p>
                     </td>
-                    <td className="py-2.5 px-2 text-center text-slate-600 font-mono">{item.hsnCode}</td>
-                    <td className="py-2.5 px-2 text-center font-bold text-slate-900">{item.quantity}</td>
-                    <td className="py-2.5 px-3 text-right text-slate-800">₹{item.unitPrice.toLocaleString('en-IN')}</td>
-                    <td className="py-2.5 px-2 text-center text-slate-600">{item.gstRate}%</td>
-                    <td className="py-2.5 px-3 text-right font-medium text-slate-900">
+                    <td className="py-2 px-2 text-center text-slate-600 font-mono text-[11px]">{item.hsnCode}</td>
+                    <td className="py-2 px-2 text-center font-bold text-slate-900">{item.quantity}</td>
+                    <td className="py-2 px-2.5 text-right text-slate-800">₹{item.unitPrice.toLocaleString('en-IN')}</td>
+                    <td className="py-2 px-2 text-center text-slate-600">{item.gstRate}%</td>
+                    <td className="py-2 px-2.5 text-right font-medium text-slate-900">
                       ₹{item.totalPrice.toLocaleString('en-IN')}
                     </td>
                   </tr>
@@ -166,7 +166,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           </div>
 
           {/* Calculation & Tax Summary */}
-          <div className="grid grid-cols-2 gap-8 items-start mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8 items-start mb-4 sm:mb-6">
             <div className="text-xs text-slate-600 space-y-2">
               <div className="p-3 bg-slate-50 rounded border border-slate-200">
                 <p className="font-bold text-slate-800 mb-1">GST Tax Summary:</p>
@@ -182,14 +182,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 <p className="font-semibold text-slate-900 mt-1">Total Tax Levy: ₹{order.taxBreakdown.totalTax.toLocaleString('en-IN')}</p>
               </div>
 
-              <div className="text-[11px] text-slate-500 space-y-1">
+              <div className="text-[10px] sm:text-[11px] text-slate-500 space-y-1">
                 <p>1. Goods sold under direct mill rate contract are subject to standard Surat jurisdiction.</p>
                 <p>2. E-Way bill reference generated under GSTIN 24AAECM8921P1ZA.</p>
                 <p>3. This is a computer generated tax invoice in compliance with CGST Rule 46.</p>
               </div>
             </div>
 
-            <div className="bg-slate-50 p-4 rounded border border-slate-200 text-xs space-y-2">
+            <div className="bg-slate-50 p-3 sm:p-4 rounded border border-slate-200 text-xs space-y-2">
               <div className="flex justify-between text-slate-700">
                 <span>Taxable Value (Subtotal):</span>
                 <span className="font-semibold text-slate-900">₹{order.subtotal.toLocaleString('en-IN')}</span>
@@ -210,22 +210,22 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                   {order.shippingCharge === 0 ? 'FREE (Mill Dispatch)' : `₹${order.shippingCharge}`}
                 </span>
               </div>
-              <div className="border-t border-slate-300 pt-2 flex justify-between text-sm font-bold text-navy">
+              <div className="border-t border-slate-300 pt-2 flex justify-between text-xs sm:text-sm font-bold text-navy">
                 <span>Total Invoice Value (INR):</span>
-                <span className="text-base text-indigo font-black">₹{order.totalAmount.toLocaleString('en-IN')}</span>
+                <span className="text-sm sm:text-base text-indigo font-black">₹{order.totalAmount.toLocaleString('en-IN')}</span>
               </div>
             </div>
           </div>
 
           {/* Footer Signature */}
-          <div className="flex justify-between items-end pt-4 border-t border-slate-200 text-xs">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 pt-3 sm:pt-4 border-t border-slate-200 text-xs">
             <div>
-              <p className="text-slate-500">Authorized Digital Verification Code: <span className="font-mono text-slate-800">MLE-{order.id.slice(-6).toUpperCase()}</span></p>
+              <p className="text-slate-500 text-[11px]">Authorized Digital Verification Code: <span className="font-mono text-slate-800">MLE-{order.id.slice(-6).toUpperCase()}</span></p>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right w-full sm:w-auto">
               <p className="font-bold text-slate-800">For Mahalaxmi Enterprises</p>
-              <div className="h-10"></div>
-              <p className="text-[11px] text-slate-500 border-t border-slate-400 pt-1">Authorized Mill Signatory / Dispatch Officer</p>
+              <div className="h-6 sm:h-10"></div>
+              <p className="text-[10px] sm:text-[11px] text-slate-500 border-t border-slate-400 pt-1">Authorized Mill Signatory / Dispatch Officer</p>
             </div>
           </div>
         </div>

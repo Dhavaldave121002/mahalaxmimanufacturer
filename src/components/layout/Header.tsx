@@ -53,25 +53,8 @@ export const Header: React.FC = () => {
   const [pinInput, setPinInput] = useState(deliveryPincode);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const mobileSearchContainerRef = useRef<HTMLDivElement>(null);
-
-  // Detect scroll offset: collapse top announcement & category rails when scrolled
-  useEffect(() => {
-    const handleScroll = () => {
-      const offset = window.scrollY;
-      if (offset > 40) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Automatically close any open search or menus on page navigation
   useEffect(() => {
@@ -196,11 +179,9 @@ export const Header: React.FC = () => {
   ];
 
   return (
-    <header className={`sticky top-0 z-40 w-full transition-all duration-300 ${isScrolled ? 'shadow-md' : 'shadow-subtle'}`}>
-      {/* 1. Top Offer Announcement & Persona Switcher Bar (Collapses on Scroll) */}
-      <div className={`bg-navy text-white text-xs transition-all duration-300 overflow-hidden ${
-        isScrolled ? 'max-h-0 py-0 opacity-0 pointer-events-none' : 'max-h-16 py-1.5 px-4 sm:px-6 opacity-100'
-      }`}>
+    <>
+      {/* 1. Top Offer Announcement & Persona Switcher Bar (Normal flow, at very top) */}
+      <div className="bg-navy text-white text-xs py-1.5 px-4 sm:px-6 w-full border-b border-navy-800">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-3">
             <span className="bg-champagne/20 text-champagne px-2.5 py-0.5 rounded font-black text-[10px] tracking-wider uppercase border border-champagne/30 flex items-center gap-1">
@@ -294,10 +275,8 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Main Flipkart / Amazon Style Header Bar (ALWAYS PINNED) */}
-      <div className={`glass-header border-b border-slate-200/80 px-3 sm:px-6 relative z-30 w-full transition-all duration-300 ${
-        isScrolled ? 'py-2 shadow-sm' : 'py-2.5 sm:py-3 shadow-none'
-      }`}>
+      {/* 2. Main Flipkart / Amazon Style Header Bar (ALWAYS PINNED TO TOP 0) */}
+      <header className="sticky top-0 z-40 w-full bg-white/98 backdrop-blur-md border-b border-slate-200/90 shadow-sm py-2 sm:py-2.5 px-3 sm:px-6">
         <div className="max-w-7xl mx-auto">
           {/* Main Bar Row (Logo, Pincode, Search on desktop, Actions) */}
           <div className="flex items-center justify-between gap-2 sm:gap-6">
@@ -633,15 +612,11 @@ export const Header: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* 3. Flipkart / Meesho Style Visual Category Circles Rail (Collapses on Scroll) */}
+      {/* 3. Flipkart / Meesho Style Visual Category Circles Rail (Scrolls away under Bar 2) */}
       {!['/cart', '/checkout'].includes(location.pathname) && (
-        <div className={`bg-white border-b border-slate-200 overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x transition-all duration-300 ${
-          isScrolled
-            ? 'max-h-0 py-0 opacity-0 overflow-hidden pointer-events-none border-none'
-            : 'max-h-28 py-2 sm:py-2.5 opacity-100'
-        }`}>
+        <nav className="bg-white border-b border-slate-200 overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x py-2 sm:py-2.5">
           <div className="flex items-center gap-4 sm:gap-8 px-4 w-max min-w-full justify-start sm:justify-center">
             {categoryBubbles.map((cat, i) => (
               <Link
@@ -665,7 +640,7 @@ export const Header: React.FC = () => {
               </Link>
             ))}
           </div>
-        </div>
+        </nav>
       )}
 
       {/* PIN Code Modal */}
@@ -968,6 +943,6 @@ export const Header: React.FC = () => {
         </div>,
         document.body
       )}
-    </header>
+    </>
   );
 };
