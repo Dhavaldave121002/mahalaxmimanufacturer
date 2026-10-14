@@ -107,6 +107,19 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
             <Zap className="w-3.5 h-3.5" />
             <span>Buy Now (₹{total.toLocaleString('en-IN')})</span>
           </button>
+
+          {/* 1-Click WhatsApp Quick Order */}
+          <a
+            href={`https://wa.me/919876543210?text=${encodeURIComponent(
+              `Hello Mahalaxmi Enterprises, I want to order ${quantity} units of "${product.name}" (SKU: ${product.sku}) at ₹${currentUnitPrice}/pc. Total: ₹${total}. Please confirm stock.`
+            )}`}
+            target="_blank"
+            rel="noreferrer"
+            className="hidden sm:flex py-2 sm:py-2.5 px-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition items-center gap-1.5 shadow-sm"
+            title="Order via WhatsApp"
+          >
+            <span>💬 WhatsApp</span>
+          </a>
         </div>
       </div>
     </div>

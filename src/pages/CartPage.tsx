@@ -463,6 +463,20 @@ export const CartPage: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
 
+            {/* 1-Click WhatsApp Quick Order */}
+            <a
+              href={`https://wa.me/919876543210?text=${encodeURIComponent(
+                `Hello Mahalaxmi Enterprises, I want to order my cart items:\n` +
+                cart.map(i => `- ${i.quantity}x ${i.product.name} (₹${i.unitPrice}/pc)`).join('\n') +
+                `\n\nTotal Amount: ₹${cartTotal}\nPlease confirm order and share payment link / bank RTGS details.`
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm text-center"
+            >
+              <span>💬 Confirm & Order Cart via WhatsApp</span>
+            </a>
+
             {/* Payment & Security Trust Badges Strip */}
             <div className="pt-3 border-t border-slate-100 space-y-2.5">
               <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">

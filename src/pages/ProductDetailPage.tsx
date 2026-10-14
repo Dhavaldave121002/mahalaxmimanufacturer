@@ -486,6 +486,42 @@ export const ProductDetailPage: React.FC = () => {
                 <span>Need 500+ Units? RFQ</span>
               </Link>
             </div>
+
+            {/* Direct WhatsApp Instant Buy Button */}
+            <a
+              href={`https://wa.me/919876543210?text=${encodeURIComponent(
+                `Hello Mahalaxmi Enterprises, I want to order ${quantity} units of "${product.name}" (SKU: ${product.sku}, ${selectedVariant?.name || 'Default'}) at ₹${currentUnitPrice}/pc. Total Value: ₹${currentLineTotal}. Please confirm stock & dispatch.`
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm"
+            >
+              <span>💬 Instant Order on WhatsApp (Direct Loom Desk)</span>
+            </a>
+
+            {/* High-Conversion Trust Signals Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs pt-1">
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col items-center justify-center">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 mb-1" />
+                <span className="font-bold text-navy text-[11px]">7-Day Return</span>
+                <span className="text-[10px] text-slate-500">Free Replacement</span>
+              </div>
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col items-center justify-center">
+                <Truck className="w-4 h-4 text-indigo mb-1" />
+                <span className="font-bold text-navy text-[11px]">24h Dispatch</span>
+                <span className="text-[10px] text-slate-500">Surat Loom Gate</span>
+              </div>
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col items-center justify-center">
+                <Zap className="w-4 h-4 text-amber-500 mb-1" />
+                <span className="font-bold text-navy text-[11px]">COD Available</span>
+                <span className="text-[10px] text-slate-500">Pay on Inspection</span>
+              </div>
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col items-center justify-center">
+                <Building2 className="w-4 h-4 text-indigo mb-1" />
+                <span className="font-bold text-navy text-[11px]">GST E-Invoice</span>
+                <span className="text-[10px] text-slate-500">100% ITC Credit</span>
+              </div>
+            </div>
           </div>
 
           {/* Delivery PIN Code Checker */}

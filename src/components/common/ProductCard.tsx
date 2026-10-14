@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../../types';
 import { useApp } from '../../context/AppContext';
-import { ShoppingCart, Star, Check, Zap, ArrowUpRight, ShieldCheck, Flame } from 'lucide-react';
+import { ShoppingCart, Star, Check, Zap, ArrowUpRight, ShieldCheck, Flame, MessageCircle } from 'lucide-react';
 import { Badge } from './Badge';
 
 interface ProductCardProps {
@@ -116,8 +116,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
           )}
 
-          {/* Add to Cart button */}
-          <div className="mt-3 flex items-center gap-2">
+          {/* Trust Tags */}
+          <div className="mt-2 flex items-center justify-between text-[10px] text-slate-500 font-medium">
+            <span>✓ COD Available</span>
+            <span>•</span>
+            <span>✓ 7-Day Return</span>
+            <span>•</span>
+            <span>✓ 24h Dispatch</span>
+          </div>
+
+          {/* Add to Cart & WhatsApp Quick Order Buttons */}
+          <div className="mt-2.5 flex items-center gap-1.5">
             <button
               onClick={handleQuickAdd}
               className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm ${
@@ -139,9 +148,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               )}
             </button>
 
+            {/* 1-Click WhatsApp Direct Quick Buy */}
+            <a
+              href={`https://wa.me/919876543210?text=${encodeURIComponent(
+                `Hello Mahalaxmi Enterprises, I want to order "${product.name}" (SKU: ${product.sku}) at ₹${product.retailPrice}. Please confirm stock & dispatch.`
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="p-2.5 bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white rounded-xl transition border border-emerald-200 shrink-0"
+              title="Quick Order via WhatsApp"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </a>
+
             <Link
               to={`/product/${product.slug}`}
-              className="p-2 border border-slate-200 hover:border-indigo hover:text-indigo rounded-xl text-slate-600 transition"
+              className="p-2.5 border border-slate-200 hover:border-indigo hover:text-indigo rounded-xl text-slate-600 transition shrink-0"
               title="View full specifications & wholesale tiers"
             >
               <ArrowUpRight className="w-4 h-4" />

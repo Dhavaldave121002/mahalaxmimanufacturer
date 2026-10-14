@@ -76,6 +76,43 @@ export const CheckoutPage: React.FC = () => {
     addressType: 'COMMERCIAL' as const
   };
 
+  const handlePincodeChange = (pin: string) => {
+    const cleanPin = pin.replace(/\D/g, '').slice(0, 6);
+    let autoCity = newAddress.city;
+    let autoState = newAddress.state;
+
+    if (cleanPin.startsWith('38') || cleanPin.startsWith('39') || cleanPin.startsWith('36')) {
+      autoState = 'Gujarat';
+      if (cleanPin.startsWith('380')) autoCity = 'Ahmedabad';
+      else if (cleanPin.startsWith('395')) autoCity = 'Surat';
+      else if (cleanPin.startsWith('390')) autoCity = 'Vadodara';
+      else if (cleanPin.startsWith('360')) autoCity = 'Rajkot';
+    } else if (cleanPin.startsWith('40') || cleanPin.startsWith('41')) {
+      autoState = 'Maharashtra';
+      if (cleanPin.startsWith('400')) autoCity = 'Mumbai';
+      else if (cleanPin.startsWith('411')) autoCity = 'Pune';
+    } else if (cleanPin.startsWith('11')) {
+      autoState = 'Delhi';
+      autoCity = 'New Delhi';
+    } else if (cleanPin.startsWith('56')) {
+      autoState = 'Karnataka';
+      autoCity = 'Bangalore';
+    } else if (cleanPin.startsWith('60')) {
+      autoState = 'Tamil Nadu';
+      autoCity = 'Chennai';
+    } else if (cleanPin.startsWith('30')) {
+      autoState = 'Rajasthan';
+      autoCity = 'Jaipur';
+    }
+
+    setNewAddress(prev => ({
+      ...prev,
+      pincode: cleanPin,
+      city: autoCity,
+      state: autoState
+    }));
+  };
+
   const handleAddNewAddress = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAddress.street || !newAddress.pincode) return;
@@ -293,6 +330,15 @@ export const CheckoutPage: React.FC = () => {
                   />
                   <input
                     type="text"
+                    maxLength={6}
+                    required
+                    placeholder="6-digit PIN (Auto-fills city)"
+                    value={newAddress.pincode}
+                    onChange={e => handlePincodeChange(e.target.value)}
+                    className="p-2 border border-slate-300 rounded-lg outline-none font-mono font-bold text-navy"
+                  />
+                  <input
+                    type="text"
                     required
                     placeholder="City / District"
                     value={newAddress.city}
@@ -301,12 +347,11 @@ export const CheckoutPage: React.FC = () => {
                   />
                   <input
                     type="text"
-                    maxLength={6}
                     required
-                    placeholder="6-digit PIN code"
-                    value={newAddress.pincode}
-                    onChange={e => setNewAddress({ ...newAddress, pincode: e.target.value })}
-                    className="p-2 border border-slate-300 rounded-lg outline-none font-mono"
+                    placeholder="State"
+                    value={newAddress.state}
+                    onChange={e => setNewAddress({ ...newAddress, state: e.target.value })}
+                    className="p-2 border border-slate-300 rounded-lg outline-none"
                   />
                 </div>
                 <button
@@ -545,9 +590,34 @@ export const CheckoutPage: React.FC = () => {
               )}
             </button>
 
-            <p className="text-[10px] text-slate-400 text-center leading-tight">
-              By confirming, you agree to Mahalaxmi Enterprises Direct Mill Terms of Commercial Supply.
-            </p>
+            {/* 1-Click WhatsApp Checkout Fallback */}
+            <a
+              href={`https://wa.me/919876543210?text=${encodeURIComponent(
+                `Hello Mahalaxmi Enterprises, I am ready to checkout my order:\n` +
+                `Name: ${activeAddress.fullName} (${activeAddress.phone})\n` +
+                `Delivery Address: ${activeAddress.street}, ${activeAddress.city}, ${activeAddress.state} - ${activeAddress.pincode}\n` +
+                (isB2B && gstNumber ? `Company: ${companyName} | GSTIN: ${gstNumber}\n` : '') +
+                `Total Amount: ₹${cartTotal} (Payment Mode: ${paymentMethod})\n\nPlease confirm dispatch from Surat Mill.`
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm text-center"
+            >
+              <span>💬 Confirm & Finalize via WhatsApp</span>
+            </a>
+
+            <div className="pt-2 border-t border-slate-100 flex flex-col gap-1.5 text-center">
+              <div className="flex items-center justify-center gap-3 text-[10px] font-bold text-slate-500">
+                <span>🔒 256-Bit SSL Encrypted</span>
+                <span>•</span>
+                <span>🛡️ SafeXpress / V-Trans Express</span>
+                <span>•</span>
+                <span>⚡ 24h Mill Gate Loading</span>
+              </div>
+              <p className="text-[10px] text-slate-400 leading-tight">
+                By confirming, you agree to Mahalaxmi Enterprises Direct Mill Terms of Commercial Supply.
+              </p>
+            </div>
           </div>
         </div>
       </form>
