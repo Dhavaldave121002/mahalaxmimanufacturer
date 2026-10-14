@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import {
   Search,
@@ -26,6 +26,7 @@ import { Badge } from '../common/Badge';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     currentUser,
     switchUserRole,
@@ -49,14 +50,36 @@ export const Header: React.FC = () => {
 
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
+  // Automatically close any open search or menus on page navigation
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    setSearchOpen(false);
+    setRoleMenuOpen(false);
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // Click outside and escape key dismiss
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
         setSearchOpen(false);
       }
     };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+        setRoleMenuOpen(false);
+      }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -232,7 +255,7 @@ export const Header: React.FC = () => {
       </div>
 
       {/* 2. Main Flipkart / Amazon Style Header Bar */}
-      <div className="glass-header border-b border-slate-200/80 px-4 sm:px-6 py-3">
+      <div className="glass-header border-b border-slate-200/80 px-4 sm:px-6 py-3 relative z-30">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 sm:gap-6">
           {/* Logo & Brand */}
           <div className="flex items-center gap-3 shrink-0">
@@ -281,7 +304,7 @@ export const Header: React.FC = () => {
           </div>
 
           {/* Amazon/Flipkart Mega Search Bar */}
-          <div className="flex-1 max-w-2xl relative" ref={searchContainerRef}>
+          <div className="flex-1 max-w-2xl relative z-40" ref={searchContainerRef}>
             <form onSubmit={handleSearchSubmit} className="flex rounded-xl overflow-hidden shadow-subtle border border-slate-300 focus-within:border-indigo focus-within:ring-2 focus-within:ring-indigo/20 transition bg-white">
               {/* Category Dropdown (Amazon style) */}
               <div className="hidden sm:flex items-center bg-slate-100 border-r border-slate-300 px-2 text-xs text-slate-700 font-semibold cursor-pointer">
@@ -299,7 +322,7 @@ export const Header: React.FC = () => {
               </div>
 
               {/* Text Input */}
-              <div className="relative flex-1">
+              <div className="relative flex-1 flex items-center">
                 <input
                   type="text"
                   value={searchInput}
@@ -311,6 +334,19 @@ export const Header: React.FC = () => {
                   placeholder="Search 300 TC bedsheets, 600 GSM bath towels, microfiber wipers, canvas bags..."
                   className="w-full text-navy text-xs sm:text-sm pl-4 pr-3 py-2.5 outline-none placeholder:text-slate-400"
                 />
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchInput('');
+                      setSearchOpen(false);
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-navy mr-1 rounded-full transition"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
               {/* Search Submit Button */}
@@ -323,9 +359,9 @@ export const Header: React.FC = () => {
               </button>
             </form>
 
-            {/* Autocomplete Dropdown */}
+            {/* Autocomplete Dropdown - 100% Solid background & High Z-Index */}
             {searchOpen && (
-              <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-premium border border-slate-200 py-3 z-50 overflow-hidden animate-in fade-in">
+              <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-float border border-slate-200/90 py-3.5 z-50 overflow-hidden animate-in fade-in ring-1 ring-black/5">
                 {searchInput.trim() ? (
                   <div>
                     <div className="px-4 py-1 text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -440,31 +476,33 @@ export const Header: React.FC = () => {
       </div>
 
       {/* 3. Flipkart / Meesho Style Visual Category Circles Rail */}
-      <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 overflow-x-auto hide-scrollbar">
-        <div className="max-w-7xl mx-auto flex items-center gap-6 sm:gap-8 min-w-max">
-          {categoryBubbles.map((cat, i) => (
-            <Link
-              key={i}
-              to={cat.path}
-              className="group flex flex-col items-center text-center gap-1.5 transition"
-            >
-              <div className="relative w-12 h-12 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-slate-200 to-indigo/40 group-hover:from-indigo group-hover:to-champagne transition">
-                <img
-                  src={cat.img}
-                  alt={cat.name}
-                  className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
-                />
-                {cat.isHot && (
-                  <span className="absolute top-0 right-0 w-3 h-3 bg-error rounded-full border-2 border-white"></span>
-                )}
-              </div>
-              <span className="text-[11px] font-bold text-slate-700 group-hover:text-indigo transition whitespace-nowrap">
-                {cat.name}
-              </span>
-            </Link>
-          ))}
+      {!['/cart', '/checkout'].includes(location.pathname) && (
+        <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 overflow-x-auto hide-scrollbar relative z-10">
+          <div className="max-w-7xl mx-auto flex items-center gap-6 sm:gap-8 min-w-max">
+            {categoryBubbles.map((cat, i) => (
+              <Link
+                key={i}
+                to={cat.path}
+                className="group flex flex-col items-center text-center gap-1.5 transition"
+              >
+                <div className="relative w-12 h-12 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-slate-200 to-indigo/40 group-hover:from-indigo group-hover:to-champagne transition">
+                  <img
+                    src={cat.img}
+                    alt={cat.name}
+                    className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
+                  />
+                  {cat.isHot && (
+                    <span className="absolute top-0 right-0 w-3 h-3 bg-error rounded-full border-2 border-white"></span>
+                  )}
+                </div>
+                <span className="text-[11px] font-bold text-slate-700 group-hover:text-indigo transition whitespace-nowrap">
+                  {cat.name}
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* PIN Code Modal */}
       {pinModalOpen && (
