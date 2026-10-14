@@ -232,7 +232,7 @@ export const HomePage: React.FC = () => {
             {/* Carousel Navigation Arrows */}
             <button
               onClick={() => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white flex items-center justify-center border border-white/20 transition z-20"
+              className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20"
               title="Previous slide"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -240,7 +240,7 @@ export const HomePage: React.FC = () => {
 
             <button
               onClick={() => setCurrentSlide(prev => (prev + 1) % heroSlides.length)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white flex items-center justify-center border border-white/20 transition z-20"
+              className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20"
               title="Next slide"
             >
               <ChevronRight className="w-5 h-5" />
@@ -797,7 +797,7 @@ export const HomePage: React.FC = () => {
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   High-durability 300 & 400 TC percale bedsheets, zero-twist 600 GSM bath sheets, and stain-resistant banquet table linen tested for 500+ commercial wash cycles in industrial laundry plants.
                 </p>
-                <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <p className="font-bold text-navy">Custom Embroidery</p>
                     <p className="text-slate-500 text-[11px] mt-0.5">Hotel crest weaving on towels and duvet corners</p>
@@ -818,7 +818,7 @@ export const HomePage: React.FC = () => {
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   Maximize store profit margins with direct mill rates on packaged bedsheets, curtains, and cotton towels. Fast 48-hour dispatch so you can maintain lean inventory without tying up capital.
                 </p>
-                <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <p className="font-bold text-navy">Display-Ready Packaging</p>
                     <p className="text-slate-500 text-[11px] mt-0.5">Attractive retail photo-card box packaging</p>
@@ -839,7 +839,7 @@ export const HomePage: React.FC = () => {
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   Source unbranded and white-label cotton goods with high-definition digital asset packs ready for your marketplace listings. High repeat purchase rates and low returns.
                 </p>
-                <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <p className="font-bold text-navy">High-Resolution Photos</p>
                     <p className="text-slate-500 text-[11px] mt-0.5">Free product photography & listing specs provided</p>
@@ -860,7 +860,7 @@ export const HomePage: React.FC = () => {
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   Heavy-duty chlorine-resistant patient linen, hospital draw sheets, color-coded 350 GSM microfiber sanitizing cloths, and industrial kitchen aprons.
                 </p>
-                <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <p className="font-bold text-navy">Thermal Autoclave Safe</p>
                     <p className="text-slate-500 text-[11px] mt-0.5">Withstands 90°C high-temperature sterilization</p>
@@ -881,7 +881,7 @@ export const HomePage: React.FC = () => {
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                   Why pay 2x to 3x retail showroom markups? Get luxury 300 TC pure cotton bedsheets and 600 GSM spa towels delivered to your doorstep at direct factory rates.
                 </p>
-                <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <p className="font-bold text-navy">Free Home Delivery</p>
                     <p className="text-slate-500 text-[11px] mt-0.5">Complimentary shipping on orders above ₹1,499</p>

@@ -207,7 +207,7 @@ export const AccountPage: React.FC = () => {
           </div>
 
           {/* Quick shortcuts */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Link
               to="/orders"
               className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo transition shadow-subtle text-xs space-y-1 block"

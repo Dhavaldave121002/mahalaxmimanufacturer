@@ -181,7 +181,7 @@ export const CheckoutPage: React.FC = () => {
               </Badge>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => setIsB2B(false)}

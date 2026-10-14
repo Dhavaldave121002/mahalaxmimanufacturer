@@ -833,7 +833,7 @@ export const WholesalePage: React.FC = () => {
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-emerald-200 text-[11px]">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-emerald-200 text-[11px]">
                           <div>
                             <span className="text-slate-500 block">Legal Entity Name:</span>
                             <span className="font-bold text-navy">{gstinVerifiedData.entityName}</span>
@@ -1237,7 +1237,7 @@ export const WholesalePage: React.FC = () => {
             </div>
 
             {/* Buyer Details */}
-            <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
               <div>
                 <span className="text-slate-400 block text-[10px] uppercase font-bold">Quotation Issued To:</span>
                 <p className="font-bold text-navy">{selectedQuoteForPrint.buyer.companyName}</p>
