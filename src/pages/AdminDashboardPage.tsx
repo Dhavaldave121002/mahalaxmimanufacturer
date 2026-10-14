@@ -278,7 +278,7 @@ export const AdminDashboardPage: React.FC = () => {
       </div>
 
       {/* Admin Tabs */}
-      <div className="flex border-b border-slate-200 overflow-x-auto gap-6 hide-scrollbar">
+      <div className="flex border-b border-slate-200 overflow-x-auto gap-4 sm:gap-6 hide-scrollbar touch-pan-x w-full max-w-full pb-1">
         <button
           onClick={() => setActiveTab('overview')}
           className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap flex items-center gap-2 ${

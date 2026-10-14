@@ -24,34 +24,34 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
   const isB2B = order.customer.isB2B && !!order.customer.gstNumber;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-navy/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-premium max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[110] overflow-y-auto bg-navy/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-premium max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         {/* Modal Top Control Bar - hidden during actual window.print() */}
-        <div className="no-print bg-navy text-white px-6 py-4 flex items-center justify-between border-b border-navy-800">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo/30 rounded-lg">
-              <ShieldCheck className="w-5 h-5 text-champagne" />
+        <div className="no-print bg-navy text-white px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-3 border-b border-navy-800">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="p-1.5 sm:p-2 bg-indigo/30 rounded-lg shrink-0">
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-champagne" />
             </div>
-            <div>
-              <h3 className="font-semibold text-lg text-white">
+            <div className="min-w-0">
+              <h3 className="font-semibold text-sm sm:text-lg text-white truncate">
                 {type === 'INVOICE' ? 'Official GST Tax Invoice' : 'Warehouse Packing Slip'}
               </h3>
-              <p className="text-xs text-slate-300">
-                Order Reference: {order.orderNumber} • Dated: {new Date(order.createdAt).toLocaleDateString('en-IN')}
+              <p className="text-[10px] sm:text-xs text-slate-300 truncate">
+                Ref: {order.orderNumber} • Dated: {new Date(order.createdAt).toLocaleDateString('en-IN')}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-4 py-2 bg-indigo hover:bg-indigo-dark text-white rounded-lg text-sm font-medium transition shadow-sm"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-indigo hover:bg-indigo-dark text-white rounded-lg text-xs sm:text-sm font-medium transition shadow-sm"
             >
-              <Printer className="w-4 h-4" />
-              Print / Save PDF
+              <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>Print / PDF</span>
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-slate-300 hover:text-white hover:bg-navy-800 rounded-lg transition"
+              className="p-1.5 sm:p-2 text-slate-300 hover:text-white hover:bg-navy-800 rounded-lg transition"
             >
               <X className="w-5 h-5" />
             </button>
@@ -59,7 +59,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
         </div>
 
         {/* Printable Document Area */}
-        <div className="p-8 overflow-y-auto bg-white text-navy print-only-container">
+        <div className="p-4 sm:p-8 overflow-y-auto bg-white text-navy print-only-container">
           {/* Header */}
           <div className="border-b-2 border-navy pb-6 mb-6">
             <div className="flex justify-between items-start">
