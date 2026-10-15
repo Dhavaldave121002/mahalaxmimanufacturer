@@ -2,5 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /admin
 
-# Google & Bing Sitemaps
-Sitemap: https://mahalaxmimanufacturer.vercel.app/sitemap.xml
+# Google, Bing & International Sitemaps
+Sitemap: https://mahalaxmimanufacturer.com/sitemap.xml

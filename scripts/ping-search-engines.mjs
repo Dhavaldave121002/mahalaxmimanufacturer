@@ -1,7 +1,7 @@
 // Automated Live Search Engine Ping & IndexNow Submitter for Mahalaxmi Enterprises
 import https from 'https';
 
-const DOMAIN = 'mahalaxmimanufacturer.vercel.app';
+const DOMAIN = 'mahalaxmimanufacturer.com';
 const SITEMAP_URL = `https://${DOMAIN}/sitemap.xml`;
 const KEY = 'd80f4f91899147cbba1b7e42d7658c14';
 

@@ -3,19 +3,19 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <!-- Core Hubs -->
   <url>
-    <loc>https://mahalaxmimanufacturer.vercel.app/</loc>
+    <loc>https://mahalaxmimanufacturer.com/</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>always</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://mahalaxmimanufacturer.vercel.app/wholesale</loc>
+    <loc>https://mahalaxmimanufacturer.com/wholesale</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://mahalaxmimanufacturer.vercel.app/catalog</loc>
+    <loc>https://mahalaxmimanufacturer.com/catalog</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
@@ -23,25 +23,25 @@
 
   <!-- Categories -->
   <url>
-    <loc>https://mahalaxmimanufacturer.vercel.app/category/textile</loc>
+    <loc>https://mahalaxmimanufacturer.com/category/textile</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://mahalaxmimanufacturer.vercel.app/category/cotton-products</loc>
+    <loc>https://mahalaxmimanufacturer.com/category/cotton-products</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://mahalaxmimanufacturer.vercel.app/category/home-kitchen</loc>
+    <loc>https://mahalaxmimanufacturer.com/category/home-kitchen</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://mahalaxmimanufacturer.vercel.app/category/household</loc>
+    <loc>https://mahalaxmimanufacturer.com/category/household</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -49,7 +49,7 @@
 
   <!-- Products with Google Image Indexing for Top Ranking -->
   <url>
-    <loc>https://mahalaxmimanufacturer.vercel.app/product/glance-300-tc-cotton-double-bedsheet</loc>
+    <loc>https://mahalaxmimanufacturer.com/product/glance-300-tc-cotton-double-bedsheet</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
@@ -60,7 +60,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://mahalaxmimanufacturer.vercel.app/product/luxury-600-gsm-cotton-bath-towel</loc>
+    <loc>https://mahalaxmimanufacturer.com/product/luxury-600-gsm-cotton-bath-towel</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
@@ -71,7 +71,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://mahalaxmimanufacturer.vercel.app/product/commercial-350-gsm-microfiber-cloth-pack</loc>
+    <loc>https://mahalaxmimanufacturer.com/product/commercial-350-gsm-microfiber-cloth-pack</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
@@ -82,7 +82,7 @@
     </image:image>
   </url>
   <url>
-    <loc>https://mahalaxmimanufacturer.vercel.app/product/heavy-duty-canvas-shopping-tote-bag</loc>
+    <loc>https://mahalaxmimanufacturer.com/product/heavy-duty-canvas-shopping-tote-bag</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
