@@ -7,8 +7,8 @@ export const MobileBottomNav: React.FC = () => {
   const location = useLocation();
   const { cartTotalItemsCount } = useApp();
 
-  // Hide on product detail pages so StickyPurchaseBar has full bottom bar
-  if (location.pathname.startsWith('/product/')) {
+  // Hide on product detail pages and admin dashboard
+  if (location.pathname.startsWith('/product/') || location.pathname.startsWith('/admin')) {
     return null;
   }
 

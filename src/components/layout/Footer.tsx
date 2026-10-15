@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   ShieldCheck,
   Truck,
@@ -15,6 +15,13 @@ import {
 } from 'lucide-react';
 
 export const Footer: React.FC = () => {
+  const location = useLocation();
+
+  // Hide storefront footer on admin dashboard
+  if (location.pathname.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <footer className="bg-navy text-white pt-12 pb-8 border-t border-navy-800 w-full max-w-full overflow-hidden">
       {/* 1. Value Proposition Pillars */}
