@@ -1,9 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MessageCircle, X, Send } from 'lucide-react';
 
 export const WhatsAppWidget: React.FC = () => {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const isProductPage = location.pathname.startsWith('/product/');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,7 +30,15 @@ export const WhatsAppWidget: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40 flex flex-col items-end">
+    <div
+      className={`fixed right-4 md:right-6 z-40 flex flex-col items-end transition-all duration-300 ease-in-out ${
+        isProductPage && isScrolled
+          ? 'bottom-24 md:bottom-24'
+          : isProductPage
+          ? 'bottom-6 md:bottom-6'
+          : 'bottom-20 md:bottom-6'
+      }`}
+    >
       {/* Pop-up chat card */}
       {isOpen && (
         <div className="mb-3 w-80 sm:w-96 bg-white rounded-3xl shadow-float border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200">

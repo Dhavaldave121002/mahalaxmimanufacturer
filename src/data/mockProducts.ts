@@ -225,7 +225,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     description: 'Customizable bulk canvas tote bag. Features cross-stitched webbed cotton handles, 4-inch bottom gusset for extra capacity, and smooth printable surface for screen print or embroidery logos.',
     images: [
       'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=1000&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1597484662317-9bd7bdda2907?q=80&w=1000&auto=format&fit=crop'
+      'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=1000&auto=format&fit=crop'
     ],
     mrp: 349,
     retailPrice: 149,

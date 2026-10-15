@@ -138,6 +138,10 @@ export const ProductDetailPage: React.FC = () => {
             <img
               src={product.images[selectedImageIndex] || product.images[0]}
               alt={product.name}
+              onError={e => {
+                const target = e.target as HTMLImageElement;
+                if (target.src !== product.images[0]) target.src = product.images[0];
+              }}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
 
@@ -168,13 +172,22 @@ export const ProductDetailPage: React.FC = () => {
                 <button
                   key={idx}
                   onClick={() => setSelectedImageIndex(idx)}
+                  aria-label={`View photo ${idx + 1} of ${product.name}`}
                   className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition shrink-0 ${
                     selectedImageIndex === idx
                       ? 'border-indigo ring-2 ring-indigo/20'
                       : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  <img src={img} alt={`View ${idx + 1}`} className="w-full h-full object-cover" />
+                  <img
+                    src={img}
+                    alt={`${product.name} thumbnail ${idx + 1}`}
+                    onError={e => {
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== product.images[0]) target.src = product.images[0];
+                    }}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
