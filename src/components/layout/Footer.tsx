@@ -196,17 +196,123 @@ export const Footer: React.FC = () => {
                 <span>OEKO-TEX Standard 100 Class 1</span>
               </li>
               <li>
-                <Link to="/admin" className="text-champagne hover:underline font-semibold block pt-2">
+                <a
+                  href="/feed.xml"
+                  target="_blank"
+                  rel="alternate"
+                  className="text-xs text-champagne hover:underline flex items-center gap-1"
+                >
+                  <span>📡 RSS 2.0 Catalog Feed</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/sitemap.xml"
+                  target="_blank"
+                  className="text-xs text-slate-300 hover:text-champagne transition"
+                >
+                  <span>🗺️ Google Sitemap Index</span>
+                </a>
+              </li>
+              <li>
+                <Link to="/admin" className="text-champagne hover:underline font-semibold block pt-1">
                   Admin & Operations Login &rarr;
                 </Link>
               </li>
             </ul>
           </div>
         </div>
+
+        {/* 2.1 B2B Verified Authority Registry & Backlink Citation Matrix */}
+        <div className="mt-10 pt-8 border-t border-navy-800/80 space-y-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold text-champagne tracking-wider uppercase">
+                Verified B2B Authority Registry & Trade Portals
+              </p>
+              <p className="text-[11px] text-slate-300 mt-0.5">
+                Official registration credentials across Indian and international trade networks:
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-[10px]">
+              <a
+                href="https://www.indiamart.com/mahalaxmi-enterprises-surat/"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="px-2.5 py-1 bg-navy-800 hover:bg-navy-700 text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
+                title="IndiaMART Verified Exporter & Star Supplier"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>IndiaMART TrustSEAL</span>
+              </a>
+              <a
+                href="https://www.tradeindia.com/Seller-15949210-Mahalaxmi-Enterprises/"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="px-2.5 py-1 bg-navy-800 hover:bg-navy-700 text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
+                title="TradeIndia Certified Mill Manufacturer"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>TradeIndia TrustStamp</span>
+              </a>
+              <a
+                href="https://www.exportersindia.com/mahalaxmi-enterprises-gujarat/"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="px-2.5 py-1 bg-navy-800 hover:bg-navy-700 text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
+                title="ExportersIndia Verified Manufacturer Profile"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>ExportersIndia Verified</span>
+              </a>
+              <a
+                href="https://services.gst.gov.in/services/searchtp"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="px-2.5 py-1 bg-navy-800 hover:bg-navy-700 text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
+                title="Verify GSTIN 24AAECM8921P1ZA on Official GST Portal"
+              >
+                <span className="w-2 h-2 rounded-full bg-indigo"></span>
+                <span>GST Portal Official</span>
+              </a>
+              <a
+                href="https://udyamregistration.gov.in/"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="px-2.5 py-1 bg-navy-800 hover:bg-navy-700 text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
+                title="Ministry of Micro, Small and Medium Enterprises"
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span>Ministry of MSME</span>
+              </a>
+            </div>
+          </div>
+
+          {/* 2.2 Pan-India Wholesale City Delivery Network (Local SEO Matrix) */}
+          <div className="pt-4 border-t border-navy-800/60 text-[11px] text-slate-300">
+            <span className="font-bold text-slate-200 block mb-1">
+              Direct Mill Freight Corridor & Wholesale City Network:
+            </span>
+            <p className="leading-relaxed">
+              <Link to="/catalog?q=Surat+Textile" className="hover:text-champagne transition">Surat Textile Hub (Ring Road)</Link> •{' '}
+              <Link to="/catalog?q=Ahmedabad+Cotton" className="hover:text-champagne transition">Ahmedabad (Kalupur & Relief Road)</Link> •{' '}
+              <Link to="/catalog?q=Mumbai+Textile" className="hover:text-champagne transition">Mumbai (Mangaldas & Mulji Jetha Market)</Link> •{' '}
+              <Link to="/catalog?q=Delhi+Bedsheets" className="hover:text-champagne transition">Delhi NCR (Chandni Chowk & Gandhi Nagar)</Link> •{' '}
+              <Link to="/catalog?q=Tirupur+Cotton" className="hover:text-champagne transition">Tirupur (Cotton Hosiery Cluster)</Link> •{' '}
+              <Link to="/catalog?q=Bangalore+Linen" className="hover:text-champagne transition">Bangalore (Chickpet Commercial)</Link> •{' '}
+              <Link to="/catalog?q=Kolkata+Wholesale" className="hover:text-champagne transition">Kolkata (Burrabazar Wholesale)</Link> •{' '}
+              <Link to="/catalog?q=Jaipur+Textile" className="hover:text-champagne transition">Jaipur (Johari & Purohit Ji Ka Katla)</Link> •{' '}
+              <Link to="/catalog?q=Ludhiana+Towels" className="hover:text-champagne transition">Ludhiana (Clock Tower Hub)</Link> •{' '}
+              <Link to="/catalog?q=Hyderabad+Cotton" className="hover:text-champagne transition">Hyderabad (Madina Market)</Link> •{' '}
+              <Link to="/catalog?q=Chennai+Linen" className="hover:text-champagne transition">Chennai (Sowcarpet)</Link> •{' '}
+              <Link to="/catalog?q=Kanpur+Cotton" className="hover:text-champagne transition">Kanpur (General Ganj Hub)</Link>
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* 3. Bottom Legal & Copyright Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 border-t border-navy-800 text-xs text-slate-400 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 border-t border-navy-800 text-xs text-slate-300 flex flex-col md:flex-row items-center justify-between gap-4">
         <p>&copy; {new Date().getFullYear()} Mahalaxmi Enterprises. All rights reserved. Direct Mill Rates & Wholesale Essentials.</p>
         <div className="flex items-center gap-6">
           <span className="hover:text-white transition cursor-pointer">Terms of Commercial Supply</span>
