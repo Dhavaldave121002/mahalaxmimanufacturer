@@ -189,7 +189,7 @@ export const Header: React.FC = () => {
               DIRECT MILL RATE
             </span>
             <span className="text-slate-200 text-[11px] hidden sm:inline">
-              🚚 Free Dispatch above ₹1,499 • ⚡ Launch Bonus: <strong className="text-champagne font-mono font-black">LAUNCH150</strong> (Flat ₹150 Off) • 🏢 100% GST ITC Invoicing
+              🚚 Free Delivery above ₹1,499 • ⚡ Launch Bonus: <strong className="text-champagne font-mono font-black">LAUNCH150</strong> (Flat ₹150 Off) • 🏢 100% GST ITC Invoicing
             </span>
             <span className="text-slate-200 text-[11px] sm:hidden">
               ⚡ Launch Bonus: <strong className="text-champagne font-mono font-black">LAUNCH150</strong> (Flat ₹150 Off)
@@ -716,7 +716,7 @@ export const Header: React.FC = () => {
                 </p>
                 <p className="text-emerald-700 mt-1 flex items-center gap-1 font-semibold">
                   <CheckCircle2 className="w-4 h-4" />
-                  Serviceable • Estimated Dispatch: {deliveryInfo.estimatedDays} {deliveryInfo.estimatedDays === 1 ? 'day' : 'days'}
+                  Serviceable • Estimated Delivery: {deliveryInfo.estimatedDays} {deliveryInfo.estimatedDays === 1 ? 'day' : 'days'}
                 </p>
               </div>
             )}

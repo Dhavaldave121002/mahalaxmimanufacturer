@@ -212,7 +212,7 @@ export const OrderTrackingPage: React.FC = () => {
             <div>
               <p className="font-bold">Administrative Operations View (Admin Only)</p>
               <p className="text-[11px] text-amber-800">
-                You are viewing the master dispatch ledger of all company consignments ({orders.length} total). Regular customers only see their personal orders.
+                You are viewing the master ledger of all company orders ({orders.length} total). Regular customers only see their personal orders.
               </p>
             </div>
           </div>
@@ -239,7 +239,7 @@ export const OrderTrackingPage: React.FC = () => {
             <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
               {searchQuery.trim()
                 ? `We could not locate an order matching "${searchQuery}". Please verify the Order Reference (e.g. MLE-ORD-2026-...) or AWB docket number.`
-                : `Logged in as ${currentUser?.name || currentUser?.email || 'Guest'}. When you place an order, live loom weaving updates, parcel dispatch dockets, and official GST tax invoices will appear here.`}
+                : `Logged in as ${currentUser?.name || currentUser?.email || 'Guest'}. When you place an order, live order progress, courier tracking, and official GST tax invoices will appear here.`}
             </p>
           </div>
 
@@ -389,7 +389,7 @@ export const OrderTrackingPage: React.FC = () => {
                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                   <div>
                     <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">
-                      Freight Dispatch Carrier:
+                      Logistics Delivery Partner:
                     </span>
                     <p className="font-bold text-navy text-sm mt-0.5">
                       {currentOrder.courierName || 'VRL Express Cargo'}
@@ -397,7 +397,7 @@ export const OrderTrackingPage: React.FC = () => {
                   </div>
                   <div className="text-left sm:text-right">
                     <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">
-                      Docket / Waybill No:
+                      Courier / AWB Tracking No:
                     </span>
                     <p className="font-mono font-bold text-indigo text-sm mt-0.5">
                       {currentOrder.trackingNumber}

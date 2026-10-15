@@ -122,7 +122,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <span>•</span>
             <span>✓ 7-Day Return</span>
             <span>•</span>
-            <span>✓ 24h Dispatch</span>
+            <span>✓ Fast Delivery</span>
           </div>
 
           {/* Add to Cart & WhatsApp Quick Order Buttons */}

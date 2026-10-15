@@ -253,7 +253,7 @@ export const ProductDetailPage: React.FC = () => {
 
               <div className="flex items-center gap-1.5 text-slate-700 font-medium text-[11px] bg-white/80 px-2 py-1 rounded-lg border border-amber-200/50">
                 <Timer className="w-3.5 h-3.5 text-indigo shrink-0" />
-                <span>Dispatch within <strong>2h 15m</strong> for same-day shipping</span>
+                <span>Order within <strong>2h 15m</strong> for same-day shipping</span>
               </div>
             </div>
           </div>
@@ -521,8 +521,8 @@ export const ProductDetailPage: React.FC = () => {
               </div>
               <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col items-center justify-center">
                 <Truck className="w-4 h-4 text-indigo mb-1" />
-                <span className="font-bold text-navy text-[11px]">24h Dispatch</span>
-                <span className="text-[10px] text-slate-500">Surat Loom Gate</span>
+                <span className="font-bold text-navy text-[11px]">Fast Delivery</span>
+                <span className="text-[10px] text-slate-500">Pan-India Freight</span>
               </div>
               <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col items-center justify-center">
                 <Zap className="w-4 h-4 text-amber-500 mb-1" />

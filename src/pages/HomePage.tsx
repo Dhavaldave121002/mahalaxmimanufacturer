@@ -104,15 +104,6 @@ export const HomePage: React.FC = () => {
   const [calculatorMode, setCalculatorMode] = useState<'savings' | 'reseller'>('savings');
   const [resellerSellingPrice, setResellerSellingPrice] = useState<number>(999);
 
-  // Surat Mill Live Operational Capabilities Desk (No customer data exposure)
-  const millOperationalHighlights = [
-    { label: 'Looms In Operation', text: '200+ Air-Jet & Rapier Looms Active 24/7' },
-    { label: 'Pan-India Freight', text: '19,000+ Pin Codes Covered' },
-    { label: 'Dispatch Hub', text: 'Same-Day Dispatch from Surat Mill' },
-    { label: 'GST Compliance', text: '100% GSTR-2B Verified Invoicing' },
-    { label: 'Quality Standard', text: 'Azo-Free Dyeing & Lab-Tested Tensile Strength' },
-    { label: 'Wholesale Hotline', text: '+91 94291 87611 (Direct Mill Desk)' }
-  ];
 
   // Business Enquiry Quick Form state
   const [enquiryForm, setEnquiryForm] = useState({
@@ -268,29 +259,8 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* ========================================================
-          SURAT MILL OPERATIONS & DISPATCH CAPABILITIES
-          ======================================================== */}
-      <section className="bg-slate-900 text-slate-300 text-xs py-2.5 px-4 overflow-hidden border-y border-slate-800 -mt-12 mb-2">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 shrink-0 text-champagne font-black text-[11px] uppercase tracking-wider">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            <span>SURAT MILL OPERATIONS:</span>
-          </div>
-          <div className="flex items-center gap-6 overflow-x-auto hide-scrollbar whitespace-nowrap text-[11px]">
-            {millOperationalHighlights.map((m, i) => (
-              <span key={i} className="flex items-center gap-1.5 shrink-0">
-                <Truck className="w-3.5 h-3.5 text-indigo-400" />
-                <strong className="text-white">{m.label}:</strong> {m.text}
-                {i < millOperationalHighlights.length - 1 && <span className="text-slate-600 ml-4">•</span>}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Commercial Perks & Bank Offers Strip (Amazon / Flipkart Pro style) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 -mt-6 relative z-10">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-subtle">
           <div className="flex items-center gap-3 p-2">
             <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo shrink-0">
@@ -306,8 +276,8 @@ export const HomePage: React.FC = () => {
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold text-navy">Same-Day Mill Dispatch</p>
-              <p className="text-[11px] text-slate-500">Surat Ring Road Textile Hub</p>
+              <p className="text-xs font-bold text-navy">Fast Pan-India Delivery</p>
+              <p className="text-[11px] text-slate-500">19,000+ PIN Codes Covered</p>
             </div>
           </div>
           <div className="flex items-center gap-3 p-2">
