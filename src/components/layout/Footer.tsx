@@ -10,7 +10,8 @@ import {
   Mail,
   Phone,
   MapPin,
-  CheckCircle2
+  CheckCircle2,
+  Lock
 } from 'lucide-react';
 
 export const Footer: React.FC = () => {
@@ -215,8 +216,9 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
-                <Link to="/admin" className="text-champagne hover:underline font-semibold block pt-1">
-                  Admin & Operations Login &rarr;
+                <Link to="/admin" className="text-xs text-slate-400 hover:text-champagne transition flex items-center gap-1.5 pt-1">
+                  <Lock className="w-3 h-3 text-slate-500" />
+                  <span>Authorized Staff Portal</span>
                 </Link>
               </li>
             </ul>

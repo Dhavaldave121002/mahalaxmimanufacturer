@@ -196,82 +196,52 @@ export const Header: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Interactive Persona / Role Switcher */}
-            <div className="relative">
-              <button
-                onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                aria-label={`Current persona: ${currentUser.role}. Click to switch buyer persona`}
-                className="flex items-center gap-1.5 bg-navy-800 hover:bg-navy-700 text-slate-200 px-2.5 py-1 rounded-md text-xs font-medium border border-slate-700 transition"
-                title="Switch active user persona"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span className="text-slate-300">Persona:</span>
-                <span className="text-white font-bold capitalize">
-                  {currentUser.role === 'admin' ? 'Admin Ops' : currentUser.businessType || currentUser.role}
+          <div className="flex items-center gap-3">
+            {currentUser.role === 'admin' ? (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] bg-amber-500/20 text-champagne font-bold px-2 py-0.5 rounded border border-amber-400/40">
+                  Admin Session Active
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-300" />
-              </button>
-
-              {roleMenuOpen && (
-                <div className="absolute right-0 mt-1 w-64 bg-white text-navy rounded-2xl shadow-premium border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95">
-                  <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                    Switch Buyer Mode
-                  </div>
-                  <button
-                    onClick={() => { switchUserRole('consumer'); setRoleMenuOpen(false); }}
-                    className={`w-full text-left px-3.5 py-2.5 text-xs flex items-center justify-between hover:bg-slate-50 transition ${currentUser.role === 'consumer' ? 'bg-indigo-light text-indigo font-bold' : ''}`}
-                  >
-                    <div>
-                      <p className="font-semibold text-slate-900">Individual Consumer (B2C)</p>
-                      <p className="text-[11px] text-slate-500">Retail rates & doorstep home delivery</p>
-                    </div>
-                    {currentUser.role === 'consumer' && <CheckCircle2 className="w-4 h-4 text-indigo" />}
-                  </button>
-
-                  <button
-                    onClick={() => { switchUserRole('retailer'); setRoleMenuOpen(false); }}
-                    className={`w-full text-left px-3.5 py-2.5 text-xs flex items-center justify-between hover:bg-slate-50 transition ${currentUser.role === 'retailer' ? 'bg-indigo-light text-indigo font-bold' : ''}`}
-                  >
-                    <div>
-                      <p className="font-semibold text-slate-900">Verified Retailer (B2B)</p>
-                      <p className="text-[11px] text-slate-500">GST Input credit & 28% off tiers</p>
-                    </div>
-                    {currentUser.role === 'retailer' && <CheckCircle2 className="w-4 h-4 text-indigo" />}
-                  </button>
-
-                  <button
-                    onClick={() => { switchUserRole('wholesaler'); setRoleMenuOpen(false); }}
-                    className={`w-full text-left px-3.5 py-2.5 text-xs flex items-center justify-between hover:bg-slate-50 transition ${currentUser.role === 'wholesaler' ? 'bg-indigo-light text-indigo font-bold' : ''}`}
-                  >
-                    <div>
-                      <p className="font-semibold text-slate-900">Hotel / Institutional Buyer</p>
-                      <p className="text-[11px] text-slate-500">Bulk RFQ & 30-Day Credit Line</p>
-                    </div>
-                    {currentUser.role === 'wholesaler' && <CheckCircle2 className="w-4 h-4 text-indigo" />}
-                  </button>
-
-                  <button
-                    onClick={() => { switchUserRole('admin'); setRoleMenuOpen(false); }}
-                    className={`w-full text-left px-3.5 py-2.5 text-xs flex items-center justify-between hover:bg-slate-50 transition border-t border-slate-100 ${currentUser.role === 'admin' ? 'bg-indigo-light text-indigo font-bold' : ''}`}
-                  >
-                    <div>
-                      <p className="font-semibold text-slate-900">Operations Director (Admin)</p>
-                      <p className="text-[11px] text-slate-500">Inventory, RFQs & Invoices</p>
-                    </div>
-                    {currentUser.role === 'admin' && <CheckCircle2 className="w-4 h-4 text-indigo" />}
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <Link
-              to="/admin"
-              className="text-[11px] font-semibold text-champagne hover:text-white transition flex items-center gap-1"
-            >
-              <SlidersHorizontal className="w-3 h-3" />
-              <span>Admin Desk</span>
-            </Link>
+                <Link
+                  to="/admin"
+                  className="text-[11px] font-bold text-champagne hover:text-white transition flex items-center gap-1 bg-navy-800 px-2.5 py-1 rounded-md border border-slate-700"
+                >
+                  <SlidersHorizontal className="w-3 h-3" />
+                  <span>Admin Desk</span>
+                </Link>
+                <button
+                  onClick={() => switchUserRole('retailer')}
+                  className="text-[10px] text-slate-400 hover:text-white underline ml-1"
+                  title="Switch to Customer Store View"
+                >
+                  Exit Admin
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 text-[11px]">
+                <a
+                  href="tel:+919429187611"
+                  className="text-slate-300 hover:text-champagne transition flex items-center gap-1 font-medium"
+                >
+                  <PhoneCall className="w-3 h-3 text-champagne" />
+                  <span>Mill Desk: +91 94291 87611</span>
+                </a>
+                <span className="text-slate-700 hidden md:inline">•</span>
+                <Link
+                  to="/wholesale"
+                  className="text-slate-300 hover:text-white transition font-medium hidden md:inline"
+                >
+                  Wholesale RFQ
+                </Link>
+                <span className="text-slate-700 hidden sm:inline">•</span>
+                <Link
+                  to="/account"
+                  className="text-champagne hover:text-white transition font-bold"
+                >
+                  My Account
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -937,17 +907,31 @@ export const Header: React.FC = () => {
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </Link>
 
-                <Link
-                  to="/admin"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-navy font-bold"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <ShieldCheck className="w-4 h-4 text-champagne-dark shrink-0" />
-                    <span>Admin Operations Dashboard</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                </Link>
+                {currentUser.role === 'admin' ? (
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-amber-50 border border-amber-200 transition text-navy font-bold"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>Admin Operations Dashboard</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  </Link>
+                ) : (
+                  <Link
+                    to="/wholesale"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-slate-800 font-semibold"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Building2 className="w-4 h-4 text-indigo shrink-0" />
+                      <span>Direct Mill Wholesale Desk</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  </Link>
+                )}
               </div>
             </div>
 

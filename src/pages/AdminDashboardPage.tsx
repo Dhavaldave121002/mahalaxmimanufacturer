@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Product, Order, OrderStatus, Quotation, CategoryId } from '../types';
 import { InvoiceModal } from '../components/common/InvoiceModal';
@@ -21,7 +22,11 @@ import {
   Layers,
   FileText,
   SlidersHorizontal,
-  RefreshCw
+  RefreshCw,
+  Lock,
+  KeyRound,
+  LogOut,
+  ShieldCheck
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
@@ -36,8 +41,37 @@ export const AdminDashboardPage: React.FC = () => {
     updateOrderStatus,
     quotations,
     updateQuotationByStaff,
-    enquiries
+    enquiries,
+    currentUser,
+    switchUserRole
   } = useApp();
+
+  // Admin Security Gate State
+  const [passcode, setPasscode] = useState('');
+  const [authError, setAuthError] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(() => {
+    return currentUser.role === 'admin' || sessionStorage.getItem('mle_admin_auth') === 'true';
+  });
+
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanPin = passcode.trim().toLowerCase();
+    // Allow owner passcodes
+    if (['121002', 'admin', 'admin2026', 'mle2026', 'mahalaxmi'].includes(cleanPin)) {
+      switchUserRole('admin');
+      sessionStorage.setItem('mle_admin_auth', 'true');
+      setIsUnlocked(true);
+      setAuthError(false);
+    } else {
+      setAuthError(true);
+    }
+  };
+
+  const handleExitAdmin = () => {
+    sessionStorage.removeItem('mle_admin_auth');
+    switchUserRole('retailer');
+    setIsUnlocked(false);
+  };
 
   // Active Admin View: 'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'import-export'
   const [activeTab, setActiveTab] = useState<
@@ -231,6 +265,67 @@ export const AdminDashboardPage: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  // Render Staff Auth Gate if locked
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-16 bg-slate-50">
+        <div className="w-full max-w-md bg-white rounded-3xl p-8 border border-slate-200 shadow-premium space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 bg-navy text-champagne rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+              <Lock className="w-8 h-8" />
+            </div>
+            <h1 className="text-2xl font-black text-navy tracking-tight">Staff & Operations Portal</h1>
+            <p className="text-xs text-slate-500">
+              Restricted management access for Mahalaxmi Enterprises.
+            </p>
+          </div>
+
+          <form onSubmit={handleAdminLogin} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-navy block">
+                Staff Security PIN / Passcode:
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  value={passcode}
+                  onChange={e => { setPasscode(e.target.value); setAuthError(false); }}
+                  placeholder="Enter staff PIN (e.g. 121002)..."
+                  className={`w-full text-sm pl-10 pr-4 py-3 border rounded-xl outline-none transition ${
+                    authError ? 'border-red-500 bg-red-50/40' : 'border-slate-300 focus:border-indigo'
+                  }`}
+                  autoFocus
+                />
+                <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              </div>
+              {authError && (
+                <p className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Invalid passcode. Please enter authorized staff PIN.
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-navy hover:bg-navy-800 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2"
+            >
+              <ShieldCheck className="w-4 h-4 text-champagne" />
+              <span>Verify & Unlock Operations Desk</span>
+            </button>
+          </form>
+
+          <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Customer Store Visitor?</span>
+            <Link to="/" className="font-bold text-indigo hover:underline flex items-center gap-1">
+              <span>&larr; Return to Store</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 pb-24">
       {/* Admin Title & Ops Badge */}
@@ -248,6 +343,14 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleExitAdmin}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+            title="Exit Admin and return to storefront"
+          >
+            <LogOut className="w-4 h-4 text-slate-500" />
+            <span>Exit Admin</span>
+          </button>
           <button
             onClick={() => {
               setEditingProductId(null);
