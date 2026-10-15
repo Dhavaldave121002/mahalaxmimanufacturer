@@ -104,13 +104,14 @@ export const HomePage: React.FC = () => {
   const [calculatorMode, setCalculatorMode] = useState<'savings' | 'reseller'>('savings');
   const [resellerSellingPrice, setResellerSellingPrice] = useState<number>(999);
 
-  // Live Simulated Dispatch Feed
-  const liveDispatches = [
-    { city: 'Ahmedabad, GJ', item: '120 Pcs 300 TC Bedsheets', time: '4m ago', buyer: 'Patel Handlooms' },
-    { city: 'Udaipur, RJ', item: '250 Pcs Hotel Spa Towels', time: '18m ago', buyer: 'Royal Palace Resort' },
-    { city: 'Surat, GJ', item: '60 Pcs Microfiber Duster Kits', time: '29m ago', buyer: 'CleanTech Facility' },
-    { city: 'Mumbai, MH', item: '40 Pcs Kitchen Napkins', time: '42m ago', buyer: 'Heritage Cafe' },
-    { city: 'Bangalore, KA', item: '85 Pcs Heavy Canvas Bags', time: '55m ago', buyer: 'EcoHub Merchandising' }
+  // Surat Mill Live Operational Capabilities Desk (No customer data exposure)
+  const millOperationalHighlights = [
+    { label: 'Looms In Operation', text: '200+ Air-Jet & Rapier Looms Active 24/7' },
+    { label: 'Pan-India Freight', text: '19,000+ Pin Codes Covered' },
+    { label: 'Dispatch Hub', text: 'Same-Day Dispatch from Surat Mill' },
+    { label: 'GST Compliance', text: '100% GSTR-2B Verified Invoicing' },
+    { label: 'Quality Standard', text: 'Azo-Free Dyeing & Lab-Tested Tensile Strength' },
+    { label: 'Wholesale Hotline', text: '+91 94291 87611 (Direct Mill Desk)' }
   ];
 
   // Business Enquiry Quick Form state
@@ -268,19 +269,20 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ========================================================
-          LIVE SURAT MILL DISPATCH STRIP & COMMERCIAL PERKS
+          SURAT MILL OPERATIONS & DISPATCH CAPABILITIES
           ======================================================== */}
       <section className="bg-slate-900 text-slate-300 text-xs py-2.5 px-4 overflow-hidden border-y border-slate-800 -mt-12 mb-2">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 shrink-0 text-champagne font-black text-[11px] uppercase tracking-wider">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-            <span>LIVE SURAT MILL DISPATCH:</span>
+            <span>SURAT MILL OPERATIONS:</span>
           </div>
           <div className="flex items-center gap-6 overflow-x-auto hide-scrollbar whitespace-nowrap text-[11px]">
-            {liveDispatches.map((d, i) => (
+            {millOperationalHighlights.map((m, i) => (
               <span key={i} className="flex items-center gap-1.5 shrink-0">
                 <Truck className="w-3.5 h-3.5 text-indigo-400" />
-                <strong className="text-white">{d.buyer} ({d.city})</strong>: {d.item} • <span className="text-slate-400">{d.time}</span>
+                <strong className="text-white">{m.label}:</strong> {m.text}
+                {i < millOperationalHighlights.length - 1 && <span className="text-slate-600 ml-4">•</span>}
               </span>
             ))}
           </div>

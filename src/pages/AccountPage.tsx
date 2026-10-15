@@ -19,6 +19,18 @@ import { Badge } from '../components/common/Badge';
 export const AccountPage: React.FC = () => {
   const { currentUser, updateUserProfile, addSavedAddress, orders, quotations } = useApp();
 
+  const userOrdersCount = currentUser.role === 'admin'
+    ? orders.length
+    : orders.filter(
+        o =>
+          (currentUser.email && o.customer?.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+          (currentUser.id && o.customer?.id === currentUser.id) ||
+          (currentUser.phone &&
+            o.customer?.phone &&
+            currentUser.phone.replace(/\D/g, '').length >= 10 &&
+            o.customer.phone.replace(/\D/g, '').endsWith(currentUser.phone.replace(/\D/g, '').slice(-10)))
+      ).length;
+
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
     name: currentUser.name,
@@ -214,7 +226,7 @@ export const AccountPage: React.FC = () => {
             >
               <Package className="w-5 h-5 text-indigo mb-1" />
               <p className="font-bold text-navy">Track Consignments</p>
-              <p className="text-[11px] text-slate-500">{orders.length} orders on file</p>
+              <p className="text-[11px] text-slate-500">{userOrdersCount} {userOrdersCount === 1 ? 'order' : 'orders'} on file</p>
             </Link>
 
             <Link
