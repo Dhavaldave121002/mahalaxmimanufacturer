@@ -21,6 +21,8 @@ const AccountPage = lazy(() => import('./pages/AccountPage').then(m => ({ defaul
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
 
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+
 // Lightweight loading placeholder
 const PageLoadingFallback = () => (
   <div className="min-h-[50vh] flex items-center justify-center p-8">
@@ -38,14 +40,25 @@ const ScrollToTop = () => {
 };
 
 export const App: React.FC = () => {
+  // Handle chunk loading failures when a new version deploys to Vercel
+  useEffect(() => {
+    const handlePreloadError = () => {
+      console.warn('Vite preload error detected, reloading page with latest chunks...');
+      window.location.reload();
+    };
+    window.addEventListener('vite:preloadError', handlePreloadError);
+    return () => window.removeEventListener('vite:preloadError', handlePreloadError);
+  }, []);
+
   return (
-    <AppProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <div className="min-h-screen flex flex-col bg-ivory text-navy selection:bg-indigo selection:text-white pb-16 md:pb-0 overflow-x-clip w-full max-w-full">
-          <Header />
-          <main className="flex-1">
-            <Suspense fallback={<PageLoadingFallback />}>
+    <ErrorBoundary>
+      <AppProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <div className="min-h-screen flex flex-col bg-ivory text-navy selection:bg-indigo selection:text-white pb-16 md:pb-0 overflow-x-clip w-full max-w-full">
+            <Header />
+            <main className="flex-1">
+              <Suspense fallback={<PageLoadingFallback />}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/catalog" element={<CatalogPage />} />
@@ -71,6 +84,7 @@ export const App: React.FC = () => {
         </div>
       </BrowserRouter>
     </AppProvider>
+    </ErrorBoundary>
   );
 };
 

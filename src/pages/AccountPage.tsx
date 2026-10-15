@@ -21,13 +21,13 @@ import { Badge } from '../components/common/Badge';
 export const AccountPage: React.FC = () => {
   const { currentUser, isLoggedIn, logout, updateUserProfile, addSavedAddress, orders, quotations } = useApp();
 
-  const userOrdersCount = currentUser.role === 'admin'
-    ? orders.length
-    : orders.filter(
+  const userOrdersCount = currentUser?.role === 'admin'
+    ? (orders?.length || 0)
+    : (orders || []).filter(
         o =>
-          (currentUser.email && o.customer?.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
-          (currentUser.id && o.customer?.id === currentUser.id) ||
-          (currentUser.phone &&
+          (currentUser?.email && o.customer?.email?.toLowerCase() === currentUser.email.toLowerCase()) ||
+          (currentUser?.id && o.customer?.id === currentUser.id) ||
+          (currentUser?.phone &&
             o.customer?.phone &&
             currentUser.phone.replace(/\D/g, '').length >= 10 &&
             o.customer.phone.replace(/\D/g, '').endsWith(currentUser.phone.replace(/\D/g, '').slice(-10)))
@@ -35,18 +35,18 @@ export const AccountPage: React.FC = () => {
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
-    name: currentUser.name,
-    email: currentUser.email,
-    phone: currentUser.phone,
-    companyName: currentUser.companyName || '',
-    gstNumber: currentUser.gstNumber || '',
-    businessType: currentUser.businessType || 'Retailer'
+    name: currentUser?.name || '',
+    email: currentUser?.email || '',
+    phone: currentUser?.phone || '',
+    companyName: currentUser?.companyName || '',
+    gstNumber: currentUser?.gstNumber || '',
+    businessType: currentUser?.businessType || 'Retailer'
   });
 
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [newAddress, setNewAddress] = useState<Omit<Address, 'id'>>({
-    fullName: currentUser.name,
-    phone: currentUser.phone,
+    fullName: currentUser?.name || '',
+    phone: currentUser?.phone || '',
     street: '',
     city: 'Surat',
     state: 'Gujarat',
@@ -359,7 +359,7 @@ export const AccountPage: React.FC = () => {
 
           {/* List of saved addresses */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {currentUser.addresses.map(addr => (
+            {(currentUser?.addresses || []).map(addr => (
               <div
                 key={addr.id}
                 className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-1.5 text-xs relative"
