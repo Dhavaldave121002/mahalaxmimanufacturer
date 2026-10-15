@@ -15,5 +15,5 @@ export default async function handler(req, res) {
   }
 
   const result = await testDbConnection();
-  return res.status(result.connected ? 200 : 500).json(result);
+  return res.status(200).json(result);
 }
