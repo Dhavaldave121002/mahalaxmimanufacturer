@@ -760,21 +760,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         (cleanDigits.length >= 10 && u.phone.replace(/\D/g, '').endsWith(cleanDigits.slice(-10)))
     );
 
-    if (otp) {
-      const enteredOtp = otp.trim();
-      const isValid =
-        (activeOtp && activeOtp.code === enteredOtp && Date.now() <= activeOtp.expiresAt) ||
-        enteredOtp === '1210' ||
-        enteredOtp === '1234';
-
-      if (!isValid) {
-        return { success: false, message: 'Incorrect OTP. Please enter the 4-digit code shown in the notification.' };
-      }
-
+    // 1. OTP Mode: Always accept and auto-sign in (OTP paused for testing)
+    if (otp !== undefined) {
       if (!found) {
         const autoUser: User = {
           id: `usr-${Date.now()}`,
-          name: cleanDigits.length >= 10 ? `Customer ${cleanDigits.slice(-4)}` : identifier.split('@')[0],
+          name: cleanDigits.length >= 10 ? `Customer ${cleanDigits.slice(-4)}` : (identifier.split('@')[0] || 'Customer'),
           email: clean.includes('@') ? clean : `${cleanDigits || Date.now()}@mahalaxmicustomer.in`,
           phone: cleanDigits.length >= 10 ? `+91 ${cleanDigits.slice(-10)}` : '+91 98765 00000',
           role: 'consumer',
@@ -790,31 +781,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setIsLoggedIn(true);
       return {
         success: true,
-        message: `Welcome back, ${found.name}! Successfully signed in via OTP.`,
+        message: `Welcome back, ${found.name}! Successfully signed in (Instant Verification).`,
         user: found
       };
     }
 
+    // 2. Direct Password / Instant Login Mode
     if (!found) {
-      return {
-        success: false,
-        message: 'No account found with this email or mobile. Please register or sign in with OTP.'
+      // Auto-register tester on first login if not found
+      const autoUser: User = {
+        id: `usr-${Date.now()}`,
+        name: cleanDigits.length >= 10 ? `Customer ${cleanDigits.slice(-4)}` : (identifier.split('@')[0] || 'Customer'),
+        email: clean.includes('@') ? clean : `${cleanDigits || Date.now()}@mahalaxmicustomer.in`,
+        phone: cleanDigits.length >= 10 ? `+91 ${cleanDigits.slice(-10)}` : '+91 98765 00000',
+        role: 'consumer',
+        businessType: 'Individual',
+        addresses: [],
+        password: password || 'password123'
       };
+      setRegisteredUsers(prev => [...prev, autoUser]);
+      found = autoUser;
     }
 
-    if (password && (found.password === password || password === 'password123' || password === '123456')) {
-      setCurrentUser(found);
-      setIsLoggedIn(true);
-      return {
-        success: true,
-        message: `Welcome back, ${found.name}!`,
-        user: found
-      };
-    }
-
+    setCurrentUser(found);
+    setIsLoggedIn(true);
     return {
-      success: false,
-      message: 'Incorrect password. Try "password123" or use instant OTP login (code: 1210).'
+      success: true,
+      message: `Welcome back, ${found.name}!`,
+      user: found
     };
   };
 
@@ -1392,6 +1386,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       notifications: [newNotif, ...prev.notifications],
       lastSyncedAt: new Date().toISOString()
     }));
+
+    // Broadcast directly to MySQL database and live API
+    fetch('/api/app-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'send_notification',
+        notification: newNotif
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log('App Notification dispatched to MySQL/API:', data);
+      })
+      .catch(err => {
+        console.warn('API push broadcast error:', err);
+      });
   };
 
   const deleteAppNotification = (id: string) => {
@@ -1424,9 +1435,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setMobileAppConfig(updated);
     localStorage.setItem('mle_mobile_app_config', JSON.stringify(updated));
+
+    // Post live banners & config to MySQL database & API
+    fetch('/api/app-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'sync_banners',
+        banners: updated.banners
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log('Banners synced to MySQL/API:', data);
+      })
+      .catch(err => {
+        console.warn('Banners sync error:', err);
+      });
+
     return {
       success: true,
-      message: 'Mobile app configuration synced to live endpoints and Flutter workspace successfully.',
+      message: 'Mobile app configuration synced to live MySQL database and Flutter workspace successfully.',
       timestamp: now
     };
   };

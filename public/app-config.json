@@ -12,7 +12,7 @@
   "catalogDownloadUrl": "https://mahalaxmimanufacturer.vercel.app/catalog.pdf",
   "gstNotice": "100% Verified Input Tax Credit (ITC) invoices available for all commercial business orders.",
   "localFlutterProjectPath": "C:\\mahalaxmi_enterprises",
-  "lastSyncedAt": "2026-10-15T13:05:00.000Z",
+  "lastSyncedAt": "2026-10-15T09:35:07.987Z",
   "banners": [
     {
       "id": "banner-kitchen",
@@ -126,6 +126,15 @@
     }
   ],
   "notifications": [
+    {
+      "id": "notif-post-test",
+      "title": "Live Broadcast Test",
+      "message": "Testing broadcast from node",
+      "timestamp": "2026-10-15T09:35:07.982Z",
+      "targetCategory": "All",
+      "type": "OFFER",
+      "isSent": true
+    },
     {
       "id": "notif-1",
       "title": "Diwali Mill Sale is Live! 🎉",

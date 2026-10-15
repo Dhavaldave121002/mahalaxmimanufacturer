@@ -106,22 +106,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
       return;
     }
 
-    if (loginMode === 'password' && !loginPassword) {
-      setErrorMsg('Please enter your password. (Demo: password123)');
-      return;
-    }
-
-    if (loginMode === 'otp' && !loginOtp) {
-      setErrorMsg('Please enter the 4-digit verification OTP.');
-      return;
-    }
+    const effectivePassword = loginMode === 'password' ? (loginPassword || 'password123') : undefined;
+    const effectiveOtp = loginMode === 'otp' ? (loginOtp || '1210') : undefined;
 
     setLoading(true);
     setTimeout(() => {
       const res = login(
         loginIdentifier,
-        loginMode === 'password' ? loginPassword : undefined,
-        loginMode === 'otp' ? loginOtp : undefined
+        effectivePassword,
+        effectiveOtp
       );
 
       setLoading(false);
@@ -136,35 +129,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     }, 400);
   };
 
-  // Send Login OTP
+  // Send Login OTP (Instant bypass for testing)
   const handleSendLoginOtp = async () => {
     clearMessages();
     if (!loginIdentifier.trim()) {
       setErrorMsg('Please enter your 10-digit mobile number or email first.');
       return;
     }
-    const res = requestOtp(loginIdentifier);
-    if (res.success && res.otp) {
-      setOtpSent(true);
-      setLoginOtp(res.otp);
-
-      if (loginIdentifier.includes('@')) {
-        setSuccessMsg(`Sending verification email via Resend to ${loginIdentifier}...`);
-        const mailResult = await sendOtpEmail(loginIdentifier, res.otp);
-        setSuccessMsg(mailResult.message);
-      } else {
-        setSuccessMsg(`OTP generated for ${loginIdentifier}`);
-      }
-
-      setSimulatedSms({
-        sender: loginIdentifier.includes('@') ? 'RESEND-OTP' : 'VM-MHLXMI',
-        code: res.otp,
-        phone: loginIdentifier,
-        timestamp: 'Just Now'
-      });
-    } else {
-      setErrorMsg(res.message);
-    }
+    setOtpSent(true);
+    setLoginOtp('1210');
+    setSuccessMsg('⚡ Quick Testing Mode: OTP auto-filled (1210). Click Sign In to enter.');
   };
 
   // 2. Handle Registration
@@ -222,35 +196,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     }, 450);
   };
 
-  // 3. Handle Forgot Password
+  // 3. Handle Forgot Password (Instant bypass for testing)
   const handleSendForgotOtp = async () => {
     clearMessages();
     if (!forgotIdentifier.trim()) {
       setErrorMsg('Please enter your registered mobile number or email address.');
       return;
     }
-    const res = requestOtp(forgotIdentifier);
-    if (res.success && res.otp) {
-      setForgotOtpSent(true);
-      setForgotOtp(res.otp);
-
-      if (forgotIdentifier.includes('@')) {
-        setSuccessMsg(`Sending real password reset OTP to ${forgotIdentifier}...`);
-        const mailResult = await sendOtpEmail(forgotIdentifier, res.otp);
-        setSuccessMsg(mailResult.message);
-      } else {
-        setSuccessMsg(`Verification code generated for ${forgotIdentifier}`);
-      }
-
-      setSimulatedSms({
-        sender: forgotIdentifier.includes('@') ? 'RESEND-OTP' : 'VM-MHLXMI',
-        code: res.otp,
-        phone: forgotIdentifier,
-        timestamp: 'Just Now'
-      });
-    } else {
-      setErrorMsg(res.message);
-    }
+    setForgotOtpSent(true);
+    setForgotOtp('1210');
+    setSuccessMsg('⚡ Testing Mode: Verification code auto-filled (1210). Set your new password.');
   };
 
   const handleForgotSubmit = (e: React.FormEvent) => {
@@ -261,18 +216,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
       setErrorMsg('Please enter your mobile or email.');
       return;
     }
-    if (!forgotOtp.trim()) {
-      setErrorMsg('Please enter the 4-digit verification code.');
-      return;
-    }
     if (!forgotNewPassword || forgotNewPassword.length < 6) {
       setErrorMsg('New password must be at least 6 characters.');
       return;
     }
 
+    const effectiveOtp = forgotOtp.trim() || '1210';
+
     setLoading(true);
     setTimeout(() => {
-      const res = resetPassword(forgotIdentifier, forgotOtp, forgotNewPassword);
+      const res = resetPassword(forgotIdentifier, effectiveOtp, forgotNewPassword);
       setLoading(false);
       if (res.success) {
         setSuccessMsg(res.message);
@@ -513,6 +466,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                 ======================================================== */}
             {activeTab === 'login' && (
               <div className="space-y-5">
+                <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl flex items-center gap-2.5 text-xs font-semibold">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                  <span>⚡ Quick Testing Active: OTP requirement is temporarily paused. Sign in directly with any mobile or email!</span>
+                </div>
+
                 {/* Mode Selector: Password vs Instant OTP */}
                 <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
                   <button
