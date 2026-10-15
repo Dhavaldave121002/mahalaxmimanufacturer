@@ -436,19 +436,38 @@ export const WholesalePage: React.FC = () => {
 
                     return (
                       <tr key={idx} className="hover:bg-slate-50/50">
-                        {/* Product Picker */}
+                        {/* Product Picker with Visual Thumbnail & Details */}
                         <td className="py-3 px-4">
-                          <select
-                            value={row.productId}
-                            onChange={e => handleUpdatePadRow(idx, 'productId', e.target.value)}
-                            className="w-full p-2 border border-slate-300 rounded-lg text-xs font-medium focus:border-indigo outline-none bg-white text-navy"
-                          >
-                            {products.map(p => (
-                              <option key={p.id} value={p.id}>
-                                [{p.sku}] {p.name}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={prod.images?.[0] || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=200&auto=format&fit=crop'}
+                              alt={prod.name}
+                              className="w-12 h-12 sm:w-14 sm:h-14 object-cover rounded-xl border border-slate-200 shrink-0 shadow-xs bg-slate-100"
+                              onError={e => {
+                                (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=200&auto=format&fit=crop';
+                              }}
+                            />
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <select
+                                value={row.productId}
+                                onChange={e => handleUpdatePadRow(idx, 'productId', e.target.value)}
+                                className="w-full p-2 border border-slate-300 rounded-xl text-xs font-bold focus:border-indigo outline-none bg-white text-navy cursor-pointer shadow-xs truncate"
+                              >
+                                {products.map(p => (
+                                  <option key={p.id} value={p.id}>
+                                    {p.name} (SKU: {p.sku})
+                                  </option>
+                                ))}
+                              </select>
+                              <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500">
+                                <span className="bg-slate-100 text-slate-700 font-mono font-bold px-1.5 py-0.5 rounded">SKU: {prod.sku}</span>
+                                <span className="text-slate-400">•</span>
+                                <span className="text-slate-600 font-medium">HSN: {prod.hsnCode}</span>
+                                <span className="text-slate-400">•</span>
+                                <span className="text-emerald-700 font-bold">Mill Stock: {prod.stock} Units</span>
+                              </div>
+                            </div>
+                          </div>
                         </td>
 
                         {/* MRP */}
@@ -581,19 +600,39 @@ export const WholesalePage: React.FC = () => {
                   key={idx}
                   className="p-4 bg-slate-50 rounded-2xl border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center text-xs"
                 >
-                  <div className="sm:col-span-6">
-                    <label className="text-[10px] font-bold text-slate-500 block mb-1">Target Product</label>
-                    <select
-                      value={row.productId}
-                      onChange={e => handleUpdateRfqRow(idx, 'productId', e.target.value)}
-                      className="w-full p-2 border border-slate-300 rounded-lg bg-white outline-none text-navy font-semibold"
-                    >
-                      {products.map(p => (
-                        <option key={p.id} value={p.id}>
-                          [{p.sku}] {p.name}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="sm:col-span-6 flex items-center gap-3">
+                    {(() => {
+                      const targetProd = products.find(p => p.id === row.productId) || products[0];
+                      return (
+                        <>
+                          <img
+                            src={targetProd.images?.[0] || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=200&auto=format&fit=crop'}
+                            alt={targetProd.name}
+                            className="w-12 h-12 object-cover rounded-xl border border-slate-200 shrink-0 shadow-xs bg-white"
+                            onError={e => {
+                              (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=200&auto=format&fit=crop';
+                            }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <label className="text-[10px] font-bold text-slate-500 block mb-0.5">Target Product</label>
+                            <select
+                              value={row.productId}
+                              onChange={e => handleUpdateRfqRow(idx, 'productId', e.target.value)}
+                              className="w-full p-2 border border-slate-300 rounded-lg bg-white outline-none text-navy font-semibold text-xs truncate"
+                            >
+                              {products.map(p => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name} (SKU: {p.sku})
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                              SKU: {targetProd.sku} • Mill Rate: ₹{targetProd.retailPrice}/pc
+                            </p>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   <div className="sm:col-span-3">
@@ -736,17 +775,34 @@ export const WholesalePage: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
-                      {quote.items.map((it, i) => (
-                        <tr key={i}>
-                          <td className="py-2.5 px-3 font-semibold text-navy">{it.productName}</td>
+                      {quote.items.map((it, i) => {
+                        const quoteProd = products.find(p => p.id === it.productId);
+                        return (
+                          <tr key={i}>
+                            <td className="py-2.5 px-3">
+                              <div className="flex items-center gap-2.5">
+                                {quoteProd && (
+                                  <img
+                                    src={quoteProd.images?.[0] || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=200&auto=format&fit=crop'}
+                                    alt={it.productName}
+                                    className="w-10 h-10 object-cover rounded-lg border border-slate-200 shrink-0 shadow-xs"
+                                  />
+                                )}
+                                <div>
+                                  <p className="font-semibold text-navy">{it.productName}</p>
+                                  <p className="text-[10px] text-slate-400 font-mono">SKU: {it.sku}</p>
+                                </div>
+                              </div>
+                            </td>
                           <td className="py-2.5 px-2 text-center font-mono text-slate-500">{it.sku}</td>
                           <td className="py-2.5 px-2 text-center font-bold text-navy">{it.quantity}</td>
                           <td className="py-2.5 px-3 text-right text-slate-500">₹{it.targetPrice || '-'}</td>
                           <td className="py-2.5 px-3 text-right font-bold text-indigo">₹{it.quotedUnitPrice}</td>
                           <td className="py-2.5 px-4 text-right font-bold text-navy">₹{it.totalPrice.toLocaleString('en-IN')}</td>
                         </tr>
-                      ))}
-                    </tbody>
+                      );
+                    })}
+                  </tbody>
                   </table>
                 </div>
 
@@ -1064,12 +1120,24 @@ export const WholesalePage: React.FC = () => {
                     return (
                       <tr key={prod.id} className="hover:bg-slate-50/60 transition">
                         <td className="py-3 px-4 font-bold text-navy">
-                          <Link to={`/product/${prod.slug}`} className="hover:text-indigo">
-                            {prod.name}
-                          </Link>
-                          <span className="block text-[10px] text-slate-500 font-normal">
-                            {prod.subcategory} • Stock: {prod.stock} units
-                          </span>
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={prod.images?.[0] || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=200&auto=format&fit=crop'}
+                              alt={prod.name}
+                              className="w-10 h-10 object-cover rounded-lg border border-slate-200 shrink-0 shadow-xs bg-slate-50"
+                              onError={e => {
+                                (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=200&auto=format&fit=crop';
+                              }}
+                            />
+                            <div>
+                              <Link to={`/product/${prod.slug}`} className="hover:text-indigo">
+                                {prod.name}
+                              </Link>
+                              <span className="block text-[10px] text-slate-500 font-normal">
+                                {prod.subcategory} • Stock: {prod.stock} units
+                              </span>
+                            </div>
+                          </div>
                         </td>
                         <td className="py-3 px-3 text-center font-mono text-slate-500">{prod.sku}</td>
                         <td className="py-3 px-3 text-center font-mono font-semibold text-slate-700">{prod.hsnCode}</td>
