@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { sendOtpEmail } from '../utils/sendOtpEmail';
 import {
   Lock,
   Mail,
@@ -136,7 +137,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   };
 
   // Send Login OTP
-  const handleSendLoginOtp = () => {
+  const handleSendLoginOtp = async () => {
     clearMessages();
     if (!loginIdentifier.trim()) {
       setErrorMsg('Please enter your 10-digit mobile number or email first.');
@@ -145,10 +146,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     const res = requestOtp(loginIdentifier);
     if (res.success && res.otp) {
       setOtpSent(true);
-      setSuccessMsg(`OTP sent to ${loginIdentifier}`);
       setLoginOtp(res.otp);
+
+      if (loginIdentifier.includes('@')) {
+        setSuccessMsg(`Sending verification email via Resend to ${loginIdentifier}...`);
+        const mailResult = await sendOtpEmail(loginIdentifier, res.otp);
+        setSuccessMsg(mailResult.message);
+      } else {
+        setSuccessMsg(`OTP generated for ${loginIdentifier}`);
+      }
+
       setSimulatedSms({
-        sender: 'VM-MHLXMI',
+        sender: loginIdentifier.includes('@') ? 'RESEND-OTP' : 'VM-MHLXMI',
         code: res.otp,
         phone: loginIdentifier,
         timestamp: 'Just Now'
@@ -214,7 +223,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   };
 
   // 3. Handle Forgot Password
-  const handleSendForgotOtp = () => {
+  const handleSendForgotOtp = async () => {
     clearMessages();
     if (!forgotIdentifier.trim()) {
       setErrorMsg('Please enter your registered mobile number or email address.');
@@ -223,10 +232,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     const res = requestOtp(forgotIdentifier);
     if (res.success && res.otp) {
       setForgotOtpSent(true);
-      setSuccessMsg(`Verification code sent to ${forgotIdentifier}`);
       setForgotOtp(res.otp);
+
+      if (forgotIdentifier.includes('@')) {
+        setSuccessMsg(`Sending real password reset OTP to ${forgotIdentifier}...`);
+        const mailResult = await sendOtpEmail(forgotIdentifier, res.otp);
+        setSuccessMsg(mailResult.message);
+      } else {
+        setSuccessMsg(`Verification code generated for ${forgotIdentifier}`);
+      }
+
       setSimulatedSms({
-        sender: 'VM-MHLXMI',
+        sender: forgotIdentifier.includes('@') ? 'RESEND-OTP' : 'VM-MHLXMI',
         code: res.otp,
         phone: forgotIdentifier,
         timestamp: 'Just Now'
