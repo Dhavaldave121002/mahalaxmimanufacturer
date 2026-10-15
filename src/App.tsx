@@ -4,7 +4,6 @@ import { AppProvider } from './context/AppContext';
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { WhatsAppWidget } from './components/common/WhatsAppWidget';
-import { LiveSalesNotification } from './components/common/LiveSalesNotification';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
 
 // Eager load HomePage for instant LCP & FCP
@@ -63,7 +62,6 @@ export const App: React.FC = () => {
             </Suspense>
           </main>
           <Footer />
-          <LiveSalesNotification />
           <WhatsAppWidget />
           <MobileBottomNav />
         </div>
