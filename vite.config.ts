@@ -24,7 +24,25 @@ function localApiPlugin(): Plugin {
           };
         }
 
-        // DB Status API
+        // Helper to parse JSON body
+        async function ensureBodyParsed() {
+          if (req.method === 'POST' || req.method === 'PUT') {
+            if (!(req as any).body) {
+              const chunks: Buffer[] = [];
+              for await (const chunk of req) {
+                chunks.push(chunk);
+              }
+              const bodyStr = Buffer.concat(chunks).toString();
+              try {
+                (req as any).body = JSON.parse(bodyStr);
+              } catch {
+                (req as any).body = {};
+              }
+            }
+          }
+        }
+
+        // 1. DB Status API
         if (req.url === '/api/db-status') {
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Access-Control-Allow-Origin', '*');
@@ -33,7 +51,53 @@ function localApiPlugin(): Plugin {
           return;
         }
 
-        // App Config & Notifications API
+        // 2. Orders API (Web & Flutter Mobile App)
+        if (req.url?.startsWith('/api/orders')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          await ensureBodyParsed();
+          try {
+            // @ts-ignore
+            const mod = await import('./api/orders.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            expressRes.status(500).json({ success: false, error: e.message });
+          }
+          return;
+        }
+
+        // 3. Products API
+        if (req.url?.startsWith('/api/products')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          await ensureBodyParsed();
+          try {
+            // @ts-ignore
+            const mod = await import('./api/products.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            expressRes.status(500).json({ success: false, error: e.message });
+          }
+          return;
+        }
+
+        // 4. App Config & Notifications API
         if (req.url?.startsWith('/api/app-config')) {
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Access-Control-Allow-Origin', '*');
@@ -45,20 +109,7 @@ function localApiPlugin(): Plugin {
             return;
           }
 
-          // Parse POST body if needed
-          if (req.method === 'POST') {
-            const chunks: Buffer[] = [];
-            for await (const chunk of req) {
-              chunks.push(chunk);
-            }
-            const bodyStr = Buffer.concat(chunks).toString();
-            try {
-              (req as any).body = JSON.parse(bodyStr);
-            } catch {
-              (req as any).body = {};
-            }
-          }
-
+          await ensureBodyParsed();
           try {
             // @ts-ignore
             const mod = await import('./api/app-config.js');

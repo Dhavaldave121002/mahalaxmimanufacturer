@@ -1018,6 +1018,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setOrders(prev => [newOrder, ...prev]);
     clearCart();
+
+    // Persist to central MySQL database
+    fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newOrder)
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log('Web Order synced to central MySQL database:', data);
+      })
+      .catch(err => {
+        console.warn('Order API sync error:', err);
+      });
+
     return newOrder;
   };
 

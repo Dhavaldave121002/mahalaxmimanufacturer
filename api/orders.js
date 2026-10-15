@@ -1,7 +1,7 @@
 import { getDbPool } from '../database/db.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader(
@@ -16,30 +16,78 @@ export default async function handler(req, res) {
 
   const pool = getDbPool();
 
+  // 1. GET: Fetch all live orders
   if (req.method === 'GET') {
     if (!pool) {
-      return res.status(200).json({ source: 'LOCAL_FALLBACK', orders: [] });
+      return res.status(200).json({ success: true, source: 'LOCAL_FALLBACK', count: 0, data: [] });
     }
     try {
       const [rows] = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
-      return res.status(200).json({ count: rows.length, data: rows });
+      return res.status(200).json({ success: true, count: rows.length, data: rows });
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return res.status(500).json({ success: false, error: err.message });
     }
   }
 
+  // 2. POST: Insert new order from Website or Mobile App
   if (req.method === 'POST') {
-    const o = req.body;
+    let o = req.body;
+    if (typeof o === 'string') {
+      try {
+        o = JSON.parse(o);
+      } catch (e) {
+        o = {};
+      }
+    }
+    o = o || {};
+
     const orderId = o.id || `ord-${Date.now()}`;
-    const orderNumber = o.orderNumber || `MLE-${o.source === 'FLUTTER_APP' ? 'APP' : 'WEB'}-${Math.floor(10000 + Math.random() * 90000)}`;
+    const source = o.source === 'FLUTTER_APP' ? 'FLUTTER_APP' : 'WEB';
+    const orderNumber =
+      o.orderNumber ||
+      `MLE-${source === 'FLUTTER_APP' ? 'APP' : 'WEB'}-${new Date().getFullYear()}-${Math.floor(
+        10000 + Math.random() * 90000
+      )}`;
+
+    const customer = o.customer || {};
+    const customerName = customer.name || o.customerName || 'Customer';
+    const customerEmail = customer.email || o.customerEmail || 'customer@mahalaxmi.in';
+    const customerPhone = customer.phone || o.customerPhone || '+91 98765 00000';
+    const companyName = customer.companyName || o.companyName || null;
+    const gstNumber = customer.gstNumber || o.gstNumber || null;
+    const isB2B = customer.isB2B || o.isB2B ? 1 : 0;
+
+    const subtotal = Number(o.subtotal || o.totalAmount || 0);
+    const totalAmount = Number(o.totalAmount || o.subtotal || 0);
+    const paymentMethod = ['UPI', 'COD', 'NET_BANKING', 'CREDIT_30_DAYS'].includes(o.paymentMethod)
+      ? o.paymentMethod
+      : 'UPI';
+    const paymentStatus = ['PAID', 'PENDING', 'REFUNDED', 'CREDIT_APPROVED'].includes(o.paymentStatus)
+      ? o.paymentStatus
+      : paymentMethod === 'COD'
+      ? 'PENDING'
+      : 'PAID';
+    const status = o.status || 'PLACED';
+
+    const shippingAddress = typeof o.shippingAddress === 'object' ? JSON.stringify(o.shippingAddress) : String(o.shippingAddress || '{}');
+    const billingAddress = typeof o.billingAddress === 'object' ? JSON.stringify(o.billingAddress) : String(o.billingAddress || shippingAddress);
+    const timeline = Array.isArray(o.timeline)
+      ? JSON.stringify(o.timeline)
+      : JSON.stringify([
+          {
+            status: 'PLACED',
+            timestamp: new Date().toISOString(),
+            description: `Order successfully booked via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Web Store'}.`
+          }
+        ]);
 
     if (!pool) {
-      // In-memory or fallback receipt
       return res.status(201).json({
         success: true,
         orderId,
         orderNumber,
-        message: 'Order recorded in staging environment.'
+        source,
+        message: 'Order created in local fallback (MySQL pool unavailable).'
       });
     }
 
@@ -54,16 +102,16 @@ export default async function handler(req, res) {
         [
           orderId,
           orderNumber,
-          o.customer?.id || null,
-          o.source || 'WEB',
-          o.deviceInfo || (o.source === 'FLUTTER_APP' ? 'Flutter Android/iOS' : 'Web Browser'),
-          o.customer?.name || 'Customer',
-          o.customer?.email || '',
-          o.customer?.phone || '',
-          o.customer?.companyName || null,
-          o.customer?.gstNumber || null,
-          o.customer?.isB2B ? 1 : 0,
-          o.subtotal || 0,
+          customer.id || o.userId || null,
+          source,
+          o.deviceInfo || (source === 'FLUTTER_APP' ? 'Flutter Android/iOS App' : 'Desktop/Mobile Web Browser'),
+          customerName,
+          customerEmail,
+          customerPhone,
+          companyName,
+          gstNumber,
+          isB2B,
+          subtotal,
           o.taxBreakdown?.cgst || 0,
           o.taxBreakdown?.sgst || 0,
           o.taxBreakdown?.igst || 0,
@@ -71,33 +119,39 @@ export default async function handler(req, res) {
           o.shippingCharge || 0,
           o.discount || 0,
           o.couponCode || null,
-          o.totalAmount || 0,
-          o.paymentMethod || 'UPI',
-          o.paymentStatus || 'PAID',
-          o.status || 'PLACED',
-          JSON.stringify(o.shippingAddress || {}),
-          JSON.stringify(o.billingAddress || {}),
-          JSON.stringify(o.timeline || [])
+          totalAmount,
+          paymentMethod,
+          paymentStatus,
+          status,
+          shippingAddress,
+          billingAddress,
+          timeline
         ]
       );
 
       // Insert Order Items if provided
-      if (Array.isArray(o.items)) {
+      if (Array.isArray(o.items) && o.items.length > 0) {
         for (const item of o.items) {
+          const itemId = `item-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+          const unitPrice = Number(item.unitPrice || item.price || 0);
+          const quantity = Number(item.quantity || 1);
+          const totalPrice = Number(item.totalPrice || unitPrice * quantity);
+
           await pool.query(
             `INSERT INTO order_items (
-              id, order_id, product_id, product_name, sku, hsn_code, quantity, unit_price, total_price, image, gst_rate
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              id, order_id, product_id, product_name, sku, hsn_code, quantity, unit_price, total_price, variant_description, image, gst_rate
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              `item-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+              itemId,
               orderId,
-              item.productId,
-              item.productName,
-              item.sku || 'SKU',
+              item.productId || item.id || 'prod-1',
+              item.productName || item.name || 'Textile Product',
+              item.sku || 'MLE-SKU',
               item.hsnCode || '630221',
-              item.quantity || 1,
-              item.unitPrice || 0,
-              item.totalPrice || 0,
+              quantity,
+              unitPrice,
+              totalPrice,
+              item.variantDescription || item.selectedVariant?.name || 'Standard Pack',
               item.image || '',
               item.gstRate || 5.0
             ]
@@ -109,12 +163,14 @@ export default async function handler(req, res) {
         success: true,
         orderId,
         orderNumber,
-        message: 'Order placed and saved to MySQL successfully!'
+        source,
+        message: `Order ${orderNumber} successfully booked and stored in MySQL database!`
       });
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      console.error('MySQL order insert error:', err);
+      return res.status(500).json({ success: false, error: err.message });
     }
   }
 
-  return res.status(405).json({ error: 'Method Not Allowed' });
+  return res.status(405).json({ success: false, error: 'Method Not Allowed' });
 }
