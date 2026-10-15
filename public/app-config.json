@@ -12,7 +12,7 @@
   "catalogDownloadUrl": "https://mahalaxmimanufacturer.vercel.app/catalog.pdf",
   "gstNotice": "100% Verified Input Tax Credit (ITC) invoices available for all commercial business orders.",
   "localFlutterProjectPath": "C:\\mahalaxmi_enterprises",
-  "lastSyncedAt": "2026-10-15T09:35:07.987Z",
+  "lastSyncedAt": "2026-10-15T09:43:32.246Z",
   "banners": [
     {
       "id": "banner-kitchen",
@@ -126,6 +126,15 @@
     }
   ],
   "notifications": [
+    {
+      "id": "notif-live-1792057412103",
+      "title": "Diwali Special Mill Dhamaka! 🪔",
+      "message": "Exclusive 35% Flat Discount unlocked for all B2B and retail textile orders.",
+      "timestamp": "2026-10-15T09:43:32.233Z",
+      "targetCategory": "Textile",
+      "type": "OFFER",
+      "isSent": true
+    },
     {
       "id": "notif-post-test",
       "title": "Live Broadcast Test",
