@@ -89,6 +89,7 @@ export interface User {
   addresses: Address[];
   creditLimit?: number;
   availableCredit?: number;
+  password?: string;
 }
 
 export type OrderStatus =

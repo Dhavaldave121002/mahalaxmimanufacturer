@@ -12,12 +12,14 @@ import {
   CreditCard,
   Plus,
   Edit2,
-  CheckCircle2
+  CheckCircle2,
+  LogOut,
+  ArrowRight
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
 export const AccountPage: React.FC = () => {
-  const { currentUser, updateUserProfile, addSavedAddress, orders, quotations } = useApp();
+  const { currentUser, isLoggedIn, logout, updateUserProfile, addSavedAddress, orders, quotations } = useApp();
 
   const userOrdersCount = currentUser.role === 'admin'
     ? orders.length
@@ -65,6 +67,39 @@ export const AccountPage: React.FC = () => {
     setShowAddressForm(false);
   };
 
+  if (!isLoggedIn) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 sm:py-24 text-center space-y-6">
+        <div className="w-16 h-16 rounded-3xl bg-indigo-light text-indigo flex items-center justify-center mx-auto shadow-sm">
+          <UserIcon className="w-8 h-8" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-black text-navy">
+            Sign In to Your Account
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+            Please sign in to access your direct mill orders, tracking history, GST invoices, and commercial rate agreements.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <Link
+            to="/login"
+            className="w-full sm:w-auto px-8 py-3 bg-navy hover:bg-navy-800 text-white rounded-xl font-bold text-sm transition shadow-premium flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>Sign In / Login</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            to="/register"
+            className="w-full sm:w-auto px-8 py-3 bg-white hover:bg-slate-50 text-navy border border-slate-300 rounded-xl font-bold text-sm transition cursor-pointer"
+          >
+            Create Free Account
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 pb-20">
       {/* Title */}
@@ -87,6 +122,15 @@ export const AccountPage: React.FC = () => {
               GST Verified
             </Badge>
           )}
+          <button
+            type="button"
+            onClick={logout}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:text-error hover:border-error/40 hover:bg-red-50 transition cursor-pointer"
+            title="Sign out of account"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Logout</span>
+          </button>
         </div>
       </div>
 

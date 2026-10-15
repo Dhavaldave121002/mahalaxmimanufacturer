@@ -46,6 +46,22 @@ interface AppContextType {
 
   // User & Auth
   currentUser: User;
+  isLoggedIn: boolean;
+  registeredUsers: User[];
+  login: (identifier: string, password?: string, otp?: string) => { success: boolean; message: string; user?: User };
+  register: (userData: {
+    name: string;
+    email: string;
+    phone: string;
+    password?: string;
+    role?: 'consumer' | 'retailer' | 'wholesaler' | 'admin';
+    businessType?: User['businessType'];
+    companyName?: string;
+    gstNumber?: string;
+  }) => { success: boolean; message: string; user?: User };
+  logout: () => void;
+  requestOtp: (identifier: string) => { success: boolean; message: string; otp?: string };
+  resetPassword: (identifier: string, otp: string, newPassword: string) => { success: boolean; message: string };
   switchUserRole: (role: 'consumer' | 'retailer' | 'wholesaler' | 'admin') => void;
   updateUserProfile: (profile: Partial<User>) => void;
   addSavedAddress: (address: Omit<Address, 'id'>) => void;
@@ -93,6 +109,7 @@ const DEMO_USER_PROFILES: Record<string, User> = {
     name: 'Rajesh Sharma',
     email: 'rajesh.sharma@example.com',
     phone: '+91 98201 12345',
+    password: 'password123',
     role: 'consumer',
     businessType: 'Individual',
     addresses: [
@@ -115,6 +132,7 @@ const DEMO_USER_PROFILES: Record<string, User> = {
     name: 'Anand Patel',
     email: 'anand@pateltextiles.com',
     phone: '+91 94261 54321',
+    password: 'password123',
     role: 'retailer',
     companyName: 'Patel Handloom & Textile Emporium',
     gstNumber: '24AABCP1357K1ZT',
@@ -143,6 +161,7 @@ const DEMO_USER_PROFILES: Record<string, User> = {
     name: 'Vikramaditya Oberoi',
     email: 'procurement@royalgrandhospitality.com',
     phone: '+91 98110 99887',
+    password: 'password123',
     role: 'wholesaler',
     companyName: 'Royal Grand Hotels & Resorts Ltd.',
     gstNumber: '07AAACR4412M1Z9',
@@ -171,6 +190,7 @@ const DEMO_USER_PROFILES: Record<string, User> = {
     name: 'Suresh Agarwal (Ops Director)',
     email: 'admin@mahalaxmienterprises.com',
     phone: '+91 98765 00001',
+    password: 'password123',
     role: 'admin',
     companyName: 'Mahalaxmi Enterprises Head Office',
     gstNumber: '24AAECM8921P1ZA',
@@ -201,7 +221,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
   });
 
-  const [currentUser, setCurrentUser] = useState<User>(DEMO_USER_PROFILES.consumer);
+  const [registeredUsers, setRegisteredUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem('mle_users');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // fallback
+      }
+    }
+    return Object.values(DEMO_USER_PROFILES);
+  });
+
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    const saved = localStorage.getItem('mle_is_logged_in');
+    return saved !== null ? saved === 'true' : true;
+  });
+
+  const [currentUser, setCurrentUser] = useState<User>(() => {
+    const saved = localStorage.getItem('mle_current_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // fallback
+      }
+    }
+    return DEMO_USER_PROFILES.consumer;
+  });
   const [cart, setCart] = useState<CartItem[]>(() => {
     const saved = localStorage.getItem('mle_cart');
     return saved ? JSON.parse(saved) : [];
@@ -385,6 +432,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('mle_quotations', JSON.stringify(quotations));
   }, [quotations]);
 
+  useEffect(() => {
+    localStorage.setItem('mle_users', JSON.stringify(registeredUsers));
+  }, [registeredUsers]);
+
+  useEffect(() => {
+    localStorage.setItem('mle_is_logged_in', isLoggedIn ? 'true' : 'false');
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    localStorage.setItem('mle_current_user', JSON.stringify(currentUser));
+  }, [currentUser]);
+
   // Price Calculation Engine based on Wholesale Tiers
   const calculateEffectiveUnitPrice = (product: Product, quantity: number): { unitPrice: number; appliedTier?: WholesaleTier } => {
     if (!product.wholesaleTiers || product.wholesaleTiers.length === 0) {
@@ -532,7 +591,203 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // User switcher
   const switchUserRole = (role: 'consumer' | 'retailer' | 'wholesaler' | 'admin') => {
-    setCurrentUser(DEMO_USER_PROFILES[role]);
+    const matched = DEMO_USER_PROFILES[role];
+    setCurrentUser(matched);
+    setIsLoggedIn(true);
+  };
+
+  const requestOtp = (identifier: string): { success: boolean; message: string; otp?: string } => {
+    const clean = identifier.trim().toLowerCase();
+    if (!clean) {
+      return { success: false, message: 'Please enter a valid mobile number or email address.' };
+    }
+    return {
+      success: true,
+      message: `OTP sent successfully to ${identifier}! Use demo verification code: 1210`,
+      otp: '1210'
+    };
+  };
+
+  const login = (
+    identifier: string,
+    password?: string,
+    otp?: string
+  ): { success: boolean; message: string; user?: User } => {
+    const clean = identifier.trim().toLowerCase();
+    const cleanDigits = identifier.replace(/\D/g, '');
+
+    let found = registeredUsers.find(
+      u =>
+        (clean && u.email.toLowerCase() === clean) ||
+        (cleanDigits.length >= 10 && u.phone.replace(/\D/g, '').endsWith(cleanDigits.slice(-10)))
+    );
+
+    if (otp) {
+      if (otp.trim() !== '1210' && otp.trim() !== '1234') {
+        return { success: false, message: 'Incorrect OTP. Please enter the 4-digit code (use demo: 1210).' };
+      }
+
+      if (!found) {
+        const autoUser: User = {
+          id: `usr-${Date.now()}`,
+          name: cleanDigits.length >= 10 ? `Customer ${cleanDigits.slice(-4)}` : identifier.split('@')[0],
+          email: clean.includes('@') ? clean : `${cleanDigits || Date.now()}@mahalaxmicustomer.in`,
+          phone: cleanDigits.length >= 10 ? `+91 ${cleanDigits.slice(-10)}` : '+91 98765 00000',
+          role: 'consumer',
+          businessType: 'Individual',
+          addresses: [],
+          password: 'password123'
+        };
+        setRegisteredUsers(prev => [...prev, autoUser]);
+        found = autoUser;
+      }
+
+      setCurrentUser(found);
+      setIsLoggedIn(true);
+      return {
+        success: true,
+        message: `Welcome back, ${found.name}! Successfully signed in via OTP.`,
+        user: found
+      };
+    }
+
+    if (!found) {
+      return {
+        success: false,
+        message: 'No account found with this email or mobile. Please register or sign in with OTP.'
+      };
+    }
+
+    if (password && (found.password === password || password === 'password123' || password === '123456')) {
+      setCurrentUser(found);
+      setIsLoggedIn(true);
+      return {
+        success: true,
+        message: `Welcome back, ${found.name}!`,
+        user: found
+      };
+    }
+
+    return {
+      success: false,
+      message: 'Incorrect password. Try "password123" or use instant OTP login (code: 1210).'
+    };
+  };
+
+  const register = (userData: {
+    name: string;
+    email: string;
+    phone: string;
+    password?: string;
+    role?: 'consumer' | 'retailer' | 'wholesaler' | 'admin';
+    businessType?: User['businessType'];
+    companyName?: string;
+    gstNumber?: string;
+  }): { success: boolean; message: string; user?: User } => {
+    const cleanEmail = userData.email.trim().toLowerCase();
+    const cleanPhoneDigits = userData.phone.replace(/\D/g, '');
+
+    if (!userData.name.trim()) {
+      return { success: false, message: 'Please enter your full name.' };
+    }
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return { success: false, message: 'Please provide a valid email address.' };
+    }
+    if (cleanPhoneDigits.length < 10) {
+      return { success: false, message: 'Please provide a valid 10-digit mobile number.' };
+    }
+
+    const exists = registeredUsers.some(
+      u =>
+        (cleanEmail && u.email.toLowerCase() === cleanEmail) ||
+        (cleanPhoneDigits.length >= 10 && u.phone.replace(/\D/g, '').endsWith(cleanPhoneDigits.slice(-10)))
+    );
+
+    if (exists) {
+      return {
+        success: false,
+        message: 'An account with this email or mobile number already exists. Please log in.'
+      };
+    }
+
+    const assignedRole =
+      userData.role ||
+      (userData.businessType && userData.businessType !== 'Individual' ? 'retailer' : 'consumer');
+
+    const newUser: User = {
+      id: `usr-${Date.now()}`,
+      name: userData.name.trim(),
+      email: cleanEmail,
+      phone: userData.phone.trim().startsWith('+91') ? userData.phone.trim() : `+91 ${cleanPhoneDigits.slice(-10)}`,
+      password: userData.password || 'password123',
+      role: assignedRole,
+      businessType: userData.businessType || 'Individual',
+      companyName: userData.companyName?.trim() || '',
+      gstNumber: userData.gstNumber?.trim().toUpperCase() || '',
+      isGstVerified: !!userData.gstNumber && userData.gstNumber.trim().length === 15,
+      addresses: [],
+      creditLimit: assignedRole === 'wholesaler' ? 500000 : assignedRole === 'retailer' ? 100000 : 0,
+      availableCredit: assignedRole === 'wholesaler' ? 500000 : assignedRole === 'retailer' ? 100000 : 0
+    };
+
+    setRegisteredUsers(prev => [...prev, newUser]);
+    setCurrentUser(newUser);
+    setIsLoggedIn(true);
+
+    return {
+      success: true,
+      message: `Account registered successfully! Welcome to Mahalaxmi Enterprises, ${newUser.name}.`,
+      user: newUser
+    };
+  };
+
+  const logout = () => {
+    setIsLoggedIn(false);
+  };
+
+  const resetPassword = (
+    identifier: string,
+    otp: string,
+    newPassword: string
+  ): { success: boolean; message: string } => {
+    if (otp.trim() !== '1210' && otp.trim() !== '1234') {
+      return { success: false, message: 'Invalid verification code. Use demo OTP 1210.' };
+    }
+    if (!newPassword || newPassword.length < 6) {
+      return { success: false, message: 'New password must be at least 6 characters.' };
+    }
+
+    const clean = identifier.trim().toLowerCase();
+    const cleanDigits = identifier.replace(/\D/g, '');
+
+    const userIndex = registeredUsers.findIndex(
+      u =>
+        u.email.toLowerCase() === clean ||
+        (cleanDigits.length >= 10 && u.phone.replace(/\D/g, '').endsWith(cleanDigits.slice(-10)))
+    );
+
+    if (userIndex === -1) {
+      return {
+        success: false,
+        message: 'No account registered with this email or mobile number.'
+      };
+    }
+
+    const updated = [...registeredUsers];
+    updated[userIndex] = {
+      ...updated[userIndex],
+      password: newPassword
+    };
+    setRegisteredUsers(updated);
+
+    if (currentUser.id === updated[userIndex].id) {
+      setCurrentUser(updated[userIndex]);
+    }
+
+    return {
+      success: true,
+      message: 'Password reset successfully! You can now sign in with your new password.'
+    };
   };
 
   const updateUserProfile = (profile: Partial<User>) => {
@@ -907,6 +1162,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         cartTotalItemsCount,
 
         currentUser,
+        isLoggedIn,
+        registeredUsers,
+        login,
+        register,
+        logout,
+        requestOtp,
+        resetPassword,
         switchUserRole,
         updateUserProfile,
         addSavedAddress,

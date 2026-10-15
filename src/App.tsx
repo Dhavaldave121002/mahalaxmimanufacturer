@@ -19,6 +19,7 @@ const OrderTrackingPage = lazy(() => import('./pages/OrderTrackingPage').then(m 
 const WholesalePage = lazy(() => import('./pages/WholesalePage').then(m => ({ default: m.WholesalePage })));
 const AccountPage = lazy(() => import('./pages/AccountPage').then(m => ({ default: m.AccountPage })));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));
+const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
 
 // Lightweight loading placeholder
 const PageLoadingFallback = () => (
@@ -56,6 +57,9 @@ export const App: React.FC = () => {
                 <Route path="/wholesale" element={<WholesalePage />} />
                 <Route path="/account" element={<AccountPage />} />
                 <Route path="/admin" element={<AdminDashboardPage />} />
+                <Route path="/login" element={<LoginPage defaultTab="login" />} />
+                <Route path="/register" element={<LoginPage defaultTab="register" />} />
+                <Route path="/forgot-password" element={<LoginPage defaultTab="forgot" />} />
                 {/* Fallback */}
                 <Route path="*" element={<HomePage />} />
               </Routes>

@@ -35,6 +35,8 @@ export const Header: React.FC = () => {
   const location = useLocation();
   const {
     currentUser,
+    isLoggedIn,
+    logout,
     switchUserRole,
     cartTotalItemsCount,
     cartSubtotal,
@@ -223,12 +225,32 @@ export const Header: React.FC = () => {
               Wholesale RFQ
             </Link>
             <span className="text-slate-700 hidden sm:inline">•</span>
-            <Link
-              to="/account"
-              className="text-champagne hover:text-white transition font-bold"
-            >
-              My Account
-            </Link>
+            {isLoggedIn ? (
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/account"
+                  className="text-champagne hover:text-white transition font-bold"
+                >
+                  My Account
+                </Link>
+                <span className="text-slate-700">•</span>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="text-slate-400 hover:text-white transition text-[10px] cursor-pointer"
+                  title="Sign out of account"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="text-champagne hover:text-white transition font-bold"
+              >
+                Sign In / Register
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -446,20 +468,35 @@ export const Header: React.FC = () => {
               </Link>
 
               {/* Account Link */}
-              <Link
-                to="/account"
-                aria-label={`My Account: ${currentUser.name}`}
-                className="flex items-center gap-1.5 p-1 sm:p-1.5 hover:bg-slate-100 rounded-xl transition text-slate-700 hover:text-navy"
-                title="My Account"
-              >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200 flex items-center justify-center text-navy font-bold text-xs">
-                  {currentUser.name.charAt(0)}
-                </div>
-                <div className="hidden xl:block text-left text-xs">
-                  <p className="text-[10px] text-slate-500 font-medium">Hello, {currentUser.name.split(' ')[0]}</p>
-                  <p className="font-bold text-navy">Orders & GST</p>
-                </div>
-              </Link>
+              {isLoggedIn ? (
+                <Link
+                  to="/account"
+                  aria-label={`My Account: ${currentUser.name}`}
+                  className="flex items-center gap-1.5 p-1 sm:p-1.5 hover:bg-slate-100 rounded-xl transition text-slate-700 hover:text-navy"
+                  title="My Account"
+                >
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200 flex items-center justify-center text-navy font-bold text-xs shrink-0">
+                    {currentUser.name.charAt(0)}
+                  </div>
+                  <div className="hidden xl:block text-left text-xs">
+                    <p className="text-[10px] text-slate-500 font-medium">Hello, {currentUser.name.split(' ')[0]}</p>
+                    <p className="font-bold text-navy">Orders & GST</p>
+                  </div>
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  aria-label="Sign In or Register account"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 hover:bg-slate-100 rounded-xl transition text-slate-700 hover:text-navy border border-slate-200"
+                  title="Sign In / Register"
+                >
+                  <UserIcon className="w-4 h-4 text-indigo shrink-0" />
+                  <div className="hidden xl:block text-left text-xs">
+                    <p className="text-[10px] text-slate-500 font-medium">Direct Mill Access</p>
+                    <p className="font-bold text-navy">Sign In / Register</p>
+                  </div>
+                </Link>
+              )}
 
               {/* Cart Link */}
               <Link
@@ -724,10 +761,30 @@ export const Header: React.FC = () => {
               {/* User Persona & Pincode Chips */}
               <div className="pt-2 border-t border-slate-700/60 flex flex-col gap-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-300 font-medium">Hello, {currentUser.name}</span>
-                  <span className="bg-champagne/20 text-champagne text-[10px] font-bold px-2 py-0.5 rounded-full border border-champagne/30">
-                    {currentUser.businessType || 'Wholesale Buyer'}
-                  </span>
+                  {isLoggedIn ? (
+                    <>
+                      <span className="text-slate-300 font-medium truncate">Hello, {currentUser.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          logout();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="text-champagne hover:underline text-[10px] font-bold cursor-pointer"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      to="/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-champagne font-bold flex items-center gap-1 hover:underline text-xs"
+                    >
+                      <UserIcon className="w-3.5 h-3.5" />
+                      <span>Sign In / Create Account</span>
+                    </Link>
+                  )}
                 </div>
 
                 <button
