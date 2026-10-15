@@ -570,6 +570,43 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Rebate Policy': '₹199 Cash Coupon included for your next order > ₹5,000'
     },
     tags: ['swatch', 'sample', 'fabric sample', 'mill kit', 'b2b testing']
+  },
+  {
+    id: 'prod-sample-bundle-all',
+    name: 'Mahalaxmi Complete Commercial Sample Bundle (All 4 Categories Swatch & Product Minis Box)',
+    slug: 'mill-commercial-sample-bundle',
+    sku: 'MLE-BUNDLE-SMP-01',
+    category: 'textile',
+    categoryName: 'Textile',
+    subcategory: 'Sample Bundles',
+    shortDescription: 'The ultimate commercial evaluation box: 12 fabric swatches + 4 actual product minis across Home, Textile, Cotton & Household with ₹300 Rebate Voucher.',
+    description: 'Procurement-grade sample bundle designed for corporate clients, hospitality chains, and garment retailers. Includes: (1) Full set of 12 luxury fabric swatches, (2) One 600 GSM Cotton Hand Towel, (3) One Heavy-Duty Microfiber Cloth, (4) One Chef-Grade Kitchen Wipe, and (5) Mill Technical Report & Lab Certification. Fully refundable via an included ₹300 coupon code on your first wholesale order.',
+    images: [
+      'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1000&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?q=80&w=1000&auto=format&fit=crop'
+    ],
+    mrp: 999,
+    retailPrice: 299,
+    wholesaleTiers: [
+      { minQty: 1, maxQty: 3, pricePerUnit: 299, savingsPercent: 70, label: 'Single Sample Bundle' },
+      { minQty: 4, pricePerUnit: 249, savingsPercent: 75, label: 'Multi-Branch Audit Pack' }
+    ],
+    moq: 1,
+    stock: 200,
+    rating: 5.0,
+    reviewCount: 310,
+    isBestSeller: true,
+    isDirectMillDeal: true,
+    isTrending: true,
+    hsnCode: '630790',
+    gstRate: 5,
+    specifications: {
+      'Bundle Contents': '12 Swatches (15x15cm) + 1 Cotton Towel + 1 Microfiber + 1 Kitchen Wipe',
+      'Quality Standard': 'ISO 9001:2015 & Oeko-Tex Standard 100 Certified',
+      'Rebate Guarantee': '100% Refundable via ₹300 Instant Voucher on next bulk order',
+      'Dispatch Speed': 'Same-Day Air Express Dispatch from Surat Mill'
+    },
+    tags: ['sample bundle', 'sample pack', 'swatch kit', 'commercial sample', 'b2b testing', 'bundle']
   }
 ];
 
@@ -580,7 +617,7 @@ export const CATEGORIES_CONFIG = [
     tagline: 'Mill Direct Fabrics, Bedsheets & Curtains',
     icon: 'Layers',
     image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800&auto=format&fit=crop',
-    subcategories: ['Double Bedsheets', 'Curtains', 'Premium Linen', 'Fabrics'],
+    subcategories: ['Double Bedsheets', 'Curtains', 'Premium Linen', 'Fabrics', 'Sample Bundles'],
     description: 'Direct mill woven bedsheets, blackout curtains, hotel linen and raw fabrics manufactured in Surat & Tirupur.'
   },
   {

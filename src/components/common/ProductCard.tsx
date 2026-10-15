@@ -41,7 +41,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Top Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 items-start z-10">
-          {product.isDirectMillDeal && (
+          {(product.id.includes('sample') || product.id.includes('swatch')) && (
+            <span className="bg-purple-700 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+              <Zap className="w-2.5 h-2.5 fill-champagne text-champagne" />
+              100% REBATE SAMPLE
+            </span>
+          )}
+          {product.isDirectMillDeal && !(product.id.includes('sample') || product.id.includes('swatch')) && (
             <span className="badge-mill text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
               <Zap className="w-2.5 h-2.5 fill-current" />
               DIRECT MILL RATE

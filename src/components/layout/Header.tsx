@@ -188,6 +188,12 @@ export const Header: React.FC = () => {
       path: '/wholesale',
       img: 'https://images.unsplash.com/photo-1604014237800-1c9102c219da?q=80&w=200&auto=format&fit=crop',
       isHot: true
+    },
+    {
+      name: 'Sample Kits & Bundles',
+      path: '/catalog?q=sample',
+      img: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?q=80&w=200&auto=format&fit=crop',
+      isHot: true
     }
   ];
 

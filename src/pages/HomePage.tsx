@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { ProductCard } from '../components/common/ProductCard';
@@ -30,11 +30,15 @@ import {
   CreditCard,
   Box,
   TrendingUp,
-  Quote
+  Quote,
+  PackageCheck,
+  Package,
+  Boxes
 } from 'lucide-react';
 
 export const HomePage: React.FC = () => {
-  const { products, submitBusinessEnquiry } = useApp();
+  const navigate = useNavigate();
+  const { products, submitBusinessEnquiry, addToCart } = useApp();
 
   // Hero Carousel State
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -283,6 +287,23 @@ export const HomePage: React.FC = () => {
   const resellerRevenue = calcQuantity * resellerSellingPrice;
   const resellerGrossProfit = resellerRevenue - totalBulkCost;
   const resellerRoi = Math.round((resellerGrossProfit / totalBulkCost) * 100);
+
+  // Sample Kits & Bundles Handler
+  const [sampleAddedId, setSampleAddedId] = useState<string | null>(null);
+
+  const handleOrderSampleKit = (productId: string, autoRedirect: boolean = false) => {
+    const item = products.find(p => p.id === productId);
+    if (item) {
+      addToCart(item, 1);
+      setSampleAddedId(productId);
+      setTimeout(() => setSampleAddedId(null), 2500);
+      if (autoRedirect) {
+        navigate('/cart');
+      }
+    } else {
+      navigate('/catalog?q=sample');
+    }
+  };
 
   return (
     <div className="space-y-12 pb-16">
@@ -599,6 +620,221 @@ export const HomePage: React.FC = () => {
               </div>
             </Link>
           ))}
+        </div>
+      </section>
+
+      {/* ========================================================
+          4.5 B2B SAMPLES & COMMERCIAL BUNDLES SUITE
+              (Physical Swatches, 1-Pc Evaluation & Complete Bundles)
+          ======================================================== */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-navy rounded-3xl p-6 sm:p-10 text-white shadow-premium relative overflow-hidden border border-indigo-800/40">
+          {/* Subtle Background Glow */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="relative z-10 space-y-8">
+            {/* Header & Value Proposition */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 border-b border-white/10 pb-6">
+              <div className="space-y-2 max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-champagne/20 border border-champagne/30 text-champagne text-xs font-black tracking-wide uppercase">
+                  <PackageCheck className="w-4 h-4 text-champagne" />
+                  <span>B2B Quality Assurance • 100% Rebate Voucher</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
+                  Evaluate Mill Quality Before Bulk Placement
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Experience our fabric weave density, GSM thickness, and commercial tactile finish risk-free. Order single piece unit samples from any product page or get our curated physical swatch testing kits.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-4 py-2.5 rounded-2xl shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <div className="text-left">
+                  <p className="text-xs font-black text-emerald-300">100% Refund Guarantee</p>
+                  <p className="text-[11px] text-slate-300">Sample kit cost credited back on 1st bulk order</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 3 Sample Offering Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Card 1: Complete Commercial Sample Bundle */}
+              <div className="bg-white/5 hover:bg-white/10 border-2 border-champagne/40 rounded-2xl p-5 flex flex-col justify-between transition-all group relative overflow-hidden backdrop-blur-sm">
+                <div className="absolute top-3 right-3 bg-champagne text-navy text-[10px] font-black uppercase px-2 py-0.5 rounded shadow">
+                  Most Popular
+                </div>
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-champagne/20 text-champagne flex items-center justify-center mb-4">
+                    <Boxes className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white group-hover:text-champagne transition">
+                    Complete Commercial Sample Bundle
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                    All-in-one testing box: 12 fabric swatches, 4 towel cuts, canvas tote sample, GSM specs & ₹300 coupon.
+                  </p>
+
+                  <div className="mt-4 pt-3 border-t border-white/10 flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-champagne">₹299</span>
+                    <span className="text-xs text-slate-400 line-through">₹999</span>
+                    <span className="text-[11px] font-bold text-emerald-400 ml-auto">70% OFF</span>
+                  </div>
+
+                  <ul className="mt-3 space-y-1.5 text-[11px] text-slate-300">
+                    <li className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      12 Bedsheet & Terry Towel Swatches
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      4 Microfiber & Canvas Mini Cutters
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      Includes 100% Refund Voucher Code
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-6 space-y-2">
+                  <button
+                    onClick={() => handleOrderSampleKit('prod-sample-bundle-all', false)}
+                    className="w-full py-2.5 px-4 bg-champagne hover:bg-champagne-light text-navy font-black text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow"
+                  >
+                    <Package className="w-4 h-4" />
+                    <span>{sampleAddedId === 'prod-sample-bundle-all' ? 'Added to Cart! ✓' : 'Add Bundle (₹299)'}</span>
+                  </button>
+                  <button
+                    onClick={() => handleOrderSampleKit('prod-sample-bundle-all', true)}
+                    className="w-full py-2 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1 border border-white/20"
+                  >
+                    <span>Buy Now &rarr;</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 2: Fabric Swatch Box */}
+              <div className="bg-white/5 hover:bg-white/10 border border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all group backdrop-blur-sm">
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center mb-4">
+                    <PackageCheck className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white group-hover:text-champagne transition">
+                    Fabric Swatch Kit (12 Pieces)
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                    Physical touch & feel kit: 300-600 TC bedsheet fabrics and 400-650 GSM cotton terry swatches.
+                  </p>
+
+                  <div className="mt-4 pt-3 border-t border-white/10 flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-champagne">₹199</span>
+                    <span className="text-xs text-slate-400 line-through">₹499</span>
+                    <span className="text-[11px] font-bold text-emerald-400 ml-auto">60% OFF</span>
+                  </div>
+
+                  <ul className="mt-3 space-y-1.5 text-[11px] text-slate-300">
+                    <li className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      Yarn Count & GSM Specification Tagged
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      Color Fastness & Bleach Resistance Guide
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      Refundable on any subsequent bulk order
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-6 space-y-2">
+                  <button
+                    onClick={() => handleOrderSampleKit('prod-swatch-box-01', false)}
+                    className="w-full py-2.5 px-4 bg-indigo hover:bg-indigo-dark text-white font-black text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow"
+                  >
+                    <Package className="w-4 h-4" />
+                    <span>{sampleAddedId === 'prod-swatch-box-01' ? 'Added to Cart! ✓' : 'Add Swatch Kit (₹199)'}</span>
+                  </button>
+                  <button
+                    onClick={() => handleOrderSampleKit('prod-swatch-box-01', true)}
+                    className="w-full py-2 px-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1 border border-white/20"
+                  >
+                    <span>Buy Now &rarr;</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Card 3: 1-Piece Individual Product Sample */}
+              <div className="bg-white/5 hover:bg-white/10 border border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all group backdrop-blur-sm">
+                <div>
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center mb-4">
+                    <Tag className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white group-hover:text-champagne transition">
+                    1-Pc Product Unit Sample
+                  </h3>
+                  <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                    Need a finished bedsheet, bath towel, or microfiber roll? Order just 1 piece without wholesale MOQ!
+                  </p>
+
+                  <div className="mt-4 pt-3 border-t border-white/10 flex items-baseline gap-2">
+                    <span className="text-base font-black text-amber-400">Standard Retail Rate</span>
+                    <span className="text-[11px] font-bold text-emerald-400 ml-auto">MOQ Bypassed</span>
+                  </div>
+
+                  <ul className="mt-3 space-y-1.5 text-[11px] text-slate-300">
+                    <li className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      Available on every product page
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      Test washing, stitching & shrinkage
+                    </li>
+                    <li className="flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      Immediate air-courier dispatch
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="mt-6 space-y-2">
+                  <Link
+                    to="/catalog"
+                    className="w-full py-2.5 px-4 bg-white/15 hover:bg-white/25 text-white font-black text-xs rounded-xl transition flex items-center justify-center gap-1.5 border border-white/20"
+                  >
+                    <span>Browse Products to Sample</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    to="/catalog?q=sample"
+                    className="w-full py-2 px-4 text-center text-champagne hover:underline font-bold text-xs block"
+                  >
+                    View All Sample Bundles &rarr;
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Guarantee Banner */}
+            <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-300">
+              <div className="flex items-center gap-2">
+                <Truck className="w-4 h-4 text-champagne" />
+                <span>Dispatched within 24 Hours via Air Express Courier</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Verified Mill Quality Test Certificate Enclosed in Box</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-400" />
+                <span>Use coupon code <strong>SAMPLE100</strong> on your bulk order</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

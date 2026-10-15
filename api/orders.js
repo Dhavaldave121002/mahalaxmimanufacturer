@@ -69,8 +69,29 @@ export default async function handler(req, res) {
       : 'PAID';
     const status = o.status || 'PLACED';
 
-    const shippingAddress = typeof o.shippingAddress === 'object' ? JSON.stringify(o.shippingAddress) : String(o.shippingAddress || '{}');
-    const billingAddress = typeof o.billingAddress === 'object' ? JSON.stringify(o.billingAddress) : String(o.billingAddress || shippingAddress);
+    let shippingAddress = '{}';
+    if (typeof o.shippingAddress === 'object' && o.shippingAddress !== null) {
+      shippingAddress = JSON.stringify(o.shippingAddress);
+    } else if (typeof o.shippingAddress === 'string' && o.shippingAddress.trim()) {
+      try {
+        JSON.parse(o.shippingAddress);
+        shippingAddress = o.shippingAddress;
+      } catch (e) {
+        shippingAddress = JSON.stringify({ fullAddress: o.shippingAddress });
+      }
+    }
+
+    let billingAddress = shippingAddress;
+    if (typeof o.billingAddress === 'object' && o.billingAddress !== null) {
+      billingAddress = JSON.stringify(o.billingAddress);
+    } else if (typeof o.billingAddress === 'string' && o.billingAddress.trim()) {
+      try {
+        JSON.parse(o.billingAddress);
+        billingAddress = o.billingAddress;
+      } catch (e) {
+        billingAddress = JSON.stringify({ fullAddress: o.billingAddress });
+      }
+    }
     const timeline = Array.isArray(o.timeline)
       ? JSON.stringify(o.timeline)
       : JSON.stringify([

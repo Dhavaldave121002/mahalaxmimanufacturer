@@ -680,7 +680,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const disc = Math.round(cartSubtotal * 0.2);
       setAppliedCoupon(clean);
       setCouponDiscount(disc);
-      return { success: true, message: 'Wholesale coupon applied! 20% commercial discount applied.' };
+    } else if (clean === 'SAMPLE100' || clean === 'SAMPLEKIT' || clean === 'SAMPLEREBATE') {
+      const disc = Math.min(300, cartSubtotal);
+      setAppliedCoupon(clean);
+      setCouponDiscount(disc);
+      return { success: true, message: '🎉 100% Sample Rebate Applied! ₹300 credited back on your order.' };
+    } else if (clean === 'MILLB2B') {
+      const disc = Math.round(cartSubtotal * 0.05);
+      setAppliedCoupon(clean);
+      setCouponDiscount(disc);
+      return { success: true, message: 'Instant Commercial Card 5% discount applied (MILLB2B).' };
     }
     return { success: false, message: 'Invalid or expired coupon code.' };
   };
