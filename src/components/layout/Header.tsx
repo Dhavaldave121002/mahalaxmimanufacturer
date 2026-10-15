@@ -55,6 +55,17 @@ export const Header: React.FC = () => {
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const mobileSearchContainerRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Track scroll position to enhance sticky header appearance
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Automatically close any open search or menus on page navigation
   useEffect(() => {
@@ -223,7 +234,13 @@ export const Header: React.FC = () => {
       </div>
 
       {/* 2. Main Flipkart / Amazon Style Header Bar (ALWAYS PINNED TO TOP 0) */}
-      <header className="sticky top-0 z-40 w-full bg-white/98 backdrop-blur-md border-b border-slate-200/90 shadow-sm py-2 sm:py-2.5 px-3 sm:px-6">
+      <header
+        className={`sticky top-0 z-50 w-full backdrop-blur-md transition-all duration-200 py-2 sm:py-2.5 px-3 sm:px-6 ${
+          isScrolled
+            ? 'bg-white shadow-md border-b border-slate-300'
+            : 'bg-white/98 shadow-sm border-b border-slate-200/90'
+        }`}
+      >
         <div className="max-w-7xl mx-auto">
           {/* Main Bar Row (Logo, Pincode, Search on desktop, Actions) */}
           <div className="flex items-center justify-between gap-2 sm:gap-6">

@@ -41,7 +41,7 @@ export const App: React.FC = () => {
     <AppProvider>
       <BrowserRouter>
         <ScrollToTop />
-        <div className="min-h-screen flex flex-col bg-ivory text-navy selection:bg-indigo selection:text-white pb-16 md:pb-0 overflow-x-hidden w-full max-w-full">
+        <div className="min-h-screen flex flex-col bg-ivory text-navy selection:bg-indigo selection:text-white pb-16 md:pb-0 overflow-x-clip w-full max-w-full">
           <Header />
           <main className="flex-1">
             <Suspense fallback={<PageLoadingFallback />}>
