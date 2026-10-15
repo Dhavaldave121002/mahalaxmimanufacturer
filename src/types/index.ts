@@ -147,6 +147,8 @@ export interface Order {
   status: OrderStatus;
   shippingAddress: Address;
   billingAddress: Address;
+  source?: 'WEB' | 'FLUTTER_APP';
+  deviceInfo?: string;
   trackingNumber?: string;
   courierName?: string;
   estimatedDelivery: string;
@@ -206,3 +208,71 @@ export interface BusinessEnquiry {
   notes: string;
   status: 'NEW' | 'CONTACTED' | 'QUALIFIED' | 'CONVERTED';
 }
+
+// ==========================================
+// MOBILE APP MANAGEMENT (FLUTTER APP CMS)
+// ==========================================
+export interface AppBanner {
+  id: string;
+  category: string;
+  title: string;
+  subtitle: string;
+  tag: string;
+  cta: string;
+  image: string;
+  gradientFrom: string;
+  gradientVia?: string;
+  gradientTo: string;
+  accentColor: string;
+  iconName: string;
+  badgeIcon: string;
+  isActive: boolean;
+  displayOrder: number;
+}
+
+export interface AppCategoryConfig {
+  id: string;
+  name: string;
+  color: string;
+  iconName: string;
+  image: string;
+  productCountText: string;
+  isFeaturedInApp: boolean;
+  displayOrder: number;
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: string;
+  targetCategory?: string;
+  type: 'OFFER' | 'ORDER' | 'SYSTEM' | 'PRICE_DROP';
+  isSent: boolean;
+}
+
+export interface AppSettings {
+  appName: string;
+  appVersion: string;
+  minSupportedVersion: string;
+  maintenanceMode: boolean;
+  maintenanceMessage: string;
+  supportPhone: string;
+  supportEmail: string;
+  whatsappNumber: string;
+  flashSaleActive: boolean;
+  flashSaleTag: string;
+  catalogDownloadUrl: string;
+  gstNotice: string;
+  localFlutterProjectPath: string;
+}
+
+export interface MobileAppConfig {
+  banners: AppBanner[];
+  categories: AppCategoryConfig[];
+  settings: AppSettings;
+  notifications: AppNotification[];
+  appExclusiveProductIds: string[];
+  lastSyncedAt: string;
+}
+

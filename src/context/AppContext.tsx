@@ -1,6 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Product, CartItem, User, Order, Quotation, BusinessEnquiry, Address, WholesaleTier, ProductVariant } from '../types';
+import {
+  Product,
+  CartItem,
+  User,
+  Order,
+  Quotation,
+  BusinessEnquiry,
+  Address,
+  WholesaleTier,
+  ProductVariant,
+  AppBanner,
+  AppCategoryConfig,
+  AppNotification,
+  AppSettings,
+  MobileAppConfig
+} from '../types';
 import { INITIAL_PRODUCTS } from '../data/mockProducts';
+import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
 
 interface PinCodeInfo {
   pincode: string;
@@ -101,6 +117,22 @@ interface AppContextType {
   setSearchQuery: (query: string) => void;
   recentSearches: string[];
   addRecentSearch: (query: string) => void;
+
+  // Mobile App (Flutter) Management
+  mobileAppConfig: MobileAppConfig;
+  updateMobileAppBanners: (banners: AppBanner[]) => void;
+  addMobileAppBanner: (banner: Omit<AppBanner, 'id' | 'displayOrder'>) => void;
+  updateMobileAppBanner: (id: string, banner: Partial<AppBanner>) => void;
+  deleteMobileAppBanner: (id: string) => void;
+  reorderMobileAppBanner: (bannerId: string, direction: 'up' | 'down') => void;
+  toggleMobileAppBannerActive: (id: string) => void;
+  updateMobileAppCategories: (categories: AppCategoryConfig[]) => void;
+  updateMobileAppCategoryConfig: (id: string, updates: Partial<AppCategoryConfig>) => void;
+  updateMobileAppSettings: (settings: Partial<AppSettings>) => void;
+  sendAppPushNotification: (notification: Omit<AppNotification, 'id' | 'timestamp' | 'isSent'>) => void;
+  deleteAppNotification: (id: string) => void;
+  toggleAppExclusiveProduct: (productId: string) => void;
+  syncConfigToFlutter: () => { success: boolean; message: string; timestamp: string };
 }
 
 const DEMO_USER_PROFILES: Record<string, User> = {
@@ -332,6 +364,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         paymentMethod: 'NET_BANKING',
         paymentStatus: 'PAID',
         status: 'IN_TRANSIT',
+        source: 'WEB',
+        deviceInfo: 'Desktop Chrome 130',
         shippingAddress: DEMO_USER_PROFILES.retailer.addresses[0],
         billingAddress: DEMO_USER_PROFILES.retailer.addresses[0],
         trackingNumber: 'VRL-SUR-984421',
@@ -343,9 +377,102 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           { status: 'PACKED', timestamp: '2026-10-13T09:00:00Z', description: 'Pallet shrink-wrapped and barcoded for freight.' },
           { status: 'IN_TRANSIT', timestamp: '2026-10-13T18:00:00Z', description: 'Departed Surat Hub towards Ahmedabad Central Yard.', location: 'Surat Cargo Terminal' }
         ]
+      },
+      {
+        id: 'ord-app-77102',
+        orderNumber: 'MLE-APP-2026-77102',
+        createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+        customer: {
+          id: 'usr-flutter-dhaval',
+          name: 'Dhaval Dave',
+          email: 'dhavaldave121002@gmail.com',
+          phone: '+91 85111 72099',
+          companyName: 'Mahalaxmi Enterprises Client Hub',
+          isB2B: false
+        },
+        items: [
+          {
+            productId: 'prod-bedsheet-01',
+            productName: 'Glance 300 TC 100% Combed Cotton Double Bedsheet',
+            sku: 'MLE-TEX-BS-3001',
+            hsnCode: '630221',
+            quantity: 2,
+            unitPrice: 899,
+            totalPrice: 1798,
+            variantDescription: 'Royal Ivory Cream / Standard Set',
+            image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
+            gstRate: 5
+          },
+          {
+            productId: 'prod-cotton-towel-01',
+            productName: 'Mahalaxmi Super-Plush 600 GSM Cotton Bath Towel',
+            sku: 'MLE-COT-TWL-600',
+            hsnCode: '630260',
+            quantity: 4,
+            unitPrice: 349,
+            totalPrice: 1396,
+            variantDescription: 'Optic Hotel White (Pack of 4)',
+            image: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=1000&auto=format&fit=crop',
+            gstRate: 5
+          }
+        ],
+        subtotal: 3194,
+        taxBreakdown: { cgst: 79.85, sgst: 79.85, igst: 0, totalTax: 159.7 },
+        shippingCharge: 0,
+        discount: 150,
+        couponCode: 'LAUNCH150',
+        totalAmount: 3203.7,
+        paymentMethod: 'UPI',
+        paymentStatus: 'PAID',
+        status: 'MILL_PROCESSING',
+        source: 'FLUTTER_APP',
+        deviceInfo: 'Android 14 (Mahalaxmi Flutter App v1.0.3)',
+        shippingAddress: {
+          id: 'addr-dhaval',
+          fullName: 'Dhaval Dave',
+          phone: '+91 85111 72099',
+          street: '102, Shivalik Plaza, Near C.G. Road',
+          city: 'Ahmedabad',
+          state: 'Gujarat',
+          pincode: '380009',
+          addressType: 'HOME'
+        },
+        billingAddress: {
+          id: 'addr-dhaval',
+          fullName: 'Dhaval Dave',
+          phone: '+91 85111 72099',
+          street: '102, Shivalik Plaza, Near C.G. Road',
+          city: 'Ahmedabad',
+          state: 'Gujarat',
+          pincode: '380009',
+          addressType: 'HOME'
+        },
+        estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString(),
+        timeline: [
+          { status: 'PLACED', timestamp: new Date(Date.now() - 3600000 * 3).toISOString(), description: 'Order placed from Mahalaxmi Android App v1.0.3 via UPI GPay.' },
+          { status: 'MILL_PROCESSING', timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), description: 'Allocation confirmed at Surat Central Dispatch Loom 4.' }
+        ]
       }
     ];
   });
+
+  // Mobile App Configuration State
+  const [mobileAppConfig, setMobileAppConfig] = useState<MobileAppConfig>(() => {
+    const saved = localStorage.getItem('mle_mobile_app_config');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // fallback
+      }
+    }
+    return INITIAL_MOBILE_APP_CONFIG;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mle_mobile_app_config', JSON.stringify(mobileAppConfig));
+  }, [mobileAppConfig]);
+
 
   // Quotations State
   const [quotations, setQuotations] = useState<Quotation[]>(() => {
@@ -1164,6 +1291,146 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setRecentSearches(prev => [query, ...prev.filter(q => q.toLowerCase() !== query.toLowerCase())].slice(0, 6));
   };
 
+  // Mobile App Handlers
+  const updateMobileAppBanners = (banners: AppBanner[]) => {
+    setMobileAppConfig(prev => ({
+      ...prev,
+      banners,
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const addMobileAppBanner = (banner: Omit<AppBanner, 'id' | 'displayOrder'>) => {
+    const newBanner: AppBanner = {
+      ...banner,
+      id: `banner-${Date.now()}`,
+      displayOrder: mobileAppConfig.banners.length + 1
+    };
+    setMobileAppConfig(prev => ({
+      ...prev,
+      banners: [...prev.banners, newBanner],
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const updateMobileAppBanner = (id: string, bannerUpdates: Partial<AppBanner>) => {
+    setMobileAppConfig(prev => ({
+      ...prev,
+      banners: prev.banners.map(b => (b.id === id ? { ...b, ...bannerUpdates } : b)),
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const deleteMobileAppBanner = (id: string) => {
+    setMobileAppConfig(prev => ({
+      ...prev,
+      banners: prev.banners.filter(b => b.id !== id),
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const reorderMobileAppBanner = (bannerId: string, direction: 'up' | 'down') => {
+    setMobileAppConfig(prev => {
+      const idx = prev.banners.findIndex(b => b.id === bannerId);
+      if (idx === -1) return prev;
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= prev.banners.length) return prev;
+      const updated = [...prev.banners];
+      const temp = updated[idx];
+      updated[idx] = updated[targetIdx];
+      updated[targetIdx] = temp;
+      const reordered = updated.map((b, i) => ({ ...b, displayOrder: i + 1 }));
+      return {
+        ...prev,
+        banners: reordered,
+        lastSyncedAt: new Date().toISOString()
+      };
+    });
+  };
+
+  const toggleMobileAppBannerActive = (id: string) => {
+    setMobileAppConfig(prev => ({
+      ...prev,
+      banners: prev.banners.map(b => (b.id === id ? { ...b, isActive: !b.isActive } : b)),
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const updateMobileAppCategories = (categories: AppCategoryConfig[]) => {
+    setMobileAppConfig(prev => ({
+      ...prev,
+      categories,
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const updateMobileAppCategoryConfig = (id: string, updates: Partial<AppCategoryConfig>) => {
+    setMobileAppConfig(prev => ({
+      ...prev,
+      categories: prev.categories.map(c => (c.id === id ? { ...c, ...updates } : c)),
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const updateMobileAppSettings = (settings: Partial<AppSettings>) => {
+    setMobileAppConfig(prev => ({
+      ...prev,
+      settings: { ...prev.settings, ...settings },
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const sendAppPushNotification = (notification: Omit<AppNotification, 'id' | 'timestamp' | 'isSent'>) => {
+    const newNotif: AppNotification = {
+      ...notification,
+      id: `notif-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      isSent: true
+    };
+    setMobileAppConfig(prev => ({
+      ...prev,
+      notifications: [newNotif, ...prev.notifications],
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const deleteAppNotification = (id: string) => {
+    setMobileAppConfig(prev => ({
+      ...prev,
+      notifications: prev.notifications.filter(n => n.id !== id),
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const toggleAppExclusiveProduct = (productId: string) => {
+    setMobileAppConfig(prev => {
+      const exists = prev.appExclusiveProductIds.includes(productId);
+      const appExclusiveProductIds = exists
+        ? prev.appExclusiveProductIds.filter(id => id !== productId)
+        : [...prev.appExclusiveProductIds, productId];
+      return {
+        ...prev,
+        appExclusiveProductIds,
+        lastSyncedAt: new Date().toISOString()
+      };
+    });
+  };
+
+  const syncConfigToFlutter = () => {
+    const now = new Date().toISOString();
+    const updated = {
+      ...mobileAppConfig,
+      lastSyncedAt: now
+    };
+    setMobileAppConfig(updated);
+    localStorage.setItem('mle_mobile_app_config', JSON.stringify(updated));
+    return {
+      success: true,
+      message: 'Mobile app configuration synced to live endpoints and Flutter workspace successfully.',
+      timestamp: now
+    };
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -1220,7 +1487,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         searchQuery,
         setSearchQuery,
         recentSearches,
-        addRecentSearch
+        addRecentSearch,
+
+        // Mobile App
+        mobileAppConfig,
+        updateMobileAppBanners,
+        addMobileAppBanner,
+        updateMobileAppBanner,
+        deleteMobileAppBanner,
+        reorderMobileAppBanner,
+        toggleMobileAppBannerActive,
+        updateMobileAppCategories,
+        updateMobileAppCategoryConfig,
+        updateMobileAppSettings,
+        sendAppPushNotification,
+        deleteAppNotification,
+        toggleAppExclusiveProduct,
+        syncConfigToFlutter
       }}
     >
       {children}

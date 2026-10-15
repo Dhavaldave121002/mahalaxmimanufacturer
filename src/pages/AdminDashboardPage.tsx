@@ -26,9 +26,11 @@ import {
   Lock,
   KeyRound,
   LogOut,
-  ShieldCheck
+  ShieldCheck,
+  Smartphone
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
+import { MobileAppManager } from '../components/admin/MobileAppManager';
 
 export const AdminDashboardPage: React.FC = () => {
   const {
@@ -73,9 +75,9 @@ export const AdminDashboardPage: React.FC = () => {
     setIsUnlocked(false);
   };
 
-  // Active Admin View: 'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'import-export'
+  // Active Admin View: 'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'import-export' | 'mobile-app'
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'import-export'
+    'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'import-export' | 'mobile-app'
   >('overview');
 
   // Product Add / Edit Modal state
@@ -453,6 +455,22 @@ export const AdminDashboardPage: React.FC = () => {
           <FileText className="w-4 h-4" />
           <span>CSV Data Tools</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('mobile-app')}
+          className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap flex items-center gap-2 ${
+            activeTab === 'mobile-app'
+              ? 'border-amber-500 text-amber-700 bg-amber-50/50 px-3 rounded-t-xl'
+              : 'border-transparent text-slate-600 hover:text-navy'
+          }`}
+        >
+          <Smartphone className="w-4 h-4 text-amber-600" />
+          <span>Flutter App Hub</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            v1.0.3 LIVE
+          </span>
+        </button>
       </div>
 
       {/* 1. OVERVIEW TAB: KPI Cards & Trend Summaries */}
@@ -601,20 +619,20 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden">
+          <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table className="w-full text-left text-xs divide-y divide-slate-200 min-w-[840px]">
               <thead className="bg-slate-100 text-slate-700">
                 <tr>
-                  <th className="py-3 px-3">Product Name & Category</th>
-                  <th className="py-3 px-2 text-center">SKU</th>
-                  <th className="py-3 px-3 text-right">Retail Rate</th>
-                  <th className="py-3 px-3 text-center">Tiers</th>
-                  <th className="py-3 px-3 text-center">Stock Level</th>
-                  <th className="py-3 px-3 text-center">Adjust Stock</th>
-                  <th className="py-3 px-3 text-right">Actions</th>
+                  <th className="py-3 px-4 font-bold">Product Name & Category</th>
+                  <th className="py-3 px-3 text-center font-bold whitespace-nowrap">SKU Code</th>
+                  <th className="py-3 px-3 text-right font-bold whitespace-nowrap">Retail Rate</th>
+                  <th className="py-3 px-3 text-center font-bold whitespace-nowrap">Wholesale Tiers</th>
+                  <th className="py-3 px-3 text-center font-bold whitespace-nowrap">Stock Level</th>
+                  <th className="py-3 px-3 text-center font-bold whitespace-nowrap">Adjust Stock</th>
+                  <th className="py-3 px-4 text-right font-bold whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {products
                   .filter(
                     p =>
@@ -622,53 +640,57 @@ export const AdminDashboardPage: React.FC = () => {
                       p.sku.toLowerCase().includes(productSearch.toLowerCase())
                   )
                   .map(prod => (
-                    <tr key={prod.id} className="hover:bg-slate-50/50">
-                      <td className="py-3 px-3">
+                    <tr key={prod.id} className="hover:bg-slate-50/70 transition">
+                      <td className="py-3.5 px-4 min-w-[280px]">
                         <div className="flex items-center gap-3">
                           <img
                             src={prod.images[0]}
                             alt={prod.name}
-                            className="w-10 h-10 object-cover rounded-lg border border-slate-100 shrink-0"
+                            className="w-11 h-11 object-cover rounded-xl border border-slate-200 shrink-0"
                           />
-                          <div>
-                            <p className="font-bold text-navy line-clamp-1">{prod.name}</p>
-                            <span className="text-[10px] text-indigo font-semibold">{prod.categoryName} • {prod.subcategory}</span>
+                          <div className="min-w-0 max-w-sm">
+                            <p className="font-bold text-navy truncate" title={prod.name}>{prod.name}</p>
+                            <span className="text-[11px] text-indigo font-semibold block truncate mt-0.5">
+                              {prod.categoryName} &bull; {prod.subcategory}
+                            </span>
                           </div>
                         </div>
                       </td>
 
-                      <td className="py-3 px-2 text-center font-mono text-slate-500">{prod.sku}</td>
+                      <td className="py-3.5 px-3 text-center font-mono font-bold text-slate-600 whitespace-nowrap">
+                        <span className="px-2 py-1 bg-slate-100 rounded-lg text-slate-700">{prod.sku}</span>
+                      </td>
 
-                      <td className="py-3 px-3 text-right font-bold text-navy">
-                        ₹{prod.retailPrice}
+                      <td className="py-3.5 px-3 text-right font-bold text-navy whitespace-nowrap">
+                        <span className="text-sm">₹{prod.retailPrice}</span>
                         <span className="block text-[10px] text-slate-400 line-through">₹{prod.mrp}</span>
                       </td>
 
-                      <td className="py-3 px-3 text-center">
-                        <span className="bg-indigo-light text-indigo px-2 py-0.5 rounded font-bold text-[10px]">
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                        <span className="bg-indigo-light text-indigo px-2.5 py-1 rounded-lg font-bold text-[10px]">
                           {prod.wholesaleTiers?.length || 0} Tiers
                         </span>
                       </td>
 
-                      <td className="py-3 px-3 text-center">
-                        <span className={`font-bold ${prod.stock < 100 ? 'text-amber-600' : 'text-slate-800'}`}>
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                        <span className={`font-bold px-2 py-0.5 rounded ${prod.stock < 100 ? 'bg-amber-50 text-amber-700' : 'text-slate-800'}`}>
                           {prod.stock} units
                         </span>
                       </td>
 
                       {/* Instant Stock Adjustment */}
-                      <td className="py-3 px-3 text-center">
-                        <div className="inline-flex items-center gap-1">
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center gap-1.5">
                           <button
                             onClick={() => adjustProductStock(prod.id, -10)}
-                            className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-bold text-xs"
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-bold text-xs transition"
                             title="Decrease by 10"
                           >
                             -10
                           </button>
                           <button
                             onClick={() => adjustProductStock(prod.id, 50)}
-                            className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-bold text-xs"
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-bold text-xs transition"
                             title="Add 50 units"
                           >
                             +50
@@ -677,18 +699,18 @@ export const AdminDashboardPage: React.FC = () => {
                       </td>
 
                       {/* Edit & Delete */}
-                      <td className="py-3 px-3 text-right">
-                        <div className="inline-flex items-center gap-1.5">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <div className="inline-flex items-center gap-2">
                           <button
                             onClick={() => handleEditProduct(prod)}
-                            className="p-1.5 text-slate-600 hover:text-indigo rounded hover:bg-slate-100"
+                            className="p-1.5 text-slate-600 hover:text-indigo rounded-lg hover:bg-slate-100 transition"
                             title="Edit Product"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => deleteProduct(prod.id)}
-                            className="p-1.5 text-slate-400 hover:text-error rounded hover:bg-red-50"
+                            className="p-1.5 text-slate-400 hover:text-error rounded-lg hover:bg-red-50 transition"
                             title="Delete Product"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -724,19 +746,19 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border border-slate-200 rounded-xl overflow-hidden">
+          <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table className="w-full text-left text-xs divide-y divide-slate-200 min-w-[840px]">
               <thead className="bg-slate-100 text-slate-700">
                 <tr>
-                  <th className="py-3 px-3">Order ID & Date</th>
-                  <th className="py-3 px-3">Customer / Business</th>
-                  <th className="py-3 px-3 text-right">Invoice Value</th>
-                  <th className="py-3 px-3 text-center">Payment</th>
-                  <th className="py-3 px-3 text-center">Current Status</th>
-                  <th className="py-3 px-3 text-right">Actions</th>
+                  <th className="py-3 px-4 font-bold whitespace-nowrap">Order ID & Date</th>
+                  <th className="py-3 px-4 font-bold">Customer / Business</th>
+                  <th className="py-3 px-4 text-right font-bold whitespace-nowrap">Invoice Value</th>
+                  <th className="py-3 px-4 text-center font-bold whitespace-nowrap">Payment</th>
+                  <th className="py-3 px-4 text-center font-bold whitespace-nowrap">Current Status</th>
+                  <th className="py-3 px-4 text-right font-bold whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {orders
                   .filter(
                     o =>
@@ -745,37 +767,39 @@ export const AdminDashboardPage: React.FC = () => {
                       (o.customer.companyName && o.customer.companyName.toLowerCase().includes(orderSearch.toLowerCase()))
                   )
                   .map(ord => (
-                    <tr key={ord.id} className="hover:bg-slate-50/50">
-                      <td className="py-3 px-3">
+                    <tr key={ord.id} className="hover:bg-slate-50/70 transition">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <p className="font-mono font-bold text-navy">{ord.orderNumber}</p>
-                        <p className="text-[10px] text-slate-400">{new Date(ord.createdAt).toLocaleDateString('en-IN')}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{new Date(ord.createdAt).toLocaleDateString('en-IN')}</p>
                       </td>
 
-                      <td className="py-3 px-3">
-                        <p className="font-bold text-navy">{ord.customer.companyName || ord.customer.name}</p>
-                        <p className="text-[10px] text-slate-500">
+                      <td className="py-3.5 px-4 min-w-[200px]">
+                        <p className="font-bold text-navy truncate" title={ord.customer.companyName || ord.customer.name}>
+                          {ord.customer.companyName || ord.customer.name}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate mt-0.5">
                           {ord.customer.phone} {ord.customer.gstNumber ? `• GST: ${ord.customer.gstNumber}` : ''}
                         </p>
                       </td>
 
-                      <td className="py-3 px-3 text-right font-black text-navy">
+                      <td className="py-3.5 px-4 text-right font-black text-navy whitespace-nowrap">
                         ₹{ord.totalAmount.toLocaleString('en-IN')}
                       </td>
 
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <span className="font-semibold text-slate-700 text-[11px] block">{ord.paymentMethod}</span>
                         <span className={`text-[10px] font-bold ${ord.paymentStatus === 'PAID' ? 'text-emerald-700' : 'text-amber-700'}`}>
                           {ord.paymentStatus}
                         </span>
                       </td>
 
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <Badge size="sm" variant={ord.status === 'DELIVERED' ? 'success' : 'primary'}>
                           {ord.status}
                         </Badge>
                       </td>
 
-                      <td className="py-3 px-3 text-right">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-1.5">
                           {/* Update Status Button */}
                           <button
@@ -784,7 +808,7 @@ export const AdminDashboardPage: React.FC = () => {
                               setNewOrderStatus(ord.status);
                               setTrackingNumber(ord.trackingNumber || '');
                             }}
-                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-navy font-semibold rounded text-[11px]"
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-navy font-semibold rounded-lg text-[11px] transition"
                           >
                             Update
                           </button>
@@ -795,7 +819,7 @@ export const AdminDashboardPage: React.FC = () => {
                               setSelectedInvoiceOrder(ord);
                               setInvoiceType('INVOICE');
                             }}
-                            className="p-1.5 text-slate-600 hover:text-navy hover:bg-slate-100 rounded"
+                            className="p-1.5 text-slate-600 hover:text-navy hover:bg-slate-100 rounded-lg transition"
                             title="Generate GST Tax Invoice"
                           >
                             <Printer className="w-4 h-4" />
@@ -998,6 +1022,11 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 7. FLUTTER MOBILE APP MANAGEMENT HUB */}
+      {activeTab === 'mobile-app' && (
+        <MobileAppManager />
       )}
 
       {/* Product Add / Edit Modal */}

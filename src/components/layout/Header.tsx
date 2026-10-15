@@ -633,8 +633,8 @@ export const Header: React.FC = () => {
         </div>
       </header>
 
-      {/* 3. Flipkart / Meesho Style Visual Category Circles Rail (Scrolls away under Bar 2) */}
-      {!['/cart', '/checkout'].includes(location.pathname) && (
+      {/* 3. Flipkart / Meesho Style Visual Category Circles Rail (Scrolls away under Bar 2, hidden on cart/checkout/admin) */}
+      {!['/cart', '/checkout'].includes(location.pathname) && !location.pathname.startsWith('/admin') && (
         <nav className="bg-white border-b border-slate-200 overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x py-2 sm:py-2.5">
           <div className="flex items-center gap-4 sm:gap-8 px-4 w-max min-w-full justify-start sm:justify-center">
             {categoryBubbles.map((cat, i) => (
