@@ -27,7 +27,8 @@ import {
   KeyRound,
   LogOut,
   ShieldCheck,
-  Smartphone
+  Smartphone,
+  ArrowRight
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { MobileAppManager } from '../components/admin/MobileAppManager';
@@ -344,15 +345,21 @@ export const AdminDashboardPage: React.FC = () => {
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <button
-            onClick={handleExitAdmin}
-            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
-            title="Exit Admin and return to storefront"
+            onClick={() => setActiveTab('mobile-app')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 shadow-sm ${
+              activeTab === 'mobile-app'
+                ? 'bg-amber-600 text-white ring-2 ring-amber-400'
+                : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white'
+            }`}
+            title="Open Flutter Mobile App Management Hub"
           >
-            <LogOut className="w-4 h-4 text-slate-500" />
-            <span>Exit Admin</span>
+            <Smartphone className="w-4 h-4" />
+            <span>📱 Mobile App Hub</span>
+            <span className="bg-white/20 text-white px-1.5 py-0.5 rounded text-[10px] font-mono">LIVE</span>
           </button>
+
           <button
             onClick={() => {
               setEditingProductId(null);
@@ -374,16 +381,25 @@ export const AdminDashboardPage: React.FC = () => {
               });
               setProductModalOpen(true);
             }}
-            className="px-4 py-2 bg-indigo hover:bg-indigo-dark text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+            className="px-3.5 py-2 bg-indigo hover:bg-indigo-dark text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
           >
             <Plus className="w-4 h-4" />
             <span>Create New Product</span>
+          </button>
+
+          <button
+            onClick={handleExitAdmin}
+            className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+            title="Exit Admin and return to storefront"
+          >
+            <LogOut className="w-4 h-4 text-slate-500" />
+            <span>Exit Admin</span>
           </button>
         </div>
       </div>
 
       {/* Admin Tabs */}
-      <div className="flex border-b border-slate-200 overflow-x-auto gap-4 sm:gap-6 hide-scrollbar touch-pan-x w-full max-w-full pb-1">
+      <div className="flex border-b border-slate-200 overflow-x-auto gap-3 sm:gap-6 hide-scrollbar touch-pan-x w-full max-w-full pb-1">
         <button
           onClick={() => setActiveTab('overview')}
           className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap flex items-center gap-2 ${
@@ -394,6 +410,23 @@ export const AdminDashboardPage: React.FC = () => {
         >
           <TrendingUp className="w-4 h-4" />
           <span>Operations Overview</span>
+        </button>
+
+        {/* Flutter App Hub - Placed prominently near the front */}
+        <button
+          onClick={() => setActiveTab('mobile-app')}
+          className={`pb-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap flex items-center gap-2 px-2.5 rounded-t-xl ${
+            activeTab === 'mobile-app'
+              ? 'border-amber-500 text-amber-800 bg-amber-50'
+              : 'border-transparent text-amber-700 hover:text-amber-800 hover:bg-amber-50/50'
+          }`}
+        >
+          <Smartphone className="w-4 h-4 text-amber-600" />
+          <span>📱 Flutter App Hub</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            App Control
+          </span>
         </button>
 
         <button
@@ -455,27 +488,39 @@ export const AdminDashboardPage: React.FC = () => {
           <FileText className="w-4 h-4" />
           <span>CSV Data Tools</span>
         </button>
-
-        <button
-          onClick={() => setActiveTab('mobile-app')}
-          className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap flex items-center gap-2 ${
-            activeTab === 'mobile-app'
-              ? 'border-amber-500 text-amber-700 bg-amber-50/50 px-3 rounded-t-xl'
-              : 'border-transparent text-slate-600 hover:text-navy'
-          }`}
-        >
-          <Smartphone className="w-4 h-4 text-amber-600" />
-          <span>Flutter App Hub</span>
-          <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            v1.0.3 LIVE
-          </span>
-        </button>
       </div>
 
       {/* 1. OVERVIEW TAB: KPI Cards & Trend Summaries */}
       {activeTab === 'overview' && (
         <div className="space-y-8">
+          {/* Quick Access Flutter App Banner */}
+          <div className="bg-gradient-to-r from-navy via-indigo-950 to-indigo-900 rounded-3xl p-4 sm:p-5 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-subtle border border-indigo-700/40">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-400/30 flex items-center justify-center shrink-0">
+                <Smartphone className="w-6 h-6 text-amber-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-extrabold text-sm sm:text-base">Mahalaxmi Flutter Mobile App Hub</h4>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    v1.0.3 LIVE
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Direct Mill App Control: Hero Banners, Collections, Exclusive App Products & Smartphone Preview.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setActiveTab('mobile-app')}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-navy font-black text-xs rounded-xl transition flex items-center gap-2 shrink-0 shadow-sm"
+            >
+              <span>Manage Mobile App</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
           {/* Top KPI Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-subtle space-y-2">
