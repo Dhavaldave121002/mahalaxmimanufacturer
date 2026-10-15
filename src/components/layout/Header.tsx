@@ -196,52 +196,28 @@ export const Header: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
-            {currentUser.role === 'admin' ? (
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] bg-amber-500/20 text-champagne font-bold px-2 py-0.5 rounded border border-amber-400/40">
-                  Admin Session Active
-                </span>
-                <Link
-                  to="/admin"
-                  className="text-[11px] font-bold text-champagne hover:text-white transition flex items-center gap-1 bg-navy-800 px-2.5 py-1 rounded-md border border-slate-700"
-                >
-                  <SlidersHorizontal className="w-3 h-3" />
-                  <span>Admin Desk</span>
-                </Link>
-                <button
-                  onClick={() => switchUserRole('retailer')}
-                  className="text-[10px] text-slate-400 hover:text-white underline ml-1"
-                  title="Switch to Customer Store View"
-                >
-                  Exit Admin
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 text-[11px]">
-                <a
-                  href="tel:+919429187611"
-                  className="text-slate-300 hover:text-champagne transition flex items-center gap-1 font-medium"
-                >
-                  <PhoneCall className="w-3 h-3 text-champagne" />
-                  <span>Mill Desk: +91 94291 87611</span>
-                </a>
-                <span className="text-slate-700 hidden md:inline">•</span>
-                <Link
-                  to="/wholesale"
-                  className="text-slate-300 hover:text-white transition font-medium hidden md:inline"
-                >
-                  Wholesale RFQ
-                </Link>
-                <span className="text-slate-700 hidden sm:inline">•</span>
-                <Link
-                  to="/account"
-                  className="text-champagne hover:text-white transition font-bold"
-                >
-                  My Account
-                </Link>
-              </div>
-            )}
+          <div className="flex items-center gap-3 text-[11px]">
+            <a
+              href="tel:+919429187611"
+              className="text-slate-300 hover:text-champagne transition flex items-center gap-1 font-medium"
+            >
+              <PhoneCall className="w-3 h-3 text-champagne" />
+              <span>Mill Desk: +91 94291 87611</span>
+            </a>
+            <span className="text-slate-700 hidden md:inline">•</span>
+            <Link
+              to="/wholesale"
+              className="text-slate-300 hover:text-white transition font-medium hidden md:inline"
+            >
+              Wholesale RFQ
+            </Link>
+            <span className="text-slate-700 hidden sm:inline">•</span>
+            <Link
+              to="/account"
+              className="text-champagne hover:text-white transition font-bold"
+            >
+              My Account
+            </Link>
           </div>
         </div>
       </div>
@@ -907,31 +883,17 @@ export const Header: React.FC = () => {
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </Link>
 
-                {currentUser.role === 'admin' ? (
-                  <Link
-                    to="/admin"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between p-2.5 rounded-xl bg-amber-50 border border-amber-200 transition text-navy font-bold"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>Admin Operations Dashboard</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                  </Link>
-                ) : (
-                  <Link
-                    to="/wholesale"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-slate-800 font-semibold"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Building2 className="w-4 h-4 text-indigo shrink-0" />
-                      <span>Direct Mill Wholesale Desk</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                  </Link>
-                )}
+                <Link
+                  to="/wholesale"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 transition text-slate-800 font-semibold"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Building2 className="w-4 h-4 text-indigo shrink-0" />
+                    <span>Direct Mill Wholesale Desk</span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
               </div>
             </div>
 

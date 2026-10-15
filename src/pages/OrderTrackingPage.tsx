@@ -216,13 +216,6 @@ export const OrderTrackingPage: React.FC = () => {
               </p>
             </div>
           </div>
-          <Link
-            to="/admin"
-            className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition shrink-0 inline-flex items-center gap-1.5 self-start sm:self-auto"
-          >
-            <span>Admin Desk</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
         </div>
       )}
 

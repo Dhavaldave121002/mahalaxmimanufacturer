@@ -216,9 +216,8 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
-                <Link to="/admin" className="text-xs text-slate-400 hover:text-champagne transition flex items-center gap-1.5 pt-1">
-                  <Lock className="w-3 h-3 text-slate-500" />
-                  <span>Authorized Staff Portal</span>
+                <Link to="/account" className="text-xs text-slate-300 hover:text-champagne transition flex items-center gap-1.5 pt-1">
+                  <span>🏢 B2B Verified GST Profile</span>
                 </Link>
               </li>
             </ul>
