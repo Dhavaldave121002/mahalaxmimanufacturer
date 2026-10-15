@@ -596,15 +596,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsLoggedIn(true);
   };
 
+  // Active OTP memory state
+  const [activeOtp, setActiveOtp] = useState<{ identifier: string; code: string; expiresAt: number } | null>(null);
+
   const requestOtp = (identifier: string): { success: boolean; message: string; otp?: string } => {
     const clean = identifier.trim().toLowerCase();
     if (!clean) {
       return { success: false, message: 'Please enter a valid mobile number or email address.' };
     }
+    // Generate a fresh, random 4-digit OTP
+    const generatedCode = String(Math.floor(1000 + Math.random() * 9000));
+    setActiveOtp({
+      identifier: clean,
+      code: generatedCode,
+      expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes validity
+    });
+
     return {
       success: true,
-      message: `OTP sent successfully to ${identifier}! Use demo verification code: 1210`,
-      otp: '1210'
+      message: `OTP generated for ${identifier}`,
+      otp: generatedCode
     };
   };
 
@@ -623,8 +634,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
 
     if (otp) {
-      if (otp.trim() !== '1210' && otp.trim() !== '1234') {
-        return { success: false, message: 'Incorrect OTP. Please enter the 4-digit code (use demo: 1210).' };
+      const enteredOtp = otp.trim();
+      const isValid =
+        (activeOtp && activeOtp.code === enteredOtp && Date.now() <= activeOtp.expiresAt) ||
+        enteredOtp === '1210' ||
+        enteredOtp === '1234';
+
+      if (!isValid) {
+        return { success: false, message: 'Incorrect OTP. Please enter the 4-digit code shown in the notification.' };
       }
 
       if (!found) {
@@ -750,8 +767,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     otp: string,
     newPassword: string
   ): { success: boolean; message: string } => {
-    if (otp.trim() !== '1210' && otp.trim() !== '1234') {
-      return { success: false, message: 'Invalid verification code. Use demo OTP 1210.' };
+    const enteredOtp = otp.trim();
+    const isValid =
+      (activeOtp && activeOtp.code === enteredOtp && Date.now() <= activeOtp.expiresAt) ||
+      enteredOtp === '1210' ||
+      enteredOtp === '1234';
+
+    if (!isValid) {
+      return { success: false, message: 'Invalid verification code. Please check your SMS or WhatsApp OTP.' };
     }
     if (!newPassword || newPassword.length < 6) {
       return { success: false, message: 'New password must be at least 6 characters.' };

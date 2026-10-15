@@ -18,7 +18,9 @@ import {
   AlertCircle,
   Truck,
   Zap,
-  HelpCircle
+  HelpCircle,
+  MessageSquare,
+  X
 } from 'lucide-react';
 
 interface LoginPageProps {
@@ -73,6 +75,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Live Simulated SMS Notification State (100% Free on live site)
+  const [simulatedSms, setSimulatedSms] = useState<{
+    sender: string;
+    code: string;
+    phone: string;
+    timestamp: string;
+  } | null>(null);
+
   // If already logged in, show notification banner
   useEffect(() => {
     if (isLoggedIn && !searchParams.get('reauth')) {
@@ -101,7 +111,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     }
 
     if (loginMode === 'otp' && !loginOtp) {
-      setErrorMsg('Please enter the 4-digit verification OTP (Use demo: 1210).');
+      setErrorMsg('Please enter the 4-digit verification OTP.');
       return;
     }
 
@@ -133,10 +143,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
       return;
     }
     const res = requestOtp(loginIdentifier);
-    if (res.success) {
+    if (res.success && res.otp) {
       setOtpSent(true);
-      setSuccessMsg(res.message);
-      setLoginOtp('1210'); // Auto-fill demo OTP for maximum user convenience
+      setSuccessMsg(`OTP sent to ${loginIdentifier}`);
+      setLoginOtp(res.otp);
+      setSimulatedSms({
+        sender: 'VM-MHLXMI',
+        code: res.otp,
+        phone: loginIdentifier,
+        timestamp: 'Just Now'
+      });
     } else {
       setErrorMsg(res.message);
     }
@@ -205,10 +221,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
       return;
     }
     const res = requestOtp(forgotIdentifier);
-    if (res.success) {
+    if (res.success && res.otp) {
       setForgotOtpSent(true);
-      setSuccessMsg(res.message);
-      setForgotOtp('1210');
+      setSuccessMsg(`Verification code sent to ${forgotIdentifier}`);
+      setForgotOtp(res.otp);
+      setSimulatedSms({
+        sender: 'VM-MHLXMI',
+        code: res.otp,
+        phone: forgotIdentifier,
+        timestamp: 'Just Now'
+      });
     } else {
       setErrorMsg(res.message);
     }
@@ -258,7 +280,61 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   };
 
   return (
-    <div className="min-h-[85vh] py-8 sm:py-12 px-4 sm:px-6 flex items-center justify-center">
+    <div className="min-h-[85vh] py-8 sm:py-12 px-4 sm:px-6 flex items-center justify-center relative">
+      {/* Floating Simulated SMS / OTP Notification Toast (100% Free on Live Site) */}
+      {simulatedSms && (
+        <div className="fixed top-20 right-4 sm:right-6 z-50 max-w-sm w-[92%] sm:w-full bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-float border border-slate-700 animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-start justify-between gap-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo flex items-center justify-center shrink-0">
+              <MessageSquare className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between text-[11px] text-slate-400">
+                <span className="font-bold text-champagne">{simulatedSms.sender}</span>
+                <span>{simulatedSms.timestamp}</span>
+              </div>
+              <p className="text-xs text-white font-medium mt-1 leading-snug">
+                Your Mahalaxmi Mills verification OTP is{' '}
+                <strong className="font-mono text-amber-300 text-sm tracking-wider font-black">
+                  {simulatedSms.code}
+                </strong>
+                . Valid for 5 minutes.
+              </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeTab === 'login') setLoginOtp(simulatedSms.code);
+                    if (activeTab === 'forgot') setForgotOtp(simulatedSms.code);
+                    setSuccessMsg('OTP auto-filled! Click Sign In to proceed.');
+                  }}
+                  className="px-2.5 py-1 bg-white text-navy hover:bg-champagne rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
+                >
+                  <Zap className="w-3 h-3 text-indigo" />
+                  <span>Auto-Fill OTP</span>
+                </button>
+                <a
+                  href={`https://wa.me/919429187611?text=Hello%20Mahalaxmi%20Mills%2C%20my%20login%20verification%20code%20is%20${simulatedSms.code}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1"
+                >
+                  <span>WhatsApp Mill Desk</span>
+                </a>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSimulatedSms(null)}
+              className="text-slate-400 hover:text-white p-1"
+              aria-label="Dismiss notification"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         {/* Left Side: Brand Value Proposition & Trust Badges */}
