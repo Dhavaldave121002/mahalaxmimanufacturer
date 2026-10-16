@@ -28,7 +28,8 @@ import {
   LogOut,
   ShieldCheck,
   Smartphone,
-  ArrowRight
+  ArrowRight,
+  Globe
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { MobileAppManager } from '../components/admin/MobileAppManager';
@@ -815,7 +816,18 @@ export const AdminDashboardPage: React.FC = () => {
                     <tr key={ord.id} className="hover:bg-slate-50/70 transition">
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <p className="font-mono font-bold text-navy">{ord.orderNumber}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{new Date(ord.createdAt).toLocaleDateString('en-IN')}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] text-slate-400">{new Date(ord.createdAt).toLocaleDateString('en-IN')}</span>
+                          {(ord as any).source === 'FLUTTER_APP' || (ord.orderNumber && ord.orderNumber.includes('APP')) ? (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9.5px] font-black bg-purple-100 text-purple-700">
+                              <Smartphone className="w-2.5 h-2.5" /> App
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9.5px] font-semibold bg-blue-50 text-blue-700">
+                              <Globe className="w-2.5 h-2.5" /> Web
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td className="py-3.5 px-4 min-w-[200px]">
