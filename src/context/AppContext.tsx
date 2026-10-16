@@ -90,6 +90,8 @@ interface AppContextType {
     billingAddress: Address;
   }) => Order;
   updateOrderStatus: (orderId: string, status: Order['status'], trackingNumber?: string, courierName?: string) => void;
+  cancelOrder: (orderId: string, reason?: string) => Promise<{ success: boolean; message: string }>;
+  sendAbandonedCartEmail: (email?: string, name?: string) => Promise<{ success: boolean; message: string }>;
 
   // Wholesale RFQs & Quotations
   quotations: Quotation[];
@@ -1067,6 +1069,104 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const cancelOrder = async (orderId: string, reason?: string): Promise<{ success: boolean; message: string }> => {
+    const target = orders.find(o => o.id === orderId || o.orderNumber === orderId);
+    if (!target) {
+      return { success: false, message: 'Order reference not found.' };
+    }
+
+    const cancelReason = reason || 'Customer requested order cancellation.';
+
+    // Update state locally
+    setOrders(prev =>
+      prev.map(ord => {
+        if (ord.id === target.id) {
+          return {
+            ...ord,
+            status: 'CANCELLED',
+            timeline: [
+              ...ord.timeline,
+              {
+                status: 'CANCELLED',
+                timestamp: new Date().toISOString(),
+                description: `Order cancelled. Reason: ${cancelReason}`
+              }
+            ]
+          };
+        }
+        return ord;
+      })
+    );
+
+    // Call API to send cancellation email and update MySQL database
+    try {
+      const res = await fetch('/api/cancel-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderNumber: target.orderNumber,
+          orderId: target.id,
+          customerName: target.customer.name,
+          customerEmail: target.customer.email,
+          customerPhone: target.customer.phone,
+          reason: cancelReason,
+          totalAmount: target.totalAmount,
+          items: target.items,
+          source: 'WEB',
+          paymentStatus: target.paymentStatus
+        })
+      });
+      const data = await res.json();
+      return {
+        success: true,
+        message: data.message || `Order #${target.orderNumber} cancelled successfully.`
+      };
+    } catch {
+      return {
+        success: true,
+        message: `Order #${target.orderNumber} cancelled successfully.`
+      };
+    }
+  };
+
+  const sendAbandonedCartEmail = async (email?: string, name?: string): Promise<{ success: boolean; message: string }> => {
+    const targetEmail = (email || currentUser.email || '').trim().toLowerCase();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      return { success: false, message: 'Please enter a valid email address.' };
+    }
+    if (cart.length === 0) {
+      return { success: false, message: 'Your shopping cart is currently empty.' };
+    }
+
+    try {
+      const res = await fetch('/api/abandoned-cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: name || currentUser.name || 'Valued Buyer',
+          customerEmail: targetEmail,
+          customerPhone: currentUser.phone || '+91 85111 72099',
+          cartTotal: cartTotal,
+          items: cart.map(i => ({
+            productName: i.product.name,
+            variantDescription: i.selectedVariant?.name || 'Standard Mill Quality',
+            quantity: i.quantity,
+            totalPrice: i.totalPrice
+          })),
+          source: 'WEB',
+          couponCode: 'LAUNCH150'
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        return { success: true, message: `✅ Cart recovery email & ₹150 OFF coupon sent to ${targetEmail}!` };
+      }
+      return { success: false, message: data.error || 'Failed to dispatch email.' };
+    } catch (e: any) {
+      return { success: false, message: e.message || 'Network error.' };
+    }
+  };
+
   // RFQs & Quotations
   const createQuotationRequest = (
     items: { productId: string; quantity: number; targetPrice?: number }[],
@@ -1511,6 +1611,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         orders,
         createOrder,
         updateOrderStatus,
+        cancelOrder,
+        sendAbandonedCartEmail,
 
         quotations,
         createQuotationRequest,

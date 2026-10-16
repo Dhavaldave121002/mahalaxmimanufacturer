@@ -2,7 +2,7 @@ import React from 'react';
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'champagne' | 'outline';
+  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'champagne' | 'outline';
   className?: string;
   size?: 'sm' | 'md';
 }
@@ -21,6 +21,7 @@ export const Badge: React.FC<BadgeProps> = ({
     secondary: 'bg-navy text-white',
     success: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
     warning: 'bg-amber-50 text-amber-700 border border-amber-200',
+    danger: 'bg-red-50 text-red-700 border border-red-200',
     champagne: 'bg-amber-50 text-amber-900 border border-champagne/40',
     outline: 'border border-gray-300 text-gray-700 bg-white'
   };

@@ -17,7 +17,8 @@ import {
   Percent,
   Lock,
   Check,
-  Zap
+  Zap,
+  Mail
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
@@ -37,12 +38,30 @@ export const CartPage: React.FC = () => {
     applyCoupon,
     removeCoupon,
     currentUser,
-    deliveryInfo
+    deliveryInfo,
+    sendAbandonedCartEmail
   } = useApp();
 
   const [couponInput, setCouponInput] = useState('');
   const [couponMsg, setCouponMsg] = useState<{ text: string; success: boolean } | null>(null);
   const [timeLeft, setTimeLeft] = useState(899); // 14 mins 59 secs
+
+  // Abandoned cart email recovery state
+  const [emailCartInput, setEmailCartInput] = useState(currentUser?.email || '');
+  const [emailCartSending, setEmailCartSending] = useState(false);
+  const [emailCartStatus, setEmailCartStatus] = useState<string | null>(null);
+
+  const handleSendCartEmail = async () => {
+    if (!emailCartInput.trim() || !emailCartInput.includes('@')) {
+      setEmailCartStatus('Please enter a valid email address.');
+      return;
+    }
+    setEmailCartSending(true);
+    setEmailCartStatus(null);
+    const res = await sendAbandonedCartEmail(emailCartInput.trim(), currentUser?.name);
+    setEmailCartSending(false);
+    setEmailCartStatus(res.message);
+  };
 
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -496,6 +515,44 @@ export const CartPage: React.FC = () => {
             >
               <span>💬 Confirm & Order Cart via WhatsApp</span>
             </a>
+
+            {/* Email Cart Summary & ₹150 Voucher (Abandoned Cart Recovery) */}
+            <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-navy flex items-center gap-1.5">
+                  <Mail className="w-4 h-4 text-indigo" />
+                  <span>Save Cart & Email Me ₹150 Voucher</span>
+                </span>
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
+                  FREE
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-snug">
+                Not ready to checkout now? Receive your cart summary in your email with exclusive ₹150 OFF coupon code.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  value={emailCartInput}
+                  onChange={e => setEmailCartInput(e.target.value)}
+                  placeholder="Enter email address"
+                  className="flex-1 px-3 py-2 text-xs bg-white rounded-xl border border-slate-300 outline-none focus:border-indigo"
+                />
+                <button
+                  type="button"
+                  onClick={handleSendCartEmail}
+                  disabled={emailCartSending}
+                  className="px-3.5 py-2 bg-navy hover:bg-navy-800 text-white rounded-xl text-xs font-bold transition shrink-0 cursor-pointer disabled:opacity-50"
+                >
+                  {emailCartSending ? 'Sending...' : 'Email Cart'}
+                </button>
+              </div>
+              {emailCartStatus && (
+                <p className={`text-[11px] font-bold ${emailCartStatus.includes('✅') ? 'text-emerald-700' : 'text-red-600'}`}>
+                  {emailCartStatus}
+                </p>
+              )}
+            </div>
 
             {/* Payment & Security Trust Badges Strip */}
             <div className="pt-3 border-t border-slate-100 space-y-2.5">

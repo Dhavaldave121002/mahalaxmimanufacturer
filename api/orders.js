@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // 2. POST: Insert new order from Website or Mobile App
+  // 2. POST: Insert new order, cancel order, or send abandoned cart recovery
   if (req.method === 'POST') {
     let o = req.body;
     if (typeof o === 'string') {
@@ -40,6 +40,26 @@ export default async function handler(req, res) {
       }
     }
     o = o || {};
+
+    // 2A. Cancel Order Action Delegation
+    if (o.action === 'CANCEL' || o.action === 'CANCEL_ORDER') {
+      try {
+        const cancelMod = await import('./cancel-order.js');
+        return await cancelMod.default(req, res);
+      } catch (cancelErr) {
+        return res.status(500).json({ success: false, error: cancelErr.message });
+      }
+    }
+
+    // 2B. Abandoned Cart Action Delegation
+    if (o.action === 'ABANDONED_CART') {
+      try {
+        const cartMod = await import('./abandoned-cart.js');
+        return await cartMod.default(req, res);
+      } catch (cartErr) {
+        return res.status(500).json({ success: false, error: cartErr.message });
+      }
+    }
 
     const orderId = o.id || `ord-${Date.now()}`;
     const source = o.source === 'FLUTTER_APP' ? 'FLUTTER_APP' : 'WEB';

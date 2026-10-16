@@ -16,7 +16,10 @@ import {
   Building2,
   MapPin,
   Calendar,
-  MessageSquare
+  MessageSquare,
+  XCircle,
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
@@ -24,7 +27,7 @@ export const OrderTrackingPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const successOrderId = searchParams.get('success');
 
-  const { orders, addToCart, products, currentUser } = useApp();
+  const { orders, addToCart, products, currentUser, cancelOrder } = useApp();
   const isAdmin = currentUser?.role === 'admin';
 
   // 1. Filter orders strictly for the current logged-in user (unless admin)
@@ -102,6 +105,12 @@ export const OrderTrackingPage: React.FC = () => {
   const [invoiceType, setInvoiceType] = useState<'INVOICE' | 'PACKING_SLIP'>('INVOICE');
   const [reorderSuccess, setReorderSuccess] = useState(false);
 
+  // Cancellation State
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('Change of delivery date or specification');
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelFeedback, setCancelFeedback] = useState<string | null>(null);
+
   const handleReorder = (order: Order) => {
     order.items.forEach(item => {
       const prod = products.find(p => p.id === item.productId);
@@ -127,6 +136,8 @@ export const OrderTrackingPage: React.FC = () => {
         return <Badge variant="warning">Mill Processing</Badge>;
       case 'PLACED':
         return <Badge variant="outline">Order Verified</Badge>;
+      case 'CANCELLED':
+        return <Badge variant="danger">Cancelled</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -386,6 +397,16 @@ export const OrderTrackingPage: React.FC = () => {
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Reorder</span>
                   </button>
+                  {currentOrder.status !== 'CANCELLED' && currentOrder.status !== 'DELIVERED' && (
+                    <button
+                      onClick={() => setCancelModalOpen(true)}
+                      className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      title="Cancel this order and dispatch cancellation email"
+                    >
+                      <XCircle className="w-3.5 h-3.5 text-red-600" />
+                      <span>Cancel Order</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -558,6 +579,89 @@ export const OrderTrackingPage: React.FC = () => {
           onClose={() => setInvoiceModalOpen(false)}
           type={invoiceType}
         />
+      )}
+
+      {/* Order Cancellation Confirmation Modal */}
+      {cancelModalOpen && currentOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2 text-red-600 font-bold text-base">
+                <AlertCircle className="w-5 h-5" />
+                <span>Cancel Consignment Order</span>
+              </div>
+              <button
+                onClick={() => setCancelModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Are you sure you want to cancel Order <strong className="font-mono text-navy font-black">{currentOrder.orderNumber}</strong>? An automated cancellation confirmation email will be dispatched to <strong className="text-navy">{currentOrder.customer?.email}</strong> and Surat Mill Dispatch.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Reason for Cancellation *</label>
+              <select
+                value={cancelReason}
+                onChange={e => setCancelReason(e.target.value)}
+                className="w-full text-xs p-2.5 rounded-xl border border-slate-300 outline-none focus:border-indigo font-medium"
+              >
+                <option value="Change of delivery date or specification">Change of delivery date or specification</option>
+                <option value="Found alternative commercial rate">Found alternative commercial rate</option>
+                <option value="Accidental duplicate order booking">Accidental duplicate order booking</option>
+                <option value="Need to change consignment items/quantities">Need to change consignment items/quantities</option>
+                <option value="Other commercial reasons">Other commercial reasons</option>
+              </select>
+            </div>
+
+            <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-[11px] text-red-800 leading-snug">
+              ℹ️ <strong>Refund policy:</strong> If this order was prepaid via UPI/Net Banking, a 100% refund of ₹{currentOrder.totalAmount.toLocaleString('en-IN')} will be initiated to your original bank account within 3-5 business days.
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setCancelModalOpen(false)}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={async () => {
+                  setCancelling(true);
+                  const res = await cancelOrder(currentOrder.id, cancelReason);
+                  setCancelling(false);
+                  setCancelModalOpen(false);
+                  setCancelFeedback(res.message);
+                  setTimeout(() => setCancelFeedback(null), 5000);
+                }}
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {cancelling ? (
+                  <span>Processing Cancellation...</span>
+                ) : (
+                  <>
+                    <XCircle className="w-4 h-4" />
+                    <span>Confirm Order Cancellation</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Cancellation Toast */}
+      {cancelFeedback && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 text-xs font-bold animate-in slide-in-from-bottom-4">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{cancelFeedback}</span>
+        </div>
       )}
     </div>
   );
