@@ -18,7 +18,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, otp, name = 'Valued Customer' } = req.body || {};
+    const { email, otp } = req.body || {};
+    let customerName = (req.body?.name || '').trim();
+    if (!customerName || customerName.toLowerCase() === 'valued customer' || customerName.toLowerCase() === 'customer') {
+      if (email && email.includes('@')) {
+        const raw = email.split('@')[0].replace(/[0-9._-]+/g, ' ').trim();
+        if (raw.length > 1) {
+          customerName = raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        }
+      }
+    }
+    if (!customerName) customerName = 'Valued Partner';
 
     if (!email || !email.includes('@')) {
       return res.status(400).json({ success: false, message: 'Valid email address is required' });
@@ -55,9 +65,9 @@ export default async function handler(req, res) {
 
           <!-- Body -->
           <div style="padding: 32px 28px;">
-            <h2 style="font-size: 18px; font-weight: 700; color: #14213D; margin-top: 0;">Login Verification Code</h2>
+            <h2 style="font-size: 18px; font-weight: 700; color: #14213D; margin-top: 0;">Namaste ${customerName},</h2>
             <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 8px 0 24px;">
-              Hello <strong>${name}</strong>,<br>
+              Hello <strong>${customerName}</strong>,<br>
               Use the One-Time Password (OTP) below to securely verify and sign in to your direct mill commercial account.
             </p>
 
@@ -102,7 +112,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
         to: [email],
-        subject: `Your Login OTP: ${otp} | Mahalaxmi Enterprises`,
+        subject: `Namaste ${customerName}, Your Login OTP: ${otp} | Mahalaxmi Enterprises`,
         html: emailHtml
       })
     });

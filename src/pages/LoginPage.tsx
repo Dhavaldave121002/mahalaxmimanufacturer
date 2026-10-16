@@ -168,8 +168,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     setLoginOtp(''); // STRICT: MUST BE EMPTY, NO AUTO-FILL!
     setOtpSent(true);
 
+    const matchedUser = registeredUsers.find(u => u.email.toLowerCase() === id.toLowerCase() || u.phone === id);
+    const customerDisplayName = matchedUser?.name || (id.includes('@') ? id.split('@')[0].replace(/[._]/g, ' ') : 'Valued Customer');
+
     try {
-      const res = await sendOtpEmail(id, generatedCode, 'Valued Customer');
+      const res = await sendOtpEmail(id, generatedCode, customerDisplayName);
       setLoading(false);
       if (res.delivered) {
         setSuccessMsg(`✅ 4-Digit verification code sent to ${id}! Please check your email inbox.`);
@@ -304,8 +307,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     setForgotOtp('');
     setForgotOtpSent(true);
 
+    const matchedUser = registeredUsers.find(u => u.email.toLowerCase() === id.toLowerCase() || u.phone === id);
+    const customerDisplayName = matchedUser?.name || (id.includes('@') ? id.split('@')[0].replace(/[._]/g, ' ') : 'Valued Customer');
+
     try {
-      await sendOtpEmail(id, genCode, 'Valued Customer');
+      await sendOtpEmail(id, genCode, customerDisplayName);
       setLoading(false);
       setSuccessMsg(`✅ 4-Digit password reset code sent to ${id}. Check your email.`);
     } catch {

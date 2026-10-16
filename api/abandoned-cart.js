@@ -85,11 +85,18 @@ export default async function handler(req, res) {
       body = {};
     }
   }
-  body = body || {};
-
   const action = body.action || 'RECORD_OR_SEND';
-  const customerName = body.customerName || body.name || 'Valued Buyer';
   const customerEmail = (body.customerEmail || body.email || '').trim().toLowerCase();
+  let customerName = (body.customerName || body.name || '').trim();
+  if (!customerName || customerName.toLowerCase() === 'valued buyer' || customerName.toLowerCase() === 'valued customer' || customerName.toLowerCase() === 'customer') {
+    if (customerEmail && customerEmail.includes('@')) {
+      const raw = customerEmail.split('@')[0].replace(/[0-9._-]+/g, ' ').trim();
+      if (raw.length > 1) {
+        customerName = raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      }
+    }
+  }
+  if (!customerName) customerName = 'Valued Buyer';
   const customerPhone = body.customerPhone || body.phone || '+91 85111 72099';
   const cartTotal = Number(body.cartTotal || body.totalAmount || 0);
   const items = Array.isArray(body.items) ? body.items : [];
@@ -432,7 +439,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
         body: JSON.stringify({
           from: fromEmail,
           to: [customerEmail],
-          subject: `You left items in your cart! Complete your order for ₹150 OFF | Mahalaxmi Enterprises`,
+          subject: `Namaste ${customerName}, items in your cart are waiting! Flat ₹150 OFF | Mahalaxmi Enterprises`,
           html: customerHtml
         })
       });

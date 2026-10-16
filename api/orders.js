@@ -236,7 +236,7 @@ export default async function handler(req, res) {
  * Dispatch automated order emails via Resend REST API
  */
 async function sendOrderNotificationEmails(data) {
-  const {
+  let {
     orderNumber,
     customerName,
     customerEmail,
@@ -249,6 +249,17 @@ async function sendOrderNotificationEmails(data) {
     shippingAddress,
     items
   } = data;
+
+  customerName = (customerName || '').trim();
+  if (!customerName || customerName.toLowerCase() === 'valued customer' || customerName.toLowerCase() === 'customer') {
+    if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in')) {
+      const raw = customerEmail.split('@')[0].replace(/[0-9._-]+/g, ' ').trim();
+      if (raw.length > 1) {
+        customerName = raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      }
+    }
+  }
+  if (!customerName) customerName = 'Valued Customer';
 
   const DEFAULT_KEY_B64 = 'cmVfYUc4eUQ1bzVfQWJGUUJxeEZ2QTZRNFRGZmlDUU5iVHVw';
   const RESEND_API_KEY = process.env.RESEND_API_KEY || Buffer.from(DEFAULT_KEY_B64, 'base64').toString('ascii');
@@ -656,7 +667,7 @@ async function sendOrderNotificationEmails(data) {
         body: JSON.stringify({
           from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
           to: [customerEmail],
-          subject: `Order Confirmed: #${orderNumber} | Mahalaxmi Enterprises Surat`,
+          subject: `Namaste ${customerName}, Order #${orderNumber} Confirmed! | Mahalaxmi Enterprises Surat`,
           html: customerHtml
         })
       });

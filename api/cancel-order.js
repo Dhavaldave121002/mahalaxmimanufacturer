@@ -30,8 +30,17 @@ export default async function handler(req, res) {
 
   const orderNumber = body.orderNumber || body.orderNo || `MLE-ORD-${Date.now()}`;
   const orderId = body.orderId || body.id || '';
-  const customerName = body.customerName || body.name || 'Valued Customer';
-  const customerEmail = body.customerEmail || body.email || 'customer@mahalaxmi.in';
+  const customerEmail = (body.customerEmail || body.email || 'customer@mahalaxmi.in').trim();
+  let customerName = (body.customerName || body.name || '').trim();
+  if (!customerName || customerName.toLowerCase() === 'valued customer' || customerName.toLowerCase() === 'customer') {
+    if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in')) {
+      const raw = customerEmail.split('@')[0].replace(/[0-9._-]+/g, ' ').trim();
+      if (raw.length > 1) {
+        customerName = raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      }
+    }
+  }
+  if (!customerName) customerName = 'Valued Customer';
   const customerPhone = body.customerPhone || body.phone || '+91 85111 72099';
   const reason = body.reason || 'Customer requested order cancellation.';
   const totalAmount = Number(body.totalAmount || 0);
@@ -331,7 +340,7 @@ async function sendCancellationEmails(data) {
         body: JSON.stringify({
           from: fromEmail,
           to: [customerEmail],
-          subject: `Order Cancelled: #${orderNumber} | Mahalaxmi Enterprises`,
+          subject: `Namaste ${customerName}, Order Cancelled: #${orderNumber} | Mahalaxmi Enterprises`,
           html: customerHtml
         })
       });
