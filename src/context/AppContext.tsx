@@ -247,45 +247,67 @@ const DEMO_USER_PROFILES: Record<string, User> = {
   }
 };
 
+function safeLoadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    const saved = localStorage.getItem(key);
+    if (!saved || saved === 'undefined' || saved === 'null') {
+      return fallback;
+    }
+    const parsed = JSON.parse(saved);
+    if (parsed === null || parsed === undefined) return fallback;
+    return parsed as T;
+  } catch (err) {
+    console.warn(`[MLE Storage] Corrupted localStorage key "${key}" detected; resetting:`, err);
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+    return fallback;
+  }
+}
+
+function safeLoadArray<T>(key: string, fallback: T[]): T[] {
+  const data = safeLoadFromStorage<T[]>(key, fallback);
+  return Array.isArray(data) && data.length > 0 ? data : fallback;
+}
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('mle_products');
-    return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+    return safeLoadArray<Product>('mle_products', INITIAL_PRODUCTS);
   });
 
   const [registeredUsers, setRegisteredUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('mle_users');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // fallback
-      }
-    }
-    return Object.values(DEMO_USER_PROFILES);
+    return safeLoadArray<User>('mle_users', Object.values(DEMO_USER_PROFILES));
   });
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    const saved = localStorage.getItem('mle_is_logged_in');
-    return saved !== null ? saved === 'true' : true;
+    try {
+      const saved = localStorage.getItem('mle_is_logged_in');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
   });
 
   const [currentUser, setCurrentUser] = useState<User>(() => {
-    const saved = localStorage.getItem('mle_current_user');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // fallback
+    try {
+      const saved = localStorage.getItem('mle_current_user');
+      if (saved && saved !== 'undefined' && saved !== 'null') {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object' && parsed.id) {
+          return parsed;
+        }
       }
+    } catch (e) {
+      console.warn('Failed to parse mle_current_user, resetting:', e);
+      try { localStorage.removeItem('mle_current_user'); } catch {}
     }
     return DEMO_USER_PROFILES.consumer;
   });
+
   const [cart, setCart] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem('mle_cart');
-    return saved ? JSON.parse(saved) : [];
+    return safeLoadFromStorage<CartItem[]>('mle_cart', []);
   });
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
@@ -310,8 +332,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Orders State with realistic initial orders
   const [orders, setOrders] = useState<Order[]>(() => {
-    const saved = localStorage.getItem('mle_orders');
-    if (saved) return JSON.parse(saved);
+    try {
+      const saved = localStorage.getItem('mle_orders');
+      if (saved && saved !== 'undefined' && saved !== 'null') {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to parse mle_orders, resetting:', e);
+      try { localStorage.removeItem('mle_orders'); } catch {}
+    }
     return [
       {
         id: 'ord-89412',
@@ -478,8 +508,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Quotations State
   const [quotations, setQuotations] = useState<Quotation[]>(() => {
-    const saved = localStorage.getItem('mle_quotations');
-    if (saved) return JSON.parse(saved);
+    try {
+      const saved = localStorage.getItem('mle_quotations');
+      if (saved && saved !== 'undefined' && saved !== 'null') {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to parse mle_quotations, resetting:', e);
+      try { localStorage.removeItem('mle_quotations'); } catch {}
+    }
     return [
       {
         id: 'qt-108',
@@ -544,33 +582,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   ]);
 
-  // Persist storage
+  // Persist storage safely
   useEffect(() => {
-    localStorage.setItem('mle_products', JSON.stringify(products));
+    try {
+      localStorage.setItem('mle_products', JSON.stringify(products));
+    } catch (e) {
+      console.warn('Failed to persist mle_products:', e);
+    }
   }, [products]);
 
   useEffect(() => {
-    localStorage.setItem('mle_cart', JSON.stringify(cart));
+    try {
+      localStorage.setItem('mle_cart', JSON.stringify(cart));
+    } catch (e) {
+      console.warn('Failed to persist mle_cart:', e);
+    }
   }, [cart]);
 
   useEffect(() => {
-    localStorage.setItem('mle_orders', JSON.stringify(orders));
+    try {
+      localStorage.setItem('mle_orders', JSON.stringify(orders));
+    } catch (e) {
+      console.warn('Failed to persist mle_orders:', e);
+    }
   }, [orders]);
 
   useEffect(() => {
-    localStorage.setItem('mle_quotations', JSON.stringify(quotations));
+    try {
+      localStorage.setItem('mle_quotations', JSON.stringify(quotations));
+    } catch (e) {
+      console.warn('Failed to persist mle_quotations:', e);
+    }
   }, [quotations]);
 
   useEffect(() => {
-    localStorage.setItem('mle_users', JSON.stringify(registeredUsers));
+    try {
+      localStorage.setItem('mle_users', JSON.stringify(registeredUsers));
+    } catch (e) {
+      console.warn('Failed to persist mle_users:', e);
+    }
   }, [registeredUsers]);
 
   useEffect(() => {
-    localStorage.setItem('mle_is_logged_in', isLoggedIn ? 'true' : 'false');
+    try {
+      localStorage.setItem('mle_is_logged_in', isLoggedIn ? 'true' : 'false');
+    } catch (e) {
+      console.warn('Failed to persist mle_is_logged_in:', e);
+    }
   }, [isLoggedIn]);
 
   useEffect(() => {
-    localStorage.setItem('mle_current_user', JSON.stringify(currentUser));
+    try {
+      localStorage.setItem('mle_current_user', JSON.stringify(currentUser));
+    } catch (e) {
+      console.warn('Failed to persist mle_current_user:', e);
+    }
   }, [currentUser]);
 
   // Price Calculation Engine based on Wholesale Tiers
