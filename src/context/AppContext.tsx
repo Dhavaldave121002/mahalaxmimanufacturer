@@ -654,7 +654,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCart([]);
     setAppliedCoupon(null);
     setCouponDiscount(0);
+    if (currentUser?.email) {
+      fetch('/api/abandoned-cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'CLEAR',
+          customerEmail: currentUser.email
+        })
+      }).catch(() => {});
+    }
   };
+
+  // Automated 30-Minute Abandoned Cart Activity Sync
+  useEffect(() => {
+    if (!currentUser?.email || cart.length === 0) return;
+
+    const timer = setTimeout(() => {
+      fetch('/api/abandoned-cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'RECORD',
+          customerEmail: currentUser.email,
+          customerName: currentUser.name,
+          customerPhone: currentUser.phone,
+          cartTotal: cartTotal,
+          items: cart.map(i => ({
+            productName: i.product.name,
+            variantDescription: i.selectedVariant?.size || i.selectedVariant?.color || 'Standard',
+            quantity: i.quantity,
+            totalPrice: i.totalPrice
+          })),
+          source: 'WEB'
+        })
+      }).catch(() => {});
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [cart, cartTotal, currentUser]);
 
   const applyCoupon = (code: string) => {
     const clean = code.trim().toUpperCase();

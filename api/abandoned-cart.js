@@ -1,3 +1,37 @@
+import { getDbPool } from '../database/db.js';
+
+// Global In-Memory Cart Session Registry
+global.__mle_abandoned_carts = global.__mle_abandoned_carts || new Map();
+
+// 30-Minute Automatic Background Cron Timer
+if (!global.__mle_cart_interval) {
+  global.__mle_cart_interval = setInterval(async () => {
+    const now = Date.now();
+    const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+
+    for (const [email, cart] of global.__mle_abandoned_carts.entries()) {
+      if (!cart.sent && !cart.cleared && (now - cart.lastActivity) >= THIRTY_MINUTES_MS) {
+        cart.sent = true;
+        console.log(`[AUTO 30-MIN ABANDONED CART] 30 minutes reached for ${email}. Dispatched recovery email!`);
+        try {
+          await sendAbandonedCartRecoveryEmails({
+            customerName: cart.customerName,
+            customerEmail: cart.customerEmail,
+            customerPhone: cart.customerPhone,
+            cartTotal: cart.cartTotal,
+            items: cart.items,
+            source: cart.source,
+            couponCode: 'LAUNCH150'
+          });
+          console.log(`[AUTO 30-MIN ABANDONED CART] Successfully sent recovery email to ${email}`);
+        } catch (err) {
+          console.error(`[AUTO 30-MIN ABANDONED CART] Error sending to ${email}:`, err.message);
+        }
+      }
+    }
+  }, 30 * 1000); // Check every 30 seconds
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -10,6 +44,33 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
+  }
+
+  // GET: Check pending cart sessions & timers
+  if (req.method === 'GET') {
+    const now = Date.now();
+    const sessions = [];
+    for (const [email, cart] of global.__mle_abandoned_carts.entries()) {
+      const elapsedMs = now - cart.lastActivity;
+      const remainingMs = Math.max(0, (30 * 60 * 1000) - elapsedMs);
+      sessions.push({
+        email,
+        customerName: cart.customerName,
+        cartTotal: cart.cartTotal,
+        itemsCount: cart.items?.length || 0,
+        elapsedMinutes: Math.floor(elapsedMs / 60000),
+        remainingMinutes: Math.ceil(remainingMs / 60000),
+        sent: cart.sent,
+        cleared: cart.cleared,
+        source: cart.source
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      rule: 'Abandoned cart email is sent automatically after 30 minutes of inactivity',
+      activeSessionsCount: sessions.length,
+      sessions
+    });
   }
 
   if (req.method !== 'POST') {
@@ -26,8 +87,9 @@ export default async function handler(req, res) {
   }
   body = body || {};
 
+  const action = body.action || 'RECORD_OR_SEND';
   const customerName = body.customerName || body.name || 'Valued Buyer';
-  const customerEmail = body.customerEmail || body.email;
+  const customerEmail = (body.customerEmail || body.email || '').trim().toLowerCase();
   const customerPhone = body.customerPhone || body.phone || '+91 85111 72099';
   const cartTotal = Number(body.cartTotal || body.totalAmount || 0);
   const items = Array.isArray(body.items) ? body.items : [];
@@ -38,6 +100,41 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: 'Valid customerEmail is required.' });
   }
 
+  // 1. ACTION: CLEAR (Called when customer places order)
+  if (action === 'CLEAR' || action === 'ORDER_COMPLETED') {
+    if (global.__mle_abandoned_carts.has(customerEmail)) {
+      const cart = global.__mle_abandoned_carts.get(customerEmail);
+      cart.cleared = true;
+      global.__mle_abandoned_carts.delete(customerEmail);
+    }
+    return res.status(200).json({
+      success: true,
+      message: `Cart session cleared for ${customerEmail}. Pending 30-min recovery email cancelled.`
+    });
+  }
+
+  // 2. ACTION: RECORD (Stores cart activity, timer fires after 30 mins)
+  if (action === 'RECORD') {
+    global.__mle_abandoned_carts.set(customerEmail, {
+      customerEmail,
+      customerName,
+      customerPhone,
+      cartTotal,
+      items,
+      source,
+      lastActivity: Date.now(),
+      sent: false,
+      cleared: false
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Cart activity tracked for ${customerEmail}. If checkout is not completed, recovery email will dispatch in 30 minutes.`,
+      scheduledInMinutes: 30
+    });
+  }
+
+  // 3. ACTION: SEND_NOW (Instant test or explicit customer request)
   try {
     await sendAbandonedCartRecoveryEmails({
       customerName,
@@ -48,6 +145,10 @@ export default async function handler(req, res) {
       source,
       couponCode
     });
+
+    if (global.__mle_abandoned_carts.has(customerEmail)) {
+      global.__mle_abandoned_carts.get(customerEmail).sent = true;
+    }
 
     return res.status(200).json({
       success: true,

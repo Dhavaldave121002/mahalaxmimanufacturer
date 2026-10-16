@@ -517,18 +517,18 @@ export const CartPage: React.FC = () => {
             </a>
 
             {/* Email Cart Summary & ₹150 Voucher (Abandoned Cart Recovery) */}
-            <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2 text-xs">
+            <div className="p-3.5 bg-gradient-to-br from-indigo-50/50 to-emerald-50/40 border border-indigo-100 rounded-2xl space-y-2.5 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-navy flex items-center gap-1.5">
                   <Mail className="w-4 h-4 text-indigo" />
-                  <span>Save Cart & Email Me ₹150 Voucher</span>
+                  <span>⏱️ 30-Min Auto Cart Recovery & ₹150 Voucher</span>
                 </span>
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
-                  FREE
+                <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full">
+                  AUTO 30-MIN
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 leading-snug">
-                Not ready to checkout now? Receive your cart summary in your email with exclusive ₹150 OFF coupon code.
+              <p className="text-[11px] text-slate-600 leading-snug">
+                Your cart is automatically saved! If you leave without checkout, we will automatically send your cart items with an instant ₹150 OFF coupon (<strong>LAUNCH150</strong>) after 30 minutes of inactivity. Want it right now? Enter your email:
               </p>
               <div className="flex gap-2">
                 <input
