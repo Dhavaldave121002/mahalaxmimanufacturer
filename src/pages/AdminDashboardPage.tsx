@@ -29,7 +29,8 @@ import {
   ShieldCheck,
   Smartphone,
   ArrowRight,
-  Globe
+  Globe,
+  MessageSquare
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { MobileAppManager } from '../components/admin/MobileAppManager';
@@ -881,6 +882,21 @@ export const AdminDashboardPage: React.FC = () => {
                           >
                             <Printer className="w-4 h-4" />
                           </button>
+
+                          {/* 1-Click WhatsApp Customer */}
+                          {ord.customer?.phone && (
+                            <a
+                              href={`https://wa.me/${ord.customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                                `Namaste ${ord.customer.name}, Mahalaxmi Enterprises Surat se aapka order #${ord.orderNumber} (₹${ord.totalAmount.toLocaleString('en-IN')}) successfully verify ho gaya hai. Current Status: ${ord.status}. Kisi bhi help ke liye batayein.`
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition"
+                              title="Send WhatsApp update to Buyer"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </a>
+                          )}
                         </div>
                       </td>
                     </tr>

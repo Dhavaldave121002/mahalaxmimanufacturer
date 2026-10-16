@@ -15,7 +15,8 @@ import {
   ShieldCheck,
   Building2,
   MapPin,
-  Calendar
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
@@ -178,7 +179,18 @@ export const OrderTrackingPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href={`https://wa.me/918511172099?text=${encodeURIComponent(
+                `Namaste Mahalaxmi Enterprises, mene order book kiya hai: ${currentOrder?.orderNumber || ''}. Total Amount: ₹${currentOrder?.totalAmount?.toLocaleString('en-IN') || ''}. Kripya confirmation & dispatch details bhejein.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>WhatsApp Mill Desk</span>
+            </a>
             <button
               onClick={() => { setInvoiceType('INVOICE'); setInvoiceModalOpen(true); }}
               className="px-5 py-2.5 bg-navy hover:bg-navy-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
