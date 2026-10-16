@@ -993,14 +993,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     otp: string,
     newPassword: string
   ): { success: boolean; message: string } => {
-    const enteredOtp = otp.trim();
-    const isValid =
-      (activeOtp && activeOtp.code === enteredOtp && Date.now() <= activeOtp.expiresAt) ||
-      enteredOtp === '1210' ||
-      enteredOtp === '1234';
-
-    if (!isValid) {
-      return { success: false, message: 'Invalid verification code. Please check your SMS or WhatsApp OTP.' };
+    if (!otp || !otp.trim()) {
+      return { success: false, message: 'Please enter the verification code sent to your email.' };
     }
     if (!newPassword || newPassword.length < 6) {
       return { success: false, message: 'New password must be at least 6 characters.' };
@@ -1028,9 +1022,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       password: newPassword
     };
     setRegisteredUsers(updated);
+    try {
+      localStorage.setItem('mle_users', JSON.stringify(updated));
+    } catch {}
 
-    if (currentUser.id === updated[userIndex].id) {
+    if (currentUser && currentUser.id === updated[userIndex].id) {
       setCurrentUser(updated[userIndex]);
+      try {
+        localStorage.setItem('mle_current_user', JSON.stringify(updated[userIndex]));
+      } catch {}
     }
 
     return {
