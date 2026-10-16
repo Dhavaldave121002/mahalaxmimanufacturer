@@ -263,41 +263,41 @@ export const Header: React.FC = () => {
 
       {/* 2. Main Flipkart / Amazon Style Header Bar (ALWAYS PINNED TO TOP 0) */}
       <header
-        className={`sticky top-0 z-50 w-full backdrop-blur-md transition-all duration-200 py-2 sm:py-2.5 px-3 sm:px-6 ${
+        className={`sticky top-0 z-50 w-full backdrop-blur-md transition-all duration-200 py-1.5 sm:py-2.5 px-2 sm:px-6 ${
           isScrolled
             ? 'bg-white shadow-md border-b border-slate-300'
             : 'bg-white/98 shadow-sm border-b border-slate-200/90'
         }`}
       >
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto w-full">
           {/* Main Bar Row (Logo, Pincode, Search on desktop, Actions) */}
-          <div className="flex items-center justify-between gap-2 sm:gap-6">
+          <div className="flex items-center justify-between gap-1 sm:gap-6 w-full min-w-0">
             {/* Logo & Hamburger Menu */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-3 shrink-0 min-w-0">
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="md:hidden p-1.5 text-slate-700 hover:text-navy hover:bg-slate-100 rounded-lg transition"
+                className="md:hidden p-1 text-slate-700 hover:text-navy hover:bg-slate-100 rounded-lg transition"
                 aria-label="Open mobile menu"
               >
-                <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+                <Menu className="w-5 h-5" />
               </button>
 
-              <Link to="/" className="flex items-center gap-2 group">
+              <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group min-w-0">
                 <img
                   src="/logo.png"
                   alt="Mahalaxmi Enterprises Logo"
-                  className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform border border-slate-200 shrink-0"
+                  className="w-8 h-8 sm:w-11 sm:h-11 rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform border border-slate-200 shrink-0"
                 />
-                <div className="flex flex-col">
+                <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1">
-                    <span className="font-black text-base sm:text-xl tracking-tight text-navy leading-none">
+                    <span className="font-black text-sm sm:text-xl tracking-tight text-navy leading-none">
                       MAHALAXMI
                     </span>
-                    <span className="text-[8px] sm:text-[9px] bg-indigo text-white font-extrabold px-1 sm:px-1.5 py-0.2 rounded uppercase">
+                    <span className="text-[7px] sm:text-[9px] bg-indigo text-white font-extrabold px-1 py-0.2 rounded uppercase">
                       MILLS
                     </span>
                   </div>
-                  <span className="text-[8px] sm:text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mt-0.5">
+                  <span className="text-[7px] sm:text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mt-0.5 hidden xs:block">
                     Direct Mill Rates
                   </span>
                 </div>
@@ -453,16 +453,16 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Quick Action Buttons */}
-            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-3 shrink-0">
               {/* Mobile PIN Code Quick Badge */}
               <button
                 onClick={() => setPinModalOpen(true)}
                 aria-label={`Delivery Pincode: ${deliveryInfo?.city || 'Surat'}`}
-                className="lg:hidden flex items-center gap-1 px-2 py-1 text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+                className="flex lg:hidden items-center gap-1 px-1.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition shrink-0"
                 title="Delivery Pincode"
               >
                 <MapPin className="w-3 h-3 text-indigo shrink-0" />
-                <span className="max-w-[65px] truncate">{deliveryInfo?.city || 'Surat'}</span>
+                <span className="max-w-[42px] sm:max-w-[65px] truncate">{deliveryInfo?.city || 'Surat'}</span>
               </button>
 
               {/* Wholesale RFQ Link */}
@@ -480,7 +480,7 @@ export const Header: React.FC = () => {
                 <Link
                   to="/account"
                   aria-label={`My Account: ${currentUser.name}`}
-                  className="flex items-center gap-1.5 p-1 sm:p-1.5 hover:bg-slate-100 rounded-xl transition text-slate-700 hover:text-navy"
+                  className="flex items-center gap-1 p-1 sm:p-1.5 hover:bg-slate-100 rounded-xl transition text-slate-700 hover:text-navy shrink-0"
                   title="My Account"
                 >
                   <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-200 flex items-center justify-center text-navy font-bold text-xs shrink-0">
@@ -495,7 +495,7 @@ export const Header: React.FC = () => {
                 <Link
                   to="/login"
                   aria-label="Sign In or Register account"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 hover:bg-slate-100 rounded-xl transition text-slate-700 hover:text-navy border border-slate-200"
+                  className="flex items-center gap-1 p-1.5 sm:px-3 sm:py-2 hover:bg-slate-100 rounded-xl transition text-slate-700 hover:text-navy border border-slate-200 shrink-0"
                   title="Sign In / Register"
                 >
                   <UserIcon className="w-4 h-4 text-indigo shrink-0" />
@@ -510,7 +510,7 @@ export const Header: React.FC = () => {
               <Link
                 to="/cart"
                 aria-label={`Shopping Cart with ${cartTotalItemsCount} items, total ₹${cartSubtotal}`}
-                className="flex items-center gap-2 bg-navy hover:bg-navy-800 text-white px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl transition shadow-premium group"
+                className="flex items-center gap-1.5 bg-navy hover:bg-navy-800 text-white p-1.5 sm:px-4 sm:py-2.5 rounded-xl transition shadow-premium group shrink-0"
                 title="View Cart"
               >
                 <div className="relative">
@@ -533,7 +533,7 @@ export const Header: React.FC = () => {
           <div className="md:hidden mt-2 relative z-40 w-full" ref={mobileSearchContainerRef}>
             <form onSubmit={handleSearchSubmit} className="flex rounded-xl overflow-hidden shadow-sm border border-slate-300 focus-within:border-indigo focus-within:ring-2 focus-within:ring-indigo/20 transition bg-white w-full">
               <div className="relative flex-1 flex items-center min-w-0">
-                <Search className="w-4 h-4 text-slate-500 ml-3 shrink-0" />
+                <Search className="w-4 h-4 text-slate-500 ml-2.5 shrink-0" />
                 <input
                   id="mobile-search-input"
                   name="search-mobile"
@@ -546,7 +546,7 @@ export const Header: React.FC = () => {
                   }}
                   onFocus={() => setSearchOpen(true)}
                   placeholder="Search bedsheets, towels, curtains, totes..."
-                  className="w-full text-navy text-xs pl-2.5 pr-2 py-2 outline-none placeholder:text-slate-500 min-w-0"
+                  className="w-full text-navy text-xs pl-2 pr-1.5 py-2 outline-none placeholder:text-slate-500 min-w-0"
                 />
                 {searchInput && (
                   <button
@@ -567,7 +567,7 @@ export const Header: React.FC = () => {
               <button
                 type="submit"
                 aria-label="Submit search"
-                className="px-4 bg-indigo hover:bg-indigo-dark text-white text-xs font-bold transition flex items-center justify-center shrink-0"
+                className="px-3 sm:px-4 bg-indigo hover:bg-indigo-dark text-white text-xs font-bold transition flex items-center justify-center shrink-0"
               >
                 <span>Search</span>
               </button>

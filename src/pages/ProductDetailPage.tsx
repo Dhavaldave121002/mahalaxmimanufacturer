@@ -257,18 +257,18 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* High-Conversion Scarcity & Urgency Triggers */}
             <div className="mt-3.5 p-3 bg-amber-50/70 border border-amber-200/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-2 text-amber-900 font-medium">
-                <span className="flex h-2 w-2 relative">
+              <div className="flex items-center gap-2 text-amber-900 font-medium flex-wrap">
+                <span className="flex h-2 w-2 relative shrink-0">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
                 <span className="flex items-center gap-1 font-bold text-slate-800">
-                  <Eye className="w-3.5 h-3.5 text-indigo" />
+                  <Eye className="w-3.5 h-3.5 text-indigo shrink-0" />
                   24 buyers active
                 </span>
                 <span className="text-slate-300">•</span>
                 <span className="flex items-center gap-1 font-semibold text-rose-700">
-                  <Flame className="w-3.5 h-3.5 text-rose-600 fill-current" />
+                  <Flame className="w-3.5 h-3.5 text-rose-600 fill-current shrink-0" />
                   Only {Math.min(product.stock, 14)} packs left in Surat Mill lot
                 </span>
               </div>
@@ -281,15 +281,15 @@ export const ProductDetailPage: React.FC = () => {
           </div>
 
           {/* Dynamic Pricing Engine Box */}
-          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-3">
-            <div className="flex items-baseline justify-between">
+          <div className="bg-slate-50 rounded-2xl p-3.5 sm:p-5 border border-slate-200 space-y-3 overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2.5">
               <div>
                 <span className="text-xs text-slate-500 block mb-0.5">Effective Rate for {quantity} Units:</span>
-                <div className="flex items-baseline gap-3">
-                  <span className="text-3xl font-black text-navy">
+                <div className="flex items-baseline gap-2 sm:gap-3 flex-wrap">
+                  <span className="text-2xl sm:text-3xl font-black text-navy">
                     ₹{currentUnitPrice.toLocaleString('en-IN')}
                   </span>
-                  <span className="text-sm text-slate-400 line-through">
+                  <span className="text-xs sm:text-sm text-slate-400 line-through">
                     MRP ₹{product.mrp.toLocaleString('en-IN')}
                   </span>
                   <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">
@@ -298,9 +298,9 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="text-right">
+              <div className="text-left sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/80">
                 <span className="text-[11px] text-slate-500 block">Total Batch Value:</span>
-                <span className="text-xl font-bold text-indigo">
+                <span className="text-lg sm:text-xl font-bold text-indigo">
                   ₹{currentLineTotal.toLocaleString('en-IN')}
                 </span>
               </div>
@@ -314,9 +314,9 @@ export const ProductDetailPage: React.FC = () => {
             )}
 
             {/* GSTR-2B Input Tax Credit Callout */}
-            <div className="p-3 bg-indigo-50/70 border border-indigo-200/80 rounded-xl text-xs flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <Building2 className="w-4 h-4 text-indigo shrink-0" />
+            <div className="p-3 bg-indigo-50/70 border border-indigo-200/80 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start sm:items-center gap-2.5">
+                <Building2 className="w-4 h-4 text-indigo shrink-0 mt-0.5 sm:mt-0" />
                 <div>
                   <span className="font-bold text-navy block">
                     GST Registered Business? Claim ₹{gstAmount.toLocaleString('en-IN')} via GSTR-2B ITC
@@ -326,7 +326,7 @@ export const ProductDetailPage: React.FC = () => {
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-black bg-indigo/10 text-indigo px-2 py-1 rounded whitespace-nowrap">
+              <span className="text-[10px] font-black bg-indigo/10 text-indigo px-2 py-1 rounded whitespace-nowrap self-start sm:self-auto">
                 100% ITC REBATE
               </span>
             </div>
@@ -390,7 +390,7 @@ export const ProductDetailPage: React.FC = () => {
                       }}
                     />
                   </div>
-                  <div className="flex justify-between items-center text-[11px] text-slate-600">
+                  <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-1 text-[11px] text-slate-600">
                     <span>Current: {quantity} pcs</span>
                     <span>
                       Add {pcsNeededForNextTier} pcs to pay <strong>₹{nextTier.pricePerUnit}/pc</strong> (Extra ₹{nextTierSavingsPerPc}/pc savings)
@@ -500,12 +500,12 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* Commercial Sample & Sample Bundle Procurement Suite */}
             <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-amber-50/90 border border-amber-200/90 rounded-2xl space-y-3 shadow-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                 <span className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
-                  <PackageCheck className="w-4 h-4 text-amber-600" />
+                  <PackageCheck className="w-4 h-4 text-amber-600 shrink-0" />
                   B2B Quality Testing & Sample Evaluation
                 </span>
-                <span className="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-full">
+                <span className="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-full self-start sm:self-auto">
                   100% Rebate Guaranteed
                 </span>
               </div>
@@ -542,7 +542,7 @@ export const ProductDetailPage: React.FC = () => {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between text-[10px] text-amber-900 font-medium pt-0.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[10px] text-amber-900 font-medium pt-0.5 gap-1">
                 <span className="flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   Includes official Mill GSM Certification
