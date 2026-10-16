@@ -102,16 +102,67 @@ export default async function handler(req, res) {
       </html>
     `;
 
-    // 1. Attempt sending directly to recipient via Resend API
+    // ==========================================
+    // 1. PRIMARY DISPATCHER: EmailJS (Sends directly from connected Gmail with 0 domain restrictions)
+    // ==========================================
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
+    const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || process.env.VITE_EMAILJS_TEMPLATE_ID;
+    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID;
+    const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
+
+    if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
+      try {
+        const payload = {
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: {
+            to_email: email,
+            to_name: customerName,
+            user_email: email,
+            user_name: customerName,
+            otp: otp,
+            passcode: otp,
+            verification_code: otp,
+            message: `Your Mahalaxmi Enterprises login OTP is ${otp}. Valid for 5 minutes only.`
+          }
+        };
+        if (EMAILJS_PRIVATE_KEY) {
+          payload.accessToken = EMAILJS_PRIVATE_KEY;
+        }
+
+        const emailJsRes = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (emailJsRes.ok) {
+          console.log(`[EmailJS] OTP dispatched successfully to ${email}`);
+          return res.status(200).json({
+            success: true,
+            delivered: true,
+            otp: otp,
+            provider: 'emailjs',
+            message: `Verification code sent to ${email} via EmailJS`
+          });
+        } else {
+          const errText = await emailJsRes.text();
+          console.warn('[EmailJS] Dispatch failed:', errText);
+        }
+      } catch (ejsErr) {
+        console.warn('[EmailJS] Network exception:', ejsErr);
+      }
+    }
+
+    // ==========================================
+    // 2. SECONDARY DISPATCHER: Resend Gateway
+    // ==========================================
     let deliverySuccess = false;
     let resendId = null;
 
     const customFrom = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <orders@mahalaxmimanufacturer.com>';
     const sandboxFrom = 'Mahalaxmi Enterprises <onboarding@resend.dev>';
-
-    // 1. Attempt sending directly to recipient via custom domain first, then sandbox
-    let deliverySuccess = false;
-    let resendId = null;
 
     try {
       let primaryResponse = await fetch('https://api.resend.com/emails', {

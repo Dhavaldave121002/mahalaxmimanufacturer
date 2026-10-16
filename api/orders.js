@@ -660,6 +660,43 @@ async function sendOrderNotificationEmails(data) {
     `;
 
     try {
+      // 1. Primary: EmailJS Dispatch
+      const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
+      const EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_ORDER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID;
+      const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID;
+      const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
+
+      if (EMAILJS_SERVICE_ID && EMAILJS_ORDER_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
+        try {
+          const payload = {
+            service_id: EMAILJS_SERVICE_ID,
+            template_id: EMAILJS_ORDER_TEMPLATE_ID,
+            user_id: EMAILJS_PUBLIC_KEY,
+            template_params: {
+              to_email: customerEmail,
+              to_name: customerName,
+              order_number: orderNumber,
+              total_amount: Number(totalAmount).toLocaleString('en-IN'),
+              message: `Your Mahalaxmi Enterprises order #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')} has been confirmed.`
+            }
+          };
+          if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
+
+          const ejsResp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (ejsResp.ok) {
+            console.log(`[EmailJS] Order confirmation dispatched to ${customerEmail}`);
+            return;
+          }
+        } catch (ejsErr) {
+          console.warn('[EmailJS] Order confirmation failed:', ejsErr);
+        }
+      }
+
+      // 2. Secondary: Resend Dispatch
       const customSender = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <orders@mahalaxmimanufacturer.com>';
       let resp = await fetch('https://api.resend.com/emails', {
         method: 'POST',
