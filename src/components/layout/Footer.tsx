@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   ShieldCheck,
@@ -11,11 +11,16 @@ import {
   Phone,
   MapPin,
   CheckCircle2,
-  Lock
+  Lock,
+  Rss,
+  FileText,
+  Building2,
+  X
 } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const location = useLocation();
+  const [legalModal, setLegalModal] = useState<string | null>(null);
 
   // Hide storefront footer on admin dashboard
   if (location.pathname.startsWith('/admin')) {
@@ -208,23 +213,26 @@ export const Footer: React.FC = () => {
                   href="/feed.xml"
                   target="_blank"
                   rel="alternate"
-                  className="text-xs text-champagne hover:underline flex items-center gap-1"
+                  className="text-xs text-champagne hover:underline flex items-center gap-1.5 transition"
                 >
-                  <span>📡 RSS 2.0 Catalog Feed</span>
+                  <Rss className="w-3.5 h-3.5 text-champagne shrink-0" />
+                  <span>RSS 2.0 Catalog Feed</span>
                 </a>
               </li>
               <li>
                 <a
                   href="/sitemap.xml"
                   target="_blank"
-                  className="text-xs text-slate-300 hover:text-champagne transition"
+                  className="text-xs text-slate-300 hover:text-champagne transition flex items-center gap-1.5"
                 >
-                  <span>🗺️ Google Sitemap Index</span>
+                  <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>Google Sitemap Index</span>
                 </a>
               </li>
               <li>
-                <Link to="/account" className="text-xs text-slate-300 hover:text-champagne transition flex items-center gap-1.5 pt-1">
-                  <span>🏢 B2B Verified GST Profile</span>
+                <Link to="/account" className="text-xs text-slate-300 hover:text-champagne transition flex items-center gap-1.5 pt-0.5">
+                  <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span>B2B Verified GST Profile</span>
                 </Link>
               </li>
             </ul>
@@ -322,13 +330,104 @@ export const Footer: React.FC = () => {
       {/* 3. Bottom Legal & Copyright Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 border-t border-navy-800 text-xs text-slate-300 flex flex-col md:flex-row items-center justify-between gap-4">
         <p>&copy; {new Date().getFullYear()} Mahalaxmi Enterprises. All rights reserved. Direct Mill Rates & Wholesale Essentials.</p>
-        <div className="flex items-center gap-6">
-          <span className="hover:text-white transition cursor-pointer">Terms of Commercial Supply</span>
-          <span className="hover:text-white transition cursor-pointer">Wholesale Return Policy</span>
-          <span className="hover:text-white transition cursor-pointer">GST Invoice Compliance</span>
-          <span className="hover:text-white transition cursor-pointer">Security & Privacy</span>
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <button onClick={() => setLegalModal('TERMS')} className="hover:text-champagne transition text-left">Terms of Commercial Supply</button>
+          <button onClick={() => setLegalModal('RETURN')} className="hover:text-champagne transition text-left">Wholesale Return Policy</button>
+          <button onClick={() => setLegalModal('GST')} className="hover:text-champagne transition text-left">GST Invoice Compliance</button>
+          <button onClick={() => setLegalModal('PRIVACY')} className="hover:text-champagne transition text-left">Security & Privacy</button>
         </div>
       </div>
+
+      {/* Legal Policy Modal */}
+      {legalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white text-navy rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative border border-slate-200">
+            <button
+              onClick={() => setLegalModal(null)}
+              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-navy hover:bg-slate-100 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {legalModal === 'TERMS' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-indigo">
+                  <Factory className="w-5 h-5" />
+                  <h3 className="text-lg font-black">Terms of Commercial Supply</h3>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  All commercial textile purchases from Mahalaxmi Enterprises are executed under standard Surat Mill trade covenants. Minimum Order Quantities (MOQ) apply per SKU. Goods are dispatched ex-mill upon receipt of payment or under approved B2B 30-day revolving credit line.
+                </p>
+                <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
+                  <li>Direct mill billing with legal GST compliance.</li>
+                  <li>Dispatch within 24-48 business hours via insured freight partners.</li>
+                  <li>Transit insurance included on all bulk pallet shipments.</li>
+                </ul>
+              </div>
+            )}
+
+            {legalModal === 'RETURN' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <RotateCcw className="w-5 h-5" />
+                  <h3 className="text-lg font-black">Wholesale Return Policy</h3>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  We guarantee 100% replacement for any manufacturing or weaving defect, color fastness failure, or GSM deviation exceeding ±3%.
+                </p>
+                <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
+                  <li>Notice of defect must be reported within 7 days of consignment delivery.</li>
+                  <li>Sample kit fee (₹199 / ₹299) is 100% credited back on your first wholesale order.</li>
+                  <li>Reverse pickup arranged for defective commercial bales at zero freight cost to buyer.</li>
+                </ul>
+              </div>
+            )}
+
+            {legalModal === 'GST' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-indigo">
+                  <ShieldCheck className="w-5 h-5" />
+                  <h3 className="text-lg font-black">GST Invoice Compliance</h3>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Every order includes an authorized B2B Tax Invoice compliant with Section 31 of the CGST Act. Valid for 100% Input Tax Credit (ITC) claiming.
+                </p>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono space-y-1">
+                  <p><strong>GSTIN:</strong> 24AAECM8921P1ZA</p>
+                  <p><strong>HSN Codes:</strong> 6302 (Bed & Bath Linen - 5% / 12%), 5208 (Woven Cotton Fabrics - 5%)</p>
+                  <p><strong>E-way Bill:</strong> Auto-generated for consignments exceeding ₹50,000</p>
+                </div>
+              </div>
+            )}
+
+            {legalModal === 'PRIVACY' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-navy">
+                  <Lock className="w-5 h-5" />
+                  <h3 className="text-lg font-black">Security & Privacy Protocol</h3>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Mahalaxmi Enterprises implements 256-bit SSL encryption across all order transactions, RFQ submissions, and business registrations.
+                </p>
+                <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
+                  <li>Commercial customer data is never shared with third-party marketing brokers.</li>
+                  <li>Payments processed via RBI-licensed payment aggregators.</li>
+                  <li>Registered trade accounts protected with One-Time Password (OTP) verification.</li>
+                </ul>
+              </div>
+            )}
+
+            <div className="pt-4 mt-6 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setLegalModal(null)}
+                className="px-5 py-2 bg-navy text-white text-xs font-bold rounded-xl hover:bg-navy-800 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </footer>
   );
 };
