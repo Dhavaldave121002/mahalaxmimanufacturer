@@ -232,7 +232,8 @@ async function sendOrderNotificationEmails(data) {
 
   const DEFAULT_KEY_B64 = 'cmVfYUc4eUQ1bzVfQWJGUUJxeEZ2QTZRNFRGZmlDUU5iVHVw';
   const RESEND_API_KEY = process.env.RESEND_API_KEY || Buffer.from(DEFAULT_KEY_B64, 'base64').toString('ascii');
-  const adminEmail = 'dhavaldave121002@gmail.com';
+  const primaryAdmin = 'deviltimeisback001@gmail.com';
+  const secondaryAdmin = 'dhavaldave121002@gmail.com';
 
   const itemsHtml = (items && items.length > 0)
     ? items.map(item => `
@@ -261,7 +262,7 @@ async function sendOrderNotificationEmails(data) {
     addressText = shippingAddress;
   }
 
-  // 1. Dispatch Alert Email to Store Owner (dhavaldave121002@gmail.com)
+  // 1. Dispatch Alert Email to Store Owner
   const adminHtml = `
     <!DOCTYPE html>
     <html>
@@ -318,6 +319,7 @@ async function sendOrderNotificationEmails(data) {
     </html>
   `;
 
+  // Dispatch to Primary Admin (deviltimeisback001@gmail.com - verified in Resend)
   try {
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -327,13 +329,30 @@ async function sendOrderNotificationEmails(data) {
       },
       body: JSON.stringify({
         from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
-        to: [adminEmail],
+        to: [primaryAdmin],
         subject: `🚨 [New Order] #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}`,
         html: adminHtml
       })
     });
   } catch (err) {
     console.warn('Admin notification email dispatch failed:', err);
+  }
+
+  // Attempt dispatch to Secondary Admin (dhavaldave121002@gmail.com)
+  if (secondaryAdmin !== primaryAdmin) {
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
+        to: [secondaryAdmin],
+        subject: `🚨 [New Order] #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}`,
+        html: adminHtml
+      })
+    }).catch(() => {});
   }
 
   // 2. Dispatch Confirmation Email to Customer (if valid email)
