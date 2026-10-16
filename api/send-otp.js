@@ -106,27 +106,55 @@ export default async function handler(req, res) {
     let deliverySuccess = false;
     let resendId = null;
 
+    const customFrom = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <orders@mahalaxmimanufacturer.com>';
+    const sandboxFrom = 'Mahalaxmi Enterprises <onboarding@resend.dev>';
+
+    // 1. Attempt sending directly to recipient via custom domain first, then sandbox
+    let deliverySuccess = false;
+    let resendId = null;
+
     try {
-      const primaryResponse = await fetch('https://api.resend.com/emails', {
+      let primaryResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
+          from: customFrom,
           to: [email],
           subject: `Namaste ${customerName}, Your Login OTP: ${otp} | Mahalaxmi Enterprises`,
           html: emailHtml
         })
       });
 
-      const data = await primaryResponse.json();
+      let data = await primaryResponse.json();
       if (primaryResponse.ok) {
         deliverySuccess = true;
         resendId = data.id;
       } else {
-        console.warn('Resend primary recipient restricted:', data.message);
+        console.warn('Custom domain send attempt:', data.message);
+        // Try standard onboarding address if custom domain not active yet
+        primaryResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: sandboxFrom,
+            to: [email],
+            subject: `Namaste ${customerName}, Your Login OTP: ${otp} | Mahalaxmi Enterprises`,
+            html: emailHtml
+          })
+        });
+        data = await primaryResponse.json();
+        if (primaryResponse.ok) {
+          deliverySuccess = true;
+          resendId = data.id;
+        } else {
+          console.warn('Sandbox direct recipient restricted:', data.message);
+        }
       }
     } catch (e) {
       console.warn('Primary email dispatch network error:', e);
@@ -144,7 +172,7 @@ export default async function handler(req, res) {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
+            from: sandboxFrom,
             to: [fallbackAccount],
             subject: `[OTP for ${customerName} - ${email}]: ${otp} | Mahalaxmi Enterprises`,
             html: `

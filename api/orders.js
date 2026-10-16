@@ -502,6 +502,7 @@ async function sendOrderNotificationEmails(data) {
 
   // Dispatch to Primary Admin (deviltimeisback001@gmail.com - verified in Resend)
   try {
+    const senderFrom = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <orders@mahalaxmimanufacturer.com>';
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -509,7 +510,7 @@ async function sendOrderNotificationEmails(data) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
+        from: senderFrom,
         to: [primaryAdmin],
         subject: `🚨 [New Order] #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}`,
         html: adminHtml
@@ -521,6 +522,7 @@ async function sendOrderNotificationEmails(data) {
 
   // Attempt dispatch to Secondary Admin (dhavaldave121002@gmail.com)
   if (secondaryAdmin !== primaryAdmin) {
+    const senderFrom = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <orders@mahalaxmimanufacturer.com>';
     fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -528,7 +530,7 @@ async function sendOrderNotificationEmails(data) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
+        from: senderFrom,
         to: [secondaryAdmin],
         subject: `🚨 [New Order] #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}`,
         html: adminHtml
@@ -658,19 +660,37 @@ async function sendOrderNotificationEmails(data) {
     `;
 
     try {
-      const resp = await fetch('https://api.resend.com/emails', {
+      const customSender = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <orders@mahalaxmimanufacturer.com>';
+      let resp = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
+          from: customSender,
           to: [customerEmail],
           subject: `Namaste ${customerName}, Order #${orderNumber} Confirmed! | Mahalaxmi Enterprises Surat`,
           html: customerHtml
         })
       });
+
+      if (!resp.ok) {
+        // Try standard onboarding sender if custom domain pending
+        resp = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
+            to: [customerEmail],
+            subject: `Namaste ${customerName}, Order #${orderNumber} Confirmed! | Mahalaxmi Enterprises Surat`,
+            html: customerHtml
+          })
+        });
+      }
 
       if (!resp.ok) {
         const d = await resp.json();
