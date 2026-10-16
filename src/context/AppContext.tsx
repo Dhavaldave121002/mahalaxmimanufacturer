@@ -732,6 +732,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Cart Calculations
+  const cartSubtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+  const cartTotalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Accurate GST breakdown
+  const cartTax = cart.reduce(
+    (acc, item) => {
+      const itemTaxRate = (item.product?.gstRate || 5) / 100;
+      const lineTax = item.totalPrice * itemTaxRate;
+      acc.totalTax += lineTax;
+      // If buyer is in Gujarat (same state as mill 24), CGST + SGST; otherwise IGST
+      if (currentUser?.addresses?.[0]?.state?.toLowerCase() === 'gujarat') {
+        acc.cgst += lineTax / 2;
+        acc.sgst += lineTax / 2;
+      } else {
+        acc.igst += lineTax;
+      }
+      return acc;
+    },
+    { cgst: 0, sgst: 0, igst: 0, totalTax: 0 }
+  );
+
+  // Free shipping above ₹1499 for retail; ₹99 flat otherwise. If bulk > ₹15000 free freight
+  const cartShipping = cartSubtotal >= 1499 || cartSubtotal === 0 ? 0 : 99;
+  const cartTotal = Math.max(0, Math.round(cartSubtotal - couponDiscount + cartTax.totalTax + cartShipping));
+
   // Automated 30-Minute Abandoned Cart Activity Sync
   useEffect(() => {
     if (!currentUser?.email || cart.length === 0) return;
@@ -747,7 +773,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           customerPhone: currentUser.phone,
           cartTotal: cartTotal,
           items: cart.map(i => ({
-            productName: i.product.name,
+            productName: i.product?.name || 'Textile Item',
             variantDescription: i.selectedVariant?.size || i.selectedVariant?.color || 'Standard',
             quantity: i.quantity,
             totalPrice: i.totalPrice
@@ -804,32 +830,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAppliedCoupon(null);
     setCouponDiscount(0);
   };
-
-  // Cart Calculations
-  const cartSubtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
-  const cartTotalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-
-  // Accurate GST breakdown
-  const cartTax = cart.reduce(
-    (acc, item) => {
-      const itemTaxRate = (item.product.gstRate || 5) / 100;
-      const lineTax = item.totalPrice * itemTaxRate;
-      acc.totalTax += lineTax;
-      // If buyer is in Gujarat (same state as mill 24), CGST + SGST; otherwise IGST
-      if (currentUser.addresses[0]?.state.toLowerCase() === 'gujarat') {
-        acc.cgst += lineTax / 2;
-        acc.sgst += lineTax / 2;
-      } else {
-        acc.igst += lineTax;
-      }
-      return acc;
-    },
-    { cgst: 0, sgst: 0, igst: 0, totalTax: 0 }
-  );
-
-  // Free shipping above ₹1499 for retail; ₹99 flat otherwise. If bulk > ₹15000 free freight
-  const cartShipping = cartSubtotal >= 1499 || cartSubtotal === 0 ? 0 : 99;
-  const cartTotal = Math.max(0, Math.round(cartSubtotal - couponDiscount + cartTax.totalTax + cartShipping));
 
   // User switcher
   const switchUserRole = (role: 'consumer' | 'retailer' | 'wholesaler' | 'admin') => {
