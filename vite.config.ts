@@ -120,6 +120,29 @@ function localApiPlugin(): Plugin {
           return;
         }
 
+        // 5. Send OTP Email API
+        if (req.url?.startsWith('/api/send-otp')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          await ensureBodyParsed();
+          try {
+            // @ts-ignore
+            const mod = await import('./api/send-otp.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            expressRes.status(500).json({ success: false, error: e.message });
+          }
+          return;
+        }
+
         next();
       });
     }

