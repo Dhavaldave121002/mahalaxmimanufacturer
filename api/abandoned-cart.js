@@ -418,27 +418,32 @@ async function sendAbandonedCartRecoveryEmails(data) {
     </html>
   `;
 
-  // Dispatch Admin Notification
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
-      to: [primaryAdmin],
-      subject: `[Abandoned Cart Alert] ₹${Number(cartTotal).toLocaleString('en-IN')} by ${customerName} (${source})`,
-      html: adminHtml
-    })
-  });
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <onboarding@resend.dev>';
 
-  // Dispatch Customer Recovery Email (with sandbox forward fallback)
+  // 1. Dispatch Customer Recovery Email (Strictly to Customer)
   if (customerEmail && customerEmail.includes('@')) {
-    const isVerifiedTarget = customerEmail.toLowerCase() === primaryAdmin.toLowerCase();
-    const recipient = isVerifiedTarget ? customerEmail : primaryAdmin;
-    const subjectPrefix = isVerifiedTarget ? '' : `[Cart Recovery for ${customerEmail}] `;
+    try {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: [customerEmail],
+          subject: `You left items in your cart! Complete your order for ₹150 OFF | Mahalaxmi Enterprises`,
+          html: customerHtml
+        })
+      });
+      console.log(`[ABANDONED CART] Customer recovery email dispatched strictly to ${customerEmail}`);
+    } catch (err) {
+      console.error(`[ABANDONED CART] Customer email delivery error:`, err);
+    }
+  }
 
+  // 2. Dispatch Admin Notification (Strictly to Store Owners)
+  try {
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -446,11 +451,14 @@ async function sendAbandonedCartRecoveryEmails(data) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
-        to: [recipient],
-        subject: `${subjectPrefix}You left items in your cart! Complete your order for ₹150 OFF`,
-        html: customerHtml
+        from: fromEmail,
+        to: [primaryAdmin, secondaryAdmin],
+        subject: `🛒 [Store Alert] Abandoned Cart Lead: ₹${Number(cartTotal).toLocaleString('en-IN')} by ${customerName} (${source})`,
+        html: adminHtml
       })
     });
+    console.log(`[ABANDONED CART] Admin lead alert dispatched to ${primaryAdmin} & ${secondaryAdmin}`);
+  } catch (err) {
+    console.error(`[ABANDONED CART] Admin lead alert delivery error:`, err);
   }
 }

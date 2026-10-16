@@ -525,8 +525,8 @@ async function sendOrderNotificationEmails(data) {
     }).catch(() => {});
   }
 
-  // 2. Dispatch Confirmation Email to Customer (if valid email)
-  if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in') && customerEmail !== primaryAdmin) {
+  // 2. Dispatch Confirmation Email to Customer (Strictly to Customer)
+  if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in')) {
     const customerHtml = `
       <!DOCTYPE html>
       <html lang="en">

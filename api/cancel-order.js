@@ -318,27 +318,32 @@ async function sendCancellationEmails(data) {
     </html>
   `;
 
-  // Dispatch Admin Alerts
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
-      to: [primaryAdmin],
-      subject: `[Order Cancelled] #${orderNumber} - ₹${Number(totalAmount).toLocaleString('en-IN')} (${customerName})`,
-      html: adminHtml
-    })
-  });
-
-  // Dispatch Customer Confirmation (with sandbox forward fallback)
+  // 1. Dispatch Customer Cancellation Confirmation (Strictly to Customer)
   if (customerEmail && customerEmail.includes('@')) {
-    const isVerifiedTarget = customerEmail.toLowerCase() === primaryAdmin.toLowerCase();
-    const recipient = isVerifiedTarget ? customerEmail : primaryAdmin;
-    const subjectPrefix = isVerifiedTarget ? '' : `[Cancellation Notice for ${customerEmail}] `;
+    try {
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <onboarding@resend.dev>';
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: [customerEmail],
+          subject: `Order Cancelled: #${orderNumber} | Mahalaxmi Enterprises`,
+          html: customerHtml
+        })
+      });
+      console.log(`[CANCEL ORDER] Customer confirmation dispatched strictly to ${customerEmail}`);
+    } catch (err) {
+      console.error(`[CANCEL ORDER] Customer email delivery error:`, err);
+    }
+  }
 
+  // 2. Dispatch Store Admin Alert (Strictly to Store Owners)
+  try {
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <onboarding@resend.dev>';
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -346,11 +351,14 @@ async function sendCancellationEmails(data) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
-        to: [recipient],
-        subject: `${subjectPrefix}Order Cancelled: #${orderNumber} | Mahalaxmi Enterprises`,
-        html: customerHtml
+        from: fromEmail,
+        to: [primaryAdmin, secondaryAdmin],
+        subject: `🚨 [Store Alert] Order Cancelled: #${orderNumber} - ₹${Number(totalAmount).toLocaleString('en-IN')} (${customerName})`,
+        html: adminHtml
       })
     });
+    console.log(`[CANCEL ORDER] Admin alert dispatched to ${primaryAdmin} & ${secondaryAdmin}`);
+  } catch (err) {
+    console.error(`[CANCEL ORDER] Admin alert delivery error:`, err);
   }
 }
