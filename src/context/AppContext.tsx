@@ -769,28 +769,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         (cleanDigits.length >= 10 && u.phone.replace(/\D/g, '').endsWith(cleanDigits.slice(-10)))
     );
 
-    // 1. OTP Mode: Always accept and auto-sign in (OTP paused for testing)
+    // 1. OTP Mode: Verified User Login
     if (otp !== undefined) {
       if (!found) {
-        const autoUser: User = {
-          id: `usr-${Date.now()}`,
-          name: cleanDigits.length >= 10 ? `Customer ${cleanDigits.slice(-4)}` : (identifier.split('@')[0] || 'Customer'),
-          email: clean.includes('@') ? clean : `${cleanDigits || Date.now()}@mahalaxmicustomer.in`,
-          phone: cleanDigits.length >= 10 ? `+91 ${cleanDigits.slice(-10)}` : '+91 98765 00000',
-          role: 'consumer',
-          businessType: 'Individual',
-          addresses: [],
-          password: 'password123'
+        return {
+          success: false,
+          message: 'Account not found! Please enter a registered email or click Register.'
         };
-        setRegisteredUsers(prev => [...prev, autoUser]);
-        found = autoUser;
       }
 
       setCurrentUser(found);
       setIsLoggedIn(true);
       return {
         success: true,
-        message: `Welcome back, ${found.name}! Successfully signed in (Instant Verification).`,
+        message: `Welcome back, ${found.name}! Verified successfully.`,
         user: found
       };
     }

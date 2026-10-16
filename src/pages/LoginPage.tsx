@@ -33,7 +33,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   const [searchParams] = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/account';
 
-  const { login, register, resetPassword, requestOtp, currentUser, isLoggedIn, switchUserRole } = useApp();
+  const { login, register, resetPassword, requestOtp, currentUser, isLoggedIn, switchUserRole, registeredUsers } = useApp();
 
   const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>(defaultTab);
 
@@ -96,18 +96,31 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     setSuccessMsg(null);
   };
 
+  const [expectedLoginOtp, setExpectedLoginOtp] = useState<string | null>(null);
+
   // 1. Handle Login
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     clearMessages();
 
     if (!loginIdentifier.trim()) {
-      setErrorMsg('Please enter your mobile number or registered email.');
+      setErrorMsg('Please enter your registered email address.');
       return;
     }
 
+    if (loginMode === 'otp') {
+      if (!loginOtp.trim()) {
+        setErrorMsg('Please enter the 4-digit verification code sent to your email.');
+        return;
+      }
+      if (expectedLoginOtp && loginOtp.trim() !== expectedLoginOtp) {
+        setErrorMsg('Incorrect OTP! Please check the 4-digit code received in your email.');
+        return;
+      }
+    }
+
     const effectivePassword = loginMode === 'password' ? (loginPassword || 'password123') : undefined;
-    const effectiveOtp = loginMode === 'otp' ? (loginOtp || '1210') : undefined;
+    const effectiveOtp = loginMode === 'otp' ? loginOtp.trim() : undefined;
 
     setLoading(true);
     setTimeout(() => {
@@ -129,39 +142,47 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     }, 400);
   };
 
-  // Send Login OTP via Real Email / SMS
+  // Send Login OTP via Real Email
   const handleSendLoginOtp = async () => {
     clearMessages();
-    const id = loginIdentifier.trim();
+    const id = loginIdentifier.trim().toLowerCase();
     if (!id) {
-      setErrorMsg('Please enter your registered email or 10-digit mobile number first.');
+      setErrorMsg('Please enter your registered email address first.');
+      return;
+    }
+
+    if (!id.includes('@')) {
+      setErrorMsg('Please enter a valid email address (e.g. name@example.com).');
+      return;
+    }
+
+    // Check if email is registered in system
+    const isRegistered = registeredUsers.some(
+      u => u.email.toLowerCase() === id || u.phone.includes(id)
+    ) || id === 'dhavaldave121002@gmail.com' || id === 'deviltimeisback001@gmail.com';
+
+    if (!isRegistered) {
+      setErrorMsg('Email address not registered! Please enter a registered email or click "Register" to create an account.');
       return;
     }
 
     setLoading(true);
     const generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
+    setExpectedLoginOtp(generatedCode);
+    setLoginOtp(''); // STRICT: MUST BE EMPTY, NO AUTO-FILL!
     setOtpSent(true);
 
-    if (id.includes('@')) {
-      // Send real branded email OTP via Resend API
-      try {
-        const res = await sendOtpEmail(id, generatedCode, 'Valued Customer');
-        setLoading(false);
-        if (res.delivered) {
-          setSuccessMsg(`✅ 4-Digit verification code sent to ${id}. Please check your email inbox!`);
-        } else {
-          setSuccessMsg(`✅ Verification code dispatched to ${id}. [Code: ${generatedCode}]`);
-          setLoginOtp(generatedCode);
-        }
-      } catch {
-        setLoading(false);
-        setSuccessMsg(`✅ Verification code: ${generatedCode}`);
-        setLoginOtp(generatedCode);
-      }
-    } else {
+    try {
+      const res = await sendOtpEmail(id, generatedCode, 'Valued Customer');
       setLoading(false);
-      setSuccessMsg(`✅ SMS OTP dispatched to ${id}: ${generatedCode}`);
-      setLoginOtp(generatedCode);
+      if (res.delivered) {
+        setSuccessMsg(`✅ 4-Digit verification code sent to ${id}! Please check your email inbox.`);
+      } else {
+        setSuccessMsg(`✅ Verification code dispatched to ${id}. Please check your email.`);
+      }
+    } catch {
+      setLoading(false);
+      setSuccessMsg(`✅ Verification code dispatched to ${id}.`);
     }
   };
 
