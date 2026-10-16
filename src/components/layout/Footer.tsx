@@ -87,10 +87,12 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           {/* Brand & Corporate Office */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-indigo flex items-center justify-center text-champagne font-black text-lg">
-                M
-              </div>
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/logo.png"
+                alt="Mahalaxmi Enterprises Logo"
+                className="w-10 h-10 rounded-full object-cover shadow-sm border border-navy-700 shrink-0"
+              />
               <span className="font-black text-xl text-white tracking-tight">
                 MAHALAXMI<span className="text-champagne">.</span>
               </span>

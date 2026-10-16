@@ -282,10 +282,12 @@ export const Header: React.FC = () => {
                 <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
 
-              <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-navy flex items-center justify-center text-champagne font-black text-base sm:text-xl shadow-subtle group-hover:scale-105 transition-transform border border-navy-800 shrink-0">
-                  M
-                </div>
+              <Link to="/" className="flex items-center gap-2 group">
+                <img
+                  src="/logo.png"
+                  alt="Mahalaxmi Enterprises Logo"
+                  className="w-9 h-9 sm:w-11 sm:h-11 rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform border border-slate-200 shrink-0"
+                />
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1">
                     <span className="font-black text-base sm:text-xl tracking-tight text-navy leading-none">
@@ -746,9 +748,11 @@ export const Header: React.FC = () => {
             <div className="bg-gradient-to-r from-navy via-navy-800 to-indigo-dark text-white p-5 space-y-3 shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-champagne text-navy flex items-center justify-center font-black text-base shadow-sm">
-                    M
-                  </div>
+                  <img
+                    src="/logo.png"
+                    alt="Mahalaxmi Enterprises Logo"
+                    className="w-10 h-10 rounded-full object-cover shadow-sm border border-champagne/40 shrink-0"
+                  />
                   <div>
                     <h4 className="font-black text-sm tracking-tight leading-tight">MAHALAXMI</h4>
                     <p className="text-[10px] text-champagne font-bold tracking-wider uppercase">Direct Mill Weaves</p>

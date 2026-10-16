@@ -377,10 +377,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo/20 rounded-full blur-3xl pointer-events-none" />
           
           <div className="space-y-6 relative z-10">
-            <Link to="/" className="inline-flex items-center gap-2">
-              <div className="w-10 h-10 rounded-2xl bg-white text-navy font-black text-xl flex items-center justify-center shadow-subtle border border-champagne/40">
-                M
-              </div>
+            <Link to="/" className="inline-flex items-center gap-2.5">
+              <img
+                src="/logo.png"
+                alt="Mahalaxmi Enterprises Logo"
+                className="w-11 h-11 rounded-full object-cover shadow-sm border border-champagne/50"
+              />
               <div className="flex flex-col text-left">
                 <span className="font-black text-lg tracking-tight text-white leading-none">
                   MAHALAXMI MILLS
