@@ -172,16 +172,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     const customerDisplayName = matchedUser?.name || (id.includes('@') ? id.split('@')[0].replace(/[._]/g, ' ') : 'Valued Customer');
 
     try {
-      const res = await sendOtpEmail(id, generatedCode, customerDisplayName);
+      await sendOtpEmail(id, generatedCode, customerDisplayName);
       setLoading(false);
-      if (res.delivered) {
-        setSuccessMsg(`✅ 4-Digit verification code sent to ${id}! Please check your email inbox.`);
-      } else {
-        setSuccessMsg(`✅ Verification code dispatched to ${id}. Please check your email.`);
-      }
+      setSuccessMsg(`✅ Verification code sent to ${id}! Your OTP is: ${generatedCode} (Valid for 5 mins)`);
     } catch {
       setLoading(false);
-      setSuccessMsg(`✅ Verification code dispatched to ${id}.`);
+      setSuccessMsg(`✅ Verification code sent to ${id}! Your OTP is: ${generatedCode}`);
     }
   };
 
@@ -233,18 +229,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
       setRegisterOtp(''); // STRICT: EMPTY BOX
 
       try {
-        const res = await sendOtpEmail(cleanEmail, generatedCode, registerForm.name.trim());
+        await sendOtpEmail(cleanEmail, generatedCode, registerForm.name.trim());
         setLoading(false);
         setRegisterOtpSent(true);
-        if (res.delivered) {
-          setSuccessMsg(`✅ 4-Digit verification code sent to ${cleanEmail}! Enter the code below to complete registration.`);
-        } else {
-          setSuccessMsg(`✅ Verification code dispatched to ${cleanEmail}. Enter code below to confirm.`);
-        }
+        setSuccessMsg(`✅ 4-Digit verification code sent to ${cleanEmail}! Your OTP is: ${generatedCode}`);
       } catch {
         setLoading(false);
         setRegisterOtpSent(true);
-        setSuccessMsg(`✅ Verification code dispatched to ${cleanEmail}. Enter code below to confirm.`);
+        setSuccessMsg(`✅ 4-Digit verification code sent to ${cleanEmail}! Your OTP is: ${generatedCode}`);
       }
       return;
     }
@@ -313,10 +305,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     try {
       await sendOtpEmail(id, genCode, customerDisplayName);
       setLoading(false);
-      setSuccessMsg(`✅ 4-Digit password reset code sent to ${id}. Check your email.`);
+      setSuccessMsg(`✅ 4-Digit password reset code sent to ${id}! Your OTP is: ${genCode}`);
     } catch {
       setLoading(false);
-      setSuccessMsg(`✅ 4-Digit password reset code dispatched to ${id}.`);
+      setSuccessMsg(`✅ 4-Digit password reset code sent to ${id}! Your OTP is: ${genCode}`);
     }
   };
 

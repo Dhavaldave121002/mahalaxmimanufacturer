@@ -658,7 +658,7 @@ async function sendOrderNotificationEmails(data) {
     `;
 
     try {
-      await fetch('https://api.resend.com/emails', {
+      const resp = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
@@ -671,6 +671,24 @@ async function sendOrderNotificationEmails(data) {
           html: customerHtml
         })
       });
+
+      if (!resp.ok) {
+        const d = await resp.json();
+        console.warn(`[ORDER CONFIRMATION] Customer recipient restricted (${d.message}), forwarding alert to deviltimeisback001@gmail.com`);
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
+            to: ['deviltimeisback001@gmail.com'],
+            subject: `[New Order Notice] Order #${orderNumber} by ${customerName} (${customerEmail}) - ₹${Number(totalAmount).toLocaleString('en-IN')}`,
+            html: customerHtml
+          })
+        });
+      }
     } catch (err) {
       console.warn('Customer confirmation email dispatch failed:', err);
     }

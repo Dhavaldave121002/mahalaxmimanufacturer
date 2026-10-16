@@ -327,11 +327,11 @@ async function sendCancellationEmails(data) {
     </html>
   `;
 
-  // 1. Dispatch Customer Cancellation Confirmation (Strictly to Customer)
+  // 1. Dispatch Customer Cancellation Confirmation
   if (customerEmail && customerEmail.includes('@')) {
     try {
       const fromEmail = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <onboarding@resend.dev>';
-      await fetch('https://api.resend.com/emails', {
+      const custRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
@@ -344,13 +344,31 @@ async function sendCancellationEmails(data) {
           html: customerHtml
         })
       });
-      console.log(`[CANCEL ORDER] Customer confirmation dispatched strictly to ${customerEmail}`);
+      if (custRes.ok) {
+        console.log(`[CANCEL ORDER] Customer confirmation dispatched strictly to ${customerEmail}`);
+      } else {
+        const cData = await custRes.json();
+        console.warn(`[CANCEL ORDER] Customer email restricted (${cData.message}), forwarding alert to ${primaryAdmin}`);
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: fromEmail,
+            to: [primaryAdmin],
+            subject: `[Customer Notice] Order #${orderNumber} Cancelled for ${customerName} (${customerEmail})`,
+            html: customerHtml
+          })
+        });
+      }
     } catch (err) {
       console.error(`[CANCEL ORDER] Customer email delivery error:`, err);
     }
   }
 
-  // 2. Dispatch Store Admin Alert (Strictly to Store Owners)
+  // 2. Dispatch Store Admin Alert
   try {
     const fromEmail = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <onboarding@resend.dev>';
     await fetch('https://api.resend.com/emails', {
@@ -361,12 +379,12 @@ async function sendCancellationEmails(data) {
       },
       body: JSON.stringify({
         from: fromEmail,
-        to: [primaryAdmin, secondaryAdmin],
+        to: [primaryAdmin],
         subject: `🚨 [Store Alert] Order Cancelled: #${orderNumber} - ₹${Number(totalAmount).toLocaleString('en-IN')} (${customerName})`,
         html: adminHtml
       })
     });
-    console.log(`[CANCEL ORDER] Admin alert dispatched to ${primaryAdmin} & ${secondaryAdmin}`);
+    console.log(`[CANCEL ORDER] Admin alert dispatched to ${primaryAdmin}`);
   } catch (err) {
     console.error(`[CANCEL ORDER] Admin alert delivery error:`, err);
   }

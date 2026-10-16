@@ -427,10 +427,10 @@ async function sendAbandonedCartRecoveryEmails(data) {
 
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <onboarding@resend.dev>';
 
-  // 1. Dispatch Customer Recovery Email (Strictly to Customer)
+  // 1. Dispatch Customer Recovery Email
   if (customerEmail && customerEmail.includes('@')) {
     try {
-      await fetch('https://api.resend.com/emails', {
+      const custResp = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
@@ -443,13 +443,30 @@ async function sendAbandonedCartRecoveryEmails(data) {
           html: customerHtml
         })
       });
-      console.log(`[ABANDONED CART] Customer recovery email dispatched strictly to ${customerEmail}`);
+
+      if (!custResp.ok) {
+        const cData = await custResp.json();
+        console.warn(`[ABANDONED CART] Customer email restricted (${cData.message}), forwarding alert to ${primaryAdmin}`);
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: fromEmail,
+            to: [primaryAdmin],
+            subject: `[Cart Voucher Alert] For ${customerName} (${customerEmail}) - Cart ₹${Number(cartTotal).toLocaleString('en-IN')}`,
+            html: customerHtml
+          })
+        });
+      }
     } catch (err) {
       console.error(`[ABANDONED CART] Customer email delivery error:`, err);
     }
   }
 
-  // 2. Dispatch Admin Notification (Strictly to Store Owners)
+  // 2. Dispatch Admin Notification
   try {
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -459,12 +476,12 @@ async function sendAbandonedCartRecoveryEmails(data) {
       },
       body: JSON.stringify({
         from: fromEmail,
-        to: [primaryAdmin, secondaryAdmin],
+        to: [primaryAdmin],
         subject: `🛒 [Store Alert] Abandoned Cart Lead: ₹${Number(cartTotal).toLocaleString('en-IN')} by ${customerName} (${source})`,
         html: adminHtml
       })
     });
-    console.log(`[ABANDONED CART] Admin lead alert dispatched to ${primaryAdmin} & ${secondaryAdmin}`);
+    console.log(`[ABANDONED CART] Admin lead alert dispatched to ${primaryAdmin}`);
   } catch (err) {
     console.error(`[ABANDONED CART] Admin lead alert delivery error:`, err);
   }
