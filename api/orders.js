@@ -238,83 +238,233 @@ async function sendOrderNotificationEmails(data) {
   const itemsHtml = (items && items.length > 0)
     ? items.map(item => `
         <tr>
-          <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; font-size: 13px; color: #1E293B;">
-            <strong>${item.productName || item.name || 'Textile Product'}</strong>
-            <div style="font-size: 11px; color: #64748B;">${item.variantDescription || item.sku || ''}</div>
+          <td style="padding: 12px 14px; border-bottom: 1px solid #E2E8F0; text-align: left; vertical-align: middle;">
+            <div style="font-weight: 800; font-size: 14px; color: #0F172A; line-height: 1.3;">
+              ${item.productName || item.name || 'Textile Product'}
+            </div>
+            <div style="font-size: 11px; color: #64748B; margin-top: 3px;">
+              ${item.variantDescription || item.sku || 'Standard Mill Pack'}
+            </div>
           </td>
-          <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; font-size: 13px; color: #1E293B; text-align: center;">
-            ${item.quantity || 1}
+          <td style="padding: 12px 8px; border-bottom: 1px solid #E2E8F0; text-align: center; vertical-align: middle;">
+            <span style="display: inline-block; background-color: #F1F5F9; color: #1E293B; font-weight: 800; font-size: 12px; padding: 4px 10px; border-radius: 8px;">
+              ${item.quantity || 1}
+            </span>
           </td>
-          <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; font-size: 13px; color: #1E293B; text-align: right; font-family: monospace;">
-            ₹${Number(item.unitPrice || item.price || 0).toLocaleString('en-IN')}
-          </td>
-          <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; font-size: 13px; color: #1E293B; text-align: right; font-weight: bold; font-family: monospace;">
-            ₹${Number(item.totalPrice || (item.unitPrice || 0) * (item.quantity || 1)).toLocaleString('en-IN')}
+          <td style="padding: 12px 14px; border-bottom: 1px solid #E2E8F0; text-align: right; vertical-align: middle;">
+            <div style="font-size: 14px; font-weight: 800; color: #0F172A; font-family: monospace;">
+              ₹${Number(item.totalPrice || (item.unitPrice || 0) * (item.quantity || 1)).toLocaleString('en-IN')}
+            </div>
+            <div style="font-size: 10px; color: #94A3B8;">
+              @ ₹${Number(item.unitPrice || item.price || 0).toLocaleString('en-IN')}/pc
+            </div>
           </td>
         </tr>
       `).join('')
-    : '<tr><td colspan="4" style="padding: 12px; text-align: center; color: #64748B; font-size: 13px;">Commercial Textile Consignment</td></tr>';
+    : `
+      <tr>
+        <td colspan="3" style="padding: 16px; text-align: center; color: #64748B; font-size: 13px;">
+          Commercial Textile Consignment • ₹${Number(totalAmount).toLocaleString('en-IN')}
+        </td>
+      </tr>
+    `;
 
-  let addressText = 'Direct Surat Mill Dispatch';
+  let addressText = 'Direct Surat Mill Central Dispatch';
   if (typeof shippingAddress === 'object' && shippingAddress !== null) {
-    addressText = `${shippingAddress.fullAddress || shippingAddress.addressLine1 || ''}, ${shippingAddress.city || ''} ${shippingAddress.state || ''} ${shippingAddress.postalCode || shippingAddress.pincode || ''}`;
+    const parts = [
+      shippingAddress.fullAddress || shippingAddress.addressLine1,
+      shippingAddress.city,
+      shippingAddress.state,
+      shippingAddress.postalCode || shippingAddress.pincode
+    ].filter(Boolean);
+    addressText = parts.length > 0 ? parts.join(', ') : 'Direct Surat Mill Dispatch';
   } else if (typeof shippingAddress === 'string' && shippingAddress.trim()) {
     addressText = shippingAddress;
   }
 
+  const rawPhone = (customerPhone || '').replace(/\D/g, '');
+  const cleanPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
+  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+    `Namaste ${customerName}, Mahalaxmi Enterprises se aapke Order #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) ki details hume mil gayi hain. Jaldi dispatch karenge!`
+  )}`;
+
   // 1. Dispatch Alert Email to Store Owner
   const adminHtml = `
     <!DOCTYPE html>
-    <html>
-    <head><meta charset="utf-8"></head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F7F4; margin: 0; padding: 24px;">
-      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #E2E8F0;">
-        <div style="background: #14213D; padding: 24px; color: #ffffff; text-align: center;">
-          <span style="background: #C6AA80; color: #14213D; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">
-            ${source === 'FLUTTER_APP' ? '📱 Mobile App Order' : '🌐 Web Store Order'}
-          </span>
-          <h2 style="margin: 12px 0 4px; font-size: 22px; font-weight: 800;">🚨 New Order Received!</h2>
-          <p style="margin: 0; color: #94A3B8; font-size: 13px;">Order No: <strong style="color: #ffffff;">${orderNumber}</strong></p>
-        </div>
-        <div style="padding: 24px;">
-          <div style="background: #F1F5F9; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-            <h3 style="margin: 0 0 10px; font-size: 13px; color: #14213D; text-transform: uppercase; letter-spacing: 0.5px;">Buyer Details</h3>
-            <p style="margin: 4px 0; font-size: 13px; color: #334155;"><strong>Name:</strong> ${customerName} ${companyName ? `(${companyName})` : ''}</p>
-            <p style="margin: 4px 0; font-size: 13px; color: #334155;"><strong>Phone:</strong> <a href="tel:${customerPhone}" style="color: #14213D; font-weight: bold;">${customerPhone}</a></p>
-            <p style="margin: 4px 0; font-size: 13px; color: #334155;"><strong>Email:</strong> ${customerEmail}</p>
-            <p style="margin: 4px 0; font-size: 13px; color: #334155;"><strong>Delivery Address:</strong> ${addressText}</p>
-          </div>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="color-scheme" content="light">
+      <meta name="supported-color-schemes" content="light">
+      <title>New Order Alert: ${orderNumber}</title>
+    </head>
+    <body style="margin: 0; padding: 16px 8px; background-color: #0F172A; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="max-width: 580px; margin: 0 auto;">
+        <tr>
+          <td>
+            <!-- Main Card Container -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #FFFFFF; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 12px 36px rgba(0,0,0,0.35);">
+              
+              <!-- Brand Header -->
+              <tr>
+                <td style="background: linear-gradient(135deg, #14213D 0%, #0F172A 100%); padding: 26px 20px; text-align: center; border-bottom: 3px solid #C6AA80;">
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td align="center">
+                        <div style="display: inline-block; background-color: #C6AA80; color: #14213D; font-weight: 900; font-size: 18px; width: 36px; height: 36px; line-height: 36px; border-radius: 10px; margin-bottom: 8px;">
+                          M
+                        </div>
+                        <div style="color: #FFFFFF; font-size: 18px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">
+                          MAHALAXMI ENTERPRISES
+                        </div>
+                        <div style="color: #C6AA80; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 3px;">
+                          SURAT DIRECT MILL DISPATCH DESK
+                        </div>
 
-          <h3 style="margin: 0 0 10px; font-size: 13px; color: #14213D; text-transform: uppercase; letter-spacing: 0.5px;">Ordered Items</h3>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <thead>
-              <tr style="background: #F8FAFC; text-align: left; font-size: 11px; color: #64748B; text-transform: uppercase;">
-                <th style="padding: 8px 12px; border-bottom: 2px solid #E2E8F0;">Product</th>
-                <th style="padding: 8px 12px; border-bottom: 2px solid #E2E8F0; text-align: center;">Qty</th>
-                <th style="padding: 8px 12px; border-bottom: 2px solid #E2E8F0; text-align: right;">Rate</th>
-                <th style="padding: 8px 12px; border-bottom: 2px solid #E2E8F0; text-align: right;">Total</th>
+                        <!-- Source Badge -->
+                        <div style="margin-top: 14px;">
+                          <span style="display: inline-block; background-color: ${source === 'FLUTTER_APP' ? '#059669' : '#2563EB'}; color: #FFFFFF; font-size: 11px; font-weight: 800; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            ${source === 'FLUTTER_APP' ? '📱 Mobile App Order' : '🌐 Web Store Order'}
+                          </span>
+                        </div>
+
+                        <!-- Order Number Banner -->
+                        <div style="margin-top: 12px; background-color: rgba(255,255,255,0.08); border: 1px dashed rgba(198,170,128,0.5); border-radius: 10px; padding: 8px 14px; display: inline-block;">
+                          <span style="color: #94A3B8; font-size: 11px; font-weight: 600;">ORDER REF: </span>
+                          <strong style="color: #FFFFFF; font-size: 14px; font-family: monospace; letter-spacing: 0.5px;">${orderNumber}</strong>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
 
-          <div style="border-top: 2px solid #E2E8F0; padding-top: 14px; text-align: right;">
-            <div style="font-size: 13px; color: #64748B; margin-bottom: 4px;">Payment: <strong>${paymentMethod} (${paymentStatus})</strong></div>
-            <div style="font-size: 18px; font-weight: 800; color: #14213D;">
-              Total Value: <span style="color: #10B981;">₹${Number(totalAmount).toLocaleString('en-IN')}</span>
-            </div>
-          </div>
+              <!-- Body Content -->
+              <tr>
+                <td style="padding: 24px 20px; background-color: #FFFFFF;">
+                  
+                  <!-- Section: Customer / Buyer Box -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; margin-bottom: 22px;">
+                    <tr>
+                      <td style="padding: 16px;">
+                        <div style="font-size: 11px; font-weight: 800; color: #14213D; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; border-bottom: 1px solid #E2E8F0; padding-bottom: 6px;">
+                          👤 Buyer & Delivery Details
+                        </div>
 
-          <div style="margin-top: 24px; text-align: center;">
-            <a href="https://wa.me/${(customerPhone || '').replace(/\\D/g, '')}?text=${encodeURIComponent(`Namaste ${customerName}, your Mahalaxmi Enterprises order ${orderNumber} for ₹${totalAmount} is confirmed!`)}"
-               style="display: inline-block; background: #25D366; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 13px; padding: 12px 24px; border-radius: 10px; box-shadow: 0 2px 8px rgba(37,211,102,0.3);">
-              💬 Message Customer on WhatsApp
-            </a>
-          </div>
-        </div>
-      </div>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size: 13px; line-height: 1.6;">
+                          <tr>
+                            <td width="30%" style="color: #64748B; font-weight: 600; padding: 3px 0;">Customer:</td>
+                            <td style="color: #0F172A; font-weight: 800; padding: 3px 0;">
+                              ${customerName} ${companyName ? `<span style="color: #475569; font-weight: 600;">(${companyName})</span>` : ''}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="color: #64748B; font-weight: 600; padding: 3px 0;">Mobile Phone:</td>
+                            <td style="padding: 3px 0;">
+                              <a href="tel:${customerPhone}" style="color: #14213D; font-weight: 800; text-decoration: none;">
+                                📞 ${customerPhone}
+                              </a>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="color: #64748B; font-weight: 600; padding: 3px 0; vertical-align: top;">Email:</td>
+                            <td style="color: #0F172A; font-weight: 600; padding: 3px 0; word-break: break-all;">
+                              ${customerEmail}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="color: #64748B; font-weight: 600; padding: 3px 0; vertical-align: top;">Destination:</td>
+                            <td style="color: #0F172A; font-weight: 700; padding: 3px 0;">
+                              📍 ${addressText}
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Section: Ordered Items -->
+                  <div style="font-size: 11px; font-weight: 800; color: #14213D; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;">
+                    📦 Ordered Consignment Items
+                  </div>
+
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; margin-bottom: 20px;">
+                    <thead>
+                      <tr style="background-color: #F1F5F9; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <th style="padding: 10px 14px; text-align: left; border-bottom: 2px solid #E2E8F0;">Product Item</th>
+                        <th style="padding: 10px 8px; text-align: center; border-bottom: 2px solid #E2E8F0; width: 55px;">Qty</th>
+                        <th style="padding: 10px 14px; text-align: right; border-bottom: 2px solid #E2E8F0; width: 90px;">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${itemsHtml}
+                    </tbody>
+                  </table>
+
+                  <!-- Section: Order Summary & Grand Total -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 100%); border: 1px solid #CBD5E1; border-radius: 14px; margin-bottom: 24px;">
+                    <tr>
+                      <td style="padding: 16px 20px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                          <tr>
+                            <td style="color: #64748B; font-size: 12px; font-weight: 600; padding: 3px 0;">Payment Method:</td>
+                            <td align="right" style="padding: 3px 0;">
+                              <span style="background-color: #DCFCE7; color: #15803D; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 8px;">
+                                ${paymentMethod} (${paymentStatus})
+                              </span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td style="color: #0F172A; font-size: 16px; font-weight: 900; padding-top: 10px; border-top: 1px solid #E2E8F0;">
+                              Grand Total:
+                            </td>
+                            <td align="right" style="font-size: 24px; font-weight: 900; color: #059669; font-family: monospace; padding-top: 10px; border-top: 1px solid #E2E8F0;">
+                              ₹${Number(totalAmount).toLocaleString('en-IN')}
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Primary Action: WhatsApp Customer Button -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 12px;">
+                    <tr>
+                      <td align="center">
+                        <a href="${whatsappUrl}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background-color: #25D366; color: #FFFFFF; font-weight: 900; font-size: 14px; text-align: center; text-decoration: none; padding: 14px 20px; border-radius: 12px; box-shadow: 0 4px 14px rgba(37,211,102,0.4);">
+                          💬 Message Customer on WhatsApp
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <!-- Secondary Action: Direct Phone Call -->
+                  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td align="center">
+                        <a href="tel:${customerPhone}" style="display: block; width: 100%; box-sizing: border-box; background-color: #F1F5F9; color: #1E293B; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; padding: 12px 20px; border-radius: 12px; border: 1px solid #CBD5E1;">
+                          📞 Call Customer (${customerPhone})
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+
+                </td>
+              </tr>
+
+              <!-- Footer -->
+              <tr>
+                <td style="background-color: #F8FAFC; padding: 16px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
+                  <strong style="color: #64748B;">Mahalaxmi Enterprises Central ERP</strong><br>
+                  Surat Direct Mill Rates & Wholesale Portal • Ring Road, Surat, Gujarat
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
     </body>
     </html>
   `;
@@ -356,66 +506,122 @@ async function sendOrderNotificationEmails(data) {
   }
 
   // 2. Dispatch Confirmation Email to Customer (if valid email)
-  if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in') && customerEmail !== adminEmail) {
+  if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in') && customerEmail !== primaryAdmin) {
     const customerHtml = `
       <!DOCTYPE html>
-      <html>
-      <head><meta charset="utf-8"></head>
-      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8F7F4; margin: 0; padding: 24px;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #E2E8F0;">
-          <div style="background: linear-gradient(135deg, #14213D 0%, #1B2C52 100%); padding: 32px 24px; text-align: center; color: #ffffff;">
-            <h1 style="margin: 0; font-size: 20px; font-weight: 800;">MAHALAXMI ENTERPRISES</h1>
-            <p style="margin: 4px 0 0; font-size: 11px; font-weight: 700; color: #C6AA80; text-transform: uppercase;">Surat Direct Mill Rates & Wholesale Portal</p>
-          </div>
-          <div style="padding: 28px;">
-            <div style="text-align: center; margin-bottom: 24px;">
-              <div style="display: inline-block; background: #DCFCE7; color: #166534; font-size: 12px; font-weight: 800; padding: 6px 14px; border-radius: 20px; margin-bottom: 8px;">
-                ✅ ORDER CONFIRMED
-              </div>
-              <h2 style="margin: 0; font-size: 20px; color: #14213D;">Thank you for your order, ${customerName}!</h2>
-              <p style="margin: 4px 0 0; color: #64748B; font-size: 13px;">Order Number: <strong style="color: #14213D;">${orderNumber}</strong></p>
-            </div>
-
-            <p style="font-size: 13px; color: #475569; line-height: 1.6;">
-              Your order has been allocated to our Surat central textile dispatch warehouse. Your official GST invoice is generated and will accompany the freight consignment.
-            </p>
-
-            <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-              <thead>
-                <tr style="background: #F8FAFC; text-align: left; font-size: 11px; color: #64748B; text-transform: uppercase;">
-                  <th style="padding: 8px 12px; border-bottom: 2px solid #E2E8F0;">Item</th>
-                  <th style="padding: 8px 12px; border-bottom: 2px solid #E2E8F0; text-align: center;">Qty</th>
-                  <th style="padding: 8px 12px; border-bottom: 2px solid #E2E8F0; text-align: right;">Total</th>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="color-scheme" content="light">
+        <meta name="supported-color-schemes" content="light">
+        <title>Order Confirmed: #${orderNumber}</title>
+      </head>
+      <body style="margin: 0; padding: 16px 8px; background-color: #0F172A; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="max-width: 580px; margin: 0 auto;">
+          <tr>
+            <td>
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #FFFFFF; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 12px 36px rgba(0,0,0,0.35);">
+                
+                <!-- Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #14213D 0%, #0F172A 100%); padding: 28px 20px; text-align: center; border-bottom: 3px solid #C6AA80;">
+                    <div style="display: inline-block; background-color: #C6AA80; color: #14213D; font-weight: 900; font-size: 18px; width: 36px; height: 36px; line-height: 36px; border-radius: 10px; margin-bottom: 8px;">
+                      M
+                    </div>
+                    <div style="color: #FFFFFF; font-size: 18px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">
+                      MAHALAXMI ENTERPRISES
+                    </div>
+                    <div style="color: #C6AA80; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 3px;">
+                      SURAT DIRECT MILL RATES & WHOLESALE DISPATCH
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                ${itemsHtml}
-              </tbody>
-            </table>
 
-            <div style="background: #F8FAFC; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
-              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: #475569;">
-                <span>Payment Mode:</span>
-                <strong>${paymentMethod}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 800; color: #14213D; border-top: 1px solid #E2E8F0; padding-top: 8px;">
-                <span>Grand Total:</span>
-                <span style="color: #10B981;">₹${Number(totalAmount).toLocaleString('en-IN')}</span>
-              </div>
-            </div>
+                <!-- Content -->
+                <tr>
+                  <td style="padding: 26px 20px; background-color: #FFFFFF;">
+                    
+                    <div style="text-align: center; margin-bottom: 22px;">
+                      <div style="display: inline-block; background-color: #DCFCE7; color: #15803D; font-size: 12px; font-weight: 900; padding: 6px 16px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                        ✅ ORDER BOOKED SUCCESSFULLY
+                      </div>
+                      <h2 style="margin: 12px 0 4px; font-size: 20px; font-weight: 900; color: #0F172A;">
+                        Thank You, ${customerName}!
+                      </h2>
+                      <div style="color: #64748B; font-size: 13px;">
+                        Order Ref: <strong style="color: #0F172A; font-family: monospace;">${orderNumber}</strong>
+                      </div>
+                    </div>
 
-            <div style="text-align: center; padding: 16px 0;">
-              <p style="font-size: 12px; color: #64748B; margin-bottom: 12px;">Need assistance or have dispatch questions?</p>
-              <a href="https://wa.me/918511172099?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, I need help with my Order ${orderNumber}`)}"
-                 style="display: inline-block; background: #25D366; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 13px; padding: 10px 20px; border-radius: 10px;">
-                💬 Contact Mill Support on WhatsApp
-              </a>
-            </div>
-          </div>
-          <div style="background-color: #F8FAFC; padding: 16px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
-            Mahalaxmi Enterprises • Ring Road, Surat, Gujarat • Direct Mill Helpline: +91 85111 72099
-          </div>
-        </div>
+                    <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0 0 20px; text-align: center;">
+                      Your consignment has been allocated to our Surat Central Loom & Dispatch unit. Your official GST Commercial Invoice is prepared and will accompany the freight shipment.
+                    </p>
+
+                    <!-- Ordered Items Table -->
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; margin-bottom: 20px;">
+                      <thead>
+                        <tr style="background-color: #F1F5F9; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase;">
+                          <th style="padding: 10px 14px; text-align: left; border-bottom: 2px solid #E2E8F0;">Item Description</th>
+                          <th style="padding: 10px 8px; text-align: center; border-bottom: 2px solid #E2E8F0; width: 55px;">Qty</th>
+                          <th style="padding: 10px 14px; text-align: right; border-bottom: 2px solid #E2E8F0; width: 90px;">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${itemsHtml}
+                      </tbody>
+                    </table>
+
+                    <!-- Summary Box -->
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; margin-bottom: 22px;">
+                      <tr>
+                        <td style="padding: 16px 20px;">
+                          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                              <td style="color: #64748B; font-size: 12px; font-weight: 600;">Payment Mode:</td>
+                              <td align="right" style="color: #0F172A; font-size: 12px; font-weight: 800;">
+                                ${paymentMethod}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="color: #0F172A; font-size: 16px; font-weight: 900; padding-top: 8px; border-top: 1px solid #E2E8F0;">
+                                Total Amount:
+                              </td>
+                              <td align="right" style="font-size: 22px; font-weight: 900; color: #059669; font-family: monospace; padding-top: 8px; border-top: 1px solid #E2E8F0;">
+                                ₹${Number(totalAmount).toLocaleString('en-IN')}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- WhatsApp Helpline Button -->
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td align="center">
+                          <a href="https://wa.me/918511172099?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, I need help with my Order ${orderNumber}`)}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background-color: #25D366; color: #FFFFFF; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; padding: 13px 20px; border-radius: 12px;">
+                            💬 Contact Surat Mill Helpline on WhatsApp
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="background-color: #F8FAFC; padding: 16px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
+                    Mahalaxmi Enterprises • Ring Road, Textile Market, Surat, Gujarat<br>
+                    Official Mill Hotline: +91 85111 72099 • 100% Direct Loom Rates
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>
       </body>
       </html>
     `;
