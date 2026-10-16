@@ -327,40 +327,31 @@ async function sendCancellationEmails(data) {
     </html>
   `;
 
-  // 1. Dispatch Customer Cancellation Confirmation
+  // 1. Dispatch Customer Cancellation Confirmation via EmailJS
   if (customerEmail && customerEmail.includes('@')) {
     try {
-      const fromEmail = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <onboarding@resend.dev>';
-      const custRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: [customerEmail],
-          subject: `Namaste ${customerName}, Order Cancelled: #${orderNumber} | Mahalaxmi Enterprises`,
-          html: customerHtml
-        })
-      });
-      if (custRes.ok) {
-        console.log(`[CANCEL ORDER] Customer confirmation dispatched strictly to ${customerEmail}`);
-      } else {
-        const cData = await custRes.json();
-        console.warn(`[CANCEL ORDER] Customer email restricted (${cData.message}), forwarding alert to ${primaryAdmin}`);
-        await fetch('https://api.resend.com/emails', {
+      const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
+      const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
+      const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY;
+      const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
+
+      if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
+        const payload = {
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: {
+            to_email: customerEmail,
+            to_name: customerName,
+            order_number: orderNumber,
+            message: `Order #${orderNumber} has been cancelled successfully.`
+          }
+        };
+        if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
+        await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: fromEmail,
-            to: [primaryAdmin],
-            subject: `[Customer Notice] Order #${orderNumber} Cancelled for ${customerName} (${customerEmail})`,
-            html: customerHtml
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
       }
     } catch (err) {
@@ -368,24 +359,33 @@ async function sendCancellationEmails(data) {
     }
   }
 
-  // 2. Dispatch Store Admin Alert
+  // 2. Dispatch Store Admin Alert via EmailJS
   try {
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <onboarding@resend.dev>';
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: [primaryAdmin],
-        subject: `🚨 [Store Alert] Order Cancelled: #${orderNumber} - ₹${Number(totalAmount).toLocaleString('en-IN')} (${customerName})`,
-        html: adminHtml
-      })
-    });
-    console.log(`[CANCEL ORDER] Admin alert dispatched to ${primaryAdmin}`);
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
+    const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
+    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY;
+    const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
+
+    if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
+      const payload = {
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_TEMPLATE_ID,
+        user_id: EMAILJS_PUBLIC_KEY,
+        template_params: {
+          to_email: primaryAdmin,
+          to_name: 'Mahalaxmi Admin',
+          order_number: orderNumber,
+          message: `🚨 Store Alert: Order #${orderNumber} was cancelled by ${customerName} (₹${Number(totalAmount).toLocaleString('en-IN')})`
+        }
+      };
+      if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
+      await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
   } catch (err) {
-    console.error(`[CANCEL ORDER] Admin alert delivery error:`, err);
+    console.error(`[CANCEL ORDER] Admin email delivery error:`, err);
   }
 }

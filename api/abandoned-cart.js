@@ -425,40 +425,32 @@ async function sendAbandonedCartRecoveryEmails(data) {
     </html>
   `;
 
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <onboarding@resend.dev>';
-
-  // 1. Dispatch Customer Recovery Email
+  // 1. Dispatch Customer Recovery Email via EmailJS
   if (customerEmail && customerEmail.includes('@')) {
     try {
-      const custResp = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: [customerEmail],
-          subject: `Namaste ${customerName}, items in your cart are waiting! Flat ₹150 OFF | Mahalaxmi Enterprises`,
-          html: customerHtml
-        })
-      });
+      const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
+      const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
+      const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY;
+      const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
-      if (!custResp.ok) {
-        const cData = await custResp.json();
-        console.warn(`[ABANDONED CART] Customer email restricted (${cData.message}), forwarding alert to ${primaryAdmin}`);
-        await fetch('https://api.resend.com/emails', {
+      if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
+        const payload = {
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: {
+            to_email: customerEmail,
+            to_name: customerName,
+            cart_total: Number(cartTotal).toLocaleString('en-IN'),
+            message: `Items in your cart are waiting! Use coupon LAUNCH150 for flat ₹150 OFF.`
+          }
+        };
+        if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
+
+        await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: fromEmail,
-            to: [primaryAdmin],
-            subject: `[Cart Voucher Alert] For ${customerName} (${customerEmail}) - Cart ₹${Number(cartTotal).toLocaleString('en-IN')}`,
-            html: customerHtml
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
       }
     } catch (err) {
@@ -466,22 +458,32 @@ async function sendAbandonedCartRecoveryEmails(data) {
     }
   }
 
-  // 2. Dispatch Admin Notification
+  // 2. Dispatch Admin Notification via EmailJS
   try {
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: [primaryAdmin],
-        subject: `🛒 [Store Alert] Abandoned Cart Lead: ₹${Number(cartTotal).toLocaleString('en-IN')} by ${customerName} (${source})`,
-        html: adminHtml
-      })
-    });
-    console.log(`[ABANDONED CART] Admin lead alert dispatched to ${primaryAdmin}`);
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
+    const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
+    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY;
+    const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
+
+    if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
+      const payload = {
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_TEMPLATE_ID,
+        user_id: EMAILJS_PUBLIC_KEY,
+        template_params: {
+          to_email: primaryAdmin,
+          to_name: 'Mahalaxmi Admin',
+          message: `🛒 [Store Alert] Abandoned Cart Lead: ₹${Number(cartTotal).toLocaleString('en-IN')} by ${customerName} (${source})`
+        }
+      };
+      if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
+
+      await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
   } catch (err) {
     console.error(`[ABANDONED CART] Admin lead alert delivery error:`, err);
   }

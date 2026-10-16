@@ -500,42 +500,38 @@ async function sendOrderNotificationEmails(data) {
     </html>
   `;
 
-  // Dispatch to Primary Admin (deviltimeisback001@gmail.com - verified in Resend)
+  // Dispatch Admin Notification via EmailJS
   try {
-    const senderFrom = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <orders@mahalaxmimanufacturer.com>';
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: senderFrom,
-        to: [primaryAdmin],
-        subject: `🚨 [New Order] #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}`,
-        html: adminHtml
-      })
-    });
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
+    const EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_ORDER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID;
+    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID;
+    const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
+
+    if (EMAILJS_SERVICE_ID && EMAILJS_ORDER_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
+      const payload = {
+        service_id: EMAILJS_SERVICE_ID,
+        template_id: EMAILJS_ORDER_TEMPLATE_ID,
+        user_id: EMAILJS_PUBLIC_KEY,
+        template_params: {
+          to_email: primaryAdmin,
+          to_name: 'Mahalaxmi Mill Admin',
+          order_number: orderNumber,
+          total_amount: Number(totalAmount).toLocaleString('en-IN'),
+          customer_name: customerName,
+          customer_email: customerEmail || 'N/A',
+          message: `🚨 New Order #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')} via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}`
+        }
+      };
+      if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
+
+      await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
   } catch (err) {
     console.warn('Admin notification email dispatch failed:', err);
-  }
-
-  // Attempt dispatch to Secondary Admin (dhavaldave121002@gmail.com)
-  if (secondaryAdmin !== primaryAdmin) {
-    const senderFrom = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <orders@mahalaxmimanufacturer.com>';
-    fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: senderFrom,
-        to: [secondaryAdmin],
-        subject: `🚨 [New Order] #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}`,
-        html: adminHtml
-      })
-    }).catch(() => {});
   }
 
   // 2. Dispatch Confirmation Email to Customer (Strictly to Customer)
@@ -696,56 +692,6 @@ async function sendOrderNotificationEmails(data) {
         }
       }
 
-      // 2. Secondary: Resend Dispatch
-      const customSender = process.env.RESEND_FROM_EMAIL || 'Mahalaxmi Enterprises <orders@mahalaxmimanufacturer.com>';
-      let resp = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: customSender,
-          to: [customerEmail],
-          subject: `Namaste ${customerName}, Order #${orderNumber} Confirmed! | Mahalaxmi Enterprises Surat`,
-          html: customerHtml
-        })
-      });
-
-      if (!resp.ok) {
-        // Try standard onboarding sender if custom domain pending
-        resp = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
-            to: [customerEmail],
-            subject: `Namaste ${customerName}, Order #${orderNumber} Confirmed! | Mahalaxmi Enterprises Surat`,
-            html: customerHtml
-          })
-        });
-      }
-
-      if (!resp.ok) {
-        const d = await resp.json();
-        console.warn(`[ORDER CONFIRMATION] Customer recipient restricted (${d.message}), forwarding alert to deviltimeisback001@gmail.com`);
-        await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            from: 'Mahalaxmi Enterprises <onboarding@resend.dev>',
-            to: ['deviltimeisback001@gmail.com'],
-            subject: `[New Order Notice] Order #${orderNumber} by ${customerName} (${customerEmail}) - ₹${Number(totalAmount).toLocaleString('en-IN')}`,
-            html: customerHtml
-          })
-        });
-      }
     } catch (err) {
       console.warn('Customer confirmation email dispatch failed:', err);
     }
