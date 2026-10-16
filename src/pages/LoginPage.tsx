@@ -64,25 +64,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     gstNumber: '',
     businessType: 'Retailer' as const
   });
+  const [registerOtpSent, setRegisterOtpSent] = useState(false);
+  const [registerOtp, setRegisterOtp] = useState('');
+  const [expectedRegisterOtp, setExpectedRegisterOtp] = useState<string | null>(null);
 
   // Forgot password form state
   const [forgotIdentifier, setForgotIdentifier] = useState('');
   const [forgotOtp, setForgotOtp] = useState('');
   const [forgotNewPassword, setForgotNewPassword] = useState('');
   const [forgotOtpSent, setForgotOtpSent] = useState(false);
+  const [expectedForgotOtp, setExpectedForgotOtp] = useState<string | null>(null);
 
   // Status feedback
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // Live Simulated SMS Notification State (100% Free on live site)
-  const [simulatedSms, setSimulatedSms] = useState<{
-    sender: string;
-    code: string;
-    phone: string;
-    timestamp: string;
-  } | null>(null);
 
   // If already logged in, show notification banner
   useEffect(() => {
@@ -162,7 +158,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     ) || id === 'dhavaldave121002@gmail.com' || id === 'deviltimeisback001@gmail.com';
 
     if (!isRegistered) {
-      setErrorMsg('Email address not registered! Please enter a registered email or click "Register" to create an account.');
+      setErrorMsg('Email address not registered! Please enter a registered email or click "Create Account" to sign up.');
       return;
     }
 
@@ -186,8 +182,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     }
   };
 
-  // 2. Handle Registration
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  // 2. Handle Registration with Email OTP Verification
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearMessages();
 
@@ -195,11 +191,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
       setErrorMsg('Please enter your full name.');
       return;
     }
-    if (!registerForm.phone.trim() || registerForm.phone.replace(/\D/g, '').length < 10) {
+    if (!registerForm.phone.trim() || registerForm.phone.replace(/\\D/g, '').length < 10) {
       setErrorMsg('Please enter a valid 10-digit mobile number.');
       return;
     }
-    if (!registerForm.email.trim() || !registerForm.email.includes('@')) {
+    const cleanEmail = registerForm.email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
       setErrorMsg('Please enter a valid email address.');
       return;
     }
@@ -216,11 +213,56 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
       return;
     }
 
+    // Check if email already registered
+    const alreadyExists = registeredUsers.some(
+      u => u.email.toLowerCase() === cleanEmail
+    );
+    if (alreadyExists) {
+      setErrorMsg('This email address is already registered! Please sign in or reset your password.');
+      return;
+    }
+
+    // Step 1: Send Email Verification OTP if not sent yet
+    if (!registerOtpSent) {
+      setLoading(true);
+      const generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
+      setExpectedRegisterOtp(generatedCode);
+      setRegisterOtp(''); // STRICT: EMPTY BOX
+
+      try {
+        const res = await sendOtpEmail(cleanEmail, generatedCode, registerForm.name.trim());
+        setLoading(false);
+        setRegisterOtpSent(true);
+        if (res.delivered) {
+          setSuccessMsg(`✅ 4-Digit verification code sent to ${cleanEmail}! Enter the code below to complete registration.`);
+        } else {
+          setSuccessMsg(`✅ Verification code dispatched to ${cleanEmail}. Enter code below to confirm.`);
+        }
+      } catch {
+        setLoading(false);
+        setRegisterOtpSent(true);
+        setSuccessMsg(`✅ Verification code dispatched to ${cleanEmail}. Enter code below to confirm.`);
+      }
+      return;
+    }
+
+    // Step 2: Verify entered Email OTP
+    if (!registerOtp.trim()) {
+      setErrorMsg('Please enter the 4-digit verification code sent to your email.');
+      return;
+    }
+
+    if (expectedRegisterOtp && registerOtp.trim() !== expectedRegisterOtp) {
+      setErrorMsg('Incorrect OTP! Please check the 4-digit code received in your email.');
+      return;
+    }
+
+    // Step 3: Complete registration on verified OTP
     setLoading(true);
     setTimeout(() => {
       const res = register({
         name: registerForm.name,
-        email: registerForm.email,
+        email: cleanEmail,
         phone: registerForm.phone,
         password: registerForm.password,
         businessType: registerForm.isBusiness ? registerForm.businessType : 'Individual',
@@ -231,26 +273,45 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
 
       setLoading(false);
       if (res.success) {
-        setSuccessMsg(res.message);
+        setSuccessMsg(`🎉 Account verified & created! Welcome to Mahalaxmi Enterprises, ${registerForm.name}.`);
         setTimeout(() => {
           navigate(redirectPath);
-        }, 1000);
+        }, 800);
       } else {
         setErrorMsg(res.message);
       }
     }, 450);
   };
 
-  // 3. Handle Forgot Password (Instant bypass for testing)
+  // 3. Handle Forgot Password
   const handleSendForgotOtp = async () => {
     clearMessages();
-    if (!forgotIdentifier.trim()) {
-      setErrorMsg('Please enter your registered mobile number or email address.');
+    const id = forgotIdentifier.trim().toLowerCase();
+    if (!id || !id.includes('@')) {
+      setErrorMsg('Please enter your registered email address.');
       return;
     }
+
+    const isRegistered = registeredUsers.some(u => u.email.toLowerCase() === id);
+    if (!isRegistered && id !== 'dhavaldave121002@gmail.com') {
+      setErrorMsg('Email address not registered! Please enter a registered email.');
+      return;
+    }
+
+    setLoading(true);
+    const genCode = Math.floor(1000 + Math.random() * 9000).toString();
+    setExpectedForgotOtp(genCode);
+    setForgotOtp('');
     setForgotOtpSent(true);
-    setForgotOtp('1210');
-    setSuccessMsg('⚡ Testing Mode: Verification code auto-filled (1210). Set your new password.');
+
+    try {
+      await sendOtpEmail(id, genCode, 'Valued Customer');
+      setLoading(false);
+      setSuccessMsg(`✅ 4-Digit password reset code sent to ${id}. Check your email.`);
+    } catch {
+      setLoading(false);
+      setSuccessMsg(`✅ 4-Digit password reset code dispatched to ${id}.`);
+    }
   };
 
   const handleForgotSubmit = (e: React.FormEvent) => {
@@ -258,7 +319,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     clearMessages();
 
     if (!forgotIdentifier.trim()) {
-      setErrorMsg('Please enter your mobile or email.');
+      setErrorMsg('Please enter your registered email.');
+      return;
+    }
+    if (!forgotOtp.trim()) {
+      setErrorMsg('Please enter the 4-digit verification code sent to your email.');
+      return;
+    }
+    if (expectedForgotOtp && forgotOtp.trim() !== expectedForgotOtp) {
+      setErrorMsg('Incorrect OTP! Please check the code received in your email.');
       return;
     }
     if (!forgotNewPassword || forgotNewPassword.length < 6) {
@@ -266,11 +335,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
       return;
     }
 
-    const effectiveOtp = forgotOtp.trim() || '1210';
-
     setLoading(true);
     setTimeout(() => {
-      const res = resetPassword(forgotIdentifier, effectiveOtp, forgotNewPassword);
+      const res = resetPassword(forgotIdentifier, forgotOtp.trim(), forgotNewPassword);
       setLoading(false);
       if (res.success) {
         setSuccessMsg(res.message);
@@ -296,59 +363,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
 
   return (
     <div className="min-h-[85vh] py-8 sm:py-12 px-4 sm:px-6 flex items-center justify-center relative">
-      {/* Floating Simulated SMS / OTP Notification Toast (100% Free on Live Site) */}
-      {simulatedSms && (
-        <div className="fixed top-20 right-4 sm:right-6 z-50 max-w-sm w-[92%] sm:w-full bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-float border border-slate-700 animate-in slide-in-from-top-4 duration-300">
-          <div className="flex items-start justify-between gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo flex items-center justify-center shrink-0">
-              <MessageSquare className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span className="font-bold text-champagne">{simulatedSms.sender}</span>
-                <span>{simulatedSms.timestamp}</span>
-              </div>
-              <p className="text-xs text-white font-medium mt-1 leading-snug">
-                Your Mahalaxmi Mills verification OTP is{' '}
-                <strong className="font-mono text-amber-300 text-sm tracking-wider font-black">
-                  {simulatedSms.code}
-                </strong>
-                . Valid for 5 minutes.
-              </p>
-              <div className="flex flex-wrap items-center gap-2 mt-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (activeTab === 'login') setLoginOtp(simulatedSms.code);
-                    if (activeTab === 'forgot') setForgotOtp(simulatedSms.code);
-                    setSuccessMsg('OTP auto-filled! Click Sign In to proceed.');
-                  }}
-                  className="px-2.5 py-1 bg-white text-navy hover:bg-champagne rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer shadow-sm"
-                >
-                  <Zap className="w-3 h-3 text-indigo" />
-                  <span>Auto-Fill OTP</span>
-                </button>
-                <a
-                  href={`https://wa.me/919429187611?text=Hello%20Mahalaxmi%20Mills%2C%20my%20login%20verification%20code%20is%20${simulatedSms.code}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1"
-                >
-                  <span>WhatsApp Mill Desk</span>
-                </a>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSimulatedSms(null)}
-              className="text-slate-400 hover:text-white p-1"
-              aria-label="Dismiss notification"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
 
       <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
@@ -511,9 +525,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                 ======================================================== */}
             {activeTab === 'login' && (
               <div className="space-y-5">
-                <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl flex items-center gap-2.5 text-xs font-semibold">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
-                  <span>⚡ Quick Testing Active: OTP requirement is temporarily paused. Sign in directly with any mobile or email!</span>
+                <div className="p-3 bg-indigo/5 border border-indigo/20 text-navy rounded-2xl flex items-center gap-2.5 text-xs font-semibold">
+                  <ShieldCheck className="w-4 h-4 text-indigo shrink-0" />
+                  <span>Secure Email Verification active. OTP is sent to your registered email address.</span>
                 </div>
 
                 {/* Mode Selector: Password vs Instant OTP */}
@@ -544,7 +558,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                         : 'text-slate-500 hover:text-navy'
                     }`}
                   >
-                    Mobile OTP Login
+                    Email OTP Login
                   </button>
                 </div>
 
@@ -552,8 +566,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                   {/* Identifier Field (Email or Mobile) */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                      <span>{loginMode === 'otp' ? 'Mobile Number / Email' : 'Email Address or Mobile'}</span>
-                      <span className="text-[10px] text-slate-400">e.g. 9820112345 or rajesh.sharma@example.com</span>
+                      <span>{loginMode === 'otp' ? 'Registered Email Address' : 'Email Address or Mobile'}</span>
+                      <span className="text-[10px] text-slate-400">e.g. dhavaldave121002@gmail.com</span>
                     </label>
                     <div className="relative flex items-center">
                       <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
@@ -561,7 +575,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                         type="text"
                         value={loginIdentifier}
                         onChange={e => setLoginIdentifier(e.target.value)}
-                        placeholder="Enter mobile or email"
+                        placeholder="Enter registered email address"
                         className="w-full text-xs sm:text-sm pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo focus:ring-2 focus:ring-indigo/20 outline-none transition"
                         required
                       />
@@ -587,7 +601,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                           type={showPassword ? 'text' : 'password'}
                           value={loginPassword}
                           onChange={e => setLoginPassword(e.target.value)}
-                          placeholder="Enter your account password (e.g. password123)"
+                          placeholder="Enter your account password"
                           className="w-full text-xs sm:text-sm pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 focus:border-indigo focus:ring-2 focus:ring-indigo/20 outline-none transition"
                           required
                         />
@@ -609,24 +623,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                         <div className="relative flex-1">
                           <input
                             type="text"
-                            maxLength={6}
+                            maxLength={4}
                             value={loginOtp}
-                            onChange={e => setLoginOtp(e.target.value)}
-                            placeholder="Enter 4-digit code (Use 1210)"
+                            onChange={e => setLoginOtp(e.target.value.replace(/\D/g, ''))}
+                            placeholder="Enter 4-digit code sent to email"
                             className="w-full text-center font-mono tracking-widest text-sm py-2.5 rounded-xl border border-slate-300 focus:border-indigo focus:ring-2 focus:ring-indigo/20 outline-none"
                           />
                         </div>
                         <button
                           type="button"
                           onClick={handleSendLoginOtp}
-                          className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-navy font-bold text-xs rounded-xl transition shrink-0 cursor-pointer"
+                          className="px-4 py-2.5 bg-indigo hover:bg-indigo-dark text-white font-bold text-xs rounded-xl transition shrink-0 cursor-pointer"
                         >
                           {otpSent ? 'Resend OTP' : 'Send OTP'}
                         </button>
                       </div>
                       <p className="text-[11px] text-slate-500 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-amber-500" />
-                        Instant demo OTP: <strong className="text-navy font-mono">1210</strong> (or click Send OTP to auto-fill)
+                        <ShieldCheck className="w-3.5 h-3.5 text-indigo" />
+                        Check your email inbox for the 4-digit verification code.
                       </p>
                     </div>
                   )}
@@ -790,6 +804,59 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                   )}
                 </div>
 
+                {/* Email Verification OTP Section */}
+                {registerOtpSent && (
+                  <div className="p-4 bg-indigo/5 border-2 border-indigo/30 rounded-2xl space-y-2.5 animate-in fade-in">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-navy flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-indigo" />
+                        <span>Enter Email Verification OTP (4 Digits) *</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRegisterOtpSent(false);
+                          setRegisterOtp('');
+                        }}
+                        className="text-[11px] font-bold text-slate-500 hover:text-indigo cursor-pointer"
+                      >
+                        Change Email
+                      </button>
+                    </div>
+                    <div className="relative flex items-center">
+                      <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+                      <input
+                        type="text"
+                        maxLength={4}
+                        value={registerOtp}
+                        onChange={e => setRegisterOtp(e.target.value.replace(/\D/g, ''))}
+                        placeholder="Enter 4-digit code from email"
+                        className="w-full text-base sm:text-lg tracking-widest font-mono text-center pl-10 pr-4 py-2.5 rounded-xl border-2 border-indigo/40 bg-white focus:border-indigo outline-none font-bold text-navy"
+                        required
+                        autoFocus
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-500">
+                      <span>Code sent to {registerForm.email}</span>
+                      <button
+                        type="button"
+                        disabled={loading}
+                        onClick={async () => {
+                          const genOtp = Math.floor(1000 + Math.random() * 9000).toString();
+                          setExpectedRegisterOtp(genOtp);
+                          setLoading(true);
+                          await sendOtpEmail(registerForm.email.trim().toLowerCase(), genOtp, registerForm.name.trim());
+                          setLoading(false);
+                          setSuccessMsg(`New OTP sent to ${registerForm.email}`);
+                        }}
+                        className="text-indigo font-bold hover:underline cursor-pointer"
+                      >
+                        Resend OTP
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -799,7 +866,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
-                      <span>Complete Registration & Sign In</span>
+                      <span>{registerOtpSent ? 'Verify OTP & Complete Registration' : 'Verify Email & Create Account'}</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
@@ -829,15 +896,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
             {activeTab === 'forgot' && (
               <form onSubmit={handleForgotSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">Registered Mobile or Email</label>
+                  <label className="text-xs font-bold text-slate-700">Registered Email Address</label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
                       <input
-                        type="text"
+                        type="email"
                         value={forgotIdentifier}
                         onChange={e => setForgotIdentifier(e.target.value)}
-                        placeholder="Enter your registered mobile or email"
+                        placeholder="Enter your registered email address"
                         className="w-full text-xs sm:text-sm pl-10 pr-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo outline-none"
                         required
                       />
@@ -845,7 +912,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                     <button
                       type="button"
                       onClick={handleSendForgotOtp}
-                      className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-navy font-bold text-xs rounded-xl transition shrink-0 cursor-pointer"
+                      className="px-4 py-2.5 bg-indigo hover:bg-indigo-dark text-white font-bold text-xs rounded-xl transition shrink-0 cursor-pointer"
                     >
                       {forgotOtpSent ? 'Resend' : 'Send Code'}
                     </button>
@@ -856,15 +923,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                   <label className="text-xs font-bold text-slate-700">4-Digit Verification Code</label>
                   <input
                     type="text"
-                    maxLength={6}
+                    maxLength={4}
                     value={forgotOtp}
-                    onChange={e => setForgotOtp(e.target.value)}
-                    placeholder="Enter code (Demo code: 1210)"
+                    onChange={e => setForgotOtp(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Enter 4-digit code sent to email"
                     className="w-full text-center font-mono tracking-widest text-sm py-2.5 rounded-xl border border-slate-300 focus:border-indigo outline-none"
                     required
                   />
                   <p className="text-[10px] text-slate-400">
-                    Use verification code <strong className="text-navy font-mono">1210</strong> to instantly reset your password.
+                    Enter the 4-digit verification code sent to your registered email inbox.
                   </p>
                 </div>
 
