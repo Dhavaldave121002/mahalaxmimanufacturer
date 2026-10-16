@@ -23,34 +23,41 @@ export class ErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error caught by ErrorBoundary:', error, errorInfo);
 
-    // If chunk load failed (common when new version is deployed to Vercel), auto-reload once
+    // If chunk load failed (common when new version is deployed to Vercel), auto-reload immediately
+    const msg = (error?.message || '').toLowerCase();
     const isChunkError =
-      error.message?.includes('Failed to fetch dynamically imported module') ||
-      error.message?.includes('Loading chunk') ||
-      error.message?.includes('dynamically imported module');
+      msg.includes('dynamically imported module') ||
+      msg.includes('loading chunk') ||
+      msg.includes('failed to fetch') ||
+      msg.includes('importing a module script') ||
+      msg.includes('preload') ||
+      msg.includes('networkerror');
 
     if (isChunkError) {
       const lastReload = sessionStorage.getItem('mle_last_chunk_reload');
       const now = Date.now();
-      if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+      if (!lastReload || now - parseInt(lastReload, 10) > 6000) {
         sessionStorage.setItem('mle_last_chunk_reload', now.toString());
-        window.location.reload();
+        window.location.href = window.location.href.split('?')[0] + '?v=' + now;
+        return;
       }
     }
   }
 
   private handleReset = () => {
     try {
-      // Clear potentially corrupted transient session items
       sessionStorage.clear();
     } catch {
       // ignore
     }
-    window.location.href = '/';
+    window.location.href = '/?v=' + Date.now();
   };
 
   private handleReload = () => {
-    window.location.reload();
+    try {
+      sessionStorage.removeItem('mle_last_chunk_reload');
+    } catch {}
+    window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now();
   };
 
   public render() {
