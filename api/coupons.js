@@ -105,9 +105,10 @@ function saveFallbackCoupons(couponsList) {
   }
 }
 
+let tableEnsured = false;
 // Ensure MySQL table exists with proper indexes
 async function ensureCouponsTable(pool) {
-  if (!pool) return;
+  if (!pool || tableEnsured) return;
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS coupons (
@@ -131,6 +132,7 @@ async function ensureCouponsTable(pool) {
         INDEX idx_active (is_active)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+    tableEnsured = true;
   } catch (err) {
     console.warn('MySQL ensureCouponsTable error:', err.message);
   }

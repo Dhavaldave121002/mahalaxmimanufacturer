@@ -22,6 +22,9 @@ export function getDbPool() {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
+      connectTimeout: 2000,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000,
       ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : undefined
     });
     return pool;
@@ -38,6 +41,9 @@ export function getDbPool() {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
+      connectTimeout: 2000,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 10000,
       ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : undefined
     });
     return pool;
