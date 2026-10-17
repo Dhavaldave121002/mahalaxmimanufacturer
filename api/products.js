@@ -29,6 +29,78 @@ function saveFallbackProducts(products) {
   }
 }
 
+
+let reviewsTableEnsured = false;
+async function ensureReviewsTable(pool) {
+  if (!pool || reviewsTableEnsured) return;
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS product_reviews (
+        id VARCHAR(64) PRIMARY KEY,
+        product_id VARCHAR(64) NOT NULL,
+        product_title VARCHAR(255) NOT NULL,
+        customer_name VARCHAR(150) NOT NULL,
+        customer_email VARCHAR(150),
+        rating DECIMAL(2,1) NOT NULL DEFAULT 5.0,
+        comment TEXT NOT NULL,
+        status ENUM('APPROVED', 'PENDING', 'REJECTED') DEFAULT 'APPROVED',
+        verified_buyer TINYINT(1) DEFAULT 1,
+        source VARCHAR(32) DEFAULT 'WEB',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_rev_prod (product_id),
+        INDEX idx_rev_email (customer_email)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+    reviewsTableEnsured = true;
+  } catch (e) {
+    console.warn('ensureReviewsTable warning:', e.message);
+  }
+}
+
+function loadFallbackReviews() {
+  try {
+    const fPath = path.join(process.cwd(), 'public', 'reviews.json');
+    if (fs.existsSync(fPath)) {
+      return JSON.parse(fs.readFileSync(fPath, 'utf8'));
+    }
+  } catch (_) {}
+  return [
+    {
+      id: 'rev-01',
+      product_id: 'cotton-bath-towels',
+      product_title: 'Soft Cotton Bath Towels',
+      customer_name: 'Harish M.',
+      customer_email: 'harish@grandheritage.com',
+      rating: 5.0,
+      comment: 'Outstanding fabric quality and dimensional stability. Surpassed 40 industrial wash cycles with zero shrinkage. Direct mill rates saved our property over ₹45,000.',
+      status: 'APPROVED',
+      verified_buyer: 1,
+      source: 'WEB',
+      created_at: new Date(Date.now() - 14 * 86400000).toISOString()
+    },
+    {
+      id: 'rev-02',
+      product_id: 'cotton-double-bedsheet',
+      product_title: 'Cotton Double Bedsheet',
+      customer_name: 'Sanjay K. (Kalyan Handlooms)',
+      customer_email: 'sanjay@kalyan.in',
+      rating: 5.0,
+      comment: 'Packaging is clean and presentation is very premium for our retail shelves. Customers love the combed cotton hand-feel. Reordering another 50 packs today.',
+      status: 'APPROVED',
+      verified_buyer: 1,
+      source: 'FLUTTER_APP',
+      created_at: new Date(Date.now() - 25 * 86400000).toISOString()
+    }
+  ];
+}
+
+function saveFallbackReviews(revs) {
+  try {
+    const fPath = path.join(process.cwd(), 'public', 'reviews.json');
+    fs.writeFileSync(fPath, JSON.stringify(revs, null, 2), 'utf8');
+  } catch (_) {}
+}
+
 let tableEnsured = false;
 async function ensureProductsTable(pool) {
   if (!pool || tableEnsured) return;
@@ -91,6 +163,46 @@ export default async function handler(req, res) {
   // ----------------------------------------------------
   // GET: Fetch all active products
   // ----------------------------------------------------
+  
+  // ----------------------------------------------------
+  // GET: Reviews Query Support
+  // ----------------------------------------------------
+  if (req.method === 'GET' && (req.query?.action === 'reviews' || req.query?.type === 'reviews')) {
+    const productId = req.query?.productId || req.query?.product_id;
+    const email = req.query?.email ? req.query.email.trim().toLowerCase() : null;
+
+    if (pool) {
+      try {
+        await ensureReviewsTable(pool);
+        let query = 'SELECT * FROM product_reviews WHERE status = "APPROVED"';
+        const params = [];
+        if (productId) {
+          query += ' AND product_id = ?';
+          params.push(productId);
+        } else if (email) {
+          query = 'SELECT * FROM product_reviews WHERE LOWER(customer_email) = ?';
+          params.push(email);
+        } else if (req.query?.all === 'true') {
+          query = 'SELECT * FROM product_reviews';
+        }
+        query += ' ORDER BY created_at DESC';
+        const [rows] = await pool.query(query, params);
+        return res.status(200).json({ success: true, count: rows.length, reviews: rows });
+      } catch (e) {
+        console.warn('MySQL reviews fetch warning:', e.message);
+      }
+    }
+
+    const fallback = loadFallbackReviews();
+    let filtered = fallback;
+    if (productId) {
+      filtered = fallback.filter(f => f.product_id === productId);
+    } else if (email) {
+      filtered = fallback.filter(f => (f.customer_email || '').toLowerCase() === email);
+    }
+    return res.status(200).json({ success: true, count: filtered.length, reviews: filtered });
+  }
+
   if (req.method === 'GET') {
     if (pool) {
       try {
@@ -149,6 +261,85 @@ export default async function handler(req, res) {
       try { p = JSON.parse(p); } catch { p = {}; }
     }
     p = p || {};
+
+    
+    // ----------------------------------------------------
+    // POST ACTION: ADD REVIEW
+    // ----------------------------------------------------
+    if (p.action === 'add_review' || p.action === 'ADD_REVIEW') {
+      const reviewId = p.id || ('rev-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
+      const productId = (p.productId || p.product_id || '').trim();
+      const productTitle = (p.productTitle || p.product_title || 'Direct Mill Product').trim();
+      const customerName = (p.customerName || p.name || 'Valued Buyer').trim();
+      const customerEmail = (p.customerEmail || p.email || '').trim().toLowerCase();
+      const rating = Number(p.rating || 5.0);
+      const comment = (p.comment || p.notes || '').trim();
+      const source = p.source || 'WEB';
+
+      if (!productId || !comment) {
+        return res.status(400).json({ success: false, error: 'Product ID and review comment are required.' });
+      }
+
+      if (pool) {
+        try {
+          await ensureReviewsTable(pool);
+          await pool.query(
+            `INSERT INTO product_reviews 
+              (id, product_id, product_title, customer_name, customer_email, rating, comment, status, verified_buyer, source)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'APPROVED', 1, ?)`,
+            [reviewId, productId, productTitle, customerName, customerEmail, rating, comment, source]
+          );
+
+          try {
+            await pool.query(
+              'UPDATE products SET review_count = review_count + 1 WHERE id = ?',
+              [productId]
+            );
+          } catch (_) {}
+        } catch (dbErr) {
+          console.warn('MySQL review insert warning:', dbErr.message);
+        }
+      }
+
+      const revList = loadFallbackReviews();
+      const newRev = {
+        id: reviewId,
+        product_id: productId,
+        product_title: productTitle,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        rating,
+        comment,
+        status: 'APPROVED',
+        verified_buyer: 1,
+        source,
+        created_at: new Date().toISOString()
+      };
+      revList.unshift(newRev);
+      saveFallbackReviews(revList);
+
+      return res.status(201).json({
+        success: true,
+        message: 'Review submitted successfully! Thank you for your feedback.',
+        review: newRev
+      });
+    }
+
+    // ----------------------------------------------------
+    // POST ACTION: DELETE REVIEW (Admin)
+    // ----------------------------------------------------
+    if (p.action === 'delete_review') {
+      const targetId = p.id || p.reviewId;
+      if (pool && targetId) {
+        try {
+          await pool.query('DELETE FROM product_reviews WHERE id = ?', [targetId]);
+        } catch (_) {}
+      }
+      const revList = loadFallbackReviews();
+      const filtered = revList.filter(r => r.id !== targetId);
+      saveFallbackReviews(filtered);
+      return res.status(200).json({ success: true, message: 'Review removed successfully.' });
+    }
 
     if (!p.name || !p.sku) {
       return res.status(400).json({ success: false, error: 'Product name and SKU are required.' });

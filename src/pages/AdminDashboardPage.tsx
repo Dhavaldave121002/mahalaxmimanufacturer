@@ -84,9 +84,9 @@ export const AdminDashboardPage: React.FC = () => {
     setIsUnlocked(false);
   };
 
-  // Active Admin View: 'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'import-export' | 'mobile-app' | 'coupons'
+  // Active Admin View: 'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'reviews' | 'import-export' | 'mobile-app' | 'coupons'
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'import-export' | 'mobile-app' | 'coupons'
+    'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'reviews' | 'import-export' | 'mobile-app' | 'coupons'
   >('overview');
 
   // Product Add / Edit Modal state
@@ -489,6 +489,18 @@ export const AdminDashboardPage: React.FC = () => {
         >
           <Building2 className="w-4 h-4" />
           <span>Wholesale RFQ Desk ({quotations.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('reviews')}
+          className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap flex items-center gap-2 ${
+            activeTab === 'reviews'
+              ? 'border-indigo text-indigo'
+              : 'border-transparent text-slate-500 hover:text-navy'
+          }`}
+        >
+          <Star className="w-4 h-4 text-amber-500" />
+          <span>Customer Reviews ({adminReviews.length})</span>
         </button>
 
         <button
