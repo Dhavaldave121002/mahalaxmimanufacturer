@@ -13,6 +13,7 @@ dist-ssr
 *.local
 .env
 *.apk
+!public/app-release.apk
 
 # Editor directories and files
 .vscode/*
