@@ -657,9 +657,9 @@ async function sendOrderNotificationEmails(data) {
 
     try {
       // 1. Primary: EmailJS Dispatch
-      const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
-      const EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_ORDER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID;
-      const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID;
+      const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
+      const EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_ORDER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID || 'template_er89rta';
+      const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID || 'G6gT9XDN4SFBz6oqW';
       const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
       if (EMAILJS_SERVICE_ID && EMAILJS_ORDER_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
@@ -671,16 +671,23 @@ async function sendOrderNotificationEmails(data) {
             template_params: {
               to_email: customerEmail,
               to_name: customerName,
+              subject: `Order Confirmed: #${orderNumber} | Mahalaxmi Enterprises`,
+              headline: 'Order Confirmed!',
+              code_box: `#${orderNumber}`,
+              subtext: `Total Value: ₹${Number(totalAmount).toLocaleString('en-IN')} • Surat Mill`,
               order_number: orderNumber,
               total_amount: Number(totalAmount).toLocaleString('en-IN'),
-              message: `Your Mahalaxmi Enterprises order #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')} has been confirmed.`
+              message: `Thank you for your order! Your consignment #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')} is confirmed and being packed at Surat Direct Mill.`
             }
           };
           if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
 
           const ejsResp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Origin': 'https://mahalaxmimanufacturer.com'
+            },
             body: JSON.stringify(payload)
           });
           if (ejsResp.ok) {

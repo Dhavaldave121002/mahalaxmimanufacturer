@@ -428,9 +428,9 @@ async function sendAbandonedCartRecoveryEmails(data) {
   // 1. Dispatch Customer Recovery Email via EmailJS
   if (customerEmail && customerEmail.includes('@')) {
     try {
-      const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
-      const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
-      const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY;
+      const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
+      const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || process.env.VITE_EMAILJS_TEMPLATE_ID || 'template_er89rta';
+      const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || 'G6gT9XDN4SFBz6oqW';
       const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
       if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
@@ -441,15 +441,22 @@ async function sendAbandonedCartRecoveryEmails(data) {
           template_params: {
             to_email: customerEmail,
             to_name: customerName,
+            subject: `Flat ₹150 OFF on items waiting in your cart! | Mahalaxmi Enterprises`,
+            headline: 'Mill Voucher: LAUNCH150',
+            code_box: 'LAUNCH150',
+            subtext: `Cart Value: ₹${Number(cartTotal).toLocaleString('en-IN')} • Valid Today`,
             cart_total: Number(cartTotal).toLocaleString('en-IN'),
-            message: `Items in your cart are waiting! Use coupon LAUNCH150 for flat ₹150 OFF.`
+            message: `Items in your cart are waiting! Complete your order today and get instant flat ₹150 discount.`
           }
         };
         if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
 
         await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Origin': 'https://mahalaxmimanufacturer.com'
+          },
           body: JSON.stringify(payload)
         });
       }
@@ -460,9 +467,9 @@ async function sendAbandonedCartRecoveryEmails(data) {
 
   // 2. Dispatch Admin Notification via EmailJS
   try {
-    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
-    const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
-    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY;
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
+    const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || process.env.VITE_EMAILJS_TEMPLATE_ID || 'template_er89rta';
+    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || 'G6gT9XDN4SFBz6oqW';
     const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
     if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
@@ -473,14 +480,21 @@ async function sendAbandonedCartRecoveryEmails(data) {
         template_params: {
           to_email: primaryAdmin,
           to_name: 'Mahalaxmi Admin',
-          message: `🛒 [Store Alert] Abandoned Cart Lead: ₹${Number(cartTotal).toLocaleString('en-IN')} by ${customerName} (${source})`
+          subject: `🛒 Store Alert: Abandoned Cart (₹${Number(cartTotal).toLocaleString('en-IN')})`,
+          headline: 'Abandoned Cart Lead',
+          code_box: `₹${Number(cartTotal).toLocaleString('en-IN')}`,
+          subtext: `Customer: ${customerName} (${source})`,
+          message: `Store Alert: Abandoned Cart Lead of ₹${Number(cartTotal).toLocaleString('en-IN')} by ${customerName} (${source})`
         }
       };
       if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
 
       await fetch('https://api.emailjs.com/api/v1.0/email/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'https://mahalaxmimanufacturer.com'
+        },
         body: JSON.stringify(payload)
       });
     }

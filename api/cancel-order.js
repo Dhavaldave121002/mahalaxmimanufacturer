@@ -330,9 +330,9 @@ async function sendCancellationEmails(data) {
   // 1. Dispatch Customer Cancellation Confirmation via EmailJS
   if (customerEmail && customerEmail.includes('@')) {
     try {
-      const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
-      const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
-      const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY;
+      const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
+      const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || process.env.VITE_EMAILJS_TEMPLATE_ID || 'template_er89rta';
+      const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || 'G6gT9XDN4SFBz6oqW';
       const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
       if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
@@ -343,14 +343,21 @@ async function sendCancellationEmails(data) {
           template_params: {
             to_email: customerEmail,
             to_name: customerName,
+            subject: `Order #${orderNumber} Cancelled | Mahalaxmi Enterprises`,
+            headline: 'Order Cancelled',
+            code_box: `#${orderNumber}`,
+            subtext: `Total: ₹${Number(totalAmount).toLocaleString('en-IN')} • Refund in 2-4 days`,
             order_number: orderNumber,
-            message: `Order #${orderNumber} has been cancelled successfully.`
+            message: `Your order #${orderNumber} has been cancelled successfully as requested.`
           }
         };
         if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
         await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Origin': 'https://mahalaxmimanufacturer.com'
+          },
           body: JSON.stringify(payload)
         });
       }
@@ -361,9 +368,9 @@ async function sendCancellationEmails(data) {
 
   // 2. Dispatch Store Admin Alert via EmailJS
   try {
-    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
-    const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID;
-    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY;
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
+    const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || process.env.VITE_EMAILJS_TEMPLATE_ID || 'template_er89rta';
+    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || 'G6gT9XDN4SFBz6oqW';
     const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
     if (EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
@@ -374,14 +381,21 @@ async function sendCancellationEmails(data) {
         template_params: {
           to_email: primaryAdmin,
           to_name: 'Mahalaxmi Admin',
+          subject: `🚨 Store Alert: Order #${orderNumber} Cancelled`,
+          headline: 'Order Cancellation',
+          code_box: `#${orderNumber}`,
+          subtext: `Customer: ${customerName} (${customerEmail})`,
           order_number: orderNumber,
-          message: `🚨 Store Alert: Order #${orderNumber} was cancelled by ${customerName} (₹${Number(totalAmount).toLocaleString('en-IN')})`
+          message: `Store Alert: Order #${orderNumber} was cancelled by ${customerName} (₹${Number(totalAmount).toLocaleString('en-IN')})`
         }
       };
       if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
       await fetch('https://api.emailjs.com/api/v1.0/email/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'https://mahalaxmimanufacturer.com'
+        },
         body: JSON.stringify(payload)
       });
     }

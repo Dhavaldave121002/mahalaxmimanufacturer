@@ -59,10 +59,14 @@ export default async function handler(req, res) {
             to_name: customerName,
             user_email: email,
             user_name: customerName,
+            subject: `Namaste ${customerName}, Your Verification OTP is ${otp} - Mahalaxmi Enterprises`,
+            headline: 'Your Verification Code',
+            code_box: otp,
+            subtext: 'Valid for 5 minutes only',
             otp: otp,
             passcode: otp,
             verification_code: otp,
-            message: `Your Mahalaxmi Enterprises verification OTP is ${otp}. Valid for 5 minutes only.`
+            message: `Use the One-Time Password (OTP) below to securely verify your account on Mahalaxmi Enterprises.`
           }
         };
         if (EMAILJS_PRIVATE_KEY) {
