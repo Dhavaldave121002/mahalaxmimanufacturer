@@ -1,0 +1,176 @@
+[
+  {
+    "id": "usr-1792224580738-435",
+    "name": "Pooja Dave",
+    "email": "web.wholesaler.1792224580738@gmail.com",
+    "phone": "+91 97240 33445",
+    "role": "wholesaler",
+    "businessType": "Individual",
+    "companyName": "Dave Textile Hub",
+    "gstNumber": "",
+    "isGstVerified": false,
+    "creditLimit": 500000,
+    "availableCredit": 500000,
+    "addresses": []
+  },
+  {
+    "id": "usr-1792224580712-981",
+    "name": "Ramesh Patel",
+    "email": "flutter.buyer.1792224580711@gmail.com",
+    "phone": "+91 98250 11223",
+    "role": "retailer",
+    "businessType": "Retailer",
+    "companyName": "Patel Handloom Surat",
+    "gstNumber": "24AAACP9988K1Z2",
+    "isGstVerified": true,
+    "creditLimit": 100000,
+    "availableCredit": 100000,
+    "addresses": []
+  },
+  {
+    "id": "usr-1792224037150-215",
+    "name": "Cross Platform Tester",
+    "email": "sync.tester.1792224037150@mahalaxmi.com",
+    "phone": "+91 99988 77766",
+    "role": "retailer",
+    "businessType": "Retailer",
+    "companyName": "Surat Fasteners & Fabric Ltd",
+    "gstNumber": "24ABCDE1234F1Z5",
+    "isGstVerified": true,
+    "creditLimit": 100000,
+    "availableCredit": 100000,
+    "addresses": []
+  },
+  {
+    "id": "usr-dhaval",
+    "name": "Dhaval Dave",
+    "email": "dhavaldave121002@gmail.com",
+    "phone": "+91 85111 72099",
+    "role": "admin",
+    "businessType": "Manufacturer",
+    "companyName": "Mahalaxmi Enterprises",
+    "gstNumber": "24AAECM8921P1ZA",
+    "isGstVerified": true,
+    "creditLimit": 1000000,
+    "availableCredit": 1000000,
+    "addresses": [
+      {
+        "id": "addr-dhaval",
+        "fullName": "Dhaval Dave",
+        "phone": "+91 85111 72099",
+        "street": "Plot 124, GIDC Industrial Estate, Pandesara",
+        "city": "Surat",
+        "state": "Gujarat",
+        "pincode": "394221",
+        "addressType": "COMMERCIAL",
+        "isDefault": true
+      }
+    ]
+  },
+  {
+    "id": "usr-admin",
+    "name": "Suresh Agarwal (Ops Director)",
+    "email": "admin@mahalaxmienterprises.com",
+    "phone": "+91 98765 00001",
+    "role": "admin",
+    "businessType": "Wholesale Buyer",
+    "companyName": "Mahalaxmi Enterprises Head Office",
+    "gstNumber": "24AAECM8921P1ZA",
+    "isGstVerified": true,
+    "creditLimit": 1000000,
+    "availableCredit": 1000000,
+    "addresses": [
+      {
+        "id": "addr-admin",
+        "fullName": "Suresh Agarwal",
+        "phone": "+91 98765 00001",
+        "street": "Plot 124, GIDC Industrial Estate, Pandesara",
+        "city": "Surat",
+        "state": "Gujarat",
+        "pincode": "394221",
+        "addressType": "COMMERCIAL",
+        "isDefault": true
+      }
+    ]
+  },
+  {
+    "id": "usr-c01",
+    "name": "Rajesh Sharma",
+    "email": "rajesh.sharma@example.com",
+    "phone": "+91 98201 12345",
+    "role": "consumer",
+    "businessType": "Individual",
+    "companyName": "",
+    "gstNumber": "",
+    "isGstVerified": false,
+    "creditLimit": 0,
+    "availableCredit": 0,
+    "addresses": [
+      {
+        "id": "addr-1",
+        "fullName": "Rajesh Sharma",
+        "phone": "+91 98201 12345",
+        "street": "Flat 402, Lotus Greens, Ring Road",
+        "city": "Surat",
+        "state": "Gujarat",
+        "pincode": "395002",
+        "addressType": "HOME",
+        "isDefault": true
+      }
+    ]
+  },
+  {
+    "id": "usr-r02",
+    "name": "Anand Patel",
+    "email": "anand@pateltextiles.com",
+    "phone": "+91 94261 54321",
+    "role": "retailer",
+    "businessType": "Retailer",
+    "companyName": "Patel Handloom & Textile Emporium",
+    "gstNumber": "24AABCP1357K1ZT",
+    "isGstVerified": true,
+    "creditLimit": 250000,
+    "availableCredit": 195000,
+    "addresses": [
+      {
+        "id": "addr-2",
+        "fullName": "Anand Patel",
+        "companyName": "Patel Handloom & Textile Emporium",
+        "phone": "+91 94261 54321",
+        "street": "Shop 14-16, New Cloth Market, Relief Road",
+        "city": "Ahmedabad",
+        "state": "Gujarat",
+        "pincode": "380001",
+        "addressType": "COMMERCIAL",
+        "isDefault": true
+      }
+    ]
+  },
+  {
+    "id": "usr-w03",
+    "name": "Vikramaditya Oberoi",
+    "email": "procurement@royalgrandhospitality.com",
+    "phone": "+91 98110 99887",
+    "role": "wholesaler",
+    "businessType": "Hotel/Hospitality",
+    "companyName": "Royal Grand Hotels & Resorts Ltd.",
+    "gstNumber": "07AAACR4412M1Z9",
+    "isGstVerified": true,
+    "creditLimit": 1000000,
+    "availableCredit": 820000,
+    "addresses": [
+      {
+        "id": "addr-3",
+        "fullName": "Vikramaditya Oberoi",
+        "companyName": "Royal Grand Hotels (Central Supply Hub)",
+        "phone": "+91 98110 99887",
+        "street": "Warehouse 4B, Aerocity Hospitality Zone",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "110037",
+        "addressType": "WAREHOUSE",
+        "isDefault": true
+      }
+    ]
+  }
+]

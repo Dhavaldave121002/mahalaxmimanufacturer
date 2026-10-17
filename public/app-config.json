@@ -12,7 +12,7 @@
   "catalogDownloadUrl": "https://mahalaxmimanufacturer.vercel.app/catalog.pdf",
   "gstNotice": "100% Verified Input Tax Credit (ITC) invoices available for all commercial business orders.",
   "localFlutterProjectPath": "C:\\mahalaxmi_enterprises",
-  "lastSyncedAt": "2026-10-17T06:15:36.923Z",
+  "lastSyncedAt": "2026-10-17T07:40:40.239Z",
   "banners": [
     {
       "id": "banner-cotton",
@@ -123,7 +123,9 @@
       "minOrderValue": 0,
       "isActive": true,
       "isFeatured": true,
-      "applicableFor": "ALL"
+      "applicableFor": "ALL",
+      "usedCount": 42,
+      "createdAt": "2026-10-01T00:00:00.000Z"
     },
     {
       "id": "coup-milldirect10",
@@ -136,7 +138,9 @@
       "maxDiscountAmount": 1500,
       "isActive": true,
       "isFeatured": true,
-      "applicableFor": "ALL"
+      "applicableFor": "ALL",
+      "usedCount": 78,
+      "createdAt": "2026-10-02T00:00:00.000Z"
     },
     {
       "id": "coup-bulk500",
@@ -148,7 +152,9 @@
       "minOrderValue": 3000,
       "isActive": true,
       "isFeatured": true,
-      "applicableFor": "ALL"
+      "applicableFor": "ALL",
+      "usedCount": 29,
+      "createdAt": "2026-10-05T00:00:00.000Z"
     },
     {
       "id": "coup-mahalaxmi20",
@@ -161,7 +167,9 @@
       "maxDiscountAmount": 5000,
       "isActive": true,
       "isFeatured": true,
-      "applicableFor": "B2B"
+      "applicableFor": "B2B",
+      "usedCount": 15,
+      "createdAt": "2026-10-08T00:00:00.000Z"
     }
   ]
 }

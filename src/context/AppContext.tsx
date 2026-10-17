@@ -407,6 +407,70 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     syncProductsFromBackend();
   }, [syncProductsFromBackend]);
 
+  // Synchronize users live from MySQL / Central API
+  const syncUsersFromBackend = useCallback(async () => {
+    try {
+      const res = await fetch('/api/auth');
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json && json.success && Array.isArray(json.users) && json.users.length > 0) {
+        setRegisteredUsers(prev => {
+          const map = new Map<string, User>();
+          for (const u of json.users) {
+            const key = (u.email || '').trim().toLowerCase();
+            if (key) map.set(key, u);
+          }
+          for (const u of prev) {
+            const key = (u.email || '').trim().toLowerCase();
+            if (key && !map.has(key)) {
+              map.set(key, u);
+            }
+          }
+          return Array.from(map.values());
+        });
+      }
+    } catch {
+      // quiet offline fallback
+    }
+  }, []);
+
+  // Synchronize orders live from MySQL / Central API (including Flutter mobile app orders!)
+  const syncOrdersFromBackend = useCallback(async () => {
+    try {
+      const res = await fetch('/api/orders');
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+        setOrders(prev => {
+          const map = new Map<string, Order>();
+          for (const o of json.data) {
+            const key = (o.orderNumber || o.id || '').trim().toUpperCase();
+            if (key) map.set(key, o);
+          }
+          for (const o of prev) {
+            const key = (o.orderNumber || o.id || '').trim().toUpperCase();
+            if (key && !map.has(key)) {
+              map.set(key, o);
+            }
+          }
+          return Array.from(map.values());
+        });
+      }
+    } catch {
+      // quiet offline fallback
+    }
+  }, []);
+
+  useEffect(() => {
+    syncUsersFromBackend();
+    syncOrdersFromBackend();
+    const interval = setInterval(() => {
+      syncOrdersFromBackend();
+      syncUsersFromBackend();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [syncUsersFromBackend, syncOrdersFromBackend]);
+
   const addCoupon = (coupon: Omit<CouponOffer, 'id' | 'usedCount' | 'createdAt'>) => {
     const newCoupon: CouponOffer = {
       ...coupon,
@@ -1217,6 +1281,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentUser(newUser);
     setIsLoggedIn(true);
 
+    // Persist to central MySQL Database via /api/auth
+    fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'register',
+        user: {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          phone: newUser.phone,
+          password: userData.password || 'password123',
+          role: newUser.role,
+          businessType: newUser.businessType,
+          companyName: newUser.companyName,
+          gstNumber: newUser.gstNumber,
+          isGstVerified: newUser.isGstVerified,
+          addresses: newUser.addresses
+        }
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log('User registered in MySQL database:', data);
+      })
+      .catch(err => {
+        console.warn('User auth API sync error:', err);
+      });
+
     return {
       success: true,
       message: `Account registered successfully! Welcome to Mahalaxmi Enterprises, ${newUser.name}.`,
@@ -1272,6 +1365,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         localStorage.setItem('mle_current_user', JSON.stringify(updated[userIndex]));
       } catch {}
     }
+
+    // Update password in central MySQL Database via /api/auth
+    fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'reset_password',
+        identifier: clean,
+        newPassword: newPassword
+      })
+    }).catch(() => {});
 
     return {
       success: true,

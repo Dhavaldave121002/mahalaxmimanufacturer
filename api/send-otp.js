@@ -77,7 +77,7 @@ export default async function handler(req, res) {
           payload.accessToken = EMAILJS_PRIVATE_KEY;
         }
 
-        const emailJsRes = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        let emailJsRes = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -90,8 +90,22 @@ export default async function handler(req, res) {
           emailDelivered = true;
           console.log(`[EmailJS] OTP ${otp} dispatched successfully to ${email}`);
         } else {
-          const errText = await emailJsRes.text();
-          console.warn('[EmailJS] Dispatch response:', errText);
+          // If primary template fails, auto-fallback to template_rxzob8r
+          if (EMAILJS_TEMPLATE_ID !== 'template_rxzob8r') {
+            payload.template_id = 'template_rxzob8r';
+            const retryRes = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Origin': 'https://mahalaxmimanufacturer.com'
+              },
+              body: JSON.stringify(payload)
+            });
+            if (retryRes.ok) {
+              emailDelivered = true;
+              console.log(`[EmailJS] OTP ${otp} dispatched via fallback template_rxzob8r to ${email}`);
+            }
+          }
         }
       } catch (ejsErr) {
         console.warn('[EmailJS] Network error:', ejsErr);
