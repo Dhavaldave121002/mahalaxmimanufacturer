@@ -242,6 +242,96 @@ export const OrderTrackingPage: React.FC = () => {
         </div>
       )}
 
+      {/* 🌟 PROMINENT HERO AWB & CONSIGNMENT TRACKING SEARCH BOX */}
+      <div className="bg-gradient-to-r from-navy via-navy-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-700">
+        <div className="relative z-10 max-w-3xl space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-champagne/20 border border-champagne/40 text-champagne text-xs font-bold uppercase tracking-wider">
+            <Truck className="w-3.5 h-3.5" />
+            <span>Official Surat Central Mill Dispatch Tracker</span>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            Track Consignment by AWB Docket No.
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
+            Enter your Air Waybill (AWB) Docket Number or Order Reference ID below to view real-time carrier milestones, live status, and download your official GST tax invoice.
+          </p>
+
+          {/* Hero Search Box */}
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 pt-2">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => {
+                  setSearchQuery(e.target.value);
+                  const q = e.target.value.trim().toLowerCase();
+                  if (q) {
+                    const found = orders.find(
+                      o =>
+                        o.orderNumber.toLowerCase() === q ||
+                        (o.trackingNumber && o.trackingNumber.toLowerCase() === q)
+                    );
+                    if (found) setSelectedOrder(found);
+                  }
+                }}
+                placeholder="Enter AWB Docket (e.g. TRK..., IW...) or Order Reference (e.g. MLE-ORD-...)"
+                className="w-full h-12 pl-11 pr-4 bg-white/10 hover:bg-white/15 focus:bg-white text-white focus:text-navy rounded-2xl border border-white/20 focus:border-champagne outline-none text-xs sm:text-sm transition placeholder:text-slate-400 font-medium shadow-inner"
+              />
+              <Search className="w-5 h-5 text-slate-300 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            </div>
+            <button
+              onClick={() => {
+                const q = searchQuery.trim().toLowerCase();
+                if (!q) return;
+                const found = orders.find(
+                  o =>
+                    o.orderNumber.toLowerCase() === q ||
+                    (o.trackingNumber && o.trackingNumber.toLowerCase() === q)
+                );
+                if (found) {
+                  setSelectedOrder(found);
+                }
+              }}
+              className="h-12 px-7 bg-amber-500 hover:bg-amber-600 text-navy font-black text-xs sm:text-sm rounded-2xl transition shadow-lg flex items-center justify-center gap-2 cursor-pointer shrink-0"
+            >
+              <Truck className="w-4 h-4 text-navy" />
+              <span>Track Live Status</span>
+            </button>
+          </div>
+
+          {/* Quick Try Sample Chips */}
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-300">
+            <span className="text-[11px] text-slate-400">Sample Live AWB:</span>
+            {orders
+              .filter(o => o.trackingNumber)
+              .slice(0, 3)
+              .map(o => (
+                <button
+                  key={o.id}
+                  onClick={() => {
+                    setSearchQuery(o.trackingNumber || '');
+                    setSelectedOrder(o);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-mono text-[11px] transition border border-white/10 cursor-pointer"
+                >
+                  {o.trackingNumber}
+                </button>
+              ))}
+            <button
+              onClick={() => {
+                setSearchQuery('IW3475453455');
+                const found = orders.find(o => o.trackingNumber === 'IW3475453455');
+                if (found) setSelectedOrder(found);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-champagne font-mono text-[11px] transition border border-white/10 cursor-pointer"
+            >
+              IW3475453455
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Main Order Tracker Layout or Empty State */}
       {displayedOrders.length === 0 ? (
         <div className="bg-white rounded-3xl p-8 sm:p-14 border border-slate-200 text-center max-w-2xl mx-auto space-y-6 shadow-subtle">
