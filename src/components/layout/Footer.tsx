@@ -12,8 +12,6 @@ import {
   MapPin,
   CheckCircle2,
   Lock,
-  Rss,
-  FileText,
   Building2,
   X
 } from 'lucide-react';
@@ -235,26 +233,13 @@ export const Footer: React.FC = () => {
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                 <span>OEKO-TEX Standard 100 Class 1</span>
               </li>
-              <li>
-                <a
-                  href="/feed.xml"
-                  target="_blank"
-                  rel="alternate"
-                  className="text-xs text-champagne hover:underline flex items-center gap-1.5 transition"
-                >
-                  <Rss className="w-3.5 h-3.5 text-champagne shrink-0" />
-                  <span>RSS 2.0 Catalog Feed</span>
-                </a>
+              <li className="flex items-center gap-1.5 text-slate-300">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>ISO 9001:2015 Production Standards</span>
               </li>
-              <li>
-                <a
-                  href="/sitemap.xml"
-                  target="_blank"
-                  className="text-xs text-slate-300 hover:text-champagne transition flex items-center gap-1.5"
-                >
-                  <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span>Google Sitemap Index</span>
-                </a>
+              <li className="flex items-center gap-1.5 text-slate-300">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Surat Loom Quality Tested Guarantee</span>
               </li>
               <li>
                 <Link to="/account" className="text-xs text-slate-300 hover:text-champagne transition flex items-center gap-1.5 pt-0.5">
