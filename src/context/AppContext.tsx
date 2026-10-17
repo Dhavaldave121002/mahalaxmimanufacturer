@@ -807,6 +807,72 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           { status: 'PLACED', timestamp: new Date(Date.now() - 3600000 * 3).toISOString(), description: 'Order placed from Mahalaxmi Android App v1.0.3 via UPI GPay.' },
           { status: 'MILL_PROCESSING', timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), description: 'Allocation confirmed at Surat Central Dispatch Loom 4.' }
         ]
+      },
+      {
+        id: 'ord-deliv-64192',
+        orderNumber: 'MLE-ORD-2026-64192',
+        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+        customer: {
+          id: 'usr-flutter-dhaval',
+          name: 'Dhaval Dave',
+          email: 'dhavaldave121002@gmail.com',
+          phone: '+91 85111 72099',
+          companyName: 'Mahalaxmi Enterprises Client Hub',
+          isB2B: false
+        },
+        items: [
+          {
+            productId: 'prod-bedsheet-01',
+            productName: 'Glance 300 TC 100% Combed Cotton Double Bedsheet',
+            sku: 'MLE-TEX-BS-3001',
+            hsnCode: '630221',
+            quantity: 1,
+            unitPrice: 899,
+            totalPrice: 899,
+            variantDescription: 'Royal Ivory Cream / Standard Set',
+            image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
+            gstRate: 5
+          }
+        ],
+        subtotal: 899,
+        taxBreakdown: { cgst: 22.48, sgst: 22.48, igst: 0, totalTax: 44.95 },
+        shippingCharge: 0,
+        discount: 0,
+        totalAmount: 943.95,
+        paymentMethod: 'UPI',
+        paymentStatus: 'PAID',
+        status: 'DELIVERED',
+        source: 'WEB',
+        deviceInfo: 'Desktop Chrome 130',
+        shippingAddress: {
+          id: 'addr-dhaval',
+          fullName: 'Dhaval Dave',
+          phone: '+91 85111 72099',
+          street: '102, Shivalik Plaza, Near C.G. Road',
+          city: 'Ahmedabad',
+          state: 'Gujarat',
+          pincode: '380009',
+          addressType: 'HOME'
+        },
+        billingAddress: {
+          id: 'addr-dhaval',
+          fullName: 'Dhaval Dave',
+          phone: '+91 85111 72099',
+          street: '102, Shivalik Plaza, Near C.G. Road',
+          city: 'Ahmedabad',
+          state: 'Gujarat',
+          pincode: '380009',
+          addressType: 'HOME'
+        },
+        trackingNumber: 'DEL-SUR-554109',
+        courierName: 'Delhivery Surface Express',
+        estimatedDelivery: new Date(Date.now() - 86400000).toISOString(),
+        timeline: [
+          { status: 'PLACED', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), description: 'Order placed & payment verified.' },
+          { status: 'MILL_PROCESSING', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), description: 'Batch packaged at Surat Mill.' },
+          { status: 'IN_TRANSIT', timestamp: new Date(Date.now() - 86400000 * 1.5).toISOString(), description: 'Arrived at Ahmedabad Delivery Hub.' },
+          { status: 'DELIVERED', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), description: 'Consignment successfully handed over to customer. 7-Day Return / Exchange Guarantee is now active.' }
+        ]
       }
     ];
   });
@@ -1576,9 +1642,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               description: `Status updated to ${status} by logistics dispatcher.`
             }
           ];
+          const isRefunded = status === 'REFUNDED' || status === 'RETURN_APPROVED' || status === 'CANCELLED';
           return {
             ...ord,
             status,
+            paymentStatus: isRefunded ? 'REFUNDED' : ord.paymentStatus,
             trackingNumber: trackingNumber || ord.trackingNumber,
             courierName: courierName || ord.courierName,
             timeline: updatedTimeline

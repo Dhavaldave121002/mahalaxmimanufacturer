@@ -99,7 +99,13 @@ export type OrderStatus =
   | 'DISPATCHED'
   | 'IN_TRANSIT'
   | 'DELIVERED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'RETURN_REQUESTED'
+  | 'EXCHANGE_REQUESTED'
+  | 'RETURN_APPROVED'
+  | 'REFUNDED'
+  | 'EXCHANGE_APPROVED'
+  | 'RETURN_REJECTED';
 
 export type PaymentMethod = 'UPI' | 'COD' | 'NET_BANKING' | 'CREDIT_30_DAYS';
 export type PaymentStatus = 'PAID' | 'PENDING' | 'REFUNDED' | 'CREDIT_APPROVED';

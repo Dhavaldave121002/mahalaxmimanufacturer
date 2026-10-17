@@ -561,30 +561,39 @@ export const OrderTrackingPage: React.FC = () => {
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Reorder</span>
                   </button>
-                  {currentOrder.status !== 'CANCELLED' && currentOrder.status !== 'DELIVERED' && (
+                  {currentOrder.status !== 'CANCELLED' && currentOrder.status !== 'DELIVERED' && currentOrder.status !== 'REFUNDED' && (
                     <button
                       onClick={() => setCancelModalOpen(true)}
                       className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
-                      title="Cancel this order and dispatch cancellation email"
+                      title="Cancel this order immediately for an instant 100% refund"
                     >
                       <XCircle className="w-3.5 h-3.5 text-red-600" />
-                      <span>Cancel Order</span>
+                      <span>Cancel & 100% Refund</span>
                     </button>
                   )}
-                  {currentOrder.status === 'DELIVERED' && (
+
+                  {currentOrder.status !== 'CANCELLED' && currentOrder.status !== 'REFUNDED' && (
                     <button
                       onClick={() => setReturnModalOpen(true)}
                       className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
-                      title="Request Return or Exchange for delivered goods"
+                      title="Request 100% Refund, Return, or Size/Defect Exchange"
                     >
                       <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
-                      <span>Return / Exchange</span>
+                      <span>Request Return / Exchange & Refund</span>
                     </button>
                   )}
+
                   {((currentOrder.status as string) === 'RETURN_REQUESTED' || (currentOrder.status as string) === 'EXCHANGE_REQUESTED') && (
                     <span className="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
-                      <span>{(currentOrder.status as string) === 'EXCHANGE_REQUESTED' ? 'Exchange Requested' : 'Return In Progress'}</span>
+                      <span>{(currentOrder.status as string) === 'EXCHANGE_REQUESTED' ? 'Exchange Requested' : 'Return & Refund Under Review'}</span>
+                    </span>
+                  )}
+
+                  {(currentOrder.status === 'REFUNDED' || currentOrder.status === 'RETURN_APPROVED') && (
+                    <span className="px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>100% Refund Approved</span>
                     </span>
                   )}
                 </div>

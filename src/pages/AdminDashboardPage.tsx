@@ -31,7 +31,10 @@ import {
   ArrowRight,
   Globe,
   MessageSquare,
-  Tag
+  Tag,
+  RotateCcw,
+  XCircle,
+  Check
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { MobileAppManager } from '../components/admin/MobileAppManager';
@@ -131,9 +134,10 @@ export const AdminDashboardPage: React.FC = () => {
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<Order | null>(null);
   const [invoiceType, setInvoiceType] = useState<'INVOICE' | 'PACKING_SLIP'>('INVOICE');
 
-  // Search queries in admin
+  // Search queries and filters in admin
   const [productSearch, setProductSearch] = useState('');
   const [orderSearch, setOrderSearch] = useState('');
+  const [orderFilter, setOrderFilter] = useState<'ALL' | 'ACTIVE' | 'DELIVERED' | 'RETURNS_REFUNDS' | 'CANCELLED'>('ALL');
 
   // Order status updater modal / inline
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
@@ -792,13 +796,13 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* 3. ORDERS TAB: Manage status, Invoices, Shipments */}
+      {/* 3. ORDERS TAB: Manage status, Invoices, Shipments & Returns/Refunds */}
       {activeTab === 'orders' && (
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-subtle space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
-              <h3 className="font-extrabold text-base text-navy">Order Fulfillment & Dispatch Control</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Update shipment status, assign waybill numbers, and print legal tax invoices.</p>
+              <h3 className="font-extrabold text-base text-navy">Order Fulfillment & Returns Control</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Manage dispatches, approve/reject return & refund requests, and print tax invoices.</p>
             </div>
 
             <div className="relative">
@@ -813,8 +817,85 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Return & Refund Queue Filter Bar */}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setOrderFilter('ALL')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                orderFilter === 'ALL'
+                  ? 'bg-navy text-white shadow-sm'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              <span>All Orders</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">{orders.length}</span>
+            </button>
+
+            <button
+              onClick={() => setOrderFilter('ACTIVE')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                orderFilter === 'ACTIVE'
+                  ? 'bg-indigo text-white shadow-sm'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              <span>Active Dispatches</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">
+                {orders.filter(o => ['PLACED', 'MILL_PROCESSING', 'PACKED', 'IN_TRANSIT', 'DISPATCHED'].includes(o.status)).length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setOrderFilter('DELIVERED')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                orderFilter === 'DELIVERED'
+                  ? 'bg-emerald-700 text-white shadow-sm'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              <span>Delivered (7-Day Guarantee)</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">
+                {orders.filter(o => o.status === 'DELIVERED').length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setOrderFilter('RETURNS_REFUNDS')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 border ${
+                orderFilter === 'RETURNS_REFUNDS'
+                  ? 'bg-amber-500 text-white border-amber-600 shadow-sm'
+                  : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200'
+              }`}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Return & Refund Queue</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-900 text-white font-mono">
+                {orders.filter(o =>
+                  (o.status as string) === 'RETURN_REQUESTED' ||
+                  (o.status as string) === 'EXCHANGE_REQUESTED' ||
+                  o.status === 'REFUNDED' ||
+                  o.status === 'RETURN_APPROVED'
+                ).length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setOrderFilter('CANCELLED')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                orderFilter === 'CANCELLED'
+                  ? 'bg-red-700 text-white shadow-sm'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+              }`}
+            >
+              <span>Cancelled / Refunded</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">
+                {orders.filter(o => o.status === 'CANCELLED').length}
+              </span>
+            </button>
+          </div>
+
           <div className="overflow-x-auto border border-slate-200 rounded-2xl">
-            <table className="w-full text-left text-xs divide-y divide-slate-200 min-w-[840px]">
+            <table className="w-full text-left text-xs divide-y divide-slate-200 min-w-[880px]">
               <thead className="bg-slate-100 text-slate-700">
                 <tr>
                   <th className="py-3 px-4 font-bold whitespace-nowrap">Order ID & Date</th>
@@ -822,17 +903,39 @@ export const AdminDashboardPage: React.FC = () => {
                   <th className="py-3 px-4 text-right font-bold whitespace-nowrap">Invoice Value</th>
                   <th className="py-3 px-4 text-center font-bold whitespace-nowrap">Payment</th>
                   <th className="py-3 px-4 text-center font-bold whitespace-nowrap">Current Status</th>
-                  <th className="py-3 px-4 text-right font-bold whitespace-nowrap">Actions</th>
+                  <th className="py-3 px-4 text-right font-bold whitespace-nowrap">Approve / Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {orders
-                  .filter(
-                    o =>
+                  .filter(o => {
+                    const matchesSearch =
                       o.orderNumber.toLowerCase().includes(orderSearch.toLowerCase()) ||
                       o.customer.name.toLowerCase().includes(orderSearch.toLowerCase()) ||
-                      (o.customer.companyName && o.customer.companyName.toLowerCase().includes(orderSearch.toLowerCase()))
-                  )
+                      (o.customer.companyName && o.customer.companyName.toLowerCase().includes(orderSearch.toLowerCase()));
+                    if (!matchesSearch) return false;
+
+                    if (orderFilter === 'ACTIVE') {
+                      return ['PLACED', 'MILL_PROCESSING', 'PACKED', 'IN_TRANSIT', 'DISPATCHED'].includes(o.status);
+                    }
+                    if (orderFilter === 'DELIVERED') {
+                      return o.status === 'DELIVERED';
+                    }
+                    if (orderFilter === 'RETURNS_REFUNDS') {
+                      return (
+                        (o.status as string) === 'RETURN_REQUESTED' ||
+                        (o.status as string) === 'EXCHANGE_REQUESTED' ||
+                        o.status === 'RETURN_APPROVED' ||
+                        o.status === 'EXCHANGE_APPROVED' ||
+                        o.status === 'REFUNDED' ||
+                        (o.status as string) === 'RETURN_REJECTED'
+                      );
+                    }
+                    if (orderFilter === 'CANCELLED') {
+                      return o.status === 'CANCELLED';
+                    }
+                    return true;
+                  })
                   .map(ord => (
                     <tr key={ord.id} className="hover:bg-slate-50/70 transition">
                       <td className="py-3.5 px-4 whitespace-nowrap">
@@ -866,19 +969,99 @@ export const AdminDashboardPage: React.FC = () => {
 
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <span className="font-semibold text-slate-700 text-[11px] block">{ord.paymentMethod}</span>
-                        <span className={`text-[10px] font-bold ${ord.paymentStatus === 'PAID' ? 'text-emerald-700' : 'text-amber-700'}`}>
+                        <span className={`text-[10px] font-bold ${
+                          ord.paymentStatus === 'PAID'
+                            ? 'text-emerald-700'
+                            : ord.paymentStatus === 'REFUNDED'
+                            ? 'text-purple-700'
+                            : 'text-amber-700'
+                        }`}>
                           {ord.paymentStatus}
                         </span>
                       </td>
 
                       <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                        <Badge size="sm" variant={ord.status === 'DELIVERED' ? 'success' : 'primary'}>
-                          {ord.status}
-                        </Badge>
+                        {(ord.status as string) === 'RETURN_REQUESTED' ? (
+                          <span className="px-2.5 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-[10px] font-black inline-flex items-center gap-1 shadow-sm">
+                            <RotateCcw className="w-3 h-3 text-amber-700 animate-spin" />
+                            Return Requested
+                          </span>
+                        ) : (ord.status as string) === 'EXCHANGE_REQUESTED' ? (
+                          <span className="px-2.5 py-1 bg-blue-100 text-blue-900 border border-blue-300 rounded-lg text-[10px] font-black inline-flex items-center gap-1 shadow-sm">
+                            <RotateCcw className="w-3 h-3 text-blue-700" />
+                            Exchange Requested
+                          </span>
+                        ) : ord.status === 'REFUNDED' || ord.status === 'RETURN_APPROVED' ? (
+                          <span className="px-2.5 py-1 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-[10px] font-black inline-flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-700" />
+                            100% Refunded
+                          </span>
+                        ) : ord.status === 'EXCHANGE_APPROVED' ? (
+                          <span className="px-2.5 py-1 bg-indigo-100 text-indigo-900 border border-indigo-300 rounded-lg text-[10px] font-black inline-flex items-center gap-1">
+                            <Check className="w-3 h-3 text-indigo-700" />
+                            Exchange Approved
+                          </span>
+                        ) : (ord.status as string) === 'RETURN_REJECTED' ? (
+                          <span className="px-2.5 py-1 bg-rose-100 text-rose-900 border border-rose-300 rounded-lg text-[10px] font-black inline-flex items-center gap-1">
+                            <XCircle className="w-3 h-3 text-rose-700" />
+                            Request Rejected
+                          </span>
+                        ) : ord.status === 'CANCELLED' ? (
+                          <span className="px-2.5 py-1 bg-red-100 text-red-900 border border-red-300 rounded-lg text-[10px] font-black inline-flex items-center gap-1">
+                            <XCircle className="w-3 h-3 text-red-700" />
+                            Cancelled
+                          </span>
+                        ) : (
+                          <Badge size="sm" variant={ord.status === 'DELIVERED' ? 'success' : 'primary'}>
+                            {ord.status}
+                          </Badge>
+                        )}
                       </td>
 
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-1.5">
+                          {/* 1-Click Approve Return & Refund */}
+                          {(ord.status as string) === 'RETURN_REQUESTED' && (
+                            <>
+                              <button
+                                onClick={() => updateOrderStatus(ord.id, 'REFUNDED')}
+                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] transition shadow-sm flex items-center gap-1 cursor-pointer"
+                                title="Approve Return & Issue 100% Refund"
+                              >
+                                <Check className="w-3 h-3" />
+                                <span>Approve & 100% Refund</span>
+                              </button>
+                              <button
+                                onClick={() => updateOrderStatus(ord.id, 'RETURN_REJECTED')}
+                                className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-lg text-[10px] transition cursor-pointer"
+                                title="Reject Return Request"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+
+                          {/* 1-Click Approve Exchange */}
+                          {(ord.status as string) === 'EXCHANGE_REQUESTED' && (
+                            <>
+                              <button
+                                onClick={() => updateOrderStatus(ord.id, 'EXCHANGE_APPROVED')}
+                                className="px-2.5 py-1 bg-indigo hover:bg-indigo-dark text-white font-bold rounded-lg text-[10px] transition shadow-sm flex items-center gap-1 cursor-pointer"
+                                title="Approve Size/Color Exchange & Dispatch Replacement"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                <span>Approve Exchange</span>
+                              </button>
+                              <button
+                                onClick={() => updateOrderStatus(ord.id, 'RETURN_REJECTED')}
+                                className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-lg text-[10px] transition cursor-pointer"
+                                title="Reject Exchange Request"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+
                           {/* Update Status Button */}
                           <button
                             onClick={() => {
@@ -886,7 +1069,7 @@ export const AdminDashboardPage: React.FC = () => {
                               setNewOrderStatus(ord.status);
                               setTrackingNumber(ord.trackingNumber || '');
                             }}
-                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-navy font-semibold rounded-lg text-[11px] transition"
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-navy font-semibold rounded-lg text-[11px] transition cursor-pointer"
                           >
                             Update
                           </button>
@@ -931,17 +1114,28 @@ export const AdminDashboardPage: React.FC = () => {
               <h4 className="font-bold text-navy">Update Order Consignment #{editingOrderId}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 block mb-1">New Fulfillment Status</label>
+                  <label className="text-[10px] font-bold text-slate-500 block mb-1">New Fulfillment / Return Status</label>
                   <select
                     value={newOrderStatus}
                     onChange={e => setNewOrderStatus(e.target.value as OrderStatus)}
-                    className="w-full p-2 border border-slate-300 rounded-lg bg-white outline-none"
+                    className="w-full p-2 border border-slate-300 rounded-lg bg-white outline-none font-medium"
                   >
-                    <option value="PLACED">PLACED (Order Verified)</option>
-                    <option value="MILL_PROCESSING">MILL_PROCESSING (Loom Batching)</option>
-                    <option value="PACKED">PACKED (Palletized & Barcoded)</option>
-                    <option value="IN_TRANSIT">IN_TRANSIT (Carrier Waybill En Route)</option>
-                    <option value="DELIVERED">DELIVERED (Handover Complete)</option>
+                    <optgroup label="Fulfillment Pipeline">
+                      <option value="PLACED">PLACED (Order Verified)</option>
+                      <option value="MILL_PROCESSING">MILL_PROCESSING (Loom Batching)</option>
+                      <option value="PACKED">PACKED (Palletized & Barcoded)</option>
+                      <option value="IN_TRANSIT">IN_TRANSIT (Carrier Waybill En Route)</option>
+                      <option value="DELIVERED">DELIVERED (Handover Complete - 7-Day Guarantee)</option>
+                    </optgroup>
+                    <optgroup label="Returns, Exchanges & Refunds">
+                      <option value="RETURN_REQUESTED">🔄 RETURN_REQUESTED (Customer Return Request)</option>
+                      <option value="EXCHANGE_REQUESTED">🔁 EXCHANGE_REQUESTED (Customer Exchange Request)</option>
+                      <option value="RETURN_APPROVED">✅ RETURN_APPROVED (Doorstep Pickup Scheduled)</option>
+                      <option value="REFUNDED">💸 REFUNDED (100% Refund Credited to Bank/UPI)</option>
+                      <option value="EXCHANGE_APPROVED">📦 EXCHANGE_APPROVED (Replacement Dispatched)</option>
+                      <option value="RETURN_REJECTED">❌ RETURN_REJECTED (Request Rejected by Admin)</option>
+                      <option value="CANCELLED">🚫 CANCELLED (Order Cancelled & 100% Refunded)</option>
+                    </optgroup>
                   </select>
                 </div>
 
@@ -973,13 +1167,13 @@ export const AdminDashboardPage: React.FC = () => {
                     updateOrderStatus(editingOrderId, newOrderStatus, trackingNumber, courierName);
                     setEditingOrderId(null);
                   }}
-                  className="px-4 py-2 bg-indigo text-white font-bold rounded-lg hover:bg-indigo-dark transition"
+                  className="px-4 py-2 bg-indigo text-white font-bold rounded-lg hover:bg-indigo-dark transition cursor-pointer"
                 >
                   Save Status & Notify Buyer
                 </button>
                 <button
                   onClick={() => setEditingOrderId(null)}
-                  className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-600 font-medium"
+                  className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-600 font-medium cursor-pointer"
                 >
                   Cancel
                 </button>
