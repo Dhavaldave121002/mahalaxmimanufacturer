@@ -1,95 +1,243 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-  <!-- Core Hubs -->
+  <!-- Core Hubs & Categories -->
   <url>
     <loc>https://mahalaxmimanufacturer.com/</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>always</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://mahalaxmimanufacturer.com/wholesale</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://mahalaxmimanufacturer.com/catalog</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
-
-  <!-- Categories -->
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/track</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>always</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/account</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/login</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
   <url>
     <loc>https://mahalaxmimanufacturer.com/category/textile</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://mahalaxmimanufacturer.com/category/cotton-products</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://mahalaxmimanufacturer.com/category/home-kitchen</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://mahalaxmimanufacturer.com/category/household</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
 
-  <!-- Products with Google Image Indexing for Top Ranking -->
+  <!-- Live Products with Google Image Indexing for Rich Snippets -->
   <url>
     <loc>https://mahalaxmimanufacturer.com/product/glance-300-tc-cotton-double-bedsheet</loc>
-    <lastmod>2026-10-14</lastmod>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     <image:image>
-      <image:loc>https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&amp;w=1200</image:loc>
-      <image:title>Glance 300 TC Combed Cotton Double Bedsheet Surat Mill Direct</image:title>
-      <image:caption>Direct mill 300 Thread Count pure cotton double bedsheets with pillow covers from Surat textile cluster</image:caption>
+      <image:loc>https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Glance 300 TC 100% Pure Combed Cotton Double Bedsheet with 2 Pillow Covers Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Glance 300 TC 100% Pure Combed Cotton Double Bedsheet with 2 Pillow Covers from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
     </image:image>
   </url>
   <url>
-    <loc>https://mahalaxmimanufacturer.com/product/luxury-600-gsm-cotton-bath-towel</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://mahalaxmimanufacturer.com/product/heritage-linen-blend-blackout-curtains</loc>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
     <image:image>
-      <image:loc>https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&amp;w=1200</image:loc>
-      <image:title>Luxury 600 GSM Cotton Bath Towel Hospitality Plush</image:title>
-      <image:caption>Hotel grade 600 GSM bath towels combed Gujarat cotton direct mill rate</image:caption>
+      <image:loc>https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Heritage Textured Linen-Blend Blackout Eyelet Curtains (Set of 2) Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Heritage Textured Linen-Blend Blackout Eyelet Curtains (Set of 2) from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
     </image:image>
   </url>
   <url>
-    <loc>https://mahalaxmimanufacturer.com/product/commercial-350-gsm-microfiber-cloth-pack</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://mahalaxmimanufacturer.com/product/hospitality-crisp-white-linen-duvet-cover</loc>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
     <image:image>
-      <image:loc>https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?q=80&amp;w=1200</image:loc>
-      <image:title>Commercial 350 GSM Microfiber Cleaning Cloth Bulk Pack</image:title>
-      <image:caption>Lint-free 350 GSM microfiber cloths for commercial and automotive cleaning wholesale</image:caption>
+      <image:loc>https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Hospitality Grade 100% Pure Crisp White Linen Duvet Covers Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Hospitality Grade 100% Pure Crisp White Linen Duvet Covers from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
     </image:image>
   </url>
   <url>
-    <loc>https://mahalaxmimanufacturer.com/product/heavy-duty-canvas-shopping-tote-bag</loc>
-    <lastmod>2026-10-14</lastmod>
+    <loc>https://mahalaxmimanufacturer.com/product/raw-unbleached-cotton-drill-fabric-roll</loc>
+    <lastmod>2026-10-17</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>0.9</priority>
     <image:image>
-      <image:loc>https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&amp;w=1200</image:loc>
-      <image:title>Heavy Duty 380 GSM Canvas Shopping Tote Bag Factory Price</image:title>
-      <image:caption>Eco-friendly 380 GSM cotton canvas shopping bags ready for custom corporate screen printing</image:caption>
+      <image:loc>https://images.unsplash.com/photo-1604014237800-1c9102c219da?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Raw Greige Unbleached Cotton Drill &amp; Poplin Fabric (By the Roll / Meter) Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Raw Greige Unbleached Cotton Drill &amp; Poplin Fabric (By the Roll / Meter) from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/mahalaxmi-600-gsm-plush-cotton-bath-towel</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Mahalaxmi Super-Plush 600 GSM Combed Cotton Bath Towel (75 x 150 cm) Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Mahalaxmi Super-Plush 600 GSM Combed Cotton Bath Towel (75 x 150 cm) from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/eco-craft-heavy-duty-cotton-canvas-tote-bag</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Eco-Craft 380 GSM Heavy Duty Cotton Canvas Tote Bag with Reinforced Handles Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Eco-Craft 380 GSM Heavy Duty Cotton Canvas Tote Bag with Reinforced Handles from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/waffle-weave-cotton-baby-swaddle-pack</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1555252333-9f8e92e65df9?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Waffle-Weave Super-Soft Cotton Baby Swaddles &amp; Multi-Purpose Quilts (Pack of 3) Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Waffle-Weave Super-Soft Cotton Baby Swaddles &amp; Multi-Purpose Quilts (Pack of 3) from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/direct-mill-cotton-waste-comber-noil</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1596704017254-9b121068fb31?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Direct Mill Industrial Cotton Waste / Comber Noil Bales (For Spinning &amp; Padding) Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Direct Mill Industrial Cotton Waste / Comber Noil Bales (For Spinning &amp; Padding) from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/chef-pro-herringbone-cotton-kitchen-towels</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Chef-Pro Herringbone Weave 100% Cotton Kitchen Bar Towels (Pack of 12) Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Chef-Pro Herringbone Weave 100% Cotton Kitchen Bar Towels (Pack of 12) from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/industrial-cotton-drill-chef-apron</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1577219491135-ce391730fb2c?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Industrial Heavy Cotton Drill Barista &amp; Chef Apron with 3 Storage Pockets Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Industrial Heavy Cotton Drill Barista &amp; Chef Apron with 3 Storage Pockets from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/banquet-satin-damask-table-cloth</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1533090161767-e6ffed986c88?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Banquet Satin Damask Stain-Resistant Round &amp; Rectangular Table Covers Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Banquet Satin Damask Stain-Resistant Round &amp; Rectangular Table Covers from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/commercial-microfiber-cleaning-cloths-pack</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1585421514738-01798e348b17?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Commercial Grade 350 GSM Microfiber Cleaning Cloths (Pack of 24 - 4 Colors) Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Commercial Grade 350 GSM Microfiber Cleaning Cloths (Pack of 24 - 4 Colors) from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/electrostatic-microfiber-fan-duster-pole</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1527515637462-cff94eecc1ac?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Electrostatic Bendable Microfiber Ceiling &amp; Fan Duster with Telescopic Stainless Pole Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Electrostatic Bendable Microfiber Ceiling &amp; Fan Duster with Telescopic Stainless Pole from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/reinforced-canvas-laundry-hamper-organizer-set</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Reinforced Canvas Foldable Laundry Hamper &amp; Quilt Storage Organizer (Pack of 3) Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Reinforced Canvas Foldable Laundry Hamper &amp; Quilt Storage Organizer (Pack of 3) from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/mill-fabric-swatch-sample-kit</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Mahalaxmi Official Mill Fabric Swatch &amp; Quality Assurance Sample Kit (100% Refundable) Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Mahalaxmi Official Mill Fabric Swatch &amp; Quality Assurance Sample Kit (100% Refundable) from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://mahalaxmimanufacturer.com/product/mill-commercial-sample-bundle</loc>
+    <lastmod>2026-10-17</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&amp;w=1000&amp;auto=format&amp;fit=crop</image:loc>
+      <image:title>Mahalaxmi Complete Commercial Sample Bundle (All 4 Categories Swatch &amp; Product Minis Box) Surat Mill Direct</image:title>
+      <image:caption>Direct mill rates on Mahalaxmi Complete Commercial Sample Bundle (All 4 Categories Swatch &amp; Product Minis Box) from Surat textile manufacturer Mahalaxmi Enterprises</image:caption>
     </image:image>
   </url>
 </urlset>

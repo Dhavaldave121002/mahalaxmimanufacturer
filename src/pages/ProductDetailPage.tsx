@@ -28,10 +28,12 @@ import {
   Box,
   PackageCheck,
   Package,
-  Boxes
+  Boxes,
+  MessageSquare
 } from 'lucide-react';
 import { StickyPurchaseBar } from '../components/common/StickyPurchaseBar';
 import { FrequentlyBoughtTogether } from '../components/common/FrequentlyBoughtTogether';
+import { SEOProductHead } from '../components/common/SEOProductHead';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -140,6 +142,9 @@ export const ProductDetailPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-12 pb-20">
+      {/* Dynamic SEO, Schema.org JSON-LD & City/State Geo Ranking */}
+      <SEOProductHead product={product} city={deliveryInfo?.city || 'Surat'} state={deliveryInfo?.state || 'Gujarat'} />
+
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
         <Link to="/" className="hover:text-indigo">Home</Link>
@@ -496,6 +501,30 @@ export const ProductDetailPage: React.FC = () => {
                 <Zap className="w-4 h-4" />
                 <span>Buy Now • Fast Checkout</span>
               </button>
+            </div>
+
+            {/* Direct WhatsApp Order & Mill Sales Desk */}
+            <a
+              href={`https://wa.me/918511172099?text=${encodeURIComponent(
+                `Namaste Mahalaxmi Enterprises, I am interested in ${product.name} (SKU: ${product.sku}). Qty: ${quantity} pcs. Price: ₹${currentLineTotal}. Please provide mill dispatch availability for ${deliveryInfo?.city || 'my city'}.`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Order / Inquire via WhatsApp (Mill Desk: +91 85111 72099)</span>
+            </a>
+
+            {/* Geo & Mill Direct Guarantee Banner */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-2 text-[11px] text-slate-600 font-medium">
+              <span className="flex items-center gap-1.5 text-navy font-bold">
+                <MapPin className="w-3.5 h-3.5 text-indigo shrink-0" />
+                <span>Direct Mill Dispatch to {deliveryInfo?.city || 'Surat'}, {deliveryInfo?.state || 'Gujarat'} & All India</span>
+              </span>
+              <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
+                🛡️ 7-Day Return / Exchange
+              </span>
             </div>
 
             {/* Commercial Sample & Sample Bundle Procurement Suite */}

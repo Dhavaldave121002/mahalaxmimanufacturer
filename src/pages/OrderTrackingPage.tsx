@@ -27,7 +27,7 @@ export const OrderTrackingPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const successOrderId = searchParams.get('success');
 
-  const { orders, addToCart, products, currentUser, cancelOrder } = useApp();
+  const { orders, addToCart, products, currentUser, cancelOrder, requestReturnOrExchange } = useApp();
   const isAdmin = currentUser?.role === 'admin';
 
   // 1. Filter orders strictly for the current logged-in user (unless admin)
@@ -176,6 +176,14 @@ export const OrderTrackingPage: React.FC = () => {
   const [cancelReason, setCancelReason] = useState('Change of delivery date or specification');
   const [cancelling, setCancelling] = useState(false);
   const [cancelFeedback, setCancelFeedback] = useState<string | null>(null);
+
+  // Return & Exchange State
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
+  const [returnType, setReturnType] = useState<'RETURN' | 'EXCHANGE'>('RETURN');
+  const [returnReason, setReturnReason] = useState('Fabric defect / weaving flaw');
+  const [returnComment, setReturnComment] = useState('');
+  const [submittingReturn, setSubmittingReturn] = useState(false);
+  const [returnFeedback, setReturnFeedback] = useState<string | null>(null);
 
   const handleReorder = (order: Order) => {
     order.items.forEach(item => {
@@ -563,6 +571,22 @@ export const OrderTrackingPage: React.FC = () => {
                       <span>Cancel Order</span>
                     </button>
                   )}
+                  {currentOrder.status === 'DELIVERED' && (
+                    <button
+                      onClick={() => setReturnModalOpen(true)}
+                      className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+                      title="Request Return or Exchange for delivered goods"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Return / Exchange</span>
+                    </button>
+                  )}
+                  {((currentOrder.status as string) === 'RETURN_REQUESTED' || (currentOrder.status as string) === 'EXCHANGE_REQUESTED') && (
+                    <span className="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
+                      <span>{(currentOrder.status as string) === 'EXCHANGE_REQUESTED' ? 'Exchange Requested' : 'Return In Progress'}</span>
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -817,6 +841,137 @@ export const OrderTrackingPage: React.FC = () => {
         <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 text-xs font-bold animate-in slide-in-from-bottom-4">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{cancelFeedback}</span>
+        </div>
+      )}
+
+      {/* Return & Exchange Request Modal */}
+      {returnModalOpen && currentOrder && (
+        <div className="fixed inset-0 z-50 bg-navy/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in zoom-in-95 border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700">
+                  <RotateCcw className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-navy">Request Return or Exchange</h3>
+                  <p className="text-[11px] text-slate-500">Order: #{currentOrder.orderNumber}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReturnModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Request Type Toggle */}
+            <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setReturnType('RETURN')}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  returnType === 'RETURN'
+                    ? 'bg-white text-navy shadow-sm'
+                    : 'text-slate-600 hover:text-navy'
+                }`}
+              >
+                <span>🔄 Return & Refund</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setReturnType('EXCHANGE')}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                  returnType === 'EXCHANGE'
+                    ? 'bg-white text-navy shadow-sm'
+                    : 'text-slate-600 hover:text-navy'
+                }`}
+              >
+                <span>🔁 Size / Defect Exchange</span>
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Reason for {returnType === 'EXCHANGE' ? 'Exchange' : 'Return'} *</label>
+              <select
+                value={returnReason}
+                onChange={e => setReturnReason(e.target.value)}
+                className="w-full text-xs p-2.5 rounded-xl border border-slate-300 outline-none focus:border-indigo font-medium"
+              >
+                <option value="Fabric defect / weaving flaw">Fabric defect / weaving flaw</option>
+                <option value="Wrong size or dimension received">Wrong size or dimension received</option>
+                <option value="Colour shade mismatch compared to photo">Colour shade mismatch compared to photo</option>
+                <option value="Damaged outer packing during courier transit">Damaged outer packing during courier transit</option>
+                <option value="GSM weight / yarn feel different than specification">GSM weight / yarn feel different than specification</option>
+                <option value="Other quality or requirement issue">Other quality or requirement issue</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Additional Comments / Item Details (Optional)</label>
+              <textarea
+                value={returnComment}
+                onChange={e => setReturnComment(e.target.value)}
+                placeholder="Mention specific pieces or replacement size required..."
+                rows={3}
+                className="w-full text-xs p-3 rounded-xl border border-slate-300 outline-none focus:border-indigo resize-none font-medium"
+              />
+            </div>
+
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-snug space-y-1">
+              <div className="font-bold flex items-center gap-1">
+                <span>🛡️ 7-Day Mill Guarantee:</span>
+              </div>
+              <p>
+                Our courier will pick up the parcel from your delivery address within <strong>24-48 business hours</strong>.
+                {returnType === 'RETURN'
+                  ? ` 100% refund of ₹${currentOrder.totalAmount.toLocaleString('en-IN')} will be credited upon pickup.`
+                  : ' Replacement fresh batch will be dispatched immediately once handed over.'}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setReturnModalOpen(false)}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={submittingReturn}
+                onClick={async () => {
+                  setSubmittingReturn(true);
+                  const res = await requestReturnOrExchange(currentOrder.id, returnType, returnReason, returnComment);
+                  setSubmittingReturn(false);
+                  setReturnModalOpen(false);
+                  setReturnFeedback(res.message);
+                  setTimeout(() => setReturnFeedback(null), 6000);
+                }}
+                className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {submittingReturn ? (
+                  <span>Submitting Request...</span>
+                ) : (
+                  <>
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Confirm {returnType === 'EXCHANGE' ? 'Exchange' : 'Return'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Return Toast */}
+      {returnFeedback && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-3 text-xs font-bold animate-in slide-in-from-bottom-4">
+          <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>{returnFeedback}</span>
         </div>
       )}
     </div>
