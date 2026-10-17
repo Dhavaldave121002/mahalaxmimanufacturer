@@ -43,6 +43,15 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Handle database connectivity test directly to conserve serverless function slots
+  if (req.url && (req.url.includes('check_db=true') || req.url.includes('action=db-status'))) {
+    const { testDbConnection } = await import('../database/db.js');
+    const result = await testDbConnection();
+    return res.status(200).json(result);
+  }
+
+
+
   const pool = getDbPool();
 
   // ----------------------------------------------------

@@ -54,7 +54,7 @@ function localApiPlugin(): Plugin {
         }
 
         // 1. DB Status API
-        if (req.url === '/api/db-status') {
+        if (req.url === '/api/db-status' || req.url?.includes('check_db=true')) {
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Access-Control-Allow-Origin', '*');
           const result = await testDbConnection();

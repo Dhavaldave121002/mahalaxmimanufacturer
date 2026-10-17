@@ -93,13 +93,13 @@ export const MobileAppManager: React.FC = () => {
     setDbTestLoading(true);
     setDbTestResult(null);
     try {
-      const res = await fetch('/api/db-status');
+      const res = await fetch('/api/app-config?check_db=true');
       const data = await res.json();
       setDbTestResult(data);
     } catch (err: any) {
       setDbTestResult({
         connected: false,
-        message: 'Could not connect to /api/db-status: ' + (err.message || 'Network error')
+        message: 'Could not connect to database test API: ' + (err.message || 'Network error')
       });
     } finally {
       setDbTestLoading(false);
