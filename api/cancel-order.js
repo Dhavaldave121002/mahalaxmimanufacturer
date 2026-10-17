@@ -327,6 +327,30 @@ async function sendCancellationEmails(data) {
     </html>
   `;
 
+  const cancelItemsBlock = `
+    <div style="margin: 20px 0 16px; text-align: left; background-color: #FFFFFF; border: 1px solid #FECACA; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+      <div style="background-color: #FEF2F2; padding: 12px 16px; font-weight: 900; font-size: 11px; color: #991B1B; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #FECACA;">
+        ❌ Cancelled Consignment Items
+      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <thead>
+          <tr style="background-color: #F1F5F9; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase;">
+            <th style="padding: 10px 14px; text-align: left; border-bottom: 1px solid #E2E8F0;">Product Item</th>
+            <th style="padding: 10px 8px; text-align: center; border-bottom: 1px solid #E2E8F0; width: 55px;">Qty</th>
+            <th style="padding: 10px 14px; text-align: right; border-bottom: 1px solid #E2E8F0; width: 95px;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHtml}
+        </tbody>
+      </table>
+      <div style="background-color: #F8FAFC; padding: 12px 16px; font-size: 12px; color: #475569; border-top: 1px solid #E2E8F0; line-height: 1.5;">
+        📝 <strong style="color: #0F172A;">Reason:</strong> ${reason || 'Customer requested cancellation'}<br>
+        💰 <strong style="color: #0F172A;">Refund Total:</strong> ₹${Number(totalAmount).toLocaleString('en-IN')} (Credited in 2-4 working days)
+      </div>
+    </div>
+  `;
+
   // 1. Dispatch Customer Cancellation Confirmation via EmailJS
   if (customerEmail && customerEmail.includes('@')) {
     try {
@@ -348,6 +372,7 @@ async function sendCancellationEmails(data) {
             code_box: `#${orderNumber}`,
             subtext: `Total: ₹${Number(totalAmount).toLocaleString('en-IN')} • Refund in 2-4 days`,
             order_number: orderNumber,
+            items_block: cancelItemsBlock,
             message: `Your order #${orderNumber} has been cancelled successfully as requested.`
           }
         };
@@ -386,6 +411,7 @@ async function sendCancellationEmails(data) {
           code_box: `#${orderNumber}`,
           subtext: `Customer: ${customerName} (${customerEmail})`,
           order_number: orderNumber,
+          items_block: cancelItemsBlock,
           message: `Store Alert: Order #${orderNumber} was cancelled by ${customerName} (₹${Number(totalAmount).toLocaleString('en-IN')})`
         }
       };

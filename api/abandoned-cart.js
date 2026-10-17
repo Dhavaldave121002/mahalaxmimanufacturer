@@ -425,6 +425,29 @@ async function sendAbandonedCartRecoveryEmails(data) {
     </html>
   `;
 
+  const cartItemsBlock = `
+    <div style="margin: 20px 0 16px; text-align: left; background-color: #FFFFFF; border: 1px solid #DBEAFE; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+      <div style="background-color: #EFF6FF; padding: 12px 16px; font-weight: 900; font-size: 11px; color: #1E40AF; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #DBEAFE;">
+        🛒 Reserved Items In Your Cart
+      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <thead>
+          <tr style="background-color: #F1F5F9; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase;">
+            <th style="padding: 10px 14px; text-align: left; border-bottom: 1px solid #E2E8F0;">Product Item</th>
+            <th style="padding: 10px 8px; text-align: center; border-bottom: 1px solid #E2E8F0; width: 55px;">Qty</th>
+            <th style="padding: 10px 14px; text-align: right; border-bottom: 1px solid #E2E8F0; width: 95px;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHtml}
+        </tbody>
+      </table>
+      <div style="background-color: #F8FAFC; padding: 12px 16px; font-size: 12px; color: #059669; font-weight: 800; border-top: 1px solid #E2E8F0;">
+        🎁 Use Coupon Code: LAUNCH150 for Extra Flat ₹150 Instant Off!
+      </div>
+    </div>
+  `;
+
   // 1. Dispatch Customer Recovery Email via EmailJS
   if (customerEmail && customerEmail.includes('@')) {
     try {
@@ -446,6 +469,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
             code_box: 'LAUNCH150',
             subtext: `Cart Value: ₹${Number(cartTotal).toLocaleString('en-IN')} • Valid Today`,
             cart_total: Number(cartTotal).toLocaleString('en-IN'),
+            items_block: cartItemsBlock,
             message: `Items in your cart are waiting! Complete your order today and get instant flat ₹150 discount.`
           }
         };
@@ -484,6 +508,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
           headline: 'Abandoned Cart Lead',
           code_box: `₹${Number(cartTotal).toLocaleString('en-IN')}`,
           subtext: `Customer: ${customerName} (${source})`,
+          items_block: cartItemsBlock,
           message: `Store Alert: Abandoned Cart Lead of ₹${Number(cartTotal).toLocaleString('en-IN')} by ${customerName} (${source})`
         }
       };

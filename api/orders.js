@@ -313,6 +313,30 @@ async function sendOrderNotificationEmails(data) {
     addressText = shippingAddress;
   }
 
+  const orderItemsBlock = `
+    <div style="margin: 20px 0 16px; text-align: left; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+      <div style="background-color: #F8FAFC; padding: 12px 16px; font-weight: 900; font-size: 11px; color: #1E293B; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #E2E8F0;">
+        📦 Ordered Consignment Items (${(items && items.length) || 1} Products)
+      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <thead>
+          <tr style="background-color: #F1F5F9; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase;">
+            <th style="padding: 10px 14px; text-align: left; border-bottom: 1px solid #E2E8F0;">Product Item</th>
+            <th style="padding: 10px 8px; text-align: center; border-bottom: 1px solid #E2E8F0; width: 55px;">Qty</th>
+            <th style="padding: 10px 14px; text-align: right; border-bottom: 1px solid #E2E8F0; width: 95px;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHtml}
+        </tbody>
+      </table>
+      <div style="background-color: #F8FAFC; padding: 12px 16px; font-size: 12px; color: #475569; border-top: 1px solid #E2E8F0; line-height: 1.5;">
+        📍 <strong style="color: #0F172A;">Delivery Destination:</strong> ${addressText}<br>
+        💳 <strong style="color: #0F172A;">Payment Mode:</strong> ${paymentMethod} (${paymentStatus}) • <strong style="color: #059669;">Grand Total: ₹${Number(totalAmount).toLocaleString('en-IN')}</strong>
+      </div>
+    </div>
+  `;
+
   const rawPhone = (customerPhone || '').replace(/\D/g, '');
   const cleanPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
@@ -523,6 +547,7 @@ async function sendOrderNotificationEmails(data) {
           total_amount: Number(totalAmount).toLocaleString('en-IN'),
           customer_name: customerName,
           customer_email: customerEmail || 'N/A',
+          items_block: orderItemsBlock,
           message: `🚨 New order booked by ${customerName} (${customerPhone}) via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}! Value: ₹${Number(totalAmount).toLocaleString('en-IN')}. Delivery to: ${addressText}.`
         }
       };
@@ -684,6 +709,7 @@ async function sendOrderNotificationEmails(data) {
               subtext: `Total Value: ₹${Number(totalAmount).toLocaleString('en-IN')} • Surat Mill`,
               order_number: orderNumber,
               total_amount: Number(totalAmount).toLocaleString('en-IN'),
+              items_block: orderItemsBlock,
               message: `Thank you for your order! Your consignment #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')} is confirmed and being packed at Surat Direct Mill.`
             }
           };

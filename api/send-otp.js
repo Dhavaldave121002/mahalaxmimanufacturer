@@ -66,6 +66,7 @@ export default async function handler(req, res) {
             otp: otp,
             passcode: otp,
             verification_code: otp,
+            items_block: '',
             message: `Use the One-Time Password (OTP) below to securely verify your account on Mahalaxmi Enterprises.`
           }
         };
