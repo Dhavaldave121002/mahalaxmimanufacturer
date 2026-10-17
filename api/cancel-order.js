@@ -114,24 +114,43 @@ async function sendCancellationEmails(data) {
   const secondaryAdmin = 'deviltimeisback001@gmail.com';
 
   const itemsHtml = (items && items.length > 0)
-    ? items.map(item => `
+    ? items.map(item => {
+        let itemImg = item.image || item.imageUrl || item.thumbnail || item.productImage || 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=120&auto=format&fit=crop&q=80';
+        if (typeof itemImg === 'string' && itemImg.startsWith('/')) {
+          itemImg = `https://mahalaxmimanufacturer.vercel.app${itemImg}`;
+        }
+        return `
         <tr>
-          <td style="padding: 10px 14px; border-bottom: 1px solid #E2E8F0; text-align: left;">
-            <div style="font-weight: 800; font-size: 13px; color: #0F172A;">
-              ${item.productName || item.title || item.name || 'Textile Consignment'}
-            </div>
-            <div style="font-size: 11px; color: #64748B;">
-              ${item.variantDescription || item.size || 'Standard Mill Quality'}
-            </div>
+          <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: left; vertical-align: middle;">
+            <table cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="vertical-align: middle; padding-right: 12px; width: 48px;">
+                  <img src="${itemImg}" alt="${item.productName || item.title || item.name || 'Textile'}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid #CBD5E1; display: block;" />
+                </td>
+                <td style="vertical-align: middle;">
+                  <div style="font-weight: 800; font-size: 13px; color: #0F172A; line-height: 1.3;">
+                    ${item.productName || item.title || item.name || 'Textile Consignment'}
+                  </div>
+                  <div style="font-size: 11px; color: #64748B; margin-top: 3px;">
+                    ${item.variantDescription || item.size || 'Standard Mill Quality'}
+                  </div>
+                </td>
+              </tr>
+            </table>
           </td>
-          <td style="padding: 10px 8px; border-bottom: 1px solid #E2E8F0; text-align: center; font-weight: 800; color: #1E293B; font-size: 12px;">
-            ${item.quantity || item.units || 1}
+          <td style="padding: 10px 8px; border-bottom: 1px solid #E2E8F0; text-align: center; vertical-align: middle;">
+            <span style="display: inline-block; background-color: #F1F5F9; color: #1E293B; font-weight: 800; font-size: 12px; padding: 4px 10px; border-radius: 8px;">
+              ${item.quantity || item.units || 1}
+            </span>
           </td>
-          <td style="padding: 10px 14px; border-bottom: 1px solid #E2E8F0; text-align: right; font-weight: 800; color: #0F172A; font-family: monospace;">
-            ₹${Number(item.totalPrice || item.price || 0).toLocaleString('en-IN')}
+          <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: right; vertical-align: middle;">
+            <div style="font-size: 14px; font-weight: 800; color: #0F172A; font-family: monospace;">
+              ₹${Number(item.totalPrice || item.price || 0).toLocaleString('en-IN')}
+            </div>
           </td>
         </tr>
-      `).join('')
+      `;
+      }).join('')
     : `
       <tr>
         <td colspan="3" style="padding: 14px; text-align: center; color: #64748B; font-size: 12px;">
