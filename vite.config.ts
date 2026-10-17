@@ -23,6 +23,17 @@ function localApiPlugin(): Plugin {
             return expressRes;
           };
         }
+        if (!expressRes.send) {
+          expressRes.send = function (data: any) {
+            if (typeof data === 'string') {
+              expressRes.end(data);
+            } else {
+              expressRes.setHeader('Content-Type', 'application/json');
+              expressRes.end(JSON.stringify(data));
+            }
+            return expressRes;
+          };
+        }
 
         // Helper to parse JSON body
         async function ensureBodyParsed() {
@@ -182,6 +193,28 @@ function localApiPlugin(): Plugin {
           try {
             // @ts-ignore
             const mod = await import('./api/abandoned-cart.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            expressRes.status(500).json({ success: false, error: e.message });
+          }
+          return;
+        }
+
+        // 8. Official GST Tax Invoice Endpoint (Print / PDF / Download)
+        if (req.url?.startsWith('/api/invoice')) {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          try {
+            const urlObj = new URL(req.url, 'http://localhost:5173');
+            (req as any).query = Object.fromEntries(urlObj.searchParams.entries());
+            // @ts-ignore
+            const mod = await import('./api/invoice.js');
             await mod.default(req, expressRes);
           } catch (e: any) {
             expressRes.status(500).json({ success: false, error: e.message });
