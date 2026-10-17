@@ -29,7 +29,8 @@ import {
   PackageCheck,
   Package,
   Boxes,
-  MessageSquare
+  MessageSquare,
+  X
 } from 'lucide-react';
 import { StickyPurchaseBar } from '../components/common/StickyPurchaseBar';
 import { FrequentlyBoughtTogether } from '../components/common/FrequentlyBoughtTogether';
@@ -60,6 +61,7 @@ export const ProductDetailPage: React.FC = () => {
   const [pinInput, setPinInput] = useState(deliveryPincode);
   const [addedAnimation, setAddedAnimation] = useState(false);
   const [activeTab, setActiveTab] = useState<'specs' | 'tiers' | 'care' | 'reviews'>('specs');
+  const [showReturnModal, setShowReturnModal] = useState(false);
 
   if (!product) {
     return (
@@ -535,14 +537,20 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* Geo & Mill Direct Guarantee Banner */}
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-2 text-[11px] text-slate-600 font-medium">
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600 font-medium">
               <span className="flex items-center gap-1.5 text-navy font-bold">
                 <MapPin className="w-3.5 h-3.5 text-indigo shrink-0" />
                 <span>Direct Mill Dispatch to {deliveryInfo?.city || 'Surat'}, {deliveryInfo?.state || 'Gujarat'} & All India</span>
               </span>
-              <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
-                🛡️ 7-Day Return / Exchange
-              </span>
+              <button
+                type="button"
+                onClick={() => setShowReturnModal(true)}
+                className="text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 shrink-0 flex items-center gap-1 cursor-pointer transition"
+                title="Click to view 7-Day Return, Exchange & 100% Refund Policy"
+              >
+                <span>🛡️ 7-Day Return / Exchange & 100% Refund</span>
+                <span className="text-[10px] text-emerald-800 underline font-semibold">(View Policy)</span>
+              </button>
             </div>
 
             {/* Commercial Sample & Sample Bundle Procurement Suite */}
@@ -617,11 +625,16 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* High-Conversion Trust Signals Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs pt-1">
-              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col items-center justify-center">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 mb-1" />
-                <span className="font-bold text-navy text-[11px]">7-Day Return</span>
-                <span className="text-[10px] text-slate-500">Free Replacement</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowReturnModal(true)}
+                className="p-2.5 bg-emerald-50/60 hover:bg-emerald-100/70 rounded-xl border border-emerald-200/80 flex flex-col items-center justify-center transition cursor-pointer text-center group"
+                title="Click to view 7-Day Return & 100% Refund Policy"
+              >
+                <RotateCcw className="w-4 h-4 text-emerald-600 mb-1 group-hover:rotate-[-45deg] transition-transform" />
+                <span className="font-bold text-emerald-900 text-[11px]">7-Day Return</span>
+                <span className="text-[10px] text-emerald-700 font-semibold underline">100% Refund</span>
+              </button>
               <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col items-center justify-center">
                 <Truck className="w-4 h-4 text-indigo mb-1" />
                 <span className="font-bold text-navy text-[11px]">Fast Delivery</span>
@@ -861,6 +874,81 @@ export const ProductDetailPage: React.FC = () => {
             {relatedProducts.map(p => (
               <ProductCard key={p.id} product={p} />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* 7-Day Return & Refund Policy Modal */}
+      {showReturnModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white text-navy rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowReturnModal(false)}
+              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-navy hover:bg-slate-100 transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2.5 text-emerald-600">
+                <RotateCcw className="w-6 h-6 shrink-0" />
+                <div>
+                  <h3 className="text-lg font-black text-navy">7-Day Return, Exchange & 100% Refund Policy</h3>
+                  <p className="text-xs text-emerald-600 font-semibold">100% Direct Mill Guarantee & Buyer Protection</p>
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-950 space-y-1.5">
+                <div className="font-bold flex items-center gap-1.5 text-emerald-800">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>Free Doorstep Reverse Pickup & 100% Money-Back</span>
+                </div>
+                <p className="leading-relaxed">
+                  Every order of <strong>{product.name}</strong> is covered by our unconditional 7-Day Mill Guarantee. If the dimensions, fabric hand-feel, GSM, or shade don't meet your expectations, we arrange reverse pickup and process an instant 100% refund or free exchange.
+                </p>
+              </div>
+
+              <div className="space-y-2.5 text-xs text-slate-700">
+                <h4 className="font-bold text-navy uppercase text-[11px] tracking-wider">Guarantee Highlights:</h4>
+                <ul className="space-y-2 pl-1">
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-emerald-600 shrink-0">1.</span>
+                    <span><strong>7-Day Return Window:</strong> You can initiate a return or exchange anytime within 7 days of package delivery.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-emerald-600 shrink-0">2.</span>
+                    <span><strong>100% Full Refund:</strong> No hidden restocking fees or return shipping charges. 100% amount credited to your UPI / Bank within 3-5 days of pickup.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-emerald-600 shrink-0">3.</span>
+                    <span><strong>Doorstep Pickup in 24-48 Hours:</strong> Delhivery / BlueDart will pick up the parcel directly from your doorstep.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-emerald-600 shrink-0">4.</span>
+                    <span><strong>Free Exchange:</strong> Need a different color or size? We dispatch replacement pieces immediately.</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
+                <h4 className="font-bold text-navy">How to Request a Return or Refund:</h4>
+                <p className="text-slate-600">
+                  • <strong>Online:</strong> Go to <Link to="/orders" className="text-indigo font-bold underline">Track Order</Link> and click <em>"🔄 Return / Exchange"</em> on your delivered order.
+                </p>
+                <p className="text-slate-600">
+                  • <strong>WhatsApp:</strong> Message us at <a href="https://wa.me/918511172099" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">+91 85111 72099</a> with your Order ID.
+                </p>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  onClick={() => setShowReturnModal(false)}
+                  className="px-5 py-2.5 bg-navy text-white text-xs font-bold rounded-xl hover:bg-navy-800 transition cursor-pointer"
+                >
+                  Understood & Close
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

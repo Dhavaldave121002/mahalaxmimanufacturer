@@ -44,15 +44,25 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-navy-800/40 border border-navy-700/50">
-            <div className="p-2.5 bg-indigo/20 text-champagne rounded-lg">
-              <ShieldCheck className="w-5 h-5" />
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-navy-800/40 border border-emerald-500/30">
+            <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-lg">
+              <RotateCcw className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-bold text-sm text-white">100% GST Invoiced</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="font-bold text-sm text-white">7-Day Return & 100% Refund</h4>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-bold border border-emerald-500/40">Guaranteed</span>
+              </div>
               <p className="text-xs text-slate-300 mt-1">
-                Claim full Input Tax Credit (ITC) with legally compliant B2B tax invoices & E-way bills.
+                Doorstep reverse pickup in 24-48 hrs. 100% refund to UPI/Bank or instant size/defect exchange.
               </p>
+              <button
+                type="button"
+                onClick={() => setLegalModal('RETURN')}
+                className="mt-1.5 text-[11px] text-emerald-400 hover:text-emerald-300 font-bold underline flex items-center gap-1 cursor-pointer"
+              >
+                Read Full Refund Policy →
+              </button>
             </div>
           </div>
 
@@ -70,12 +80,12 @@ export const Footer: React.FC = () => {
 
           <div className="flex items-start gap-3 p-4 rounded-xl bg-navy-800/40 border border-navy-700/50">
             <div className="p-2.5 bg-indigo/20 text-champagne rounded-lg">
-              <Award className="w-5 h-5" />
+              <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-bold text-sm text-white">Hospitality & Export Grade</h4>
+              <h4 className="font-bold text-sm text-white">100% GST & Lab Tested</h4>
               <p className="text-xs text-slate-300 mt-1">
-                OEKO-TEX tested combed cotton engineered for 500+ commercial laundering cycles.
+                OEKO-TEX tested combed cotton. Valid B2B tax invoices with full Input Tax Credit (ITC).
               </p>
             </div>
           </div>
@@ -111,7 +121,7 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-champagne shrink-0" />
-                <span>Wholesale Line: +91 98765 43210 / +91 94261 11223</span>
+                <span>Wholesale Line: +91 98765 43210 / +91 85111 72099</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-champagne shrink-0" />
@@ -157,38 +167,53 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Wholesale & Commercial */}
+          {/* Customer Service & Return Policies */}
           <div className="space-y-3">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Wholesale Commerce</h4>
+            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Customer Care & Support</h4>
             <ul className="text-xs text-slate-300 space-y-2">
               <li>
-                <Link to="/wholesale" className="hover:text-champagne transition">
-                  Request Bulk Quotation (RFQ)
+                <button
+                  type="button"
+                  onClick={() => setLegalModal('RETURN')}
+                  className="hover:text-champagne transition text-left font-bold text-emerald-400 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>7-Day Return & Refund Policy</span>
+                </button>
+              </li>
+              <li>
+                <Link to="/orders" className="hover:text-champagne transition flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Track Order & Live AWB</span>
                 </Link>
+              </li>
+              <li>
+                <Link to="/orders" className="hover:text-champagne transition text-amber-300 font-medium">
+                  Request Return / Exchange Online
+                </Link>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setLegalModal('TERMS')}
+                  className="hover:text-champagne transition text-left"
+                >
+                  Shipping & Delivery Terms
+                </button>
+              </li>
+              <li>
+                <a
+                  href="https://wa.me/918511172099?text=Namaste%20Mahalaxmi%20Enterprises,%20I%20have%20an%20inquiry%20regarding%20my%20Order/Return."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-champagne transition text-emerald-400 flex items-center gap-1 font-semibold"
+                >
+                  WhatsApp Helpdesk (+91 85111 72099)
+                </a>
               </li>
               <li>
                 <Link to="/wholesale" className="hover:text-champagne transition">
-                  Bulk SKU Order Pad
-                </Link>
-              </li>
-              <li>
-                <Link to="/account" className="hover:text-champagne transition">
-                  GST Verification Portal
-                </Link>
-              </li>
-              <li>
-                <Link to="/wholesale" className="hover:text-champagne transition">
-                  Hotel & Hospitality Procurement
-                </Link>
-              </li>
-              <li>
-                <Link to="/wholesale" className="hover:text-champagne transition">
-                  Reseller & Distributor Program
-                </Link>
-              </li>
-              <li>
-                <Link to="/orders" className="hover:text-champagne transition">
-                  Consignment Tracking
+                  Commercial Sample Evaluation
                 </Link>
               </li>
             </ul>
@@ -333,8 +358,11 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 border-t border-navy-800 text-xs text-slate-300 flex flex-col md:flex-row items-center justify-between gap-4">
         <p>&copy; {new Date().getFullYear()} Mahalaxmi Enterprises. All rights reserved. Direct Mill Rates & Wholesale Essentials.</p>
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <button onClick={() => setLegalModal('RETURN')} className="text-emerald-400 font-bold hover:text-emerald-300 transition text-left cursor-pointer flex items-center gap-1">
+            <RotateCcw className="w-3.5 h-3.5" />
+            7-Day Return & Refund Policy
+          </button>
           <button onClick={() => setLegalModal('TERMS')} className="hover:text-champagne transition text-left">Terms of Commercial Supply</button>
-          <button onClick={() => setLegalModal('RETURN')} className="hover:text-champagne transition text-left">Wholesale Return Policy</button>
           <button onClick={() => setLegalModal('GST')} className="hover:text-champagne transition text-left">GST Invoice Compliance</button>
           <button onClick={() => setLegalModal('PRIVACY')} className="hover:text-champagne transition text-left">Security & Privacy</button>
         </div>
@@ -343,13 +371,70 @@ export const Footer: React.FC = () => {
       {/* Legal Policy Modal */}
       {legalModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white text-navy rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative border border-slate-200">
+          <div className="bg-white text-navy rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative border border-slate-200 max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setLegalModal(null)}
-              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-navy hover:bg-slate-100 transition"
+              className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-navy hover:bg-slate-100 transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
+
+            {legalModal === 'RETURN' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <RotateCcw className="w-6 h-6 shrink-0" />
+                  <div>
+                    <h3 className="text-lg font-black text-navy">7-Day Return, Exchange & 100% Refund Policy</h3>
+                    <p className="text-xs text-emerald-600 font-semibold">100% Buyer Protection & Direct Mill Guarantee</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-950 space-y-1.5">
+                  <div className="font-bold flex items-center gap-1.5 text-emerald-800">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Hassle-Free Doorstep Reverse Pickup & 100% Refund</span>
+                  </div>
+                  <p className="leading-relaxed">
+                    At Mahalaxmi Enterprises, we stand firmly behind every piece of fabric produced in our Surat & Tirupur looms. If you are not completely satisfied with your order, we offer a straightforward 7-Day return, exchange, or refund with zero hidden deductions.
+                  </p>
+                </div>
+
+                <div className="space-y-2.5 text-xs text-slate-700">
+                  <h4 className="font-bold text-navy uppercase text-[11px] tracking-wider">Policy Highlights & Terms:</h4>
+                  <ul className="space-y-2 pl-1">
+                    <li className="flex items-start gap-2">
+                      <span className="font-bold text-emerald-600 shrink-0">1.</span>
+                      <span><strong>7-Day Return Window:</strong> You can initiate a return or exchange request within 7 calendar days from the date the consignment is delivered to your address.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-bold text-emerald-600 shrink-0">2.</span>
+                      <span><strong>100% Full Refund Guarantee:</strong> When a return is requested, 100% of your order value will be refunded directly to your original payment method (Bank Account / UPI / Card) within 3-5 business days after reverse pickup.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-bold text-emerald-600 shrink-0">3.</span>
+                      <span><strong>Free Doorstep Reverse Pickup:</strong> Our logistics partners (Delhivery, BlueDart, Blr Freight) will pick up the package from your doorstep within 24 to 48 business hours at zero reverse freight cost for verified defect/exchange claims.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-bold text-emerald-600 shrink-0">4.</span>
+                      <span><strong>Size / Dimension / Defect Exchange:</strong> Received a different size or weaving flaw? Select "Size / Defect Exchange" and a fresh replacement lot will be dispatched immediately.</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-bold text-emerald-600 shrink-0">5.</span>
+                      <span><strong>B2B & Wholesale Bales:</strong> Commercial consignments with weaving flaws or GSM deviation exceeding ±3% are 100% replaced with zero hassle. Sample kit costs (₹199 / ₹299) are 100% credited back on your first wholesale order.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
+                  <h4 className="font-bold text-navy">How to Request a Return or Exchange:</h4>
+                  <div className="space-y-1 text-slate-600">
+                    <p>• <strong>Method 1 (Instant Online):</strong> Visit <Link to="/orders" onClick={() => setLegalModal(null)} className="text-indigo font-bold underline">Track Order / Consignments</Link>, select your delivered order, and click the <strong>"🔄 Return / Exchange"</strong> button.</p>
+                    <p>• <strong>Method 2 (WhatsApp Desk):</strong> Ping our Surat Mill dispatch helpline on WhatsApp at <a href="https://wa.me/918511172099" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">+91 85111 72099</a> with your Order ID.</p>
+                    <p>• <strong>Method 3 (Email):</strong> Email our team at <a href="mailto:orders@mahalaxmienterprises.com" className="text-indigo font-bold underline">orders@mahalaxmienterprises.com</a>.</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {legalModal === 'TERMS' && (
               <div className="space-y-4">
@@ -364,23 +449,6 @@ export const Footer: React.FC = () => {
                   <li>Direct mill billing with legal GST compliance.</li>
                   <li>Dispatch within 24-48 business hours via insured freight partners.</li>
                   <li>Transit insurance included on all bulk pallet shipments.</li>
-                </ul>
-              </div>
-            )}
-
-            {legalModal === 'RETURN' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-emerald-600">
-                  <RotateCcw className="w-5 h-5" />
-                  <h3 className="text-lg font-black">Wholesale Return Policy</h3>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  We guarantee 100% replacement for any manufacturing or weaving defect, color fastness failure, or GSM deviation exceeding ±3%.
-                </p>
-                <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
-                  <li>Notice of defect must be reported within 7 days of consignment delivery.</li>
-                  <li>Sample kit fee (₹199 / ₹299) is 100% credited back on your first wholesale order.</li>
-                  <li>Reverse pickup arranged for defective commercial bales at zero freight cost to buyer.</li>
                 </ul>
               </div>
             )}
@@ -422,7 +490,7 @@ export const Footer: React.FC = () => {
             <div className="pt-4 mt-6 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setLegalModal(null)}
-                className="px-5 py-2 bg-navy text-white text-xs font-bold rounded-xl hover:bg-navy-800 transition"
+                className="px-5 py-2 bg-navy text-white text-xs font-bold rounded-xl hover:bg-navy-800 transition cursor-pointer"
               >
                 Close
               </button>
