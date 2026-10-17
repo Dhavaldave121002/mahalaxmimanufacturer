@@ -45,8 +45,11 @@ export const Header: React.FC = () => {
     deliveryInfo,
     checkPincode,
     recentSearches,
-    addRecentSearch
+    addRecentSearch,
+    coupons
   } = useApp();
+
+  const topPromo = coupons.find(c => c.isActive && c.isFeatured);
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
@@ -208,10 +211,16 @@ export const Header: React.FC = () => {
               DIRECT MILL RATE
             </span>
             <span className="text-slate-200 text-[11px] hidden sm:inline">
-              🚚 Free Delivery above ₹1,499 • ⚡ Launch Bonus: <strong className="text-champagne font-mono font-black">LAUNCH150</strong> (Flat ₹150 Off) • 🏢 100% GST ITC Invoicing
+              🚚 Free Delivery above ₹1,499 • {topPromo ? (
+                <>⚡ Live Offer: <strong className="text-champagne font-mono font-black">{topPromo.code}</strong> ({topPromo.discountType === 'FLAT' ? `Flat ₹${topPromo.discountValue} Off` : `${topPromo.discountValue}% Off`}) • </>
+              ) : null}🏢 100% GST ITC Invoicing
             </span>
             <span className="text-slate-200 text-[11px] sm:hidden">
-              ⚡ Launch Bonus: <strong className="text-champagne font-mono font-black">LAUNCH150</strong> (Flat ₹150 Off)
+              {topPromo ? (
+                <>⚡ Offer: <strong className="text-champagne font-mono font-black">{topPromo.code}</strong> ({topPromo.discountType === 'FLAT' ? `Flat ₹${topPromo.discountValue} Off` : `${topPromo.discountValue}% Off`})</>
+              ) : (
+                <>⚡ Direct Mill Rates • 100% Cotton</>
+              )}
             </span>
           </div>
 

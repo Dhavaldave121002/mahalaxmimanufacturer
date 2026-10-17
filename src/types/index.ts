@@ -276,3 +276,25 @@ export interface MobileAppConfig {
   lastSyncedAt: string;
 }
 
+// ==========================================
+// PROMO COUPONS & MILL OFFERS MANAGEMENT
+// ==========================================
+export interface CouponOffer {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  discountType: 'FLAT' | 'PERCENTAGE';
+  discountValue: number;
+  minOrderValue: number;
+  maxDiscountAmount?: number;
+  validUntil?: string;
+  isActive: boolean;
+  isFeatured: boolean;
+  applicableFor: 'ALL' | 'B2B' | 'B2C';
+  usageLimit?: number;
+  usedCount: number;
+  createdAt: string;
+}
+
+

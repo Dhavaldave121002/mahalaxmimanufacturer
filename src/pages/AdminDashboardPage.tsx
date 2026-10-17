@@ -30,10 +30,12 @@ import {
   Smartphone,
   ArrowRight,
   Globe,
-  MessageSquare
+  MessageSquare,
+  Tag
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { MobileAppManager } from '../components/admin/MobileAppManager';
+import { CouponOfferManager } from '../components/admin/CouponOfferManager';
 
 export const AdminDashboardPage: React.FC = () => {
   const {
@@ -48,7 +50,8 @@ export const AdminDashboardPage: React.FC = () => {
     updateQuotationByStaff,
     enquiries,
     currentUser,
-    switchUserRole
+    switchUserRole,
+    coupons
   } = useApp();
 
   // Admin Security Gate State
@@ -78,9 +81,9 @@ export const AdminDashboardPage: React.FC = () => {
     setIsUnlocked(false);
   };
 
-  // Active Admin View: 'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'import-export' | 'mobile-app'
+  // Active Admin View: 'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'import-export' | 'mobile-app' | 'coupons'
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'import-export' | 'mobile-app'
+    'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'import-export' | 'mobile-app' | 'coupons'
   >('overview');
 
   // Product Add / Edit Modal state
@@ -453,6 +456,23 @@ export const AdminDashboardPage: React.FC = () => {
         >
           <ShoppingCart className="w-4 h-4" />
           <span>Order Management ({orders.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('coupons')}
+          className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap flex items-center gap-2 ${
+            activeTab === 'coupons'
+              ? 'border-indigo text-indigo font-black'
+              : 'border-transparent text-slate-500 hover:text-navy'
+          }`}
+        >
+          <Tag className="w-4 h-4 text-amber-500" />
+          <span>Coupons & Offers ({coupons.length})</span>
+          {coupons.filter(c => c.isActive).length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
+              {coupons.filter(c => c.isActive).length} Live
+            </span>
+          )}
         </button>
 
         <button
@@ -1100,6 +1120,11 @@ export const AdminDashboardPage: React.FC = () => {
       {/* 7. FLUTTER MOBILE APP MANAGEMENT HUB */}
       {activeTab === 'mobile-app' && (
         <MobileAppManager />
+      )}
+
+      {/* 8. PROMOTIONAL COUPONS & MILL OFFERS MANAGER */}
+      {activeTab === 'coupons' && (
+        <CouponOfferManager />
       )}
 
       {/* Product Add / Edit Modal */}

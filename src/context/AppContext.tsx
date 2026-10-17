@@ -13,10 +13,12 @@ import {
   AppCategoryConfig,
   AppNotification,
   AppSettings,
-  MobileAppConfig
+  MobileAppConfig,
+  CouponOffer
 } from '../types';
 import { INITIAL_PRODUCTS } from '../data/mockProducts';
 import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
+import { INITIAL_COUPONS } from '../data/initialCoupons';
 
 interface PinCodeInfo {
   pincode: string;
@@ -52,8 +54,14 @@ interface AppContextType {
   clearCart: () => void;
   appliedCoupon: string | null;
   couponDiscount: number;
-  applyCoupon: (code: string) => { success: boolean; message: string };
+  applyCoupon: (code: string) => { success: boolean; message: string; discount?: number };
   removeCoupon: () => void;
+  coupons: CouponOffer[];
+  addCoupon: (coupon: Omit<CouponOffer, 'id' | 'usedCount' | 'createdAt'>) => void;
+  updateCoupon: (id: string, updates: Partial<CouponOffer>) => void;
+  deleteCoupon: (id: string) => void;
+  toggleCouponActive: (id: string) => void;
+  toggleCouponFeatured: (id: string) => void;
   cartSubtotal: number;
   cartTax: { cgst: number; sgst: number; igst: number; totalTax: number };
   cartShipping: number;
@@ -312,6 +320,68 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
+
+  // Dynamic Coupons & Offers Management State
+  const [coupons, setCoupons] = useState<CouponOffer[]>(() => {
+    try {
+      const saved = localStorage.getItem('mle_coupons');
+      if (saved && saved !== 'undefined' && saved !== 'null') {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.warn('Failed to parse mle_coupons, resetting:', e);
+    }
+    return INITIAL_COUPONS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('mle_coupons', JSON.stringify(coupons));
+    } catch (e) {
+      console.warn('Failed to persist mle_coupons:', e);
+    }
+  }, [coupons]);
+
+  const addCoupon = (coupon: Omit<CouponOffer, 'id' | 'usedCount' | 'createdAt'>) => {
+    const newCoupon: CouponOffer = {
+      ...coupon,
+      id: `coup-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      code: coupon.code.trim().toUpperCase(),
+      usedCount: 0,
+      createdAt: new Date().toISOString()
+    };
+    setCoupons(prev => [newCoupon, ...prev]);
+  };
+
+  const updateCoupon = (id: string, updates: Partial<CouponOffer>) => {
+    setCoupons(prev =>
+      prev.map(c => {
+        if (c.id === id) {
+          const updated = { ...c, ...updates };
+          if (updates.code) updated.code = updates.code.trim().toUpperCase();
+          return updated;
+        }
+        return c;
+      })
+    );
+  };
+
+  const deleteCoupon = (id: string) => {
+    setCoupons(prev => prev.filter(c => c.id !== id));
+  };
+
+  const toggleCouponActive = (id: string) => {
+    setCoupons(prev =>
+      prev.map(c => (c.id === id ? { ...c, isActive: !c.isActive } : c))
+    );
+  };
+
+  const toggleCouponFeatured = (id: string) => {
+    setCoupons(prev =>
+      prev.map(c => (c.id === id ? { ...c, isFeatured: !c.isFeatured } : c))
+    );
+  };
 
   const [deliveryPincode, setDeliveryPincode] = useState<string>('395002');
   const [deliveryInfo, setDeliveryInfo] = useState<PinCodeInfo | null>({
@@ -830,42 +900,56 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const applyCoupon = (code: string) => {
     const clean = code.trim().toUpperCase();
-    if (clean === 'LAUNCH150' || clean === 'FIRSTORDER') {
-      const disc = Math.min(150, cartSubtotal);
-      setAppliedCoupon(clean);
-      setCouponDiscount(disc);
-      return { success: true, message: '🎉 Launch Offer Applied! Flat ₹150 OFF on your first mill order.' };
-    } else if (clean === 'MILLDIRECT10') {
-      const disc = Math.round(cartSubtotal * 0.1);
-      setAppliedCoupon(clean);
-      setCouponDiscount(disc);
-      return { success: true, message: 'Coupon applied! 10% instant direct mill discount.' };
-    } else if (clean === 'BULK500') {
-      if (cartSubtotal < 3000) {
-        return { success: false, message: 'BULK500 requires a minimum order value of ₹3,000.' };
-      }
-      setAppliedCoupon(clean);
-      setCouponDiscount(500);
-      return { success: true, message: 'Coupon applied! ₹500 instant bulk discount.' };
-    } else if (clean === 'MAHALAXMI20') {
-      if (cartSubtotal < 10000) {
-        return { success: false, message: 'MAHALAXMI20 requires minimum order value of ₹10,000 for wholesale buyers.' };
-      }
-      const disc = Math.round(cartSubtotal * 0.2);
-      setAppliedCoupon(clean);
-      setCouponDiscount(disc);
-    } else if (clean === 'SAMPLE100' || clean === 'SAMPLEKIT' || clean === 'SAMPLEREBATE') {
-      const disc = Math.min(300, cartSubtotal);
-      setAppliedCoupon(clean);
-      setCouponDiscount(disc);
-      return { success: true, message: '🎉 100% Sample Rebate Applied! ₹300 credited back on your order.' };
-    } else if (clean === 'MILLB2B') {
-      const disc = Math.round(cartSubtotal * 0.05);
-      setAppliedCoupon(clean);
-      setCouponDiscount(disc);
-      return { success: true, message: 'Instant Commercial Card 5% discount applied (MILLB2B).' };
+    if (!clean) return { success: false, message: 'Please enter a coupon code.' };
+
+    const matched = coupons.find(c => c.code.toUpperCase() === clean);
+    if (!matched) {
+      return { success: false, message: `Invalid coupon code "${code}". Please check spelling.` };
     }
-    return { success: false, message: 'Invalid or expired coupon code.' };
+
+    if (!matched.isActive) {
+      return { success: false, message: `Coupon code "${matched.code}" is currently inactive or expired.` };
+    }
+
+    if (matched.validUntil && new Date(matched.validUntil).getTime() < Date.now()) {
+      return {
+        success: false,
+        message: `Coupon code "${matched.code}" expired on ${new Date(matched.validUntil).toLocaleDateString('en-IN')}.`
+      };
+    }
+
+    const isB2B = currentUser.role !== 'consumer' || !!currentUser.gstNumber;
+    if (matched.applicableFor === 'B2B' && !isB2B) {
+      return {
+        success: false,
+        message: `Coupon "${matched.code}" is reserved exclusively for registered B2B wholesale buyers.`
+      };
+    }
+
+    if (matched.minOrderValue > 0 && cartSubtotal < matched.minOrderValue) {
+      return {
+        success: false,
+        message: `Coupon "${matched.code}" requires a minimum order value of ₹${matched.minOrderValue.toLocaleString('en-IN')}. (Current: ₹${cartSubtotal.toLocaleString('en-IN')})`
+      };
+    }
+
+    let disc = 0;
+    if (matched.discountType === 'FLAT') {
+      disc = Math.min(matched.discountValue, cartSubtotal);
+    } else {
+      disc = Math.round((cartSubtotal * matched.discountValue) / 100);
+      if (matched.maxDiscountAmount && matched.maxDiscountAmount > 0) {
+        disc = Math.min(disc, matched.maxDiscountAmount);
+      }
+    }
+
+    setAppliedCoupon(matched.code);
+    setCouponDiscount(disc);
+    return {
+      success: true,
+      message: `🎉 Offer Applied! ${matched.title} (-₹${disc.toLocaleString('en-IN')})`,
+      discount: disc
+    };
   };
 
   const removeCoupon = () => {
@@ -1734,6 +1818,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         couponDiscount,
         applyCoupon,
         removeCoupon,
+        coupons,
+        addCoupon,
+        updateCoupon,
+        deleteCoupon,
+        toggleCouponActive,
+        toggleCouponFeatured,
         cartSubtotal,
         cartTax,
         cartShipping,

@@ -37,6 +37,7 @@ export const CartPage: React.FC = () => {
     couponDiscount,
     applyCoupon,
     removeCoupon,
+    coupons,
     currentUser,
     deliveryInfo,
     sendAbandonedCartEmail
@@ -45,6 +46,9 @@ export const CartPage: React.FC = () => {
   const [couponInput, setCouponInput] = useState('');
   const [couponMsg, setCouponMsg] = useState<{ text: string; success: boolean } | null>(null);
   const [timeLeft, setTimeLeft] = useState(899); // 14 mins 59 secs
+
+  // Active & Featured storefront coupons configured by Admin
+  const featuredCoupons = coupons.filter(c => c.isActive && c.isFeatured);
 
   // Abandoned cart email recovery state
   const [emailCartInput, setEmailCartInput] = useState(currentUser?.email || '');
@@ -349,89 +353,50 @@ export const CartPage: React.FC = () => {
               </p>
             )}
 
-            {/* Quick 1-Click Coupon Chips */}
-            <div className="pt-2 border-t border-slate-100 space-y-1.5">
-              <span className="text-[11px] font-bold text-slate-700 block">
-                Tap to apply available mill coupons:
-              </span>
-              <div className="flex flex-col gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => handleApplyCoupon(undefined, 'LAUNCH150')}
-                  className={`p-2 rounded-xl text-left border text-xs transition flex items-center justify-between ${
-                    appliedCoupon === 'LAUNCH150'
-                      ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 font-bold ring-1 ring-emerald-500'
-                      : 'border-amber-300 bg-amber-50/70 hover:bg-amber-100/60 text-slate-900'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
-                    <span className="font-black text-amber-950">LAUNCH150</span>
-                    <span className="text-[10px] text-amber-800 font-semibold">• Flat ₹150 Launch Bonus</span>
-                  </div>
-                  <span className="text-[10px] font-black text-amber-900 bg-amber-200/70 px-2 py-0.5 rounded">
-                    {appliedCoupon === 'LAUNCH150' ? 'Applied ✓' : '1-Click Apply'}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleApplyCoupon(undefined, 'MILLDIRECT10')}
-                  className={`p-2 rounded-xl text-left border text-xs transition flex items-center justify-between ${
-                    appliedCoupon === 'MILLDIRECT10'
-                      ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 font-bold'
-                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Percent className="w-3.5 h-3.5 text-indigo" />
-                    <span className="font-bold">MILLDIRECT10</span>
-                    <span className="text-[10px] text-slate-500">• 10% Flat Instant Off</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-indigo">
-                    {appliedCoupon === 'MILLDIRECT10' ? 'Applied ✓' : 'Apply'}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleApplyCoupon(undefined, 'BULK500')}
-                  className={`p-2 rounded-xl text-left border text-xs transition flex items-center justify-between ${
-                    appliedCoupon === 'BULK500'
-                      ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 font-bold'
-                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span className="font-bold">BULK500</span>
-                    <span className="text-[10px] text-slate-500">• Flat ₹500 Off (&gt;₹3,000)</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-indigo">
-                    {appliedCoupon === 'BULK500' ? 'Applied ✓' : 'Apply'}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleApplyCoupon(undefined, 'MAHALAXMI20')}
-                  className={`p-2 rounded-xl text-left border text-xs transition flex items-center justify-between ${
-                    appliedCoupon === 'MAHALAXMI20'
-                      ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 font-bold'
-                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="font-bold">MAHALAXMI20</span>
-                    <span className="text-[10px] text-slate-500">• 20% Off Wholesale (&gt;₹10,000)</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-indigo">
-                    {appliedCoupon === 'MAHALAXMI20' ? 'Applied ✓' : 'Apply'}
-                  </span>
-                </button>
+            {/* Quick 1-Click Coupon Chips (Dynamically driven by Admin) */}
+            {featuredCoupons.length > 0 && (
+              <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                <span className="text-[11px] font-bold text-slate-700 block">
+                  Tap to apply available mill coupons:
+                </span>
+                <div className="flex flex-col gap-1.5">
+                  {featuredCoupons.map(coupon => {
+                    const isApplied = appliedCoupon === coupon.code;
+                    const isFlat = coupon.discountType === 'FLAT';
+                    return (
+                      <button
+                        key={coupon.id}
+                        type="button"
+                        onClick={() => handleApplyCoupon(undefined, coupon.code)}
+                        className={`p-2 rounded-xl text-left border text-xs transition flex items-center justify-between ${
+                          isApplied
+                            ? 'border-emerald-500 bg-emerald-50/70 text-emerald-900 font-bold ring-1 ring-emerald-500'
+                            : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                          <Tag className="w-3.5 h-3.5 text-indigo shrink-0" />
+                          <span className="font-black text-slate-900 shrink-0">{coupon.code}</span>
+                          <span className="text-[10px] text-slate-500 font-medium truncate">
+                            • {isFlat ? `₹${coupon.discountValue} FLAT OFF` : `${coupon.discountValue}% OFF`}
+                            {coupon.minOrderValue > 0 ? ` (>₹${coupon.minOrderValue.toLocaleString('en-IN')})` : ''}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-[10px] font-black px-2 py-0.5 rounded shrink-0 ${
+                            isApplied
+                              ? 'bg-emerald-200/70 text-emerald-900'
+                              : 'bg-indigo/10 text-indigo'
+                          }`}
+                        >
+                          {isApplied ? 'Applied ✓' : '1-Click Apply'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Pricing Calculation Summary Card */}
@@ -521,14 +486,14 @@ export const CartPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="font-bold text-navy flex items-center gap-1.5">
                   <Mail className="w-4 h-4 text-indigo" />
-                  <span>⏱️ 30-Min Auto Cart Recovery & ₹150 Voucher</span>
+                  <span>⏱️ 30-Min Auto Cart Recovery & Voucher</span>
                 </span>
                 <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full">
                   AUTO 30-MIN
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 leading-snug">
-                Your cart is automatically saved! If you leave without checkout, we will automatically send your cart items with an instant ₹150 OFF coupon (<strong>LAUNCH150</strong>) after 30 minutes of inactivity. Want it right now? Enter your email:
+                Your cart is automatically saved! If you leave without checkout, we will automatically send your cart items with an instant discount voucher {featuredCoupons[0] ? <>(<strong>{featuredCoupons[0].code}</strong>)</> : ''} after 30 minutes of inactivity. Want it right now? Enter your email:
               </p>
               <div className="flex gap-2">
                 <input
