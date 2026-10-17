@@ -1,5 +1,10 @@
 import { getDbPool } from '../database/db.js';
 
+// Global fallback cache for serverless environments when MySQL pool is offline
+if (!globalThis._mle_orders_cache) {
+  globalThis._mle_orders_cache = [];
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,15 +21,98 @@ export default async function handler(req, res) {
 
   const pool = getDbPool();
 
-  // 1. GET: Fetch all live orders
+  // 1. GET: Fetch all live orders with attached items
   if (req.method === 'GET') {
     if (!pool) {
-      return res.status(200).json({ success: true, source: 'LOCAL_FALLBACK', count: 0, data: [] });
+      return res.status(200).json({
+        success: true,
+        source: 'LOCAL_FALLBACK',
+        count: globalThis._mle_orders_cache.length,
+        data: globalThis._mle_orders_cache
+      });
     }
     try {
       const [rows] = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
-      return res.status(200).json({ success: true, count: rows.length, data: rows });
+      let allItems = [];
+      try {
+        const [itemRows] = await pool.query('SELECT * FROM order_items');
+        allItems = itemRows || [];
+      } catch (itemErr) {
+        console.warn('Could not fetch order_items:', itemErr.message);
+      }
+
+      const itemsByOrderId = {};
+      for (const item of allItems) {
+        if (!itemsByOrderId[item.order_id]) itemsByOrderId[item.order_id] = [];
+        itemsByOrderId[item.order_id].push({
+          productId: item.product_id,
+          productName: item.product_name,
+          sku: item.sku,
+          hsnCode: item.hsn_code,
+          quantity: item.quantity,
+          unitPrice: Number(item.unit_price),
+          totalPrice: Number(item.total_price),
+          variantDescription: item.variant_description,
+          image: item.image,
+          gstRate: Number(item.gst_rate)
+        });
+      }
+
+      const formatted = rows.map(r => {
+        let shippingAddr = {};
+        let billingAddr = {};
+        let timelineArr = [];
+        try {
+          shippingAddr = typeof r.shipping_address === 'string' ? JSON.parse(r.shipping_address) : (r.shipping_address || {});
+        } catch {}
+        try {
+          billingAddr = typeof r.billing_address === 'string' ? JSON.parse(r.billing_address) : (r.billing_address || {});
+        } catch {}
+        try {
+          timelineArr = typeof r.timeline === 'string' ? JSON.parse(r.timeline) : (r.timeline || []);
+        } catch {}
+
+        return {
+          id: r.id,
+          orderNumber: r.order_number,
+          createdAt: r.created_at,
+          source: r.source || 'WEB',
+          deviceInfo: r.device_info,
+          customer: {
+            id: r.user_id,
+            name: r.customer_name,
+            email: r.customer_email,
+            phone: r.customer_phone,
+            companyName: r.company_name,
+            gstNumber: r.gst_number,
+            isB2B: !!r.is_b2b
+          },
+          subtotal: Number(r.subtotal || 0),
+          taxBreakdown: {
+            cgst: Number(r.cgst || 0),
+            sgst: Number(r.sgst || 0),
+            igst: Number(r.igst || 0),
+            totalTax: Number(r.total_tax || 0)
+          },
+          shippingCharge: Number(r.shipping_charge || 0),
+          discount: Number(r.discount || 0),
+          couponCode: r.coupon_code || undefined,
+          totalAmount: Number(r.total_amount || 0),
+          paymentMethod: r.payment_method || 'UPI',
+          paymentStatus: r.payment_status || 'PAID',
+          status: r.status || 'PLACED',
+          shippingAddress: shippingAddr,
+          billingAddress: billingAddr,
+          trackingNumber: r.tracking_number,
+          courierName: r.courier_name,
+          timeline: timelineArr,
+          items: itemsByOrderId[r.id] || []
+        };
+      });
+
+      return res.status(200).json({ success: true, count: formatted.length, data: formatted });
     } catch (err) {
+      console.error('Fetch orders error:', err);
       return res.status(500).json({ success: false, error: err.message });
     }
   }
@@ -167,12 +255,43 @@ export default async function handler(req, res) {
     }
 
     if (!pool) {
+      const fallbackOrder = {
+        id: orderId,
+        orderNumber,
+        createdAt: new Date().toISOString(),
+        source,
+        deviceInfo: o.deviceInfo || (source === 'FLUTTER_APP' ? 'Flutter Android/iOS App' : 'Desktop/Mobile Web Browser'),
+        customer: {
+          id: customer.id || o.userId || null,
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
+          companyName,
+          gstNumber,
+          isB2B: !!isB2B
+        },
+        subtotal,
+        taxBreakdown: o.taxBreakdown || { cgst: 0, sgst: 0, igst: 0, totalTax: 0 },
+        shippingCharge: o.shippingCharge || 0,
+        discount: o.discount || 0,
+        couponCode: o.couponCode || undefined,
+        totalAmount,
+        paymentMethod,
+        paymentStatus,
+        status,
+        shippingAddress: typeof shippingAddress === 'string' ? JSON.parse(shippingAddress) : shippingAddress,
+        billingAddress: typeof billingAddress === 'string' ? JSON.parse(billingAddress) : billingAddress,
+        timeline: typeof timeline === 'string' ? JSON.parse(timeline) : timeline,
+        items: o.items || []
+      };
+      globalThis._mle_orders_cache.unshift(fallbackOrder);
+
       return res.status(201).json({
         success: true,
         orderId,
         orderNumber,
         source,
-        message: 'Order created in local fallback (MySQL pool unavailable).'
+        message: 'Order created and saved in memory fallback store.'
       });
     }
 

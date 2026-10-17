@@ -92,6 +92,7 @@ interface AppContextType {
   updateOrderStatus: (orderId: string, status: Order['status'], trackingNumber?: string, courierName?: string) => void;
   cancelOrder: (orderId: string, reason?: string) => Promise<{ success: boolean; message: string }>;
   sendAbandonedCartEmail: (email?: string, name?: string) => Promise<{ success: boolean; message: string }>;
+  refreshOrders: () => Promise<void>;
 
   // Wholesale RFQs & Quotations
   quotations: Quotation[];
@@ -606,6 +607,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('Failed to persist mle_orders:', e);
     }
   }, [orders]);
+
+  // Synchronize orders live from MySQL / Central API
+  const syncOrdersFromBackend = useCallback(async () => {
+    try {
+      const res = await fetch('/api/orders');
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+        setOrders(prev => {
+          const map = new Map<string, Order>();
+          // Priority 1: Central backend / MySQL live orders
+          for (const ord of json.data) {
+            const key = (ord.orderNumber || ord.id || '').trim().toLowerCase();
+            if (key) map.set(key, ord);
+          }
+          // Priority 2: Keep any local test orders if not present in backend
+          for (const ord of prev) {
+            const key = (ord.orderNumber || ord.id || '').trim().toLowerCase();
+            if (key && !map.has(key)) {
+              map.set(key, ord);
+            }
+          }
+          const merged = Array.from(map.values()).sort((a, b) => {
+            const timeA = new Date(a.createdAt || 0).getTime();
+            const timeB = new Date(b.createdAt || 0).getTime();
+            return timeB - timeA;
+          });
+          return merged;
+        });
+      }
+    } catch (err) {
+      // Quiet fail if offline
+    }
+  }, []);
+
+  // Auto-sync on startup and live poll every 8 seconds
+  useEffect(() => {
+    syncOrdersFromBackend();
+    const interval = setInterval(syncOrdersFromBackend, 8000);
+    return () => clearInterval(interval);
+  }, [syncOrdersFromBackend]);
 
   useEffect(() => {
     try {
@@ -1715,6 +1757,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateOrderStatus,
         cancelOrder,
         sendAbandonedCartEmail,
+        refreshOrders: syncOrdersFromBackend,
 
         quotations,
         createQuotationRequest,

@@ -59,8 +59,21 @@ export const MobileAppManager: React.FC = () => {
     syncConfigToFlutter,
     products,
     orders,
-    updateOrderStatus
+    updateOrderStatus,
+    refreshOrders
   } = useApp();
+
+  const [isRefreshingOrders, setIsRefreshingOrders] = useState(false);
+
+  const handleManualRefreshOrders = async () => {
+    setIsRefreshingOrders(true);
+    try {
+      await refreshOrders();
+      triggerSyncAlert('✅ Live MySQL & App Orders refreshed successfully!');
+    } finally {
+      setIsRefreshingOrders(false);
+    }
+  };
 
   // Active Sub-tab
   const [activeSubTab, setActiveSubTab] = useState<
@@ -144,8 +157,13 @@ export const MobileAppManager: React.FC = () => {
   const [notifCategory, setNotifCategory] = useState('All');
   const [notifType, setNotifType] = useState<'OFFER' | 'ORDER' | 'SYSTEM' | 'PRICE_DROP'>('OFFER');
 
-  // Filter for App Orders
-  const appOrders = orders.filter(o => o.source === 'FLUTTER_APP' || o.id.includes('app'));
+  // Filter for App Orders (matches source, id, or orderNumber with 'app')
+  const appOrders = orders.filter(
+    o =>
+      o.source === 'FLUTTER_APP' ||
+      (o.id && o.id.toLowerCase().includes('app')) ||
+      (o.orderNumber && o.orderNumber.toLowerCase().includes('app'))
+  );
 
   // Auto-slide phone simulator banner
   const activeBanners = mobileAppConfig.banners.filter(b => b.isActive);
@@ -749,16 +767,29 @@ export const MobileAppManager: React.FC = () => {
           {/* SUB-TAB 4: MOBILE APP ORDERS */}
           {activeSubTab === 'orders' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-base font-bold text-navy">Flutter App Orders Stream</h3>
+                  <h3 className="text-base font-bold text-navy flex items-center gap-2">
+                    <span>Flutter App Orders Stream</span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" title="Live Auto-Sync Active"></span>
+                  </h3>
                   <p className="text-xs text-slate-500">
                     Live orders placed directly from mobile devices running the Mahalaxmi Flutter application.
                   </p>
                 </div>
-                <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold">
-                  {appOrders.length} App Orders Active
-                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleManualRefreshOrders}
+                    disabled={isRefreshingOrders}
+                    className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingOrders ? 'animate-spin' : ''}`} />
+                    <span>{isRefreshingOrders ? 'Syncing...' : 'Sync Live Orders'}</span>
+                  </button>
+                  <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold">
+                    {appOrders.length} App Orders Active
+                  </span>
+                </div>
               </div>
 
               {appOrders.length === 0 ? (
