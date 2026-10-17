@@ -44,7 +44,9 @@ export const ProductDetailPage: React.FC = () => {
     deliveryPincode,
     deliveryInfo,
     checkPincode,
-    currentUser
+    currentUser,
+    isInWishlist,
+    toggleWishlist
   } = useApp();
 
   const product = products.find(p => p.slug === slug);
@@ -503,18 +505,34 @@ export const ProductDetailPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Direct WhatsApp Order & Mill Sales Desk */}
-            <a
-              href={`https://wa.me/918511172099?text=${encodeURIComponent(
-                `Namaste Mahalaxmi Enterprises, I am interested in ${product.name} (SKU: ${product.sku}). Qty: ${quantity} pcs. Price: ₹${currentLineTotal}. Please provide mill dispatch availability for ${deliveryInfo?.city || 'my city'}.`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>Order / Inquire via WhatsApp (Mill Desk: +91 85111 72099)</span>
-            </a>
+            {/* Wishlist & WhatsApp Quick Action Row */}
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <button
+                type="button"
+                onClick={() => toggleWishlist(product.id)}
+                className={`w-full sm:w-auto py-3 px-4 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 border shadow-sm cursor-pointer shrink-0 ${
+                  isInWishlist(product.id)
+                    ? 'bg-red-50 text-red-600 border-red-200'
+                    : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'
+                }`}
+                title={isInWishlist(product.id) ? 'Remove from Wishlist' : 'Save in Wishlist'}
+              >
+                <Heart className={`w-4 h-4 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-slate-500'}`} />
+                <span>{isInWishlist(product.id) ? 'Saved in Wishlist' : 'Add to Wishlist'}</span>
+              </button>
+
+              <a
+                href={`https://wa.me/918511172099?text=${encodeURIComponent(
+                  `Namaste Mahalaxmi Enterprises, I am interested in ${product.name} (SKU: ${product.sku}). Qty: ${quantity} pcs. Price: ₹${currentLineTotal}. Please provide mill dispatch availability for ${deliveryInfo?.city || 'my city'}.`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm text-center"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Order via WhatsApp (Mill Desk)</span>
+              </a>
+            </div>
 
             {/* Geo & Mill Direct Guarantee Banner */}
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-2 text-[11px] text-slate-600 font-medium">

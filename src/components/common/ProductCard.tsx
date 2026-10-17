@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../../types';
 import { useApp } from '../../context/AppContext';
-import { ShoppingCart, Star, Check, Zap, ArrowUpRight, ShieldCheck, Flame, MessageCircle } from 'lucide-react';
+import { ShoppingCart, Star, Check, Zap, ArrowUpRight, ShieldCheck, Flame, MessageCircle, Heart } from 'lucide-react';
 import { Badge } from './Badge';
 
 interface ProductCardProps {
@@ -10,8 +10,9 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { addToCart } = useApp();
+  const { addToCart, isInWishlist, toggleWishlist } = useApp();
   const [added, setAdded] = useState(false);
+  const isSaved = isInWishlist(product.id);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -61,8 +62,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
         </div>
 
+        {/* Heart Wishlist Toggle Button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleWishlist(product.id);
+          }}
+          className={`absolute top-2.5 right-2.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition shadow-sm cursor-pointer z-10 ${
+            isSaved
+              ? 'bg-red-50 text-red-500 fill-red-500 ring-1 ring-red-200'
+              : 'bg-white/90 text-slate-400 hover:text-red-500 hover:bg-white'
+          }`}
+          title={isSaved ? 'Remove from Wishlist' : 'Save to Wishlist'}
+        >
+          <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isSaved ? 'fill-red-500 text-red-500' : ''}`} />
+        </button>
+
         {discountPercent > 0 && (
-          <div className="absolute top-2.5 right-2.5 bg-error text-white text-[11px] font-black px-2 py-0.5 rounded-lg shadow-sm">
+          <div className="absolute top-2.5 left-2.5 bg-error text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm">
             {discountPercent}% OFF
           </div>
         )}

@@ -26,9 +26,11 @@ import {
   Download,
   Calculator,
   Truck,
-  ChevronRight
+  ChevronRight,
+  Heart
 } from 'lucide-react';
 import { Badge } from '../common/Badge';
+import { WishlistDrawer } from '../common/WishlistDrawer';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -46,11 +48,13 @@ export const Header: React.FC = () => {
     checkPincode,
     recentSearches,
     addRecentSearch,
-    coupons
+    coupons,
+    wishlist
   } = useApp();
 
   const topPromo = coupons.find(c => c.isActive && c.isFeatured);
 
+  const [wishlistOpen, setWishlistOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [searchCategory, setSearchCategory] = useState('all');
@@ -514,6 +518,22 @@ export const Header: React.FC = () => {
                   </div>
                 </Link>
               )}
+
+              {/* Wishlist Button */}
+              <button
+                type="button"
+                onClick={() => setWishlistOpen(true)}
+                aria-label={`Wishlist with ${wishlist.length} saved items`}
+                className="relative p-2 sm:px-3 sm:py-2.5 rounded-xl hover:bg-slate-100 transition text-slate-700 hover:text-red-600 shrink-0 border border-slate-200 cursor-pointer"
+                title="View Saved Wishlist"
+              >
+                <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${wishlist.length > 0 ? 'text-red-500 fill-red-500' : 'text-slate-600'}`} />
+                {wishlist.length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white">
+                    {wishlist.length}
+                  </span>
+                )}
+              </button>
 
               {/* Cart Link */}
               <Link
@@ -1009,6 +1029,9 @@ export const Header: React.FC = () => {
         </div>,
         document.body
       )}
+
+      {/* Slide-over User-Persistent Wishlist Drawer */}
+      <WishlistDrawer isOpen={wishlistOpen} onClose={() => setWishlistOpen(false)} />
     </>
   );
 };

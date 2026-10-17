@@ -68,6 +68,14 @@ interface AppContextType {
   cartTotal: number;
   cartTotalItemsCount: number;
 
+  // Wishlist
+  wishlist: string[];
+  addToWishlist: (productId: string) => void;
+  removeFromWishlist: (productId: string) => void;
+  toggleWishlist: (productId: string) => void;
+  isInWishlist: (productId: string) => boolean;
+  clearWishlist: () => void;
+
   // User & Auth
   currentUser: User;
   isLoggedIn: boolean;
@@ -321,6 +329,102 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
+
+  // User-Keyed Persistent Wishlist State
+  const [wishlist, setWishlist] = useState<string[]>(() => {
+    try {
+      const email = currentUser?.email ? currentUser.email.toLowerCase() : null;
+      const userKey = email ? `mle_wishlist_${email}` : 'mle_wishlist_guest';
+      const saved = localStorage.getItem(userKey);
+      if (saved) return JSON.parse(saved);
+      const legacy = localStorage.getItem('mle_wishlist');
+      if (legacy) return JSON.parse(legacy);
+    } catch {}
+    return [];
+  });
+
+  // When currentUser logs in or switches, load their user-specific wishlist and merge guest items
+  useEffect(() => {
+    if (!currentUser?.email) return;
+    const email = currentUser.email.toLowerCase();
+    const userKey = `mle_wishlist_${email}`;
+    let currentItems: string[] = [];
+
+    try {
+      const saved = localStorage.getItem(userKey);
+      if (saved) currentItems = JSON.parse(saved);
+      const guestSaved = localStorage.getItem('mle_wishlist_guest');
+      if (guestSaved) {
+        const guestItems = JSON.parse(guestSaved);
+        if (Array.isArray(guestItems) && guestItems.length > 0) {
+          currentItems = Array.from(new Set([...currentItems, ...guestItems]));
+          localStorage.removeItem('mle_wishlist_guest');
+        }
+      }
+    } catch {}
+
+    if (currentItems.length > 0) {
+      setWishlist(currentItems);
+      localStorage.setItem(userKey, JSON.stringify(currentItems));
+    }
+
+    // Fetch from central MySQL wishlist API
+    fetch(`/api/wishlist?email=${encodeURIComponent(email)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.success && Array.isArray(data.productIds)) {
+          const merged = Array.from(new Set([...currentItems, ...data.productIds]));
+          setWishlist(merged);
+          localStorage.setItem(userKey, JSON.stringify(merged));
+          if (merged.length > data.productIds.length) {
+            fetch('/api/wishlist', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, productIds: merged })
+            }).catch(() => {});
+          }
+        }
+      })
+      .catch(() => {});
+  }, [currentUser?.email]);
+
+  // Persist wishlist whenever updated
+  useEffect(() => {
+    const email = currentUser?.email ? currentUser.email.toLowerCase() : null;
+    const userKey = email ? `mle_wishlist_${email}` : 'mle_wishlist_guest';
+    try {
+      localStorage.setItem(userKey, JSON.stringify(wishlist));
+      localStorage.setItem('mle_wishlist', JSON.stringify(wishlist));
+    } catch {}
+
+    if (email) {
+      fetch('/api/wishlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, productIds: wishlist })
+      }).catch(() => {});
+    }
+  }, [wishlist, currentUser?.email]);
+
+  const addToWishlist = (productId: string) => {
+    setWishlist(prev => (prev.includes(productId) ? prev : [...prev, productId]));
+  };
+
+  const removeFromWishlist = (productId: string) => {
+    setWishlist(prev => prev.filter(id => id !== productId));
+  };
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist(prev => (prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]));
+  };
+
+  const isInWishlist = (productId: string) => {
+    return wishlist.includes(productId);
+  };
+
+  const clearWishlist = () => {
+    setWishlist([]);
+  };
 
   // Dynamic Coupons & Offers Management State
   const [coupons, setCoupons] = useState<CouponOffer[]>(() => {
@@ -2116,6 +2220,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         cartShipping,
         cartTotal,
         cartTotalItemsCount,
+
+        // Wishlist
+        wishlist,
+        addToWishlist,
+        removeFromWishlist,
+        toggleWishlist,
+        isInWishlist,
+        clearWishlist,
 
         currentUser,
         isLoggedIn,
