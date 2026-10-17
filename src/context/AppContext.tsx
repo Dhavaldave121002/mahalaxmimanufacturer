@@ -774,7 +774,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           cartTotal: cartTotal,
           items: cart.map(i => ({
             productName: i.product?.name || 'Textile Item',
-            variantDescription: i.selectedVariant?.size || i.selectedVariant?.color || 'Standard',
+            variantDescription: i.selectedVariant?.size || (i.selectedVariant as any)?.color || 'Standard',
             quantity: i.quantity,
             totalPrice: i.totalPrice
           })),
