@@ -110,8 +110,8 @@ async function sendCancellationEmails(data) {
 
   const DEFAULT_KEY_B64 = 'cmVfYUc4eUQ1bzVfQWJGUUJxeEZ2QTZRNFRGZmlDUU5iVHVw';
   const RESEND_API_KEY = process.env.RESEND_API_KEY || Buffer.from(DEFAULT_KEY_B64, 'base64').toString('ascii');
-  const primaryAdmin = 'deviltimeisback001@gmail.com';
-  const secondaryAdmin = 'dhavaldave121002@gmail.com';
+  const primaryAdmin = process.env.ADMIN_EMAIL || 'mahalaxmienterpriseuk@gmail.com';
+  const secondaryAdmin = 'deviltimeisback001@gmail.com';
 
   const itemsHtml = (items && items.length > 0)
     ? items.map(item => `

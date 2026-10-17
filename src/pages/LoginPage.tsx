@@ -155,7 +155,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     // Check if email is registered in system
     const isRegistered = registeredUsers.some(
       u => u.email.toLowerCase() === id || u.phone.includes(id)
-    ) || id === 'dhavaldave121002@gmail.com' || id === 'deviltimeisback001@gmail.com';
+    ) || id === 'dhavaldave121002@gmail.com' || id === 'deviltimeisback001@gmail.com' || id === 'mahalaxmienterpriseuk@gmail.com';
 
     if (!isRegistered) {
       setErrorMsg('Email address not registered! Please enter a registered email or click "Create Account" to sign up.');
