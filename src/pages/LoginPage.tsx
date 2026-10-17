@@ -174,10 +174,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     try {
       await sendOtpEmail(id, generatedCode, customerDisplayName);
       setLoading(false);
-      setSuccessMsg(`✅ Verification code sent to ${id}! Your OTP is: ${generatedCode} (Valid for 5 mins)`);
+      setSuccessMsg(`✅ Verification code sent to ${id}! Please check your email inbox.`);
     } catch {
       setLoading(false);
-      setSuccessMsg(`✅ Verification code sent to ${id}! Your OTP is: ${generatedCode}`);
+      setSuccessMsg(`✅ Verification code sent to ${id}! Please check your email inbox.`);
     }
   };
 
@@ -232,11 +232,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
         await sendOtpEmail(cleanEmail, generatedCode, registerForm.name.trim());
         setLoading(false);
         setRegisterOtpSent(true);
-        setSuccessMsg(`✅ 4-Digit verification code sent to ${cleanEmail}! Your OTP is: ${generatedCode}`);
+        setSuccessMsg(`✅ 4-Digit verification code sent to ${cleanEmail}! Please check your email inbox.`);
       } catch {
         setLoading(false);
         setRegisterOtpSent(true);
-        setSuccessMsg(`✅ 4-Digit verification code sent to ${cleanEmail}! Your OTP is: ${generatedCode}`);
+        setSuccessMsg(`✅ 4-Digit verification code sent to ${cleanEmail}! Please check your email inbox.`);
       }
       return;
     }
@@ -305,10 +305,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     try {
       await sendOtpEmail(id, genCode, customerDisplayName);
       setLoading(false);
-      setSuccessMsg(`✅ 4-Digit password reset code sent to ${id}! Your OTP is: ${genCode}`);
+      setSuccessMsg(`✅ 4-Digit password reset code sent to ${id}! Please check your email inbox.`);
     } catch {
       setLoading(false);
-      setSuccessMsg(`✅ 4-Digit password reset code sent to ${id}! Your OTP is: ${genCode}`);
+      setSuccessMsg(`✅ 4-Digit password reset code sent to ${id}! Please check your email inbox.`);
     }
   };
 
