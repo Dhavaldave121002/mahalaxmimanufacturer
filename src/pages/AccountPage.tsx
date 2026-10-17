@@ -17,7 +17,8 @@ import {
   ArrowRight,
   FileText,
   Send,
-  Sparkles
+  Sparkles,
+  Star
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
@@ -46,7 +47,34 @@ export const AccountPage: React.FC = () => {
     businessType: currentUser?.businessType || 'Retailer'
   });
 
-    const [showEnquiryModal, setShowEnquiryModal] = useState(false);
+    
+  // User's Submitted Reviews State
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [myReviews, setMyReviews] = useState<any[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+
+  const fetchMyReviews = async () => {
+    if (!currentUser?.email) return;
+    setReviewsLoading(true);
+    try {
+      const res = await fetch(`/api/products?action=reviews&email=${encodeURIComponent(currentUser.email.toLowerCase())}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.reviews)) {
+          setMyReviews(json.reviews);
+        }
+      }
+    } catch (_) {}
+    finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyReviews();
+  }, [currentUser?.email]);
+
+  const [showEnquiryModal, setShowEnquiryModal] = useState(false);
   const [enquirySuccess, setEnquirySuccess] = useState(false);
   const [enquirySubmitting, setEnquirySubmitting] = useState(false);
   const [enquiryForm, setEnquiryForm] = useState({
@@ -309,7 +337,7 @@ export const AccountPage: React.FC = () => {
           </div>
 
           {/* Quick shortcuts */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link
               to="/orders"
               className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo transition shadow-subtle text-xs space-y-1 block"
@@ -328,8 +356,23 @@ export const AccountPage: React.FC = () => {
                 <FileText className="w-5 h-5 text-indigo group-hover:scale-110 transition-transform mb-1" />
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo text-white uppercase tracking-wider">Fast RFQ</span>
               </div>
-              <p className="font-bold text-navy">Submit Custom Requirement</p>
-              <p className="text-[11px] text-slate-500">Send custom bulk quotes to Admin directly</p>
+              <p className="font-bold text-navy">Custom Requirement</p>
+              <p className="text-[11px] text-slate-500">Send quotes to Admin</p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowReviewsModal(true)}
+              className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo transition shadow-subtle text-xs space-y-1 block text-left w-full group cursor-pointer"
+            >
+              <div className="flex items-center justify-between">
+                <Star className="w-5 h-5 text-amber-500 fill-amber-400 group-hover:scale-110 transition-transform mb-1" />
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                  {myReviews.length}
+                </span>
+              </div>
+              <p className="font-bold text-navy">My Reviews</p>
+              <p className="text-[11px] text-slate-500">{myReviews.length} reviews submitted</p>
             </button>
           </div>
         </div>
@@ -577,6 +620,94 @@ export const AccountPage: React.FC = () => {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+
+      {/* My Reviews Modal (Matching Mobile App "My Reviews") */}
+      {showReviewsModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                  <Star className="w-5 h-5 fill-current" />
+                </div>
+                <div>
+                  <h3 className="font-black text-lg text-navy">My Product Reviews</h3>
+                  <p className="text-xs text-slate-500">All reviews submitted by you ({myReviews.length} items)</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowReviewsModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="overflow-y-auto space-y-3 pr-1 grow">
+              {reviewsLoading ? (
+                <div className="py-12 text-center text-slate-400 text-xs">
+                  Loading your verified reviews from central database...
+                </div>
+              ) : myReviews.length === 0 ? (
+                <div className="py-12 text-center space-y-2">
+                  <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+                    <Star className="w-6 h-6" />
+                  </div>
+                  <p className="font-bold text-navy text-sm">No reviews submitted yet</p>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                    Visit any product detail page and click "Write a Product Review" to share your feedback.
+                  </p>
+                </div>
+              ) : (
+                myReviews.map(r => (
+                  <div key={r.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-bold text-navy text-xs sm:text-sm">{r.product_title || r.productTitle || 'Direct Mill Product'}</h4>
+                        <div className="flex items-center gap-1 text-amber-500 mt-1">
+                          {[1, 2, 3, 4, 5].map(st => (
+                            <Star
+                              key={st}
+                              className={`w-3.5 h-3.5 ${st <= Math.round(Number(r.rating || 5)) ? 'fill-current' : 'text-slate-200'}`}
+                            />
+                          ))}
+                          <span className="text-[11px] font-bold text-slate-700 ml-1">{r.rating} / 5</span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-slate-400">
+                        {new Date(r.created_at || r.createdAt || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+
+                    <p className="text-slate-600 bg-white p-3 rounded-xl border border-slate-100 leading-relaxed">
+                      "{r.comment}"
+                    </p>
+
+                    <div className="flex items-center justify-between text-[10px] pt-1 text-slate-400">
+                      <span className="text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
+                        ✓ Verified Purchase Review
+                      </span>
+                      <span>Source: {r.source || 'WEB'}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowReviewsModal(false)}
+                className="px-5 py-2 bg-navy text-white font-bold rounded-xl text-xs hover:bg-navy-800 transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
