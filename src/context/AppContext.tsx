@@ -376,6 +376,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => clearInterval(interval);
   }, [syncCouponsFromBackend]);
 
+  // Synchronize products live from MySQL / Central API
+  const syncProductsFromBackend = useCallback(async () => {
+    try {
+      const res = await fetch('/api/products');
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+        setProducts(prev => {
+          const map = new Map<string, Product>();
+          for (const p of json.data) {
+            const key = (p.id || p.sku || '').trim().toLowerCase();
+            if (key) map.set(key, p);
+          }
+          for (const p of prev) {
+            const key = (p.id || p.sku || '').trim().toLowerCase();
+            if (key && !map.has(key)) {
+              map.set(key, p);
+            }
+          }
+          return Array.from(map.values());
+        });
+      }
+    } catch {
+      // quiet offline fallback
+    }
+  }, []);
+
+  useEffect(() => {
+    syncProductsFromBackend();
+  }, [syncProductsFromBackend]);
+
   const addCoupon = (coupon: Omit<CouponOffer, 'id' | 'usedCount' | 'createdAt'>) => {
     const newCoupon: CouponOffer = {
       ...coupon,
@@ -1658,22 +1689,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       id: `prod-${Date.now()}`
     };
     setProducts(prev => [newProduct, ...prev]);
+
+    // Dispatch to MySQL database & Central API
+    fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newProduct)
+    }).catch(() => {});
   };
 
   const updateProduct = (id: string, updatedFields: Partial<Product>) => {
+    let targetProduct: Product | null = null;
     setProducts(prev =>
-      prev.map(p => (p.id === id ? { ...p, ...updatedFields } : p))
+      prev.map(p => {
+        if (p.id === id) {
+          targetProduct = { ...p, ...updatedFields };
+          return targetProduct;
+        }
+        return p;
+      })
     );
+
+    if (targetProduct) {
+      fetch('/api/products', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(targetProduct)
+      }).catch(() => {});
+    }
   };
 
   const deleteProduct = (id: string) => {
     setProducts(prev => prev.filter(p => p.id !== id));
+
+    fetch(`/api/products?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }).catch(() => {});
   };
 
   const adjustProductStock = (id: string, delta: number) => {
     setProducts(prev =>
       prev.map(p => (p.id === id ? { ...p, stock: Math.max(0, p.stock + delta) } : p))
     );
+
+    fetch('/api/products', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, delta })
+    }).catch(() => {});
   };
 
   // PIN code check
