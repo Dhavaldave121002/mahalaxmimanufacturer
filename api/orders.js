@@ -502,9 +502,9 @@ async function sendOrderNotificationEmails(data) {
 
   // Dispatch Admin Notification via EmailJS
   try {
-    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
-    const EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_ORDER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID;
-    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID;
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
+    const EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_ORDER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID || 'template_rxzob8r';
+    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID || 'G6gT9XDN4SFBz6oqW';
     const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
     if (EMAILJS_SERVICE_ID && EMAILJS_ORDER_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
@@ -515,18 +515,25 @@ async function sendOrderNotificationEmails(data) {
         template_params: {
           to_email: primaryAdmin,
           to_name: 'Mahalaxmi Mill Admin',
+          subject: `🚨 New Order Alert: #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) | Mahalaxmi Admin`,
+          headline: 'New Order Received!',
+          code_box: `#${orderNumber}`,
+          subtext: `Customer: ${customerName} (${customerPhone}) • ₹${Number(totalAmount).toLocaleString('en-IN')}`,
           order_number: orderNumber,
           total_amount: Number(totalAmount).toLocaleString('en-IN'),
           customer_name: customerName,
           customer_email: customerEmail || 'N/A',
-          message: `🚨 New Order #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')} via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}`
+          message: `🚨 New order booked by ${customerName} (${customerPhone}) via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}! Value: ₹${Number(totalAmount).toLocaleString('en-IN')}. Delivery to: ${addressText}.`
         }
       };
       if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
 
       await fetch('https://api.emailjs.com/api/v1.0/email/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'https://mahalaxmimanufacturer.com'
+        },
         body: JSON.stringify(payload)
       });
     }
