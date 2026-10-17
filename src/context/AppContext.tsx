@@ -434,42 +434,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  // Synchronize orders live from MySQL / Central API (including Flutter mobile app orders!)
-  const syncOrdersFromBackend = useCallback(async () => {
-    try {
-      const res = await fetch('/api/orders');
-      if (!res.ok) return;
-      const json = await res.json();
-      if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-        setOrders(prev => {
-          const map = new Map<string, Order>();
-          for (const o of json.data) {
-            const key = (o.orderNumber || o.id || '').trim().toUpperCase();
-            if (key) map.set(key, o);
-          }
-          for (const o of prev) {
-            const key = (o.orderNumber || o.id || '').trim().toUpperCase();
-            if (key && !map.has(key)) {
-              map.set(key, o);
-            }
-          }
-          return Array.from(map.values());
-        });
-      }
-    } catch {
-      // quiet offline fallback
-    }
-  }, []);
-
   useEffect(() => {
     syncUsersFromBackend();
-    syncOrdersFromBackend();
-    const interval = setInterval(() => {
-      syncOrdersFromBackend();
-      syncUsersFromBackend();
-    }, 10000);
+    const interval = setInterval(syncUsersFromBackend, 12000);
     return () => clearInterval(interval);
-  }, [syncUsersFromBackend, syncOrdersFromBackend]);
+  }, [syncUsersFromBackend]);
 
   const addCoupon = (coupon: Omit<CouponOffer, 'id' | 'usedCount' | 'createdAt'>) => {
     const newCoupon: CouponOffer = {
