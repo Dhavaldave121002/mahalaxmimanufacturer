@@ -41,9 +41,9 @@ export default async function handler(req, res) {
     // ==========================================
     // EmailJS Dispatch Engine (Direct Gmail delivery without Resend or sandbox restrictions)
     // ==========================================
-    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID;
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
     const EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || process.env.VITE_EMAILJS_TEMPLATE_ID;
-    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID;
+    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID || 'G6gT9XDN4SFBz6oqW';
     const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
     let emailDelivered = false;
@@ -71,7 +71,10 @@ export default async function handler(req, res) {
 
         const emailJsRes = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Origin': 'https://mahalaxmimanufacturer.com'
+          },
           body: JSON.stringify(payload)
         });
 
