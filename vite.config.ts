@@ -222,6 +222,124 @@ function localApiPlugin(): Plugin {
           return;
         }
 
+        
+        // 9. Return & Exchange Request API
+        if (req.url?.startsWith('/api/return-exchange')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          await ensureBodyParsed();
+          try {
+            // @ts-ignore
+            const mod = await import('./api/return-exchange.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            expressRes.status(500).json({ success: false, error: e.message });
+          }
+          return;
+        }
+
+        // 10. Business Enquiries & RFQ API
+        if (req.url?.startsWith('/api/enquiry')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          await ensureBodyParsed();
+          try {
+            // @ts-ignore
+            const mod = await import('./api/enquiry.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            expressRes.status(500).json({ success: false, error: e.message });
+          }
+          return;
+        }
+
+        // 11. Auth API (Login, Register, Profile Update)
+        if (req.url?.startsWith('/api/auth')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          await ensureBodyParsed();
+          try {
+            // @ts-ignore
+            const mod = await import('./api/auth.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            expressRes.status(500).json({ success: false, error: e.message });
+          }
+          return;
+        }
+
+        // 12. Wishlist Synchronization API
+        if (req.url?.startsWith('/api/wishlist')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          await ensureBodyParsed();
+          try {
+            const urlObj = new URL(req.url, 'http://localhost:5173');
+            (req as any).query = Object.fromEntries(urlObj.searchParams.entries());
+            // @ts-ignore
+            const mod = await import('./api/wishlist.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            expressRes.status(500).json({ success: false, error: e.message });
+          }
+          return;
+        }
+
+        // 13. Coupons API
+        if (req.url?.startsWith('/api/coupons')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          await ensureBodyParsed();
+          try {
+            // @ts-ignore
+            const mod = await import('./api/coupons.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            expressRes.status(500).json({ success: false, error: e.message });
+          }
+          return;
+        }
+
         next();
       });
     }

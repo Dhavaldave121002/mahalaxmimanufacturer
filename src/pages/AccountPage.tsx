@@ -14,12 +14,15 @@ import {
   Edit2,
   CheckCircle2,
   LogOut,
-  ArrowRight
+  ArrowRight,
+  FileText,
+  Send,
+  Sparkles
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
 export const AccountPage: React.FC = () => {
-  const { currentUser, isLoggedIn, logout, updateUserProfile, addSavedAddress, orders, quotations } = useApp();
+  const { currentUser, isLoggedIn, logout, updateUserProfile, addSavedAddress, orders, quotations, submitBusinessEnquiry } = useApp();
 
   const userOrdersCount = currentUser?.role === 'admin'
     ? (orders?.length || 0)
@@ -42,6 +45,49 @@ export const AccountPage: React.FC = () => {
     gstNumber: currentUser?.gstNumber || '',
     businessType: currentUser?.businessType || 'Retailer'
   });
+
+    const [showEnquiryModal, setShowEnquiryModal] = useState(false);
+  const [enquirySuccess, setEnquirySuccess] = useState(false);
+  const [enquirySubmitting, setEnquirySubmitting] = useState(false);
+  const [enquiryForm, setEnquiryForm] = useState({
+    businessName: currentUser?.companyName || '',
+    fullName: currentUser?.name || '',
+    phone: currentUser?.phone || '',
+    email: currentUser?.email || '',
+    businessType: currentUser?.businessType || 'Retailer',
+    city: currentUser?.addresses?.[0]?.city || 'Surat',
+    state: currentUser?.addresses?.[0]?.state || 'Gujarat',
+    expectedMonthlyVolume: '₹1,00,000 - ₹5,00,000',
+    notes: ''
+  });
+
+  const handleEnquirySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!enquiryForm.notes.trim()) return;
+    setEnquirySubmitting(true);
+    try {
+      submitBusinessEnquiry({
+        businessName: enquiryForm.businessName || currentUser?.companyName || 'Business Buyer',
+        fullName: enquiryForm.fullName || currentUser?.name || 'Valued Buyer',
+        phone: enquiryForm.phone || currentUser?.phone || '',
+        email: enquiryForm.email || currentUser?.email || '',
+        businessType: enquiryForm.businessType,
+        city: enquiryForm.city,
+        state: enquiryForm.state,
+        expectedMonthlyVolume: enquiryForm.expectedMonthlyVolume,
+        interestedCategories: ['textile', 'cotton-products'],
+        notes: enquiryForm.notes
+      });
+      setEnquirySuccess(true);
+      setTimeout(() => {
+        setEnquirySuccess(false);
+        setShowEnquiryModal(false);
+        setEnquiryForm(prev => ({ ...prev, notes: '' }));
+      }, 2500);
+    } finally {
+      setEnquirySubmitting(false);
+    }
+  };
 
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [newAddress, setNewAddress] = useState<Omit<Address, 'id'>>({
@@ -273,14 +319,18 @@ export const AccountPage: React.FC = () => {
               <p className="text-[11px] text-slate-500">{userOrdersCount} {userOrdersCount === 1 ? 'order' : 'orders'} on file</p>
             </Link>
 
-            <Link
-              to="/wholesale"
-              className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo transition shadow-subtle text-xs space-y-1 block"
+            <button
+              type="button"
+              onClick={() => setShowEnquiryModal(true)}
+              className="p-4 bg-gradient-to-br from-indigo-50 to-white rounded-2xl border border-indigo/20 hover:border-indigo transition shadow-subtle text-xs space-y-1 block text-left w-full group cursor-pointer"
             >
-              <Clock className="w-5 h-5 text-indigo mb-1" />
-              <p className="font-bold text-navy">Commercial RFQs</p>
-              <p className="text-[11px] text-slate-500">{quotations.length} active quotes</p>
-            </Link>
+              <div className="flex items-center justify-between">
+                <FileText className="w-5 h-5 text-indigo group-hover:scale-110 transition-transform mb-1" />
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo text-white uppercase tracking-wider">Fast RFQ</span>
+              </div>
+              <p className="font-bold text-navy">Submit Custom Requirement</p>
+              <p className="text-[11px] text-slate-500">Send custom bulk quotes to Admin directly</p>
+            </button>
           </div>
         </div>
 
@@ -384,6 +434,153 @@ export const AccountPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Custom Requirement / Business Enquiry Modal */}
+      {showEnquiryModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo/10 text-indigo flex items-center justify-center">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-lg text-navy">Custom Bulk Requirement</h3>
+                  <p className="text-xs text-slate-500">Direct Mill Quotation & Sourcing</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEnquiryModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            {enquirySuccess ? (
+              <div className="py-8 text-center space-y-3">
+                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto animate-bounce">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                <h4 className="font-extrabold text-navy text-lg">Requirement Submitted!</h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Our admin team has received your requirement. An instant notification has been dispatched to <b>mahalaxmienterpriseuk@gmail.com</b> and our team will revert within 2 hours.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleEnquirySubmit} className="space-y-4 text-xs">
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 flex items-center gap-2 text-amber-800">
+                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Your account details are pre-filled below for fastest turnaround.</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Company / Brand Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={enquiryForm.businessName}
+                      onChange={e => setEnquiryForm({ ...enquiryForm, businessName: e.target.value })}
+                      className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo"
+                      placeholder="e.g. Surat Textiles Ltd"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Contact Person</label>
+                    <input
+                      type="text"
+                      required
+                      value={enquiryForm.fullName}
+                      onChange={e => setEnquiryForm({ ...enquiryForm, fullName: e.target.value })}
+                      className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo"
+                      placeholder="Your Full Name"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Mobile / WhatsApp</label>
+                    <input
+                      type="tel"
+                      required
+                      value={enquiryForm.phone}
+                      onChange={e => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
+                      className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo"
+                      placeholder="10-digit mobile"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Work Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={enquiryForm.email}
+                      onChange={e => setEnquiryForm({ ...enquiryForm, email: e.target.value })}
+                      className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo"
+                      placeholder="email@company.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Expected Monthly Volume</label>
+                    <select
+                      value={enquiryForm.expectedMonthlyVolume}
+                      onChange={e => setEnquiryForm({ ...enquiryForm, expectedMonthlyVolume: e.target.value })}
+                      className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo bg-white"
+                    >
+                      <option value="₹50,000 - ₹2,00,000">₹50,000 - ₹2,00,000</option>
+                      <option value="₹2,00,000 - ₹5,00,000">₹2,00,000 - ₹5,00,000</option>
+                      <option value="₹5,00,000 - ₹20,00,000">₹5,00,000 - ₹20,00,000</option>
+                      <option value="₹20,00,000+ (Institutional)">₹20,00,000+ (Institutional)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Destination City</label>
+                    <input
+                      type="text"
+                      required
+                      value={enquiryForm.city}
+                      onChange={e => setEnquiryForm({ ...enquiryForm, city: e.target.value })}
+                      className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo"
+                      placeholder="e.g. Ahmedabad, Mumbai"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Requirement Details & Specifications *</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={enquiryForm.notes}
+                    onChange={e => setEnquiryForm({ ...enquiryForm, notes: e.target.value })}
+                    className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo"
+                    placeholder="Enter fabric specifications, GSM, thread count, packing requirements, delivery dates..."
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowEnquiryModal(false)}
+                    className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={enquirySubmitting}
+                    className="px-6 py-2.5 bg-navy hover:bg-navy-800 text-white font-bold rounded-xl shadow-md transition flex items-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>{enquirySubmitting ? 'Submitting...' : 'Submit Requirement to Admin'}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

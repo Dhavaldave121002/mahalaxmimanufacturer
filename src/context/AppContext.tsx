@@ -1030,12 +1030,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
+  // Fetch live enquiries from MySQL / API
+  const syncEnquiriesFromBackend = useCallback(async () => {
+    try {
+      const res = await fetch('/api/enquiry');
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json && json.success && Array.isArray(json.enquiries) && json.enquiries.length > 0) {
+        setEnquiries(prev => {
+          const map = new Map<string, BusinessEnquiry>();
+          for (const eq of json.enquiries) {
+            const key = (eq.id || eq.enquiryCode || eq.email || '').trim().toLowerCase();
+            if (key) map.set(key, eq);
+          }
+          for (const eq of prev) {
+            const key = (eq.id || eq.email || '').trim().toLowerCase();
+            if (key && !map.has(key)) map.set(key, eq);
+          }
+          return Array.from(map.values()).sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        });
+      }
+    } catch (_) {}
+  }, []);
+
   // Auto-sync on startup and live poll every 8 seconds
   useEffect(() => {
     syncOrdersFromBackend();
-    const interval = setInterval(syncOrdersFromBackend, 8000);
+    syncEnquiriesFromBackend();
+    const interval = setInterval(() => {
+      syncOrdersFromBackend();
+      syncEnquiriesFromBackend();
+    }, 8000);
     return () => clearInterval(interval);
-  }, [syncOrdersFromBackend]);
+  }, [syncOrdersFromBackend, syncEnquiriesFromBackend]);
 
   useEffect(() => {
     try {
@@ -1524,7 +1551,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateUserProfile = (profile: Partial<User>) => {
-    setCurrentUser(prev => ({ ...prev, ...profile }));
+    setCurrentUser(prev => {
+      const updated = { ...prev, ...profile };
+      if (updated.email) {
+        fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update_profile',
+            user: {
+              email: updated.email,
+              name: updated.name,
+              phone: updated.phone,
+              companyName: updated.companyName,
+              gstNumber: updated.gstNumber,
+            }
+          })
+        }).catch(err => console.warn('Failed to sync profile update to server:', err));
+      }
+      return updated;
+    });
   };
 
   const addSavedAddress = (addressData: Omit<Address, 'id'>) => {
@@ -1993,6 +2039,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       status: 'NEW'
     };
     setEnquiries(prev => [newEnquiry, ...prev]);
+
+    // Dispatch to MySQL & Resend Emails via /api/enquiry
+    fetch('/api/enquiry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullName: enquiryData.fullName,
+        businessName: enquiryData.businessName,
+        phone: enquiryData.phone,
+        email: enquiryData.email,
+        businessType: enquiryData.businessType,
+        city: enquiryData.city,
+        state: enquiryData.state,
+        expectedMonthlyVolume: enquiryData.expectedMonthlyVolume,
+        interestedCategories: enquiryData.interestedCategories,
+        notes: enquiryData.notes,
+        source: 'WEBSITE_ACCOUNT_PAGE'
+      })
+    }).catch(err => console.warn('Enquiry dispatch warning:', err));
   };
 
   // Product CRUD

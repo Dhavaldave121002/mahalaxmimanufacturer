@@ -115,6 +115,57 @@ app.post('/api/orders', async (req, res) => {
   });
 });
 
+
+// 5. Return & Exchange API
+app.all('/api/return-exchange', async (req, res) => {
+  try {
+    const mod = await import('../api/return-exchange.js');
+    await mod.default(req, res);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6. Business Enquiries API
+app.all('/api/enquiry', async (req, res) => {
+  try {
+    const mod = await import('../api/enquiry.js');
+    await mod.default(req, res);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 7. Auth API (Login, Register, Profile Update)
+app.all('/api/auth', async (req, res) => {
+  try {
+    const mod = await import('../api/auth.js');
+    await mod.default(req, res);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 8. Wishlist API
+app.all('/api/wishlist', async (req, res) => {
+  try {
+    const mod = await import('../api/wishlist.js');
+    await mod.default(req, res);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 9. Cancel Order API
+app.all('/api/cancel-order', async (req, res) => {
+  try {
+    const mod = await import('../api/cancel-order.js');
+    await mod.default(req, res);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Mahalaxmi Enterprises Production Server running on port ${PORT}`);
 });

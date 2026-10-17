@@ -296,6 +296,60 @@ export default async function handler(req, res) {
     // -------------------------------------------------------------
     // ACTION: RESET PASSWORD
     // -------------------------------------------------------------
+    
+    // -------------------------------------------------------------
+    // ACTION: UPDATE PROFILE
+    // -------------------------------------------------------------
+    if (action === 'update_profile') {
+      const u = user || req.body || {};
+      const cleanEmail = (u.email || '').trim().toLowerCase();
+      const cleanName = (u.name || u.fullName || '').trim();
+      const cleanCompany = (u.companyName || u.company_name || '').trim();
+      const cleanPhone = (u.phone || u.mobile || '').trim();
+      const cleanGst = (u.gstNumber || u.gst_number || '').trim().toUpperCase();
+
+      if (!cleanEmail) {
+        return res.status(400).json({ success: false, message: 'User email is required to update profile.' });
+      }
+
+      if (pool) {
+        try {
+          await pool.query(
+            'UPDATE users SET name = COALESCE(NULLIF(?, ""), name), company_name = COALESCE(NULLIF(?, ""), company_name), phone = COALESCE(NULLIF(?, ""), phone), gst_number = COALESCE(NULLIF(?, ""), gst_number) WHERE email = ?',
+            [cleanName, cleanCompany, cleanPhone, cleanGst, cleanEmail]
+          );
+          const [updatedRows] = await pool.query('SELECT * FROM users WHERE email = ?', [cleanEmail]);
+          if (updatedRows && updatedRows.length > 0) {
+            return res.status(200).json({
+              success: true,
+              message: 'Profile updated successfully in MySQL database!',
+              user: sanitizeUser(updatedRows[0])
+            });
+          }
+        } catch (dbErr) {
+          console.warn('MySQL profile update warning:', dbErr.message);
+        }
+      }
+
+      // Fallback update
+      const fallback = loadFallbackUsers();
+      const idx = fallback.findIndex(f => f.email.toLowerCase() === cleanEmail);
+      if (idx !== -1) {
+        if (cleanName) fallback[idx].name = cleanName;
+        if (cleanCompany) fallback[idx].companyName = cleanCompany;
+        if (cleanPhone) fallback[idx].phone = cleanPhone;
+        if (cleanGst) fallback[idx].gstNumber = cleanGst;
+        saveFallbackUsers(fallback);
+        return res.status(200).json({
+          success: true,
+          message: 'Profile updated successfully!',
+          user: sanitizeUser(fallback[idx])
+        });
+      }
+
+      return res.status(404).json({ success: false, message: 'Account not found to update.' });
+    }
+
     if (action === 'reset_password') {
       const idQuery = (identifier || '').trim().toLowerCase();
       const idDigits = (identifier || '').replace(/\D/g, '');
