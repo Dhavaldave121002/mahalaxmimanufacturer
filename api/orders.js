@@ -70,9 +70,33 @@ export default async function handler(req, res) {
       )}`;
 
     const customer = o.customer || {};
-    const customerName = customer.name || o.customerName || 'Customer';
-    const customerEmail = customer.email || o.customerEmail || 'customer@mahalaxmi.in';
-    const customerPhone = customer.phone || o.customerPhone || '+91 98765 00000';
+    let customerEmail = (
+      customer.email ||
+      o.customerEmail ||
+      o.email ||
+      customer.userEmail ||
+      o.userEmail ||
+      ''
+    ).trim();
+
+    let customerName = (
+      customer.name ||
+      o.customerName ||
+      o.name ||
+      customer.fullName ||
+      o.fullName ||
+      ''
+    ).trim();
+    if (!customerName || customerName.toLowerCase() === 'customer' || customerName.toLowerCase() === 'valued customer') {
+      if (customerEmail.includes('@')) {
+        const raw = customerEmail.split('@')[0].replace(/[0-9._-]+/g, ' ').trim();
+        if (raw.length > 1) {
+          customerName = raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        }
+      }
+    }
+    if (!customerName) customerName = 'Valued Customer';
+    const customerPhone = customer.phone || o.customerPhone || o.phone || '+91 85111 72099';
     const companyName = customer.companyName || o.companyName || null;
     const gstNumber = customer.gstNumber || o.gstNumber || null;
     const isB2B = customer.isB2B || o.isB2B ? 1 : 0;
@@ -123,20 +147,24 @@ export default async function handler(req, res) {
         ]);
 
     // Send automated notification emails (Admin Alert + Customer Confirmation)
-    sendOrderNotificationEmails({
-      orderNumber,
-      customerName,
-      customerEmail,
-      customerPhone,
-      companyName,
-      source,
-      subtotal,
-      totalAmount,
-      paymentMethod,
-      paymentStatus,
-      shippingAddress: o.shippingAddress,
-      items: o.items || []
-    }).catch(e => console.warn('Order notification email background error:', e));
+    try {
+      await sendOrderNotificationEmails({
+        orderNumber,
+        customerName,
+        customerEmail,
+        customerPhone,
+        companyName,
+        source,
+        subtotal,
+        totalAmount,
+        paymentMethod,
+        paymentStatus,
+        shippingAddress: o.shippingAddress,
+        items: o.items || []
+      });
+    } catch (e) {
+      console.warn('Order notification email background error:', e);
+    }
 
     if (!pool) {
       return res.status(201).json({
@@ -539,7 +567,7 @@ async function sendOrderNotificationEmails(data) {
     </html>
   `;
 
-  // Dispatch Admin Notification via EmailJS
+  // Concurrent EmailJS Dispatch Engine (Customer Confirmation + Store Admin Alert)
   try {
     const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
     const EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_ORDER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID || 'template_rxzob8r';
@@ -547,209 +575,92 @@ async function sendOrderNotificationEmails(data) {
     const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
     if (EMAILJS_SERVICE_ID && EMAILJS_ORDER_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
-      const payload = {
-        service_id: EMAILJS_SERVICE_ID,
-        template_id: EMAILJS_ORDER_TEMPLATE_ID,
-        user_id: EMAILJS_PUBLIC_KEY,
-        template_params: {
-          to_email: primaryAdmin,
-          to_name: 'Mahalaxmi Mill Admin',
-          subject: `🚨 New Order Alert: #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) | Mahalaxmi Admin`,
-          headline: 'New Order Received!',
-          code_box: `#${orderNumber}`,
-          subtext: `Customer: ${customerName} (${customerPhone}) • ₹${Number(totalAmount).toLocaleString('en-IN')}`,
-          order_number: orderNumber,
-          total_amount: Number(totalAmount).toLocaleString('en-IN'),
-          customer_name: customerName,
-          customer_email: customerEmail || 'N/A',
-          items_block: orderItemsBlock,
-          message: `🚨 New order booked by ${customerName} (${customerPhone}) via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}! Value: ₹${Number(totalAmount).toLocaleString('en-IN')}. Delivery to: ${addressText}.`
-        }
-      };
-      if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
+      const dispatches = [];
 
-      await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Origin': 'https://mahalaxmimanufacturer.com'
-        },
-        body: JSON.stringify(payload)
-      });
-    }
-  } catch (err) {
-    console.warn('Admin notification email dispatch failed:', err);
-  }
+      // 1. Dispatch Customer Confirmation Email (Priority)
+      if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in')) {
+        const customerPayload = {
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_ORDER_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: {
+            to_email: customerEmail,
+            to_name: customerName,
+            subject: `Order Confirmed: #${orderNumber} | Mahalaxmi Enterprises`,
+            headline: 'Order Confirmed!',
+            code_box: `#${orderNumber}`,
+            subtext: `Total Value: ₹${Number(totalAmount).toLocaleString('en-IN')} • Surat Mill`,
+            order_number: orderNumber,
+            total_amount: Number(totalAmount).toLocaleString('en-IN'),
+            items_block: orderItemsBlock,
+            message: `Thank you for your order! Your consignment #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')} is confirmed and being packed at Surat Direct Mill.`
+          }
+        };
+        if (EMAILJS_PRIVATE_KEY) customerPayload.accessToken = EMAILJS_PRIVATE_KEY;
 
-  // 2. Dispatch Confirmation Email to Customer (Strictly to Customer)
-  if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in')) {
-    const customerHtml = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="color-scheme" content="light">
-        <meta name="supported-color-schemes" content="light">
-        <title>Order Confirmed: #${orderNumber}</title>
-      </head>
-      <body style="margin: 0; padding: 16px 8px; background-color: #0F172A; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="max-width: 580px; margin: 0 auto;">
-          <tr>
-            <td>
-              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #FFFFFF; border-radius: 20px; overflow: hidden; border: 1px solid #334155; box-shadow: 0 12px 36px rgba(0,0,0,0.35);">
-                
-                <!-- Header -->
-                <tr>
-                  <td style="background: linear-gradient(135deg, #14213D 0%, #0F172A 100%); padding: 28px 20px; text-align: center; border-bottom: 3px solid #C6AA80;">
-                    <div style="display: inline-block; background-color: #C6AA80; color: #14213D; font-weight: 900; font-size: 18px; width: 36px; height: 36px; line-height: 36px; border-radius: 10px; margin-bottom: 8px;">
-                      M
-                    </div>
-                    <div style="color: #FFFFFF; font-size: 18px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">
-                      MAHALAXMI ENTERPRISES
-                    </div>
-                    <div style="color: #C6AA80; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 3px;">
-                      SURAT DIRECT MILL RATES & WHOLESALE DISPATCH
-                    </div>
-                  </td>
-                </tr>
-
-                <!-- Content -->
-                <tr>
-                  <td style="padding: 26px 20px; background-color: #FFFFFF;">
-                    
-                    <div style="text-align: center; margin-bottom: 22px;">
-                      <div style="display: inline-block; background-color: #DCFCE7; color: #15803D; font-size: 12px; font-weight: 900; padding: 6px 16px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
-                        ✅ ORDER BOOKED SUCCESSFULLY
-                      </div>
-                      <h2 style="margin: 12px 0 4px; font-size: 20px; font-weight: 900; color: #0F172A;">
-                        Thank You, ${customerName}!
-                      </h2>
-                      <div style="color: #64748B; font-size: 13px;">
-                        Order Ref: <strong style="color: #0F172A; font-family: monospace;">${orderNumber}</strong>
-                      </div>
-                    </div>
-
-                    <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0 0 20px; text-align: center;">
-                      Your consignment has been allocated to our Surat Central Loom & Dispatch unit. Your official GST Commercial Invoice is prepared and will accompany the freight shipment.
-                    </p>
-
-                    <!-- Ordered Items Table -->
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 14px; overflow: hidden; margin-bottom: 20px;">
-                      <thead>
-                        <tr style="background-color: #F1F5F9; font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase;">
-                          <th style="padding: 10px 14px; text-align: left; border-bottom: 2px solid #E2E8F0;">Item Description</th>
-                          <th style="padding: 10px 8px; text-align: center; border-bottom: 2px solid #E2E8F0; width: 55px;">Qty</th>
-                          <th style="padding: 10px 14px; text-align: right; border-bottom: 2px solid #E2E8F0; width: 90px;">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        ${itemsHtml}
-                      </tbody>
-                    </table>
-
-                    <!-- Summary Box -->
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; margin-bottom: 22px;">
-                      <tr>
-                        <td style="padding: 16px 20px;">
-                          <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                            <tr>
-                              <td style="color: #64748B; font-size: 12px; font-weight: 600;">Payment Mode:</td>
-                              <td align="right" style="color: #0F172A; font-size: 12px; font-weight: 800;">
-                                ${paymentMethod}
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="color: #0F172A; font-size: 16px; font-weight: 900; padding-top: 8px; border-top: 1px solid #E2E8F0;">
-                                Total Amount:
-                              </td>
-                              <td align="right" style="font-size: 22px; font-weight: 900; color: #059669; font-family: monospace; padding-top: 8px; border-top: 1px solid #E2E8F0;">
-                                ₹${Number(totalAmount).toLocaleString('en-IN')}
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                    </table>
-
-                    <!-- WhatsApp Helpline Button -->
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
-                      <tr>
-                        <td align="center">
-                          <a href="https://wa.me/918511172099?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, I need help with my Order ${orderNumber}`)}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background-color: #25D366; color: #FFFFFF; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; padding: 13px 20px; border-radius: 12px;">
-                            💬 Contact Surat Mill Helpline on WhatsApp
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
-
-                  </td>
-                </tr>
-
-                <!-- Footer -->
-                <tr>
-                  <td style="background-color: #F8FAFC; padding: 16px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
-                    Mahalaxmi Enterprises • Ring Road, Textile Market, Surat, Gujarat<br>
-                    Official Mill Hotline: +91 85111 72099 • 100% Direct Loom Rates
-                  </td>
-                </tr>
-
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
-
-    try {
-      // 1. Primary: EmailJS Dispatch
-      const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
-      const EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_ORDER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID || 'template_rxzob8r';
-      const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID || 'G6gT9XDN4SFBz6oqW';
-      const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
-
-      if (EMAILJS_SERVICE_ID && EMAILJS_ORDER_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
-        try {
-          const payload = {
-            service_id: EMAILJS_SERVICE_ID,
-            template_id: EMAILJS_ORDER_TEMPLATE_ID,
-            user_id: EMAILJS_PUBLIC_KEY,
-            template_params: {
-              to_email: customerEmail,
-              to_name: customerName,
-              subject: `Order Confirmed: #${orderNumber} | Mahalaxmi Enterprises`,
-              headline: 'Order Confirmed!',
-              code_box: `#${orderNumber}`,
-              subtext: `Total Value: ₹${Number(totalAmount).toLocaleString('en-IN')} • Surat Mill`,
-              order_number: orderNumber,
-              total_amount: Number(totalAmount).toLocaleString('en-IN'),
-              items_block: orderItemsBlock,
-              message: `Thank you for your order! Your consignment #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')} is confirmed and being packed at Surat Direct Mill.`
-            }
-          };
-          if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
-
-          const ejsResp = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        dispatches.push(
+          fetch('https://api.emailjs.com/api/v1.0/email/send', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'Origin': 'https://mahalaxmimanufacturer.com'
             },
-            body: JSON.stringify(payload)
-          });
-          if (ejsResp.ok) {
-            console.log(`[EmailJS] Order confirmation dispatched to ${customerEmail}`);
-            return;
-          }
-        } catch (ejsErr) {
-          console.warn('[EmailJS] Order confirmation failed:', ejsErr);
-        }
+            body: JSON.stringify(customerPayload)
+          }).then(async r => {
+            if (r.ok) {
+              console.log(`[EmailJS] Customer order confirmation delivered successfully to ${customerEmail}`);
+            } else {
+              console.warn('[EmailJS] Customer order confirmation dispatch response:', await r.text());
+            }
+          }).catch(e => console.warn('[EmailJS] Customer network error:', e))
+        );
       }
 
-    } catch (err) {
-      console.warn('Customer confirmation email dispatch failed:', err);
+      // 2. Dispatch Store Admin Alert Email
+      if (primaryAdmin && primaryAdmin.includes('@')) {
+        const adminPayload = {
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_ORDER_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: {
+            to_email: primaryAdmin,
+            to_name: 'Mahalaxmi Mill Admin',
+            subject: `🚨 New Order Alert: #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) | Mahalaxmi Admin`,
+            headline: 'New Order Received!',
+            code_box: `#${orderNumber}`,
+            subtext: `Customer: ${customerName} (${customerPhone}) • ₹${Number(totalAmount).toLocaleString('en-IN')}`,
+            order_number: orderNumber,
+            total_amount: Number(totalAmount).toLocaleString('en-IN'),
+            customer_name: customerName,
+            customer_email: customerEmail || 'N/A',
+            items_block: orderItemsBlock,
+            message: `🚨 New order booked by ${customerName} (${customerPhone}) via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Website'}! Value: ₹${Number(totalAmount).toLocaleString('en-IN')}. Delivery to: ${addressText}.`
+          }
+        };
+        if (EMAILJS_PRIVATE_KEY) adminPayload.accessToken = EMAILJS_PRIVATE_KEY;
+
+        dispatches.push(
+          fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Origin': 'https://mahalaxmimanufacturer.com'
+            },
+            body: JSON.stringify(adminPayload)
+          }).then(async r => {
+            if (r.ok) {
+              console.log(`[EmailJS] Admin alert delivered successfully to ${primaryAdmin}`);
+            } else {
+              console.warn('[EmailJS] Admin alert dispatch response:', await r.text());
+            }
+          }).catch(e => console.warn('[EmailJS] Admin network error:', e))
+        );
+      }
+
+      await Promise.allSettled(dispatches);
     }
+  } catch (err) {
+    console.warn('Order notification emails dispatch failed:', err);
   }
 }
 
