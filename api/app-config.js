@@ -244,6 +244,30 @@ export default async function handler(req, res) {
         isSent: Boolean(n.is_sent)
       }));
 
+      let formattedCoupons = [];
+      try {
+        const [couponsRows] = await pool.query('SELECT * FROM coupons WHERE is_active = 1 ORDER BY is_featured DESC, created_at DESC');
+        if (Array.isArray(couponsRows)) {
+          formattedCoupons = couponsRows.map(c => ({
+            id: c.id,
+            code: c.code,
+            title: c.title,
+            description: c.description || '',
+            discountType: c.discount_type,
+            discountValue: Number(c.discount_value),
+            minOrderValue: Number(c.min_order_value || 0),
+            maxDiscountAmount: c.max_discount_amount ? Number(c.max_discount_amount) : undefined,
+            isActive: Boolean(c.is_active),
+            isFeatured: Boolean(c.is_featured),
+            applicableFor: c.applicable_for || 'ALL'
+          }));
+        }
+      } catch (coupErr) {
+        // quiet fallback
+      }
+
+      const fallbackCoupons = readFallbackConfig()?.coupons || [];
+
       return res.status(200).json({
         success: true,
         source: 'MYSQL_DATABASE',
@@ -263,7 +287,8 @@ export default async function handler(req, res) {
           lastSyncedAt: new Date().toISOString(),
           banners: formattedBanners.length > 0 ? formattedBanners : (readFallbackConfig()?.banners || []),
           categories: formattedCategories.length > 0 ? formattedCategories : (readFallbackConfig()?.categories || []),
-          notifications: formattedNotifications
+          notifications: formattedNotifications,
+          coupons: formattedCoupons.length > 0 ? formattedCoupons : fallbackCoupons
         }
       });
     } catch (e) {

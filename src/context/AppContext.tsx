@@ -343,6 +343,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [coupons]);
 
+  // Synchronize coupons live from MySQL / Central API
+  const syncCouponsFromBackend = useCallback(async () => {
+    try {
+      const res = await fetch('/api/coupons');
+      if (!res.ok) return;
+      const json = await res.json();
+      if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+        setCoupons(prev => {
+          const map = new Map<string, CouponOffer>();
+          for (const c of json.data) {
+            const key = (c.code || c.id || '').trim().toUpperCase();
+            if (key) map.set(key, c);
+          }
+          for (const c of prev) {
+            const key = (c.code || c.id || '').trim().toUpperCase();
+            if (key && !map.has(key)) {
+              map.set(key, c);
+            }
+          }
+          return Array.from(map.values());
+        });
+      }
+    } catch {
+      // quiet offline fallback
+    }
+  }, []);
+
+  useEffect(() => {
+    syncCouponsFromBackend();
+    const interval = setInterval(syncCouponsFromBackend, 15000);
+    return () => clearInterval(interval);
+  }, [syncCouponsFromBackend]);
+
   const addCoupon = (coupon: Omit<CouponOffer, 'id' | 'usedCount' | 'createdAt'>) => {
     const newCoupon: CouponOffer = {
       ...coupon,
@@ -352,35 +385,85 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString()
     };
     setCoupons(prev => [newCoupon, ...prev]);
+
+    // Save to MySQL database via API
+    fetch('/api/coupons', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newCoupon)
+    }).catch(() => {});
   };
 
   const updateCoupon = (id: string, updates: Partial<CouponOffer>) => {
+    let targetCoupon: CouponOffer | null = null;
     setCoupons(prev =>
       prev.map(c => {
         if (c.id === id) {
           const updated = { ...c, ...updates };
           if (updates.code) updated.code = updates.code.trim().toUpperCase();
+          targetCoupon = updated;
           return updated;
         }
         return c;
       })
     );
+
+    if (targetCoupon) {
+      fetch('/api/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(targetCoupon)
+      }).catch(() => {});
+    }
   };
 
   const deleteCoupon = (id: string) => {
     setCoupons(prev => prev.filter(c => c.id !== id));
+    fetch(`/api/coupons?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    }).catch(() => {});
   };
 
   const toggleCouponActive = (id: string) => {
+    let updatedCoupon: CouponOffer | null = null;
     setCoupons(prev =>
-      prev.map(c => (c.id === id ? { ...c, isActive: !c.isActive } : c))
+      prev.map(c => {
+        if (c.id === id) {
+          updatedCoupon = { ...c, isActive: !c.isActive };
+          return updatedCoupon;
+        }
+        return c;
+      })
     );
+
+    if (updatedCoupon) {
+      fetch('/api/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedCoupon)
+      }).catch(() => {});
+    }
   };
 
   const toggleCouponFeatured = (id: string) => {
+    let updatedCoupon: CouponOffer | null = null;
     setCoupons(prev =>
-      prev.map(c => (c.id === id ? { ...c, isFeatured: !c.isFeatured } : c))
+      prev.map(c => {
+        if (c.id === id) {
+          updatedCoupon = { ...c, isFeatured: !c.isFeatured };
+          return updatedCoupon;
+        }
+        return c;
+      })
     );
+
+    if (updatedCoupon) {
+      fetch('/api/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedCoupon)
+      }).catch(() => {});
+    }
   };
 
   const [deliveryPincode, setDeliveryPincode] = useState<string>('395002');
