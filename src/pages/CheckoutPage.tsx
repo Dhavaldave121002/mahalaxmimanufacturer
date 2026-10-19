@@ -483,60 +483,6 @@ export const CheckoutPage: React.FC = () => {
                 />
               </label>
 
-              {/* UPI Option */}
-              <label
-                onClick={() => setPaymentMethod('UPI')}
-                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
-                  paymentMethod === 'UPI'
-                    ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo/10 text-indigo rounded-lg">
-                    <QrCode className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-navy">Instant UPI / Dynamic QR Code</p>
-                    <p className="text-[10px] text-slate-500">Google Pay, PhonePe, Paytm, BHIM (Zero Gateway Surcharge)</p>
-                  </div>
-                </div>
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentMethod === 'UPI'}
-                  onChange={() => setPaymentMethod('UPI')}
-                  className="accent-indigo"
-                />
-              </label>
-
-              {/* Net Banking / RTGS Option */}
-              <label
-                onClick={() => setPaymentMethod('NET_BANKING')}
-                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
-                  paymentMethod === 'NET_BANKING'
-                    ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo/10 text-indigo rounded-lg">
-                    <CreditCard className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-navy">Bank Transfer / NEFT / RTGS</p>
-                    <p className="text-[10px] text-slate-500">Direct Mill Escrow Account (Ideal for bulk payments ₹50,000+)</p>
-                  </div>
-                </div>
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentMethod === 'NET_BANKING'}
-                  onChange={() => setPaymentMethod('NET_BANKING')}
-                  className="accent-indigo"
-                />
-              </label>
-
               {/* COD Option */}
               <label
                 onClick={() => setPaymentMethod('COD')}
