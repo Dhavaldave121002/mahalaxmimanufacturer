@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   Lock,
   Building2,
-  X
+  X,
+  MessageSquare
 } from 'lucide-react';
 
 export const Footer: React.FC = () => {
@@ -92,9 +93,9 @@ export const Footer: React.FC = () => {
 
       {/* 2. Main Navigation Links & Corporate Info */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8">
           {/* Brand & Corporate Office */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-4 space-y-4">
             <div className="flex items-center gap-2.5">
               <img
                 src="/logo.png"
@@ -129,7 +130,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Catalog Categories */}
-          <div className="space-y-3">
+          <div className="lg:col-span-2 space-y-3">
             <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Catalog Collections</h4>
             <ul className="text-xs text-slate-300 space-y-2">
               <li>
@@ -166,7 +167,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Customer Service & Return Policies */}
-          <div className="space-y-3">
+          <div className="lg:col-span-3 space-y-3">
             <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Customer Care & Support</h4>
             <ul className="text-xs text-slate-300 space-y-2">
               <li>
@@ -204,9 +205,10 @@ export const Footer: React.FC = () => {
                   href="https://wa.me/918511172099?text=Namaste%20Mahalaxmi%20Enterprises,%20I%20have%20an%20inquiry%20regarding%20my%20Order/Return."
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-champagne transition text-emerald-400 flex items-center gap-1 font-semibold"
+                  className="hover:text-champagne transition text-emerald-400 flex items-center gap-1.5 font-semibold whitespace-nowrap"
                 >
-                  WhatsApp Helpdesk (+91 85111 72099)
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>WhatsApp Helpdesk (+91 85111 72099)</span>
                 </a>
               </li>
               <li>
@@ -218,7 +220,7 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Compliance & Administration */}
-          <div className="space-y-3">
+          <div className="lg:col-span-3 space-y-3">
             <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Governance & Trust</h4>
             <ul className="text-xs text-slate-300 space-y-2">
               <li className="flex items-center gap-1.5 text-slate-300">
