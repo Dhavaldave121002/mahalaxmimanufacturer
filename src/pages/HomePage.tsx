@@ -45,18 +45,27 @@ export const HomePage: React.FC = () => {
     b => b.isActive && (b.visibility === 'WEB_ONLY' || b.visibility === 'ALL' || !b.visibility)
   );
 
+  const normalizeImageUrl = (url?: string) => {
+    if (!url) return '';
+    const s = url.trim();
+    if (s.startsWith('http://') || s.startsWith('https://')) return s;
+    if (s.startsWith('/')) return s;
+    return '/' + s;
+  };
+
   const heroSlides = activeBanners.length > 0
     ? activeBanners.map(b => ({
         id: b.id,
-        title: b.title,
-        subtitle: b.subtitle,
-        highlight: b.tag || 'DIRECT MILL LOTS',
-        ctaText: b.cta || 'Shop Wholesale',
+        title: (b.title || '').trim(),
+        subtitle: (b.subtitle || '').trim(),
+        highlight: (b.tag || '').trim(),
+        ctaText: (b.cta || '').trim(),
         ctaLink: b.ctaLink || (b.category ? `/category/${b.category.toLowerCase().replace(/[^a-z0-9]/g, '-')}` : '/catalog'),
-        image: b.image || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop',
-        mobileImage: b.mobileImage || b.image,
-        badge: b.badge || b.tag || 'AUTHENTIC MILL CONTRACT RATES',
-        tagline: b.tagline || 'Direct Factory Sourcing From Surat'
+        image: b.image || '/assets/images/banner_cotton.jpg',
+        mobileImage: b.mobileImage || b.image || '',
+        badge: (b.badge || '').trim(),
+        tagline: (b.tagline || '').trim(),
+        showTextOverlay: b.showTextOverlay !== false
       }))
     : [
         {
@@ -69,7 +78,8 @@ export const HomePage: React.FC = () => {
           image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop",
           mobileImage: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800&auto=format&fit=crop",
           badge: "AUTHENTIC MILL CONTRACT RATES",
-          tagline: "300 TC Combed Cotton Bedsheets From ₹489"
+          tagline: "300 TC Combed Cotton Bedsheets From ₹489",
+          showTextOverlay: true
         }
       ];
 
@@ -312,99 +322,146 @@ export const HomePage: React.FC = () => {
           ======================================================== */}
       <section className="relative bg-navy overflow-hidden text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <div className="relative rounded-3xl overflow-hidden shadow-premium bg-navy-900 border border-slate-700 min-h-[440px] sm:min-h-[480px] flex items-center">
-            {/* Background Image with smooth transitions and responsive mobile art direction */}
-            <div className="absolute inset-0">
-              <picture className="w-full h-full block">
-                {heroSlides[currentSlide].mobileImage && (
-                  <source media="(max-width: 640px)" srcSet={heroSlides[currentSlide].mobileImage} />
+          {(() => {
+            const currentHero = heroSlides[currentSlide] || heroSlides[0];
+            const hasOverlay = currentHero.showTextOverlay !== false && Boolean(
+              currentHero.title || currentHero.subtitle || currentHero.badge
+            );
+
+            return (
+              <div className="relative rounded-3xl overflow-hidden shadow-premium bg-navy-900 border border-slate-700 min-h-[360px] sm:min-h-[460px] flex items-center">
+                {/* When no text overlay is needed, the entire banner image is an interactive direct link */}
+                {!hasOverlay && (
+                  <Link
+                    to={currentHero.ctaLink}
+                    className="absolute inset-0 z-10 cursor-pointer"
+                    title={currentHero.title || 'Special Promotion'}
+                  />
                 )}
-                <img
-                  src={heroSlides[currentSlide].image.replace('w=1200', 'w=1000')}
-                  alt={heroSlides[currentSlide].title}
-                  fetchPriority="high"
-                  decoding="async"
-                  className="w-full h-full object-cover opacity-35 transition-opacity duration-1000 scale-105"
-                />
-              </picture>
-              <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/90 to-transparent"></div>
-            </div>
 
-            {/* Content Container */}
-            <div className="relative z-10 p-6 sm:p-12 max-w-2xl space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-champagne/20 border border-champagne/30 text-champagne text-xs font-black tracking-wide uppercase">
-                <Zap className="w-3.5 h-3.5 fill-current" />
-                <span>{heroSlides[currentSlide].badge}</span>
-              </div>
+                {/* Background Image */}
+                <div className="absolute inset-0">
+                  <picture className="w-full h-full block">
+                    {currentHero.mobileImage && (
+                      <source media="(max-width: 640px)" srcSet={normalizeImageUrl(currentHero.mobileImage)} />
+                    )}
+                    <img
+                      src={normalizeImageUrl(currentHero.image)}
+                      alt={currentHero.title || 'Mahalaxmi Mill Promotion'}
+                      fetchPriority="high"
+                      decoding="async"
+                      className={`w-full h-full object-cover transition-opacity duration-700 ${
+                        hasOverlay ? 'opacity-85 sm:opacity-90' : 'opacity-100'
+                      }`}
+                    />
+                  </picture>
+                  {/* Subtle dark gradient overlay only when text overlay is actually active */}
+                  {hasOverlay && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-navy/95 via-navy/80 to-transparent"></div>
+                  )}
+                </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight">
-                {heroSlides[currentSlide].title}
-              </h1>
+                {/* Content Container (Rendered ONLY when hasOverlay is true) */}
+                {hasOverlay && (
+                  <div className="relative z-10 p-6 sm:p-12 max-w-2xl space-y-4">
+                    {currentHero.badge && (
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-champagne/20 border border-champagne/30 text-champagne text-xs font-black tracking-wide uppercase">
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>{currentHero.badge}</span>
+                      </div>
+                    )}
 
-              <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-medium">
-                {heroSlides[currentSlide].subtitle}
-              </p>
+                    {currentHero.title && (
+                      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight">
+                        {currentHero.title}
+                      </h1>
+                    )}
 
-              <div className="pt-2 flex items-baseline gap-3">
-                <span className="text-xs text-slate-300 uppercase tracking-wider font-bold">Featured Pricing:</span>
-                <span className="text-xl sm:text-2xl font-black text-champagne">
-                  {heroSlides[currentSlide].tagline}
-                </span>
-              </div>
+                    {currentHero.subtitle && (
+                      <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-medium">
+                        {currentHero.subtitle}
+                      </p>
+                    )}
 
-              {/* Action Buttons */}
-              <div className="pt-3 flex flex-wrap gap-4">
-                <Link
-                  to={heroSlides[currentSlide].ctaLink}
-                  className="px-6 py-3.5 bg-indigo hover:bg-indigo-dark text-white rounded-2xl font-black text-xs sm:text-sm transition shadow-premium flex items-center gap-2 group"
-                >
-                  <span>{heroSlides[currentSlide].ctaText}</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                    {currentHero.tagline && (
+                      <div className="pt-2 flex items-baseline gap-3">
+                        <span className="text-xs text-slate-300 uppercase tracking-wider font-bold">Featured Pricing:</span>
+                        <span className="text-xl sm:text-2xl font-black text-champagne">
+                          {currentHero.tagline}
+                        </span>
+                      </div>
+                    )}
 
-                <Link
-                  to="/wholesale"
-                  className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2"
-                >
-                  <Building2 className="w-4 h-4 text-champagne" />
-                  <span>Request Mill RFQ</span>
-                </Link>
-              </div>
-            </div>
+                    {/* Action Buttons */}
+                    <div className="pt-3 flex flex-wrap gap-4">
+                      {currentHero.ctaText && (
+                        <Link
+                          to={currentHero.ctaLink}
+                          className="px-6 py-3.5 bg-indigo hover:bg-indigo-dark text-white rounded-2xl font-black text-xs sm:text-sm transition shadow-premium flex items-center gap-2 group"
+                        >
+                          <span>{currentHero.ctaText}</span>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                      )}
 
-            {/* Carousel Navigation Arrows */}
-            <button
-              onClick={() => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)}
-              aria-label="Previous hero banner slide"
-              className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20"
-              title="Previous slide"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
+                      <Link
+                        to="/wholesale"
+                        className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2"
+                      >
+                        <Building2 className="w-4 h-4 text-champagne" />
+                        <span>Request Mill RFQ</span>
+                      </Link>
+                    </div>
+                  </div>
+                )}
 
-            <button
-              onClick={() => setCurrentSlide(prev => (prev + 1) % heroSlides.length)}
-              aria-label="Next hero banner slide"
-              className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20"
-              title="Next slide"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-
-            {/* Dots Indicator */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
-              {heroSlides.map((_, idx) => (
+                {/* Carousel Navigation Arrows */}
                 <button
-                  key={idx}
-                  onClick={() => setCurrentSlide(idx)}
-                  aria-label={`Go to slide ${idx + 1}: ${heroSlides[idx].title}`}
-                  className={`h-2 rounded-full transition-all ${
-                    currentSlide === idx ? 'w-8 bg-champagne' : 'w-2 bg-white/40'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
+                  }}
+                  aria-label="Previous hero banner slide"
+                  className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20"
+                  title="Previous slide"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCurrentSlide(prev => (prev + 1) % heroSlides.length);
+                  }}
+                  aria-label="Next hero banner slide"
+                  className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20"
+                  title="Next slide"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+
+                {/* Dots Indicator */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+                  {heroSlides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setCurrentSlide(idx);
+                      }}
+                      aria-label={`Go to slide ${idx + 1}`}
+                      className={`h-2 rounded-full transition-all ${
+                        currentSlide === idx ? 'w-8 bg-champagne' : 'w-2 bg-white/40'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </section>
 

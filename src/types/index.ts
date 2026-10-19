@@ -231,6 +231,7 @@ export interface AppBanner {
   image: string;
   mobileImage?: string;
   visibility?: 'ALL' | 'WEB_ONLY' | 'APP_ONLY';
+  showTextOverlay?: boolean;
   gradientFrom: string;
   gradientVia?: string;
   gradientTo: string;

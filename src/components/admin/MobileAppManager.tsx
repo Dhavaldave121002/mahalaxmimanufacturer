@@ -134,6 +134,7 @@ export const MobileAppManager: React.FC = () => {
     image: string;
     mobileImage?: string;
     visibility?: 'ALL' | 'WEB_ONLY' | 'APP_ONLY';
+    showTextOverlay?: boolean;
     gradientFrom: string;
     gradientVia: string;
     gradientTo: string;
@@ -153,6 +154,7 @@ export const MobileAppManager: React.FC = () => {
     image: 'assets/images/banner_home_kitchen.jpg',
     mobileImage: '',
     visibility: 'ALL',
+    showTextOverlay: true,
     gradientFrom: '#0F172A',
     gradientVia: '#1E293B',
     gradientTo: '#334155',
@@ -191,16 +193,17 @@ export const MobileAppManager: React.FC = () => {
     setEditingBannerId(null);
     setBannerForm({
       category: 'Textile',
-      title: 'Festival Mill Collection',
-      subtitle: 'Combed Cotton Bedsheets & Fabrics',
-      tag: 'NEW ARRIVAL',
-      badge: 'AUTHENTIC MILL CONTRACT RATES',
-      tagline: '300 TC Combed Cotton Bedsheets From ₹489',
+      title: '',
+      subtitle: '',
+      tag: '',
+      badge: '',
+      tagline: '',
       cta: 'Explore Mill Catalog',
       ctaLink: '/catalog',
-      image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop',
+      image: '/assets/images/banner_textile.jpg',
       mobileImage: '',
       visibility: 'ALL',
+      showTextOverlay: true,
       gradientFrom: '#1E1B4B',
       gradientVia: '#312E81',
       gradientTo: '#4338CA',
@@ -216,16 +219,17 @@ export const MobileAppManager: React.FC = () => {
     setEditingBannerId(b.id);
     setBannerForm({
       category: b.category,
-      title: b.title,
-      subtitle: b.subtitle,
-      tag: b.tag,
-      badge: b.badge || b.tag || 'AUTHENTIC MILL CONTRACT RATES',
-      tagline: b.tagline || 'Direct Factory Sourcing From Surat',
-      cta: b.cta,
+      title: b.title || '',
+      subtitle: b.subtitle || '',
+      tag: b.tag || '',
+      badge: b.badge || '',
+      tagline: b.tagline || '',
+      cta: b.cta || '',
       ctaLink: b.ctaLink || '/catalog',
       image: b.image,
       mobileImage: b.mobileImage || '',
       visibility: b.visibility || 'ALL',
+      showTextOverlay: b.showTextOverlay !== false,
       gradientFrom: b.gradientFrom,
       gradientVia: b.gradientVia || '#1E293B',
       gradientTo: b.gradientTo,
@@ -1618,86 +1622,115 @@ export const MobileAppManager: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Show Text Overlay Toggle */}
+              <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
                 <div>
-                  <label className="font-bold text-slate-700">Slide Title *</label>
-                  <input
-                    type="text"
-                    required
-                    value={bannerForm.title}
-                    onChange={e => setBannerForm({ ...bannerForm, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
-                  />
+                  <span className="font-bold text-slate-800 block text-xs">📝 Show Text & Buttons Overlay</span>
+                  <span className="text-[10px] text-slate-500">
+                    Turn OFF if your banner image already has graphic design/text printed on it!
+                  </span>
                 </div>
-                <div>
-                  <label className="font-bold text-slate-700">Badge Tag *</label>
+                <label className="relative inline-flex items-center cursor-pointer">
                   <input
-                    type="text"
-                    required
-                    value={bannerForm.tag}
-                    onChange={e => setBannerForm({ ...bannerForm, tag: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
+                    type="checkbox"
+                    checked={bannerForm.showTextOverlay !== false}
+                    onChange={e => setBannerForm({ ...bannerForm, showTextOverlay: e.target.checked })}
+                    className="sr-only peer"
                   />
-                </div>
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo"></div>
+                </label>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-slate-700">Top Pill Badge</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. AUTHENTIC MILL RATES"
-                    value={bannerForm.badge || ''}
-                    onChange={e => setBannerForm({ ...bannerForm, badge: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
-                  />
+              {bannerForm.showTextOverlay === false && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] font-medium flex items-center gap-2">
+                  <span>📷</span>
+                  <span><strong>Pure Graphic Mode:</strong> No titles, subtitles or dark gradients will cover your banner image. Your image will be displayed in 100% full clarity!</span>
                 </div>
-                <div>
-                  <label className="font-bold text-slate-700">Featured Price Highlight</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Combed Cotton From ₹489"
-                    value={bannerForm.tagline || ''}
-                    onChange={e => setBannerForm({ ...bannerForm, tagline: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
-                  />
-                </div>
-              </div>
+              )}
 
-              <div>
-                <label className="font-bold text-slate-700">Subtitle / Tagline *</label>
-                <input
-                  type="text"
-                  required
-                  value={bannerForm.subtitle}
-                  onChange={e => setBannerForm({ ...bannerForm, subtitle: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-slate-700">Target Category *</label>
-                  <select
-                    value={bannerForm.category}
-                    onChange={e => setBannerForm({ ...bannerForm, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
-                  >
-                    <option value="Home and kitchen">Home and kitchen</option>
-                    <option value="Household">Household</option>
-                    <option value="Textile">Textile</option>
-                    <option value="Cotton products">Cotton products</option>
-                  </select>
+              {/* Text Fields (Optional) */}
+              <div className={`space-y-3 transition-opacity ${bannerForm.showTextOverlay === false ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700">Slide Title (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Pure Cotton Collection (or leave blank)"
+                      value={bannerForm.title}
+                      onChange={e => setBannerForm({ ...bannerForm, title: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700">Badge Tag (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 100% PURE COTTON"
+                      value={bannerForm.tag}
+                      onChange={e => setBannerForm({ ...bannerForm, tag: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
+                    />
+                  </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700">Top Pill Badge (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. AUTHENTIC MILL RATES"
+                      value={bannerForm.badge || ''}
+                      onChange={e => setBannerForm({ ...bannerForm, badge: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700">Featured Price Highlight (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Combed Cotton From ₹489"
+                      value={bannerForm.tagline || ''}
+                      onChange={e => setBannerForm({ ...bannerForm, tagline: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="font-bold text-slate-700">CTA Button Text *</label>
+                  <label className="font-bold text-slate-700">Subtitle / Tagline (Optional)</label>
                   <input
                     type="text"
-                    required
-                    value={bannerForm.cta}
-                    onChange={e => setBannerForm({ ...bannerForm, cta: e.target.value })}
+                    placeholder="e.g. Ultra-Soft Bath Towels & Canvas Bags"
+                    value={bannerForm.subtitle}
+                    onChange={e => setBannerForm({ ...bannerForm, subtitle: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="font-bold text-slate-700">Target Category</label>
+                    <select
+                      value={bannerForm.category}
+                      onChange={e => setBannerForm({ ...bannerForm, category: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
+                    >
+                      <option value="Home and kitchen">Home and kitchen</option>
+                      <option value="Household">Household</option>
+                      <option value="Textile">Textile</option>
+                      <option value="Cotton products">Cotton products</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-bold text-slate-700">CTA Button Text (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Shop Wholesale"
+                      value={bannerForm.cta}
+                      onChange={e => setBannerForm({ ...bannerForm, cta: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
+                    />
+                  </div>
                 </div>
               </div>
 
