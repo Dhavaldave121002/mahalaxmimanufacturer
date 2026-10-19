@@ -318,52 +318,52 @@ export const HomePage: React.FC = () => {
   return (
     <div className="space-y-12 pb-16">
       {/* ========================================================
-          1. HERO CAROUSEL: Amazon/Flipkart Premium Mega Banner
+          1. HERO CAROUSEL: Amazon/Flipkart Full-Width Mega Banner
           ======================================================== */}
-      <section className="relative bg-navy overflow-hidden text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          {(() => {
-            const currentHero = heroSlides[currentSlide] || heroSlides[0];
-            const hasOverlay = currentHero.showTextOverlay !== false && Boolean(
-              currentHero.title || currentHero.subtitle || currentHero.badge
-            );
+      <section className="relative w-full overflow-hidden text-white bg-navy-950">
+        {(() => {
+          const currentHero = heroSlides[currentSlide] || heroSlides[0];
+          const hasOverlay = currentHero.showTextOverlay !== false && Boolean(
+            currentHero.title || currentHero.subtitle || currentHero.badge
+          );
 
-            return (
-              <div className="relative rounded-3xl overflow-hidden shadow-premium bg-navy-900 border border-slate-700 min-h-[360px] sm:min-h-[460px] flex items-center">
-                {/* When no text overlay is needed, the entire banner image is an interactive direct link */}
-                {!hasOverlay && (
-                  <Link
-                    to={currentHero.ctaLink}
-                    className="absolute inset-0 z-10 cursor-pointer"
-                    title={currentHero.title || 'Special Promotion'}
-                  />
-                )}
+          return (
+            <div className="relative w-full overflow-hidden shadow-premium bg-navy-950 min-h-[380px] sm:min-h-[460px] lg:min-h-[500px] flex items-center">
+              {/* When no text overlay is needed, the entire banner image is an interactive direct link */}
+              {!hasOverlay && (
+                <Link
+                  to={currentHero.ctaLink}
+                  className="absolute inset-0 z-10 cursor-pointer"
+                  title={currentHero.title || 'Special Promotion'}
+                />
+              )}
 
-                {/* Background Image */}
-                <div className="absolute inset-0">
-                  <picture className="w-full h-full block">
-                    {currentHero.mobileImage && (
-                      <source media="(max-width: 640px)" srcSet={normalizeImageUrl(currentHero.mobileImage)} />
-                    )}
-                    <img
-                      src={normalizeImageUrl(currentHero.image)}
-                      alt={currentHero.title || 'Mahalaxmi Mill Promotion'}
-                      fetchPriority="high"
-                      decoding="async"
-                      className={`w-full h-full object-cover transition-opacity duration-700 ${
-                        hasOverlay ? 'opacity-85 sm:opacity-90' : 'opacity-100'
-                      }`}
-                    />
-                  </picture>
-                  {/* Subtle dark gradient overlay only when text overlay is actually active */}
-                  {hasOverlay && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-navy/95 via-navy/80 to-transparent"></div>
+              {/* Background Image - Spanning 100% full width edge-to-edge */}
+              <div className="absolute inset-0 w-full h-full">
+                <picture className="w-full h-full block">
+                  {currentHero.mobileImage && (
+                    <source media="(max-width: 640px)" srcSet={normalizeImageUrl(currentHero.mobileImage)} />
                   )}
-                </div>
-
-                {/* Content Container (Rendered ONLY when hasOverlay is true) */}
+                  <img
+                    src={normalizeImageUrl(currentHero.image)}
+                    alt={currentHero.title || 'Mahalaxmi Mill Promotion'}
+                    fetchPriority="high"
+                    decoding="async"
+                    className={`w-full h-full object-cover transition-opacity duration-700 ${
+                      hasOverlay ? 'opacity-85 sm:opacity-90' : 'opacity-100'
+                    }`}
+                  />
+                </picture>
+                {/* Subtle dark gradient overlay only when text overlay is actually active */}
                 {hasOverlay && (
-                  <div className="relative z-10 p-6 sm:p-12 max-w-2xl space-y-4">
+                  <div className="absolute inset-0 bg-gradient-to-r from-navy-950/95 via-navy-950/80 to-transparent"></div>
+                )}
+              </div>
+
+              {/* Content Container (Rendered ONLY when hasOverlay is true) */}
+              {hasOverlay && (
+                <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-12 py-10 sm:py-16">
+                  <div className="max-w-2xl space-y-4">
                     {currentHero.badge && (
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-champagne/20 border border-champagne/30 text-champagne text-xs font-black tracking-wide uppercase">
                         <Zap className="w-3.5 h-3.5 fill-current" />
@@ -413,56 +413,56 @@ export const HomePage: React.FC = () => {
                       </Link>
                     </div>
                   </div>
-                )}
-
-                {/* Carousel Navigation Arrows */}
-                <button
-                  onClick={e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
-                  }}
-                  aria-label="Previous hero banner slide"
-                  className="hidden sm:flex absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20"
-                  title="Previous slide"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-
-                <button
-                  onClick={e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setCurrentSlide(prev => (prev + 1) % heroSlides.length);
-                  }}
-                  aria-label="Next hero banner slide"
-                  className="hidden sm:flex absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20"
-                  title="Next slide"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-
-                {/* Dots Indicator */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
-                  {heroSlides.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={e => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setCurrentSlide(idx);
-                      }}
-                      aria-label={`Go to slide ${idx + 1}`}
-                      className={`h-2 rounded-full transition-all ${
-                        currentSlide === idx ? 'w-8 bg-champagne' : 'w-2 bg-white/40'
-                      }`}
-                    />
-                  ))}
                 </div>
+              )}
+
+              {/* Carousel Navigation Arrows */}
+              <button
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
+                }}
+                aria-label="Previous hero banner slide"
+                className="hidden sm:flex absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20 shadow-lg cursor-pointer"
+                title="Previous slide"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              <button
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrentSlide(prev => (prev + 1) % heroSlides.length);
+                }}
+                aria-label="Next hero banner slide"
+                className="hidden sm:flex absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20 shadow-lg cursor-pointer"
+                title="Next slide"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+
+              {/* Dots Indicator */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
+                {heroSlides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setCurrentSlide(idx);
+                    }}
+                    aria-label={`Go to slide ${idx + 1}`}
+                    className={`h-2 rounded-full transition-all cursor-pointer ${
+                      currentSlide === idx ? 'w-8 bg-champagne' : 'w-2 bg-white/40'
+                    }`}
+                  />
+                ))}
               </div>
-            );
-          })()}
-        </div>
+            </div>
+          );
+        })()}
       </section>
 
       {/* Commercial Perks & Bank Offers Strip (Amazon / Flipkart Pro style) */}
