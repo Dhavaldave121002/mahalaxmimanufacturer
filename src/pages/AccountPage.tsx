@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Address } from '../types';
@@ -99,7 +99,7 @@ export const AccountPage: React.FC = () => {
         fullName: enquiryForm.fullName || currentUser?.name || 'Valued Buyer',
         phone: enquiryForm.phone || currentUser?.phone || '',
         email: enquiryForm.email || currentUser?.email || '',
-        businessType: enquiryForm.businessType,
+        businessType: enquiryForm.businessType as any,
         city: enquiryForm.city,
         state: enquiryForm.state,
         expectedMonthlyVolume: enquiryForm.expectedMonthlyVolume,

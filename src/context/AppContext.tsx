@@ -14,7 +14,8 @@ import {
   AppNotification,
   AppSettings,
   MobileAppConfig,
-  CouponOffer
+  CouponOffer,
+  PaymentMethod
 } from '../types';
 import { INITIAL_PRODUCTS } from '../data/mockProducts';
 import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
@@ -101,7 +102,7 @@ interface AppContextType {
   // Orders
   orders: Order[];
   createOrder: (orderData: {
-    paymentMethod: 'UPI' | 'COD' | 'NET_BANKING' | 'CREDIT_30_DAYS';
+    paymentMethod: PaymentMethod;
     shippingAddress: Address;
     billingAddress: Address;
   }) => Order;
@@ -1586,7 +1587,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Create Order
   const createOrder = (orderData: {
-    paymentMethod: 'UPI' | 'COD' | 'NET_BANKING' | 'CREDIT_30_DAYS';
+    paymentMethod: PaymentMethod;
     shippingAddress: Address;
     billingAddress: Address;
   }): Order => {
