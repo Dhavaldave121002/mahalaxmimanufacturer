@@ -144,8 +144,20 @@
         "isDefault": true
       }
     ],
-    "walletBalance": 5036,
+    "walletBalance": 5000,
     "walletTransactions": [
+      {
+        "id": "wt-1792409477536-527",
+        "userId": "usr-admin",
+        "userEmail": "admin@mahalaxmienterprises.com",
+        "type": "ORDER_PAYMENT",
+        "amount": 36,
+        "description": "Redeemed 🪙 36 Points for Order #MLE-ORD-2026-52278",
+        "orderId": "ord-1792409477442",
+        "orderNumber": "MLE-ORD-2026-52278",
+        "balanceAfter": 5000,
+        "timestamp": "2026-10-19T11:31:17.536Z"
+      },
       {
         "id": "wt-1792408548294-71",
         "userId": "usr-admin",

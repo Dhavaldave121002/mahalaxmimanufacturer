@@ -122,7 +122,7 @@ export type OrderStatus =
   | 'EXCHANGE_APPROVED'
   | 'RETURN_REJECTED';
 
-export type PaymentMethod = 'RAZORPAY' | 'UPI' | 'COD' | 'NET_BANKING' | 'WALLET_POINTS' | 'CREDIT_30_DAYS';
+export type PaymentMethod = 'RAZORPAY' | 'UPI' | 'COD' | 'NET_BANKING' | 'WALLET_POINTS' | 'PARTIAL_POINTS_RAZORPAY' | 'PARTIAL_POINTS_COD' | 'CREDIT_30_DAYS';
 export type PaymentStatus = 'PAID' | 'PENDING' | 'REFUNDED' | 'CREDIT_APPROVED';
 
 export interface OrderItem {
@@ -163,6 +163,8 @@ export interface Order {
   discount: number;
   couponCode?: string;
   totalAmount: number;
+  pointsRedeemed?: number;
+  amountPaid?: number;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   status: OrderStatus;

@@ -116,6 +116,9 @@ interface AppContextType {
     paymentMethod: PaymentMethod;
     shippingAddress: Address;
     billingAddress: Address;
+    pointsRedeemed?: number;
+    amountPaid?: number;
+    timelineNote?: string;
   }) => Order;
   updateOrderStatus: (orderId: string, status: Order['status'], trackingNumber?: string, courierName?: string) => void;
   cancelOrder: (orderId: string, reason?: string) => Promise<{ success: boolean; message: string }>;
@@ -1721,6 +1724,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     paymentMethod: PaymentMethod;
     shippingAddress: Address;
     billingAddress: Address;
+    pointsRedeemed?: number;
+    amountPaid?: number;
+    timelineNote?: string;
   }): Order => {
     const orderNum = `MLE-ORD-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
 
@@ -1736,6 +1742,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       image: item.product.images[0],
       gstRate: item.product.gstRate
     }));
+
+    const pointsRedeemed = orderData.pointsRedeemed || 0;
+    const amountPaid = orderData.amountPaid !== undefined ? orderData.amountPaid : Math.max(0, cartTotal - pointsRedeemed);
+    const isCod = orderData.paymentMethod === 'COD' || orderData.paymentMethod === 'PARTIAL_POINTS_COD';
+
+    const defaultTimelineDesc = orderData.timelineNote || (
+      pointsRedeemed > 0
+        ? `Order booked. 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Mill Points redeemed (-₹${pointsRedeemed.toLocaleString('en-IN')}). Remaining balance ₹${amountPaid.toLocaleString('en-IN')} ${isCod ? 'payable on delivery (COD)' : 'paid via Razorpay'}.`
+        : 'Order placed successfully. Allocated to Mahalaxmi Surat Central Warehouse.'
+    );
 
     const newOrder: Order = {
       id: `ord-${Date.now()}`,
@@ -1757,8 +1773,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       discount: couponDiscount,
       couponCode: appliedCoupon || undefined,
       totalAmount: cartTotal,
+      pointsRedeemed,
+      amountPaid,
       paymentMethod: orderData.paymentMethod,
-      paymentStatus: orderData.paymentMethod === 'COD' ? 'PENDING' : 'PAID',
+      paymentStatus: isCod ? 'PENDING' : 'PAID',
       status: 'PLACED',
       shippingAddress: orderData.shippingAddress,
       billingAddress: orderData.billingAddress,
@@ -1767,7 +1785,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         {
           status: 'PLACED',
           timestamp: new Date().toISOString(),
-          description: 'Order placed successfully. Allocated to Mahalaxmi Surat Central Warehouse.'
+          description: defaultTimelineDesc
         }
       ]
     };

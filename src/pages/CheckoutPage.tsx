@@ -61,9 +61,16 @@ export const CheckoutPage: React.FC = () => {
     addressType: isB2B ? 'COMMERCIAL' : 'HOME'
   });
 
-  // Payment Method
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('RAZORPAY');
+  // Payment Method & Mill Points State
+  const userWalletBalance = currentUser.walletBalance || 0;
+  const [applyPoints, setApplyPoints] = useState<boolean>(userWalletBalance > 0);
+  const [secondaryPaymentMethod, setSecondaryPaymentMethod] = useState<'RAZORPAY' | 'COD'>('RAZORPAY');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Compute points and payable balance
+  const pointsRedeemed = applyPoints ? Math.min(userWalletBalance, cartTotal) : 0;
+  const remainingPayable = Math.max(0, cartTotal - pointsRedeemed);
+  const isFullyCoveredByPoints = pointsRedeemed > 0 && remainingPayable === 0;
 
   // Address to use
   const activeAddress = currentUser.addresses[selectedAddressIndex] || {
@@ -135,8 +142,28 @@ export const CheckoutPage: React.FC = () => {
       });
     }
 
-    // A. RAZORPAY ONLINE GATEWAY PAYMENT FLOW
-    if (paymentMethod === 'RAZORPAY') {
+    // A. 100% PAID VIA MILL POINTS WALLET (₹0 Remaining)
+    if (isFullyCoveredByPoints) {
+      setIsSubmitting(true);
+      setTimeout(async () => {
+        const order = createOrder({
+          paymentMethod: 'WALLET_POINTS',
+          shippingAddress: activeAddress,
+          billingAddress: activeAddress,
+          pointsRedeemed: pointsRedeemed,
+          amountPaid: 0,
+          timelineNote: `Order 100% fully paid using 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Mill Points. Allocated to Surat warehouse.`
+        });
+
+        await redeemWalletPoints(pointsRedeemed, order.orderNumber, order.id);
+        setIsSubmitting(false);
+        navigate(`/orders?success=${order.id}`);
+      }, 700);
+      return;
+    }
+
+    // B. RAZORPAY PAYMENT (Pay remainingPayable online via UPI/Cards/NetBanking)
+    if (secondaryPaymentMethod === 'RAZORPAY') {
       setIsSubmitting(true);
       const razorpayKey = (import.meta as any).env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TXxnGK4dKMgIdA';
 
@@ -148,10 +175,12 @@ export const CheckoutPage: React.FC = () => {
 
       const options = {
         key: razorpayKey,
-        amount: Math.round(cartTotal * 100), // Amount in paise
+        amount: Math.round(remainingPayable * 100), // Amount in paise
         currency: 'INR',
         name: 'Mahalaxmi Enterprises',
-        description: `Consignment Payment - ${cart.length} items (Surat Direct Mill)`,
+        description: pointsRedeemed > 0
+          ? `Consignment Payment - ₹${remainingPayable.toLocaleString('en-IN')} (🪙 ${pointsRedeemed.toLocaleString('en-IN')} Points Redeemed)`
+          : `Consignment Payment - ${cart.length} items (Surat Direct Mill)`,
         image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=160&auto=format&fit=crop&q=80',
         prefill: {
           name: activeAddress.fullName || currentUser.name || 'Valued Buyer',
@@ -162,18 +191,28 @@ export const CheckoutPage: React.FC = () => {
           order_source: 'WEBSITE_CHECKOUT',
           b2b_buyer: isB2B ? 'YES' : 'NO',
           gst_number: gstNumber || 'N/A',
-          company_name: companyName || 'N/A'
+          company_name: companyName || 'N/A',
+          points_redeemed: pointsRedeemed > 0 ? String(pointsRedeemed) : '0',
+          net_payable: String(remainingPayable)
         },
         theme: {
           color: '#312E81' // Luxury Navy/Indigo Brand Theme
         },
-        handler: function (response: any) {
+        handler: async function (response: any) {
           console.log('[Razorpay Live Success]', response);
           const order = createOrder({
-            paymentMethod: 'RAZORPAY',
+            paymentMethod: pointsRedeemed > 0 ? 'PARTIAL_POINTS_RAZORPAY' : 'RAZORPAY',
             shippingAddress: activeAddress,
-            billingAddress: activeAddress
+            billingAddress: activeAddress,
+            pointsRedeemed: pointsRedeemed,
+            amountPaid: remainingPayable
           });
+
+          // Deduct points from wallet if applied
+          if (pointsRedeemed > 0) {
+            await redeemWalletPoints(pointsRedeemed, order.orderNumber, order.id);
+          }
+
           setIsSubmitting(false);
           navigate(`/orders?success=${order.id}&payment_id=${response.razorpay_payment_id || ''}`);
         },
@@ -195,31 +234,33 @@ export const CheckoutPage: React.FC = () => {
       } catch (err: any) {
         console.error('Razorpay invocation error:', err);
         setIsSubmitting(false);
-        alert('Could not launch payment gateway. Please select UPI or Cash on Delivery.');
+        alert('Could not launch payment gateway. Please select Cash on Delivery.');
       }
       return;
     }
 
-    // B. NON-RAZORPAY FLOW (WALLET_POINTS, UPI, NET_BANKING, COD)
+    // C. COD FLOW (Pay remainingPayable in cash/UPI upon delivery)
     setIsSubmitting(true);
     setTimeout(async () => {
       const order = createOrder({
-        paymentMethod,
+        paymentMethod: pointsRedeemed > 0 ? 'PARTIAL_POINTS_COD' : 'COD',
         shippingAddress: activeAddress,
-        billingAddress: activeAddress
+        billingAddress: activeAddress,
+        pointsRedeemed: pointsRedeemed,
+        amountPaid: remainingPayable,
+        timelineNote: pointsRedeemed > 0
+          ? `Order booked with partial points. 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Mill Points deducted. Remaining ₹${remainingPayable.toLocaleString('en-IN')} to be collected on delivery.`
+          : 'Order placed successfully under Cash on Delivery. Dispatched from Surat Central Warehouse.'
       });
 
-      // If paying with Wallet Points, redeem the points from the user's ledger
-      if (paymentMethod === 'WALLET_POINTS') {
-        const pointsToRedeem = Math.min(currentUser.walletBalance || 0, cartTotal);
-        if (pointsToRedeem > 0) {
-          await redeemWalletPoints(pointsToRedeem, order.orderNumber, order.id);
-        }
+      // Deduct points immediately so balance cannot be double-spent
+      if (pointsRedeemed > 0) {
+        await redeemWalletPoints(pointsRedeemed, order.orderNumber, order.id);
       }
 
       setIsSubmitting(false);
       navigate(`/orders?success=${order.id}`);
-    }, 1000);
+    }, 800);
   };
 
   return (
@@ -441,111 +482,202 @@ export const CheckoutPage: React.FC = () => {
             )}
           </div>
 
-          {/* Step 3: Payment Method Selection */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-subtle space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center">
-                3
-              </span>
-              <h3 className="font-extrabold text-sm text-navy">Payment Method</h3>
+          {/* Step 3: Mill Points Wallet & Payment Method Selection */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-subtle space-y-5">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center">
+                  3
+                </span>
+                <h3 className="font-extrabold text-sm text-navy">Payment & Points Redemption</h3>
+              </div>
+              <Badge variant="outline" size="sm" className="font-mono text-[10px]">
+                1 Mill Point = ₹1.00
+              </Badge>
             </div>
 
-            <div className="space-y-3">
-              {/* Razorpay Live Gateway (Cards, UPI, NetBanking, Wallets) */}
-              <label
-                onClick={() => setPaymentMethod('RAZORPAY')}
-                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
-                  paymentMethod === 'RAZORPAY'
-                    ? 'border-indigo bg-indigo-light/50 ring-2 ring-indigo shadow-sm'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-indigo text-white rounded-xl shadow-sm">
-                    <ShieldCheck className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-black text-navy">Pay via Razorpay Secure (Live)</p>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">RECOMMENDED</span>
-                    </div>
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      Credit/Debit Cards, Google Pay, PhonePe, Paytm, NetBanking & Corporate Credit Lines
-                    </p>
-                  </div>
-                </div>
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentMethod === 'RAZORPAY'}
-                  onChange={() => setPaymentMethod('RAZORPAY')}
-                  className="accent-indigo w-4 h-4"
-                />
-              </label>
-
-              {/* COD Option */}
-              <label
-                onClick={() => setPaymentMethod('COD')}
-                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
-                  paymentMethod === 'COD'
-                    ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo'
-                    : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo/10 text-indigo rounded-lg">
-                    <Truck className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-navy">Cash on Delivery (COD)</p>
-                    <p className="text-[10px] text-slate-500">Pay cash or UPI upon delivery at your doorstep</p>
-                  </div>
-                </div>
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentMethod === 'COD'}
-                  onChange={() => setPaymentMethod('COD')}
-                  className="accent-indigo"
-                />
-              </label>
-
-              {/* Mahalaxmi Mill Points Wallet Option (1 Point = ₹1) */}
-              <label
-                onClick={() => setPaymentMethod('WALLET_POINTS')}
-                className={`p-4 rounded-xl border flex items-center justify-between transition ${
-                  paymentMethod === 'WALLET_POINTS'
-                    ? 'border-indigo bg-indigo-50/70 ring-2 ring-indigo cursor-pointer'
-                    : 'border-slate-200 hover:bg-slate-50 cursor-pointer'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-champagne text-navy flex items-center justify-center font-black text-base shadow-sm">
+            {/* Mill Points Wallet Redemption Box */}
+            <div className={`p-4 rounded-xl border transition ${
+              userWalletBalance > 0
+                ? applyPoints
+                  ? 'bg-amber-50/60 border-amber-300 ring-1 ring-amber-400'
+                  : 'bg-slate-50 border-slate-200'
+                : 'bg-slate-50/70 border-slate-200 opacity-80'
+            }`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-champagne text-navy flex items-center justify-center font-black text-xl shadow-sm shrink-0">
                     🪙
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-bold text-navy">Pay with Mill Points Wallet</p>
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
-                        Available: 🪙 {(currentUser.walletBalance || 0).toLocaleString('en-IN')} Points (₹{(currentUser.walletBalance || 0).toLocaleString('en-IN')})
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs font-extrabold text-navy">Mahalaxmi Mill Points Wallet</p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        userWalletBalance > 0
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : 'bg-slate-200 text-slate-600 border-slate-300'
+                      }`}>
+                        Available: 🪙 {userWalletBalance.toLocaleString('en-IN')} Points (₹{userWalletBalance.toLocaleString('en-IN')})
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      {(currentUser.walletBalance || 0) >= cartTotal
-                        ? '✓ 100% full order amount covered by your available points balance!'
-                        : `Points cover ₹${Math.min(currentUser.walletBalance || 0, cartTotal)}, balance payable via UPI/Cash.`}
-                    </p>
+
+                    {userWalletBalance > 0 ? (
+                      <div className="mt-2 space-y-1">
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={applyPoints}
+                            onChange={e => setApplyPoints(e.target.checked)}
+                            className="w-4 h-4 text-indigo rounded focus:ring-indigo accent-indigo cursor-pointer"
+                          />
+                          <span className="text-xs font-bold text-navy">
+                            Redeem Mill Points on this order
+                          </span>
+                          {applyPoints && (
+                            <span className="text-[11px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-300">
+                              -₹{pointsRedeemed.toLocaleString('en-IN')} Instant Cut
+                            </span>
+                          )}
+                        </label>
+
+                        {applyPoints && (
+                          <p className="text-[11px] text-slate-600 pl-6 leading-relaxed">
+                            {userWalletBalance < cartTotal ? (
+                              <span>
+                                🪙 <span className="font-bold text-navy">{pointsRedeemed.toLocaleString('en-IN')} points</span> will be cut directly from your wallet balance. You can pay the remaining <span className="font-bold text-indigo">₹{remainingPayable.toLocaleString('en-IN')}</span> via Razorpay or Cash on Delivery below!
+                              </span>
+                            ) : (
+                              <span className="text-emerald-700 font-semibold">
+                                ✓ Excellent! Your available points balance covers 100% of this order total. No cash or card required!
+                              </span>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        You have 0 Mill Points. Points are automatically credited from refunds and promotional rewards.
+                      </p>
+                    )}
                   </div>
                 </div>
-                <input
-                  type="radio"
-                  name="payment"
-                  checked={paymentMethod === 'WALLET_POINTS'}
-                  onChange={() => setPaymentMethod('WALLET_POINTS')}
-                  className="accent-indigo w-4 h-4"
-                />
-              </label>
+
+                {userWalletBalance > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setApplyPoints(!applyPoints)}
+                    className="text-[11px] font-bold text-indigo hover:underline shrink-0"
+                  >
+                    {applyPoints ? 'Remove' : 'Apply Points'}
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* 100% Points Covered Banner */}
+            {isFullyCoveredByPoints ? (
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-1">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <p className="text-xs font-extrabold text-emerald-950">
+                    100% Covered by Mill Points (₹0 Cash / Online Payment Required)
+                  </p>
+                </div>
+                <p className="text-[11px] text-emerald-700 pl-7">
+                  All 🪙 {pointsRedeemed.toLocaleString('en-IN')} Points will be deducted directly from your account upon confirmation. Simply click Confirm below to book your order!
+                </p>
+              </div>
+            ) : (
+              /* Payment Options for Remaining Amount (or Full amount if points not used) */
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-extrabold text-navy">
+                    {pointsRedeemed > 0
+                      ? `Select Payment Method for Remaining Balance: ₹${remainingPayable.toLocaleString('en-IN')}`
+                      : 'Select Payment Method'}
+                  </p>
+                  {pointsRedeemed > 0 && (
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                      🪙 {pointsRedeemed.toLocaleString('en-IN')} Points Cut
+                    </span>
+                  )}
+                </div>
+
+                {/* Razorpay Live Gateway (Cards, UPI, NetBanking, Wallets) */}
+                <label
+                  onClick={() => setSecondaryPaymentMethod('RAZORPAY')}
+                  className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                    secondaryPaymentMethod === 'RAZORPAY'
+                      ? 'border-indigo bg-indigo-light/50 ring-2 ring-indigo shadow-sm'
+                      : 'border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-indigo text-white rounded-xl shadow-sm">
+                      <ShieldCheck className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-black text-navy">
+                          Pay ₹{remainingPayable.toLocaleString('en-IN')} via Razorpay Secure (Live)
+                        </p>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                          INSTANT UPI / CARDS
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        Credit/Debit Cards, Google Pay, PhonePe, Paytm, NetBanking & Corporate Credit Lines
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="radio"
+                    name="secondaryPayment"
+                    checked={secondaryPaymentMethod === 'RAZORPAY'}
+                    onChange={() => setSecondaryPaymentMethod('RAZORPAY')}
+                    className="accent-indigo w-4 h-4"
+                  />
+                </label>
+
+                {/* COD Option */}
+                <label
+                  onClick={() => setSecondaryPaymentMethod('COD')}
+                  className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                    secondaryPaymentMethod === 'COD'
+                      ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo'
+                      : 'border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo/10 text-indigo rounded-lg">
+                      <Truck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-navy">
+                          Cash on Delivery (COD) - Pay ₹{remainingPayable.toLocaleString('en-IN')}
+                        </p>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                          DOORSTEP
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        {pointsRedeemed > 0
+                          ? `🪙 ${pointsRedeemed.toLocaleString('en-IN')} points deducted now, remaining ₹${remainingPayable.toLocaleString('en-IN')} to be collected upon doorstep delivery.`
+                          : 'Pay cash or UPI upon delivery at your doorstep'}
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="radio"
+                    name="secondaryPayment"
+                    checked={secondaryPaymentMethod === 'COD'}
+                    onChange={() => setSecondaryPaymentMethod('COD')}
+                    className="accent-indigo w-4 h-4"
+                  />
+                </label>
+              </div>
+            )}
           </div>
         </div>
 
@@ -604,10 +736,30 @@ export const CheckoutPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="pt-3 border-t border-slate-200 flex justify-between items-baseline text-navy">
-                <span className="text-sm font-bold">Total Amount to Pay:</span>
-                <span className="text-2xl font-black text-indigo">
+              <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline text-slate-700">
+                <span className="text-xs font-bold">Total Order Value:</span>
+                <span className="text-sm font-bold text-navy">
                   ₹{cartTotal.toLocaleString('en-IN')}
+                </span>
+              </div>
+
+              {/* Points Deduction Line */}
+              {pointsRedeemed > 0 && (
+                <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
+                  <span className="font-bold flex items-center gap-1">
+                    <span>🪙</span> Mill Points Cut ({pointsRedeemed.toLocaleString('en-IN')} Pts):
+                  </span>
+                  <span className="font-black text-sm">-₹{pointsRedeemed.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+
+              {/* Net Payable Amount */}
+              <div className="pt-2 border-t border-slate-200 flex justify-between items-baseline text-navy">
+                <span className="text-sm font-bold">
+                  {pointsRedeemed > 0 ? 'Remaining Amount to Pay:' : 'Total Amount to Pay:'}
+                </span>
+                <span className="text-2xl font-black text-indigo">
+                  ₹{remainingPayable.toLocaleString('en-IN')}
                 </span>
               </div>
             </div>
@@ -627,10 +779,26 @@ export const CheckoutPage: React.FC = () => {
                   <Clock className="w-4 h-4 animate-spin" />
                   <span>Processing Order & GST Invoice...</span>
                 </>
-              ) : (
+              ) : isFullyCoveredByPoints ? (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Confirm & Place Order (₹{cartTotal.toLocaleString('en-IN')})</span>
+                  <span>Confirm Order with 🪙 {pointsRedeemed.toLocaleString('en-IN')} Points (₹0 to Pay)</span>
+                </>
+              ) : secondaryPaymentMethod === 'RAZORPAY' ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>
+                    Pay ₹{remainingPayable.toLocaleString('en-IN')} via Razorpay
+                    {pointsRedeemed > 0 ? ` (🪙 ${pointsRedeemed.toLocaleString('en-IN')} Pts Cut)` : ''}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Truck className="w-4 h-4" />
+                  <span>
+                    Confirm COD Order (Pay ₹{remainingPayable.toLocaleString('en-IN')} on Delivery
+                    {pointsRedeemed > 0 ? ` + 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Pts Cut` : ''})
+                  </span>
                 </>
               )}
             </button>
@@ -642,7 +810,9 @@ export const CheckoutPage: React.FC = () => {
                 `Name: ${activeAddress.fullName} (${activeAddress.phone})\n` +
                 `Delivery Address: ${activeAddress.street}, ${activeAddress.city}, ${activeAddress.state} - ${activeAddress.pincode}\n` +
                 (isB2B && gstNumber ? `Company: ${companyName} | GSTIN: ${gstNumber}\n` : '') +
-                `Total Amount: ₹${cartTotal} (Payment Mode: ${paymentMethod})\n\nPlease confirm dispatch from Surat Mill.`
+                `Total Order: ₹${cartTotal}\n` +
+                (pointsRedeemed > 0 ? `Points Cut: 🪙 ${pointsRedeemed} (-₹${pointsRedeemed})\n` : '') +
+                `Net Payable: ₹${remainingPayable} (Payment Mode: ${isFullyCoveredByPoints ? 'Mill Points 100%' : secondaryPaymentMethod})\n\nPlease confirm dispatch from Surat Mill.`
               )}`}
               target="_blank"
               rel="noreferrer"

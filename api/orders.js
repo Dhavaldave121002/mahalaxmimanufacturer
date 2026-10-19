@@ -191,12 +191,22 @@ export default async function handler(req, res) {
 
     const subtotal = Number(o.subtotal || o.totalAmount || 0);
     const totalAmount = Number(o.totalAmount || o.subtotal || 0);
-    const paymentMethod = ['UPI', 'COD', 'NET_BANKING', 'CREDIT_30_DAYS'].includes(o.paymentMethod)
+    const paymentMethod = [
+      'RAZORPAY',
+      'UPI',
+      'COD',
+      'NET_BANKING',
+      'WALLET_POINTS',
+      'PARTIAL_POINTS_RAZORPAY',
+      'PARTIAL_POINTS_COD',
+      'CREDIT_30_DAYS'
+    ].includes(o.paymentMethod)
       ? o.paymentMethod
-      : 'UPI';
+      : 'RAZORPAY';
+    const isCod = paymentMethod === 'COD' || paymentMethod === 'PARTIAL_POINTS_COD';
     const paymentStatus = ['PAID', 'PENDING', 'REFUNDED', 'CREDIT_APPROVED'].includes(o.paymentStatus)
       ? o.paymentStatus
-      : paymentMethod === 'COD'
+      : isCod
       ? 'PENDING'
       : 'PAID';
     const status = o.status || 'PLACED';
