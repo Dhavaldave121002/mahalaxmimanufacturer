@@ -11,8 +11,6 @@ import {
   Truck,
   Building2,
   Users,
-  Hotel,
-  Home,
   CheckCircle2,
   Send,
   Layers,
@@ -108,11 +106,6 @@ export const HomePage: React.FC = () => {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  // Selected persona tab for "Shop by Business Need"
-  const [selectedBusinessNeed, setSelectedBusinessNeed] = useState<
-    'hotels' | 'retailers' | 'resellers' | 'institutions' | 'home'
-  >('hotels');
 
   const [calcQuantity, setCalcQuantity] = useState<number>(100);
   const [calcItem, setCalcItem] = useState<'bedsheet' | 'towel' | 'microfiber'>('bedsheet');
@@ -354,9 +347,12 @@ export const HomePage: React.FC = () => {
                     }`}
                   />
                 </picture>
-                {/* Subtle dark gradient overlay only when text overlay is actually active */}
+                {/* Deep dark gradient overlay ensuring 100% text legibility on both light and dark images */}
                 {hasOverlay && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-navy-950/95 via-navy-950/80 to-transparent"></div>
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 md:via-slate-950/65 to-transparent pointer-events-none"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none"></div>
+                  </>
                 )}
               </div>
 
@@ -365,28 +361,30 @@ export const HomePage: React.FC = () => {
                 <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-12 py-10 sm:py-16">
                   <div className="max-w-2xl space-y-4">
                     {currentHero.badge && (
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-champagne/20 border border-champagne/30 text-champagne text-xs font-black tracking-wide uppercase">
-                        <Zap className="w-3.5 h-3.5 fill-current" />
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-champagne/40 text-champagne text-xs font-black tracking-wide uppercase shadow-sm">
+                        <Zap className="w-3.5 h-3.5 fill-current text-champagne" />
                         <span>{currentHero.badge}</span>
                       </div>
                     )}
 
                     {currentHero.title && (
-                      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight">
+                      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
                         {currentHero.title}
                       </h1>
                     )}
 
                     {currentHero.subtitle && (
-                      <p className="text-sm sm:text-base text-slate-300 leading-relaxed font-medium">
+                      <p className="text-sm sm:text-base text-slate-100 leading-relaxed font-semibold drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
                         {currentHero.subtitle}
                       </p>
                     )}
 
                     {currentHero.tagline && (
                       <div className="pt-2 flex items-baseline gap-3">
-                        <span className="text-xs text-slate-300 uppercase tracking-wider font-bold">Featured Pricing:</span>
-                        <span className="text-xl sm:text-2xl font-black text-champagne">
+                        <span className="text-xs text-slate-200 uppercase tracking-wider font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                          Featured Pricing:
+                        </span>
+                        <span className="text-xl sm:text-2xl font-black text-champagne drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
                           {currentHero.tagline}
                         </span>
                       </div>
@@ -406,7 +404,7 @@ export const HomePage: React.FC = () => {
 
                       <Link
                         to="/wholesale"
-                        className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2"
+                        className="px-6 py-3.5 bg-slate-900/70 hover:bg-slate-900/90 backdrop-blur-md text-white border border-white/30 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2 shadow-sm"
                       >
                         <Building2 className="w-4 h-4 text-champagne" />
                         <span>Request Mill RFQ</span>
@@ -1149,190 +1147,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ========================================================
-          7. SHOP BY BUSINESS NEED
-          ======================================================== */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="text-center max-w-2xl mx-auto mb-8">
-          <Badge variant="primary" size="sm" className="mb-2">
-            TAILORED PROCUREMENT
-          </Badge>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-navy tracking-tight">
-            Shop by Business Need
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Custom-built supply terms, packaging specifications, and pricing matrices designed for your sector.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-2 mb-8">
-          {[
-            { id: 'hotels', label: 'Hotels & Resorts', icon: Hotel },
-            { id: 'retailers', label: 'Retailers & Showrooms', icon: Building2 },
-            { id: 'resellers', label: 'Resellers & D2C Brands', icon: Users },
-            { id: 'institutions', label: 'Hospitals & Institutions', icon: ShieldCheck },
-            { id: 'home', label: 'Savvy Home Buyers', icon: Home }
-          ].map(tab => {
-            const Icon = tab.icon;
-            const active = selectedBusinessNeed === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setSelectedBusinessNeed(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition shadow-sm ${
-                  active
-                    ? 'bg-navy text-white shadow-subtle'
-                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${active ? 'text-champagne' : 'text-slate-400'}`} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-subtle grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div className="lg:col-span-7 space-y-4">
-            {selectedBusinessNeed === 'hotels' && (
-              <>
-                <h3 className="text-xl font-bold text-navy">
-                  Hospitality Linen & Bath Solutions (3★ to 5★ Standards)
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  High-durability 300 & 400 TC percale bedsheets, zero-twist 600 GSM bath sheets, and stain-resistant banquet table linen tested for 500+ commercial wash cycles in industrial laundry plants.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="font-bold text-navy">Custom Embroidery</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Hotel crest weaving on towels and duvet corners</p>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="font-bold text-navy">30-Day Credit Terms</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Approved credit accounts for hospitality groups</p>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {selectedBusinessNeed === 'retailers' && (
-              <>
-                <h3 className="text-xl font-bold text-navy">
-                  Textile Retailers & Fabric Showrooms
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Maximize store profit margins with direct mill rates on packaged bedsheets, curtains, and cotton towels. Fast 48-hour dispatch so you can maintain lean inventory without tying up capital.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="font-bold text-navy">Display-Ready Packaging</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Attractive retail photo-card box packaging</p>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="font-bold text-navy">Low MOQ of 10 Pcs</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Test multiple colors & designs with minimal risk</p>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {selectedBusinessNeed === 'resellers' && (
-              <>
-                <h3 className="text-xl font-bold text-navy">
-                  Online Resellers, Boutiques & D2C Brands
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Source unbranded and white-label cotton goods with high-definition digital asset packs ready for your marketplace listings. High repeat purchase rates and low returns.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="font-bold text-navy">High-Resolution Photos</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Free product photography & listing specs provided</p>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="font-bold text-navy">Bulk Drop-Freight</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Direct dispatch to Amazon / Flipkart fulfillment centers</p>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {selectedBusinessNeed === 'institutions' && (
-              <>
-                <h3 className="text-xl font-bold text-navy">
-                  Hospitals, Healthcare Facilities & Boarding Schools
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Heavy-duty chlorine-resistant patient linen, hospital draw sheets, color-coded 350 GSM microfiber sanitizing cloths, and industrial kitchen aprons.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="font-bold text-navy">Thermal Autoclave Safe</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Withstands 90°C high-temperature sterilization</p>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="font-bold text-navy">Tender Rate Contracts</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Fixed 12-month supply pricing agreements</p>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {selectedBusinessNeed === 'home' && (
-              <>
-                <h3 className="text-xl font-bold text-navy">
-                  Direct Mill Savings for Home Buyers
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Why pay 2x to 3x retail showroom markups? Get luxury 300 TC pure cotton bedsheets and 600 GSM spa towels delivered to your doorstep at direct factory rates.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="font-bold text-navy">Free Home Delivery</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Complimentary shipping on orders above ₹1,499</p>
-                  </div>
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="font-bold text-navy">Cash on Delivery (COD)</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Available across 19,000+ Indian pincodes</p>
-                  </div>
-                </div>
-              </>
-            )}
-
-            <div className="pt-2">
-              <Link
-                to="/catalog"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-navy hover:bg-navy-800 text-white rounded-xl text-xs font-bold transition"
-              >
-                <span>Browse Curated Catalog for this Sector</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="lg:col-span-5">
-            <div className="aspect-[4/3] rounded-3xl overflow-hidden border border-slate-200 shadow-subtle">
-              <img
-                src={
-                  selectedBusinessNeed === 'hotels'
-                    ? 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=800&auto=format&fit=crop'
-                    : selectedBusinessNeed === 'retailers'
-                    ? 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=800&auto=format&fit=crop'
-                    : selectedBusinessNeed === 'resellers'
-                    ? 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop'
-                    : selectedBusinessNeed === 'institutions'
-                    ? 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=800&auto=format&fit=crop'
-                    : 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=800&auto=format&fit=crop'
-                }
-                alt="Business Need Showcase"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================
-          8. CUSTOMER PROOF / REPUTATION CAROUSEL SLIDER
+          7. CUSTOMER PROOF / REPUTATION CAROUSEL SLIDER
           ======================================================== */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6">
         <div 
