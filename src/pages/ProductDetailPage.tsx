@@ -503,8 +503,66 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* Quantity Selector & Purchase Buttons Row */}
+          {/* Commercial Sample & Purchase Buttons Section */}
           <div className="space-y-4 pt-2 border-t border-slate-100">
+            {/* Commercial Sample & Sample Bundle Procurement Suite */}
+            <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-amber-50/90 border border-amber-200/90 rounded-2xl space-y-3 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                <span className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
+                  <PackageCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                  B2B Quality Testing & Sample Evaluation
+                </span>
+                <span className="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-full self-start sm:self-auto">
+                  100% Rebate Guaranteed
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 leading-relaxed">
+                Test fabric hand-feel, GSM weave weight, and wash durability before booking wholesale consignments. Sample costs are credited back 100% on your next bulk order:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleOrderSamplePiece}
+                  className="w-full p-2.5 bg-white hover:bg-amber-100/70 border border-amber-300 text-navy rounded-xl font-bold text-xs transition flex items-center gap-2.5 shadow-sm text-left group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 shrink-0 group-hover:bg-amber-200 transition">
+                    <Package className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-navy text-xs truncate">Order 1-Pc Sample</div>
+                    <div className="text-[10px] text-slate-500 font-normal">₹{product.retailPrice} • MOQ Bypassed</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleOrderSampleBundle}
+                  className="w-full p-2.5 bg-white hover:bg-indigo-50/80 border border-indigo-300 text-navy rounded-xl font-bold text-xs transition flex items-center gap-2.5 shadow-sm text-left group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo shrink-0 group-hover:bg-indigo-100 transition">
+                    <Boxes className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-navy text-xs truncate">Order Sample Bundle</div>
+                    <div className="text-[10px] text-slate-500 font-normal">₹299 • 12 Swatches + 4 Minis</div>
+                  </div>
+                </button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[10px] text-amber-900 font-medium pt-0.5 gap-1">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  Includes official Mill GSM Certification
+                </span>
+                <Link
+                  to={`/wholesale?sku=${product.sku}&product=${encodeURIComponent(product.name)}`}
+                  className="text-indigo font-bold hover:underline"
+                >
+                  Need 500+ Units? RFQ →
+                </Link>
+              </div>
+            </div>
+
             {/* Purchase Action Row: Quantity + Add to Cart + Buy Now */}
             <div id="main-product-actions" className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               {/* Quantity Selector */}
@@ -572,64 +630,6 @@ export const ProductDetailPage: React.FC = () => {
                 <Zap className="w-4 h-4 shrink-0" />
                 <span>Buy Now • Fast Checkout</span>
               </button>
-            </div>
-
-            {/* Commercial Sample & Sample Bundle Procurement Suite */}
-            <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-amber-50/90 border border-amber-200/90 rounded-2xl space-y-3 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                <span className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
-                  <PackageCheck className="w-4 h-4 text-amber-600 shrink-0" />
-                  B2B Quality Testing & Sample Evaluation
-                </span>
-                <span className="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-full self-start sm:self-auto">
-                  100% Rebate Guaranteed
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Test fabric hand-feel, GSM weave weight, and wash durability before booking wholesale consignments. Sample costs are credited back 100% on your next bulk order:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={handleOrderSamplePiece}
-                  className="w-full p-2.5 bg-white hover:bg-amber-100/70 border border-amber-300 text-navy rounded-xl font-bold text-xs transition flex items-center gap-2.5 shadow-sm text-left group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 shrink-0 group-hover:bg-amber-200 transition">
-                    <Package className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-bold text-navy text-xs truncate">Order 1-Pc Sample</div>
-                    <div className="text-[10px] text-slate-500 font-normal">₹{product.retailPrice} • MOQ Bypassed</div>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleOrderSampleBundle}
-                  className="w-full p-2.5 bg-white hover:bg-indigo-50/80 border border-indigo-300 text-navy rounded-xl font-bold text-xs transition flex items-center gap-2.5 shadow-sm text-left group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo shrink-0 group-hover:bg-indigo-100 transition">
-                    <Boxes className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-bold text-navy text-xs truncate">Order Sample Bundle</div>
-                    <div className="text-[10px] text-slate-500 font-normal">₹299 • 12 Swatches + 4 Minis</div>
-                  </div>
-                </button>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[10px] text-amber-900 font-medium pt-0.5 gap-1">
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  Includes official Mill GSM Certification
-                </span>
-                <Link
-                  to={`/wholesale?sku=${product.sku}&product=${encodeURIComponent(product.name)}`}
-                  className="text-indigo font-bold hover:underline"
-                >
-                  Need 500+ Units? RFQ →
-                </Link>
-              </div>
             </div>
 
             {/* Wishlist & WhatsApp Quick Action Row */}
