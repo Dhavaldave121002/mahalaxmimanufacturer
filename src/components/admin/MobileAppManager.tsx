@@ -131,6 +131,7 @@ export const MobileAppManager: React.FC = () => {
     cta: string;
     ctaLink?: string;
     image: string;
+    mobileImage?: string;
     gradientFrom: string;
     gradientVia: string;
     gradientTo: string;
@@ -148,6 +149,7 @@ export const MobileAppManager: React.FC = () => {
     cta: 'Shop Wholesale',
     ctaLink: '/catalog',
     image: 'assets/images/banner_home_kitchen.jpg',
+    mobileImage: '',
     gradientFrom: '#0F172A',
     gradientVia: '#1E293B',
     gradientTo: '#334155',
@@ -194,6 +196,7 @@ export const MobileAppManager: React.FC = () => {
       cta: 'Explore Mill Catalog',
       ctaLink: '/catalog',
       image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop',
+      mobileImage: '',
       gradientFrom: '#1E1B4B',
       gradientVia: '#312E81',
       gradientTo: '#4338CA',
@@ -217,6 +220,7 @@ export const MobileAppManager: React.FC = () => {
       cta: b.cta,
       ctaLink: b.ctaLink || '/catalog',
       image: b.image,
+      mobileImage: b.mobileImage || '',
       gradientFrom: b.gradientFrom,
       gradientVia: b.gradientVia || '#1E293B',
       gradientTo: b.gradientTo,
@@ -1621,7 +1625,10 @@ export const MobileAppManager: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700">Asset or Image URL</label>
+                <label className="font-bold text-slate-700 flex items-center justify-between">
+                  <span>🖥️ Desktop Web Banner Image URL</span>
+                  <span className="text-[10px] text-slate-400 font-mono">1920 × 600 px (16:9)</span>
+                </label>
                 <input
                   type="text"
                   value={bannerForm.image}
@@ -1629,6 +1636,26 @@ export const MobileAppManager: React.FC = () => {
                   placeholder="assets/images/banner_textile.jpg or https://..."
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1 font-mono text-[11px]"
                 />
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  📐 Recommended Desktop Size: 1920 x 600 px (Wide landscape)
+                </p>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 flex items-center justify-between">
+                  <span>📱 Mobile Screen & App Banner Image URL (Optional)</span>
+                  <span className="text-[10px] text-indigo font-mono">800 × 600 px (4:3)</span>
+                </label>
+                <input
+                  type="text"
+                  value={bannerForm.mobileImage || ''}
+                  onChange={e => setBannerForm({ ...bannerForm, mobileImage: e.target.value })}
+                  placeholder="https://... (or leave blank to auto-use desktop image)"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1 font-mono text-[11px]"
+                />
+                <p className="text-[10px] text-slate-400 mt-0.5">
+                  📐 Recommended Mobile Size: 800 x 600 px or 1080 x 720 px. If left blank, it automatically adapts your desktop image!
+                </p>
               </div>
 
               <div className="flex items-center gap-2 pt-2">

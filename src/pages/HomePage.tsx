@@ -52,6 +52,7 @@ export const HomePage: React.FC = () => {
         ctaText: b.cta || 'Shop Wholesale',
         ctaLink: b.ctaLink || (b.category ? `/category/${b.category.toLowerCase().replace(/[^a-z0-9]/g, '-')}` : '/catalog'),
         image: b.image || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop',
+        mobileImage: b.mobileImage || b.image,
         badge: b.badge || b.tag || 'AUTHENTIC MILL CONTRACT RATES',
         tagline: b.tagline || 'Direct Factory Sourcing From Surat'
       }))
@@ -64,6 +65,7 @@ export const HomePage: React.FC = () => {
           ctaText: "Explore Mill Catalog",
           ctaLink: "/catalog",
           image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop",
+          mobileImage: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800&auto=format&fit=crop",
           badge: "AUTHENTIC MILL CONTRACT RATES",
           tagline: "300 TC Combed Cotton Bedsheets From ₹489"
         }
@@ -309,15 +311,20 @@ export const HomePage: React.FC = () => {
       <section className="relative bg-navy overflow-hidden text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <div className="relative rounded-3xl overflow-hidden shadow-premium bg-navy-900 border border-slate-700 min-h-[440px] sm:min-h-[480px] flex items-center">
-            {/* Background Image with smooth transitions */}
+            {/* Background Image with smooth transitions and responsive mobile art direction */}
             <div className="absolute inset-0">
-              <img
-                src={heroSlides[currentSlide].image.replace('w=1200', 'w=1000')}
-                alt={heroSlides[currentSlide].title}
-                fetchPriority="high"
-                decoding="async"
-                className="w-full h-full object-cover opacity-35 transition-opacity duration-1000 scale-105"
-              />
+              <picture className="w-full h-full block">
+                {heroSlides[currentSlide].mobileImage && (
+                  <source media="(max-width: 640px)" srcSet={heroSlides[currentSlide].mobileImage} />
+                )}
+                <img
+                  src={heroSlides[currentSlide].image.replace('w=1200', 'w=1000')}
+                  alt={heroSlides[currentSlide].title}
+                  fetchPriority="high"
+                  decoding="async"
+                  className="w-full h-full object-cover opacity-35 transition-opacity duration-1000 scale-105"
+                />
+              </picture>
               <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/90 to-transparent"></div>
             </div>
 

@@ -229,6 +229,7 @@ export interface AppBanner {
   badge?: string;
   tagline?: string;
   image: string;
+  mobileImage?: string;
   gradientFrom: string;
   gradientVia?: string;
   gradientTo: string;
