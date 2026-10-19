@@ -377,7 +377,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
               />
               <div className="flex flex-col text-left">
                 <span className="font-black text-lg tracking-tight text-white leading-none">
-                  MAHALAXMI MILLS
+                  MAHALAXMI ENTERPRISES
                 </span>
                 <span className="text-[9px] font-extrabold text-champagne uppercase tracking-widest mt-0.5">
                   Direct Mill Rates & Portal

@@ -64,14 +64,9 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           <div className="border-b-2 border-navy pb-4 sm:pb-6 mb-4 sm:mb-6">
             <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl sm:text-2xl font-black tracking-tight text-navy">
-                    MAHALAXMI<span className="text-indigo">.</span>
-                  </span>
-                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest bg-navy text-champagne px-2 py-0.5 rounded">
-                    ENTERPRISES
-                  </span>
-                </div>
+                <span className="text-xl sm:text-2xl font-black tracking-tight text-navy">
+                  MAHALAXMI ENTERPRISES<span className="text-indigo">.</span>
+                </span>
                 <p className="text-xs text-slate-600 mt-1 font-medium">Direct Mill Rates & Wholesale Essentials</p>
                 <div className="text-[11px] sm:text-xs text-slate-600 mt-2 space-y-0.5">
                   <p>Plot No. 42-45, Ring Road Textile Park Phase II</p>
