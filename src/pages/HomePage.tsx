@@ -358,7 +358,7 @@ export const HomePage: React.FC = () => {
 
               {/* Content Container (Rendered ONLY when hasOverlay is true) */}
               {hasOverlay && (
-                <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:px-12 py-10 sm:py-16">
+                <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:pl-24 sm:pr-14 lg:pl-28 lg:pr-16 py-10 sm:py-16">
                   <div className="max-w-2xl space-y-4">
                     {currentHero.badge && (
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-champagne/40 text-champagne text-xs font-black tracking-wide uppercase shadow-sm">
@@ -422,7 +422,7 @@ export const HomePage: React.FC = () => {
                   setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
                 }}
                 aria-label="Previous hero banner slide"
-                className="hidden sm:flex absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20 shadow-lg cursor-pointer"
+                className="hidden sm:flex absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20 shadow-lg cursor-pointer"
                 title="Previous slide"
               >
                 <ChevronLeft className="w-6 h-6" />
@@ -435,7 +435,7 @@ export const HomePage: React.FC = () => {
                   setCurrentSlide(prev => (prev + 1) % heroSlides.length);
                 }}
                 aria-label="Next hero banner slide"
-                className="hidden sm:flex absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20 shadow-lg cursor-pointer"
+                className="hidden sm:flex absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20 shadow-lg cursor-pointer"
                 title="Next slide"
               >
                 <ChevronRight className="w-6 h-6" />
