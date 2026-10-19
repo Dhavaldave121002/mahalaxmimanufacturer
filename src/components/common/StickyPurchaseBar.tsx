@@ -25,22 +25,21 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
 
   useEffect(() => {
     const handleScroll = () => {
-      // The sticky bar must NOT appear at the top or while the user is still in the main right portion
-      // (title, pricing tiers, options, add to cart, delivery checker, etc.).
-      // It must ONLY appear once the entire right portion has finished and scrolled past above the viewport.
-      const targetEl = document.getElementById('product-right-column') || document.getElementById('main-product-actions');
-      if (targetEl) {
-        const rect = targetEl.getBoundingClientRect();
+      // The sticky purchase bar appears as soon as the main Add to Cart / Buy Now action buttons
+      // (#main-product-actions) scroll out of view (rect.bottom <= 0), or when scrolled past 450px!
+      const mainActions = document.getElementById('main-product-actions');
+      if (mainActions) {
+        const rect = mainActions.getBoundingClientRect();
         setIsVisible(rect.bottom <= 0);
       } else {
-        setIsVisible(window.scrollY > 900);
+        setIsVisible(window.scrollY > 450);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll, { passive: true });
 
-    // Initial check (hidden by default when at top)
+    // Initial check
     handleScroll();
     const timeoutId = setTimeout(handleScroll, 150);
 
@@ -56,7 +55,7 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
   const total = currentUnitPrice * quantity;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl py-2 px-2.5 sm:py-3 sm:px-8 transition-transform duration-300 animate-in slide-in-from-bottom w-full max-w-full">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl py-2.5 px-3 sm:py-3 sm:px-8 transition-transform duration-300 animate-in slide-in-from-bottom w-full max-w-full">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-1.5 sm:gap-4 w-full min-w-0">
         {/* Product Info Thumbnail & Title */}
         <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
