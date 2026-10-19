@@ -337,46 +337,46 @@ export const HomePage: React.FC = () => {
                 )}
               </div>
 
-              {/* Content Container with sleek one-side frosted dark card ensuring 100% text legibility */}
+              {/* Content Container with sleek compact frosted dark card ensuring 100% text legibility */}
               {hasOverlay && (
-                <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:pl-20 sm:pr-14 lg:pl-24 lg:pr-16 py-8 sm:py-14">
-                  <div className="max-w-xl p-6 sm:p-8 rounded-3xl bg-slate-950/80 sm:bg-slate-950/75 backdrop-blur-md border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.4)] space-y-4">
+                <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:pl-20 sm:pr-14 lg:pl-24 lg:pr-16 py-8 sm:py-12">
+                  <div className="max-w-md sm:max-w-lg p-5 sm:p-7 rounded-3xl bg-slate-950/80 sm:bg-slate-950/75 backdrop-blur-md border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.4)] space-y-3">
                     {currentHero.badge && (
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-champagne/40 text-champagne text-xs font-black tracking-wide uppercase shadow-sm">
-                        <Zap className="w-3.5 h-3.5 fill-current text-champagne" />
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-champagne/40 text-champagne text-[11px] font-black tracking-wide uppercase shadow-sm">
+                        <Zap className="w-3 h-3 fill-current text-champagne" />
                         <span>{currentHero.badge}</span>
                       </div>
                     )}
 
                     {currentHero.title && (
-                      <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight">
+                      <h1 className="text-2xl sm:text-3xl lg:text-3xl font-black text-white leading-tight tracking-tight">
                         {currentHero.title}
                       </h1>
                     )}
 
                     {currentHero.subtitle && (
-                      <p className="text-xs sm:text-base text-slate-200 leading-relaxed font-medium">
+                      <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-normal">
                         {currentHero.subtitle}
                       </p>
                     )}
 
                     {currentHero.tagline && (
-                      <div className="pt-1 flex items-baseline gap-2.5">
-                        <span className="text-xs text-slate-300 uppercase tracking-wider font-bold">
-                          Featured Pricing:
+                      <div className="pt-0.5 flex items-baseline gap-2">
+                        <span className="text-[11px] text-slate-300 uppercase tracking-wider font-semibold">
+                          Pricing:
                         </span>
-                        <span className="text-xl sm:text-2xl font-black text-champagne">
+                        <span className="text-base sm:text-lg font-black text-champagne">
                           {currentHero.tagline}
                         </span>
                       </div>
                     )}
 
                     {/* Action Buttons */}
-                    <div className="pt-2 flex flex-wrap gap-3">
+                    <div className="pt-1.5 flex flex-wrap gap-2.5">
                       {currentHero.ctaText && (
                         <Link
                           to={currentHero.ctaLink}
-                          className="px-6 py-3 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-black text-xs sm:text-sm transition shadow-premium flex items-center gap-2 group"
+                          className="px-5 py-2.5 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-bold text-xs sm:text-sm transition shadow-premium flex items-center gap-2 group"
                         >
                           <span>{currentHero.ctaText}</span>
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -385,7 +385,7 @@ export const HomePage: React.FC = () => {
 
                       <Link
                         to="/wholesale"
-                        className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-xl font-bold text-xs sm:text-sm transition flex items-center gap-2 shadow-sm"
+                        className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-xl font-bold text-xs sm:text-sm transition flex items-center gap-2 shadow-sm"
                       >
                         <Building2 className="w-4 h-4 text-champagne" />
                         <span>Request Mill RFQ</span>
