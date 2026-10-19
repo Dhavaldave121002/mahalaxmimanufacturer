@@ -21,20 +21,37 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
   onBuyNow,
   addedAnimation
 }) => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
-      // Show when scrolled past 400px (when hero buy buttons scroll out of view)
-      if (window.scrollY > 420) {
-        setIsVisible(true);
+      const targetEl = document.getElementById('main-product-actions');
+      if (targetEl) {
+        const rect = targetEl.getBoundingClientRect();
+        // Check if the actual on-page "Add to Cart" button is currently visible in viewport
+        const isMainButtonVisible = rect.top < (window.innerHeight - 40) && rect.bottom > 40;
+
+        // Sticky bar shows at the top (before main button is reached)
+        // AND shows when scrolled past (specs, reviews, FAQs).
+        // It ONLY hides when the actual main button is actively visible in the screen!
+        setIsVisible(!isMainButtonVisible);
       } else {
-        setIsVisible(false);
+        setIsVisible(true);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll, { passive: true });
+
+    // Initial check
+    handleScroll();
+    const timeoutId = setTimeout(handleScroll, 150);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
   }, []);
 
   if (!isVisible) return null;
@@ -44,34 +61,47 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl py-2 px-2.5 sm:py-3 sm:px-8 transition-transform duration-300 animate-in slide-in-from-bottom w-full max-w-full">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-1.5 sm:gap-4 w-full min-w-0">
-        {/* Product Info Thumbnail & Price */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink">
+        {/* Product Info Thumbnail & Title */}
+        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
           <img
             src={product.images[0]}
             alt={product.name}
-            className="w-10 h-10 object-cover rounded-xl border border-slate-200 shrink-0 hidden sm:block"
+            className="w-11 h-11 object-cover rounded-xl border border-slate-200 shrink-0"
           />
-          <div className="min-w-0">
-            <h4 className="font-extrabold text-xs sm:text-sm text-navy truncate max-w-[110px] sm:max-w-md hidden xs:block">
+          <div className="min-w-0 flex-1 pr-2">
+            <h4
+              className="font-extrabold text-xs sm:text-sm text-navy leading-tight break-words line-clamp-2 md:line-clamp-none"
+              title={product.name}
+            >
               {product.name}
             </h4>
-            <div className="flex items-baseline gap-1 sm:gap-2 text-xs">
-              <span className="font-black text-sm sm:text-base text-navy">₹{total.toLocaleString('en-IN')}</span>
-              {product.mrp > currentUnitPrice && (
-                <span className="text-[10px] text-slate-400 line-through hidden xs:inline">₹{product.mrp * quantity}</span>
-              )}
-              <span className="text-[9px] sm:text-[11px] text-emerald-700 font-bold bg-emerald-50 px-1 py-0.2 rounded shrink-0">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
+              <span className="text-[10px] sm:text-[11px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded shrink-0">
                 Qty {quantity}
               </span>
+              {selectedVariant && (
+                <span className="text-slate-500 text-[11px] truncate">
+                  • {selectedVariant.name}
+                </span>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          <div className="text-right hidden md:block">
-            <span className="text-[10px] text-slate-400 block">Total Payable:</span>
-            <span className="font-black text-sm text-navy">₹{total.toLocaleString('en-IN')}</span>
+        {/* Action Buttons & Single Total Price */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="text-right shrink-0">
+            <span className="text-[10px] text-slate-400 block leading-tight">Total Payable:</span>
+            <div className="flex items-baseline gap-1 justify-end">
+              <span className="font-black text-sm sm:text-base text-navy">
+                ₹{total.toLocaleString('en-IN')}
+              </span>
+              {product.mrp > currentUnitPrice && (
+                <span className="text-[10px] text-slate-400 line-through hidden sm:inline">
+                  ₹{(product.mrp * quantity).toLocaleString('en-IN')}
+                </span>
+              )}
+            </div>
           </div>
 
           <button

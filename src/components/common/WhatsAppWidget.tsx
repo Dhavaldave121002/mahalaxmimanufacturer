@@ -36,11 +36,9 @@ export const WhatsAppWidget: React.FC = () => {
 
   return (
     <div
-      className={`fixed right-4 md:right-6 z-40 flex flex-col items-end transition-all duration-300 ease-in-out ${
-        isProductPage && isScrolled
-          ? 'bottom-24 md:bottom-24'
-          : isProductPage
-          ? 'bottom-6 md:bottom-6'
+      className={`fixed right-4 md:right-6 z-50 flex flex-col items-end transition-all duration-300 ease-in-out ${
+        isProductPage
+          ? 'bottom-20 md:bottom-24'
           : 'bottom-20 md:bottom-6'
       }`}
     >

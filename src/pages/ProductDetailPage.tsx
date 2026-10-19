@@ -503,15 +503,18 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* Quantity Selector & Purchase Buttons */}
+          {/* Quantity Selector & Purchase Buttons Row */}
           <div className="space-y-4 pt-2 border-t border-slate-100">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center">
-                <span className="text-xs font-bold text-slate-700 mr-3">Quantity:</span>
-                <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden bg-white">
+            {/* Purchase Action Row: Quantity + Add to Cart + Buy Now */}
+            <div id="main-product-actions" className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* Quantity Selector */}
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs font-bold text-slate-700 sm:hidden">Quantity:</span>
+                <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden bg-white shadow-sm h-12">
                   <button
                     onClick={() => setQuantity(prev => Math.max(product.moq || 1, prev - 1))}
-                    className="px-3 py-2 text-slate-600 hover:bg-slate-100 font-bold text-sm transition"
+                    className="px-3.5 h-full text-slate-600 hover:bg-slate-100 font-bold text-base transition flex items-center justify-center"
+                    aria-label="Decrease quantity"
                   >
                     -
                   </button>
@@ -520,22 +523,55 @@ export const ProductDetailPage: React.FC = () => {
                     min={product.moq || 1}
                     value={quantity}
                     onChange={e => setQuantity(Math.max(product.moq || 1, Number(e.target.value)))}
-                    className="w-16 text-center text-xs font-bold text-navy focus:outline-none py-2"
+                    className="w-14 text-center text-xs font-black text-navy focus:outline-none h-full"
+                    aria-label="Quantity"
                   />
                   <button
                     onClick={() => setQuantity(prev => prev + 1)}
-                    className="px-3 py-2 text-slate-600 hover:bg-slate-100 font-bold text-sm transition"
+                    className="px-3.5 h-full text-slate-600 hover:bg-slate-100 font-bold text-base transition flex items-center justify-center"
+                    aria-label="Increase quantity"
                   >
                     +
                   </button>
                 </div>
+
+                {product.moq > 1 && (
+                  <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded">
+                    MOQ: {product.moq}
+                  </span>
+                )}
               </div>
 
-              {product.moq > 1 && (
-                <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded">
-                  MOQ: {product.moq} units
-                </span>
-              )}
+              {/* Add to Cart Button */}
+              <button
+                onClick={handleAddToCart}
+                className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm min-h-12 ${
+                  addedAnimation
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-navy hover:bg-navy-800 text-white'
+                }`}
+              >
+                {addedAnimation ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Added {quantity} Units to Cart</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4 text-champagne shrink-0" />
+                    <span>Add to Cart (₹{currentLineTotal.toLocaleString('en-IN')})</span>
+                  </>
+                )}
+              </button>
+
+              {/* Buy Now Button */}
+              <button
+                onClick={handleBuyNow}
+                className="flex-1 py-3 px-4 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-bold text-xs transition shadow-premium flex items-center justify-center gap-2 min-h-12"
+              >
+                <Zap className="w-4 h-4 shrink-0" />
+                <span>Buy Now • Fast Checkout</span>
+              </button>
             </div>
 
             {/* Commercial Sample & Sample Bundle Procurement Suite */}
@@ -594,38 +630,6 @@ export const ProductDetailPage: React.FC = () => {
                   Need 500+ Units? RFQ →
                 </Link>
               </div>
-            </div>
-
-            {/* Add to Cart & Buy Now Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                onClick={handleAddToCart}
-                className={`py-3.5 px-6 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm ${
-                  addedAnimation
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-navy hover:bg-navy-800 text-white'
-                }`}
-              >
-                {addedAnimation ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    <span>Added {quantity} Units to Cart</span>
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="w-4 h-4 text-champagne" />
-                    <span>Add to Cart (₹{currentLineTotal.toLocaleString('en-IN')})</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={handleBuyNow}
-                className="py-3.5 px-6 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-bold text-xs transition shadow-premium flex items-center justify-center gap-2"
-              >
-                <Zap className="w-4 h-4" />
-                <span>Buy Now • Fast Checkout</span>
-              </button>
             </div>
 
             {/* Wishlist & WhatsApp Quick Action Row */}
