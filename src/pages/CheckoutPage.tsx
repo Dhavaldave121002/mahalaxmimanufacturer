@@ -61,7 +61,7 @@ export const CheckoutPage: React.FC = () => {
   });
 
   // Payment Method
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('RAZORPAY');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Address to use
@@ -124,7 +124,6 @@ export const CheckoutPage: React.FC = () => {
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    setIsSubmitting(true);
 
     // Save company and GST if entered
     if (isB2B && gstNumber) {
@@ -135,6 +134,73 @@ export const CheckoutPage: React.FC = () => {
       });
     }
 
+    // A. RAZORPAY ONLINE GATEWAY PAYMENT FLOW
+    if (paymentMethod === 'RAZORPAY') {
+      setIsSubmitting(true);
+      const razorpayKey = (import.meta as any).env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TXxnGK4dKMgIdA';
+
+      if (typeof (window as any).Razorpay === 'undefined') {
+        alert('Razorpay Payment Gateway is loading. Please check your internet connection and try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const options = {
+        key: razorpayKey,
+        amount: Math.round(cartTotal * 100), // Amount in paise
+        currency: 'INR',
+        name: 'Mahalaxmi Enterprises',
+        description: `Consignment Payment - ${cart.length} items (Surat Direct Mill)`,
+        image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=160&auto=format&fit=crop&q=80',
+        prefill: {
+          name: activeAddress.fullName || currentUser.name || 'Valued Buyer',
+          email: currentUser.email || 'customer@mahalaxmi.in',
+          contact: activeAddress.phone || currentUser.phone || '8511172099',
+        },
+        notes: {
+          order_source: 'WEBSITE_CHECKOUT',
+          b2b_buyer: isB2B ? 'YES' : 'NO',
+          gst_number: gstNumber || 'N/A',
+          company_name: companyName || 'N/A'
+        },
+        theme: {
+          color: '#312E81' // Luxury Navy/Indigo Brand Theme
+        },
+        handler: function (response: any) {
+          console.log('[Razorpay Live Success]', response);
+          const order = createOrder({
+            paymentMethod: 'RAZORPAY',
+            shippingAddress: activeAddress,
+            billingAddress: activeAddress
+          });
+          setIsSubmitting(false);
+          navigate(`/orders?success=${order.id}&payment_id=${response.razorpay_payment_id || ''}`);
+        },
+        modal: {
+          ondismiss: function () {
+            setIsSubmitting(false);
+          }
+        }
+      };
+
+      try {
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function (resp: any) {
+          console.error('[Razorpay Failed]', resp.error);
+          alert(`Payment failed: ${resp.error?.description || 'Transaction declined. Please try another card or UPI.'}`);
+          setIsSubmitting(false);
+        });
+        rzp.open();
+      } catch (err: any) {
+        console.error('Razorpay invocation error:', err);
+        setIsSubmitting(false);
+        alert('Could not launch payment gateway. Please select UPI or Cash on Delivery.');
+      }
+      return;
+    }
+
+    // B. NON-RAZORPAY FLOW (UPI, NET_BANKING, COD, 30_DAYS_CREDIT)
+    setIsSubmitting(true);
     setTimeout(() => {
       const order = createOrder({
         paymentMethod,
@@ -375,6 +441,38 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             <div className="space-y-3">
+              {/* Razorpay Live Gateway (Cards, UPI, NetBanking, Wallets) */}
+              <label
+                onClick={() => setPaymentMethod('RAZORPAY')}
+                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                  paymentMethod === 'RAZORPAY'
+                    ? 'border-indigo bg-indigo-light/50 ring-2 ring-indigo shadow-sm'
+                    : 'border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-indigo text-white rounded-xl shadow-sm">
+                    <ShieldCheck className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-black text-navy">Pay via Razorpay Secure (Live)</p>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">RECOMMENDED</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      Credit/Debit Cards, Google Pay, PhonePe, Paytm, NetBanking & Corporate Credit Lines
+                    </p>
+                  </div>
+                </div>
+                <input
+                  type="radio"
+                  name="payment"
+                  checked={paymentMethod === 'RAZORPAY'}
+                  onChange={() => setPaymentMethod('RAZORPAY')}
+                  className="accent-indigo w-4 h-4"
+                />
+              </label>
+
               {/* UPI Option */}
               <label
                 onClick={() => setPaymentMethod('UPI')}

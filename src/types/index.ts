@@ -107,7 +107,7 @@ export type OrderStatus =
   | 'EXCHANGE_APPROVED'
   | 'RETURN_REJECTED';
 
-export type PaymentMethod = 'UPI' | 'COD' | 'NET_BANKING' | 'CREDIT_30_DAYS';
+export type PaymentMethod = 'RAZORPAY' | 'UPI' | 'COD' | 'NET_BANKING' | 'CREDIT_30_DAYS';
 export type PaymentStatus = 'PAID' | 'PENDING' | 'REFUNDED' | 'CREDIT_APPROVED';
 
 export interface OrderItem {

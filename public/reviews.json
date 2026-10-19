@@ -1,0 +1,41 @@
+[
+  {
+    "id": "rev-1792242695312-220",
+    "product_id": "cotton-bath-towels",
+    "product_title": "Soft Cotton Bath Towels",
+    "customer_name": "Dhaval Test Buyer",
+    "customer_email": "dhavaldave121002@gmail.com",
+    "rating": 5,
+    "comment": "Superb quality combed cotton directly from Surat mill! Smooth delivery.",
+    "status": "APPROVED",
+    "verified_buyer": 1,
+    "source": "WEB",
+    "created_at": "2026-10-17T13:11:35.319Z"
+  },
+  {
+    "id": "rev-01",
+    "product_id": "cotton-bath-towels",
+    "product_title": "Soft Cotton Bath Towels",
+    "customer_name": "Harish M.",
+    "customer_email": "harish@grandheritage.com",
+    "rating": 5,
+    "comment": "Outstanding fabric quality and dimensional stability. Surpassed 40 industrial wash cycles with zero shrinkage. Direct mill rates saved our property over ₹45,000.",
+    "status": "APPROVED",
+    "verified_buyer": 1,
+    "source": "WEB",
+    "created_at": "2026-10-03T13:11:35.319Z"
+  },
+  {
+    "id": "rev-02",
+    "product_id": "cotton-double-bedsheet",
+    "product_title": "Cotton Double Bedsheet",
+    "customer_name": "Sanjay K. (Kalyan Handlooms)",
+    "customer_email": "sanjay@kalyan.in",
+    "rating": 5,
+    "comment": "Packaging is clean and presentation is very premium for our retail shelves. Customers love the combed cotton hand-feel. Reordering another 50 packs today.",
+    "status": "APPROVED",
+    "verified_buyer": 1,
+    "source": "FLUTTER_APP",
+    "created_at": "2026-09-22T13:11:35.319Z"
+  }
+]
