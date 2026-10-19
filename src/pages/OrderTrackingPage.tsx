@@ -302,21 +302,6 @@ export const OrderTrackingPage: React.FC = () => {
         </div>
       )}
 
-      {/* Admin Operations Banner */}
-      {isAdmin && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-900 shadow-subtle">
-          <div className="flex items-center gap-2.5">
-            <ShieldCheck className="w-5 h-5 text-amber-600 shrink-0" />
-            <div>
-              <p className="font-bold">Administrative Operations View (Admin Only)</p>
-              <p className="text-[11px] text-amber-800">
-                You are viewing the master ledger of all company orders ({orders.length} total). Regular customers only see their personal orders.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 🌟 PROMINENT HERO AWB & CONSIGNMENT TRACKING SEARCH BOX */}
       <div className="bg-gradient-to-r from-navy via-navy-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-700">
         <div className="relative z-10 max-w-3xl space-y-4">
