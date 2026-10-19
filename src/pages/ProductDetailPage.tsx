@@ -716,34 +716,65 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Delivery PIN Code Checker */}
-          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
-            <div className="flex items-center gap-2 font-bold text-navy">
-              <MapPin className="w-4 h-4 text-indigo" />
-              <span>Check Delivery Speed to Your Pincode</span>
+          {/* Delivery PIN Code Checker with Live Delhivery Integration */}
+          <div className="p-4 bg-gradient-to-br from-indigo-50/50 to-white rounded-2xl border border-indigo/20 shadow-sm space-y-2.5 text-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-bold text-navy">
+                <MapPin className="w-4 h-4 text-indigo" />
+                <span>Check Delivery & COD to Your Pincode</span>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                Powered by Delhivery
+              </span>
             </div>
+
             <form onSubmit={handlePincodeCheck} className="flex gap-2">
               <input
                 type="text"
                 maxLength={6}
                 value={pinInput}
                 onChange={e => setPinInput(e.target.value.replace(/\D/g, ''))}
-                placeholder="6-digit Indian PIN"
-                className="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-mono w-40 focus:border-indigo outline-none"
+                placeholder="Enter 6-digit Pincode (e.g. 395002)"
+                className="px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-mono w-56 focus:border-indigo focus:ring-1 focus:ring-indigo outline-none bg-white shadow-sm"
               />
               <button
                 type="submit"
-                className="px-3 py-1.5 bg-navy text-white text-xs font-semibold rounded-lg hover:bg-navy-800 transition"
+                className="px-5 py-2 bg-navy text-white text-xs font-bold rounded-xl hover:bg-navy-800 transition shadow-sm cursor-pointer"
               >
-                Check
+                Verify Pincode
               </button>
             </form>
 
             {deliveryInfo && (
-              <p className="text-emerald-700 text-[11px] font-medium flex items-center gap-1 pt-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                Deliverable to {deliveryInfo.city}, {deliveryInfo.state} in {deliveryInfo.estimatedDays} business days via Express Freight.
-              </p>
+              <div className="pt-1.5 space-y-1.5">
+                {deliveryInfo.serviceable ? (
+                  <>
+                    <div className="flex items-center gap-1.5 text-emerald-800 text-xs font-bold">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Deliverable to {deliveryInfo.city}, {deliveryInfo.state} ({deliveryInfo.pincode})</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 pt-0.5">
+                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-semibold">
+                        ⚡ Est. Delivery: {deliveryInfo.estimatedDays} Days
+                      </span>
+                      {deliveryInfo.codAvailable ? (
+                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo rounded-md font-semibold">
+                          💵 Cash on Delivery (COD) Available
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-md font-semibold">
+                          💳 Prepaid Only for this location
+                        </span>
+                      )}
+                      <span className="text-slate-400">Direct Surat Mill Dispatch</span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-rose-600 text-xs font-semibold flex items-center gap-1.5">
+                    <span>✕ Delivery is currently not serviceable to pincode {deliveryInfo.pincode}.</span>
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>

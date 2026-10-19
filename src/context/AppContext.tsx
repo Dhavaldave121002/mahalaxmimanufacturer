@@ -2117,35 +2117,53 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }).catch(() => {});
   };
 
-  // PIN code check
+  // PIN code check (Integrated with Live Delhivery Logistics API)
   const checkPincode = (pin: string): PinCodeInfo => {
-    setDeliveryPincode(pin);
-    const found = PINCODE_DATABASE[pin.trim()];
-    if (found) {
-      const info: PinCodeInfo = {
-        pincode: pin,
-        city: found.city,
-        state: found.state,
-        serviceable: true,
-        estimatedDays: found.days,
-        codAvailable: true
-      };
-      setDeliveryInfo(info);
-      return info;
-    } else {
-      // Default fallback for any 6-digit Indian pin
-      const is6Digit = /^[1-9][0-9]{5}$/.test(pin.trim());
-      const info: PinCodeInfo = {
-        pincode: pin,
-        city: is6Digit ? 'Pan-India Hub' : 'Unknown',
-        state: is6Digit ? 'India' : 'Unknown',
-        serviceable: is6Digit,
-        estimatedDays: is6Digit ? 4 : 0,
-        codAvailable: is6Digit
-      };
-      setDeliveryInfo(info);
-      return info;
+    const cleanPin = pin.trim().replace(/\D/g, '');
+    setDeliveryPincode(cleanPin);
+
+    // Initial instant local estimate
+    const found = PINCODE_DATABASE[cleanPin];
+    const is6Digit = /^[1-9][0-9]{5}$/.test(cleanPin);
+    const initialInfo: PinCodeInfo = {
+      pincode: cleanPin,
+      city: found?.city || (is6Digit ? 'Commercial Delivery Hub' : 'Unknown'),
+      state: found?.state || (is6Digit ? 'India' : 'Unknown'),
+      serviceable: is6Digit,
+      estimatedDays: found?.days || (is6Digit ? 3 : 0),
+      codAvailable: is6Digit
+    };
+    setDeliveryInfo(initialInfo);
+
+    // Call live Delhivery API endpoint to verify exact COD & Express Delivery status
+    if (cleanPin.length === 6) {
+      fetch(`/api/app-config?action=pincode&pincode=${cleanPin}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.success && data.serviceable) {
+            setDeliveryInfo({
+              pincode: cleanPin,
+              city: data.city || initialInfo.city,
+              state: data.state || initialInfo.state,
+              serviceable: true,
+              estimatedDays: data.state === 'GJ' ? 2 : 4,
+              codAvailable: !!data.codAvailable
+            });
+          } else if (data && data.serviceable === false) {
+            setDeliveryInfo({
+              pincode: cleanPin,
+              city: initialInfo.city,
+              state: initialInfo.state,
+              serviceable: false,
+              estimatedDays: 0,
+              codAvailable: false
+            });
+          }
+        })
+        .catch(() => {});
     }
+
+    return initialInfo;
   };
 
   const addRecentSearch = (query: string) => {

@@ -109,7 +109,7 @@ function localApiPlugin(): Plugin {
         }
 
         // 4. App Config & Notifications API
-        if (req.url?.startsWith('/api/app-config')) {
+        if (req.url?.startsWith('/api/app-config') || req.url?.includes('action=pincode')) {
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Access-Control-Allow-Origin', '*');
           res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS,PUT');

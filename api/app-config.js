@@ -44,6 +44,82 @@ export default async function handler(req, res) {
   }
 
   // Handle database connectivity test directly to conserve serverless function slots
+  
+  // ----------------------------------------------------
+  // DELHIVERY PINCODE SERVICEABILITY & COD CHECK
+  // ----------------------------------------------------
+  if (req.url && (req.url.includes('action=pincode') || req.url.includes('check_pincode='))) {
+    try {
+      const urlObj = new URL(req.url, 'http://localhost:5173');
+      const pin = urlObj.searchParams.get('pincode') || urlObj.searchParams.get('check_pincode') || '';
+      const cleanPin = pin.replace(/\D/g, '');
+
+      if (!cleanPin || cleanPin.length !== 6) {
+        return res.status(400).json({
+          success: false,
+          serviceable: false,
+          error: 'Please provide a valid 6-digit Indian postal code.'
+        });
+      }
+
+      const delhiveryToken = process.env.DELHIVERY_API_TOKEN || '4cf4301404f5c82646cb33e7092e08224c2fced7';
+      const dUrl = 'https://track.delhivery.com/c/api/pin-codes/json/?filter_codes=' + cleanPin;
+
+      const dRes = await fetch(dUrl, {
+        headers: {
+          'Authorization': 'Token ' + delhiveryToken,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (dRes.ok) {
+        const dData = await dRes.json();
+        const codeList = dData?.delivery_codes || [];
+        const match = codeList.find(c => c.postal_code?.pin == cleanPin);
+
+        if (match && match.postal_code) {
+          const pc = match.postal_code;
+          const codAvailable = pc.cod === 'Y' || pc.cash === 'Y';
+          const prepaidAvailable = pc.pre_paid === 'Y';
+          const district = pc.district || pc.city || '';
+          const state = pc.state_code || '';
+
+          // Calculate estimated delivery: Surat to Gujarat = 1-2 days, Rest of India = 3-4 days
+          const isGujarat = state === 'GJ' || district.toLowerCase().includes('surat') || district.toLowerCase().includes('ahmedabad');
+          const estDays = isGujarat ? '1-2 Days (Surat Fast Direct Dispatch)' : '3-4 Business Days';
+
+          return res.status(200).json({
+            success: true,
+            serviceable: true,
+            pincode: cleanPin,
+            city: pc.city || district,
+            state: state,
+            district: district,
+            codAvailable: codAvailable,
+            prepaidAvailable: prepaidAvailable,
+            pickupAvailable: pc.pickup === 'Y',
+            estimatedDays: estDays,
+            courierPartner: 'Delhivery Surface Express',
+            message: codAvailable
+              ? 'Delivery & Cash on Delivery (COD) available for ' + (pc.city || district) + ' (' + cleanPin + ').'
+              : 'Prepaid Delivery available. (Cash on Delivery not serviceable for this pincode).'
+          });
+        }
+      }
+
+      // Fallback response if pin not serviceable in Delhivery
+      return res.status(200).json({
+        success: true,
+        serviceable: false,
+        pincode: cleanPin,
+        message: 'Delivery is currently not serviceable to pincode ' + cleanPin + ' via Delhivery.'
+      });
+    } catch (dErr) {
+      console.warn('Delhivery check error:', dErr.message);
+      return res.status(500).json({ success: false, error: dErr.message });
+    }
+  }
+
   if (req.url && (req.url.includes('check_db=true') || req.url.includes('action=db-status'))) {
     const { testDbConnection } = await import('../database/db.js');
     const result = await testDbConnection();
