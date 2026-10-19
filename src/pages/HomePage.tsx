@@ -92,20 +92,6 @@ export const HomePage: React.FC = () => {
     return () => clearInterval(timer);
   }, [heroSlides.length]);
 
-  // Flash Sale Countdown Timer State
-  const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 42, seconds: 18 });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: 59, seconds: 59 };
-        if (prev.hours > 0) return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        return { hours: 6, minutes: 0, seconds: 0 };
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const [calcQuantity, setCalcQuantity] = useState<number>(100);
   const [calcItem, setCalcItem] = useState<'bedsheet' | 'towel' | 'microfiber'>('bedsheet');
@@ -463,86 +449,56 @@ export const HomePage: React.FC = () => {
         })()}
       </section>
 
-      {/* Commercial Perks & Bank Offers Strip (Amazon / Flipkart Pro style) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 -mt-6 relative z-10">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-subtle">
-          <div className="flex items-center gap-3 p-2">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo shrink-0">
-              <CreditCard className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-navy">5% Instant Bank Discount</p>
-              <p className="text-[11px] text-slate-500">RuPay & Commercial Cards (MILLB2B)</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-2">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0">
-              <Truck className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-navy">Fast Pan-India Delivery</p>
-              <p className="text-[11px] text-slate-500">19,000+ PIN Codes Covered</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-2">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-navy shrink-0">
-              <ShieldCheck className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-navy">100% GSTR-2B ITC Claim</p>
-              <p className="text-[11px] text-slate-500">Verified GST Invoice with HSN</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-2">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo shrink-0">
-              <Zap className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-navy">Zero Commission Rates</p>
-              <p className="text-[11px] text-slate-500">Pure factory prices without 25% app fee</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ========================================================
-          2. FLASH SALE / DEAL OF THE DAY (With Live Countdown)
+          COMMERCIAL PERKS & ASSURANCE STRIP (Full-Width Edge-to-Edge)
           ======================================================== */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 rounded-3xl p-5 sm:p-6 text-white shadow-premium flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-white shrink-0">
-              <Flame className="w-7 h-7 fill-white animate-pulse" />
+      <section className="w-full bg-white border-b border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] -mt-12 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 py-3 sm:py-4 gap-3 sm:gap-6 lg:gap-0 lg:divide-x lg:divide-slate-200">
+            {/* Box 1: 5% Bank Discount */}
+            <div className="flex items-center gap-3.5 lg:px-6 py-2">
+              <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-sm">
+                <CreditCard className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-bold text-navy truncate">5% Instant Bank Discount</p>
+                <p className="text-[11px] sm:text-xs text-slate-500 truncate">RuPay & Commercial Cards (MILLB2B)</p>
+              </div>
             </div>
-            <div>
-              <span className="text-[10px] font-black tracking-widest uppercase bg-white/20 px-2 py-0.5 rounded">
-                DEAL OF THE DAY • DIRECT WEAVING LOTS
-              </span>
-              <h3 className="text-lg sm:text-xl font-black mt-0.5">
-                Flash Mill Clearance: Up to 52% Off Combed Cotton Stock
-              </h3>
+
+            {/* Box 2: Pan-India Delivery */}
+            <div className="flex items-center gap-3.5 lg:px-6 py-2">
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 shadow-sm">
+                <Truck className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-bold text-navy truncate">Fast Pan-India Delivery</p>
+                <p className="text-[11px] sm:text-xs text-slate-500 truncate">19,000+ PIN Codes Covered</p>
+              </div>
+            </div>
+
+            {/* Box 3: 100% GSTR-2B ITC */}
+            <div className="flex items-center gap-3.5 lg:px-6 py-2">
+              <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0 shadow-sm">
+                <ShieldCheck className="w-5 h-5 text-amber-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-bold text-navy truncate">100% GSTR-2B ITC Claim</p>
+                <p className="text-[11px] sm:text-xs text-slate-500 truncate">Verified GST Invoice with HSN</p>
+              </div>
+            </div>
+
+            {/* Box 4: Zero Commission */}
+            <div className="flex items-center gap-3.5 lg:px-6 py-2">
+              <div className="w-11 h-11 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0 shadow-sm">
+                <Zap className="w-5 h-5 text-purple-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-bold text-navy truncate">Zero Commission Rates</p>
+                <p className="text-[11px] sm:text-xs text-slate-500 truncate">Pure factory rates without 25% app fee</p>
+              </div>
             </div>
           </div>
-
-          {/* Countdown Clock */}
-          <div className="flex items-center gap-2 bg-black/30 px-4 py-2 rounded-2xl border border-white/20">
-            <Clock className="w-4 h-4 text-champagne" />
-            <span className="text-xs font-bold text-slate-200">Ends In:</span>
-            <div className="flex items-center gap-1 font-mono font-black text-sm">
-              <span className="bg-black/50 px-2 py-1 rounded">{String(timeLeft.hours).padStart(2, '0')}h</span>
-              <span>:</span>
-              <span className="bg-black/50 px-2 py-1 rounded">{String(timeLeft.minutes).padStart(2, '0')}m</span>
-              <span>:</span>
-              <span className="bg-black/50 px-2 py-1 rounded">{String(timeLeft.seconds).padStart(2, '0')}s</span>
-            </div>
-          </div>
-
-          <Link
-            to="/catalog?filter=bestseller"
-            className="px-5 py-2.5 bg-white text-navy hover:bg-slate-100 rounded-xl font-bold text-xs transition shadow-sm whitespace-nowrap"
-          >
-            Shop Flash Deals &rarr;
-          </Link>
         </div>
       </section>
 
