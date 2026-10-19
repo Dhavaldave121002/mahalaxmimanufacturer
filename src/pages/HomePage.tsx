@@ -40,8 +40,10 @@ export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { products, submitBusinessEnquiry, addToCart, categories, mobileAppConfig } = useApp();
 
-  // Hero Carousel State: Dynamic from Admin & CMS
-  const activeBanners = (mobileAppConfig?.banners || []).filter(b => b.isActive);
+  // Hero Carousel State: Dynamic from Admin & CMS (Filtered for Website)
+  const activeBanners = (mobileAppConfig?.banners || []).filter(
+    b => b.isActive && (b.visibility === 'WEB_ONLY' || b.visibility === 'ALL' || !b.visibility)
+  );
 
   const heroSlides = activeBanners.length > 0
     ? activeBanners.map(b => ({

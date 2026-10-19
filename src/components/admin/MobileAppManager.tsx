@@ -121,6 +121,7 @@ export const MobileAppManager: React.FC = () => {
   // Banner Editor Modal
   const [bannerModalOpen, setBannerModalOpen] = useState(false);
   const [editingBannerId, setEditingBannerId] = useState<string | null>(null);
+  const [bannerPlatformFilter, setBannerPlatformFilter] = useState<'ALL' | 'WEB_ONLY' | 'APP_ONLY'>('ALL');
   const [bannerForm, setBannerForm] = useState<{
     category: string;
     title: string;
@@ -132,6 +133,7 @@ export const MobileAppManager: React.FC = () => {
     ctaLink?: string;
     image: string;
     mobileImage?: string;
+    visibility?: 'ALL' | 'WEB_ONLY' | 'APP_ONLY';
     gradientFrom: string;
     gradientVia: string;
     gradientTo: string;
@@ -150,6 +152,7 @@ export const MobileAppManager: React.FC = () => {
     ctaLink: '/catalog',
     image: 'assets/images/banner_home_kitchen.jpg',
     mobileImage: '',
+    visibility: 'ALL',
     gradientFrom: '#0F172A',
     gradientVia: '#1E293B',
     gradientTo: '#334155',
@@ -197,6 +200,7 @@ export const MobileAppManager: React.FC = () => {
       ctaLink: '/catalog',
       image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop',
       mobileImage: '',
+      visibility: 'ALL',
       gradientFrom: '#1E1B4B',
       gradientVia: '#312E81',
       gradientTo: '#4338CA',
@@ -221,6 +225,7 @@ export const MobileAppManager: React.FC = () => {
       ctaLink: b.ctaLink || '/catalog',
       image: b.image,
       mobileImage: b.mobileImage || '',
+      visibility: b.visibility || 'ALL',
       gradientFrom: b.gradientFrom,
       gradientVia: b.gradientVia || '#1E293B',
       gradientTo: b.gradientTo,
@@ -522,24 +527,71 @@ export const MobileAppManager: React.FC = () => {
           {/* SUB-TAB 1: CAROUSEL BANNERS */}
           {activeSubTab === 'banners' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-base font-bold text-navy">Mobile App Carousel Slides</h3>
+                  <h3 className="text-base font-bold text-navy">Carousel & Hero Promotion Slides</h3>
                   <p className="text-xs text-slate-500">
-                    These slides appear dynamically in the top hero slider of the Flutter app home screen.
+                    Target your banners specifically for <strong>Website</strong>, <strong>Mobile App</strong>, or <strong>Both</strong>!
                   </p>
                 </div>
                 <button
                   onClick={handleOpenAddBanner}
-                  className="px-3 py-2 bg-indigo hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+                  className="px-3.5 py-2 bg-indigo hover:bg-indigo-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition self-start sm:self-auto"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add New Slide</span>
+                  <span>+ Add New Slide</span>
+                </button>
+              </div>
+
+              {/* Platform Filter Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+                <button
+                  onClick={() => setBannerPlatformFilter('ALL')}
+                  className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${
+                    bannerPlatformFilter === 'ALL'
+                      ? 'bg-navy text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  <span>All Slides</span>
+                  <span className="px-1.5 py-0.2 bg-black/20 rounded-full text-[10px]">
+                    {mobileAppConfig.banners.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setBannerPlatformFilter('WEB_ONLY')}
+                  className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${
+                    bannerPlatformFilter === 'WEB_ONLY'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                  }`}
+                >
+                  <span>🌐 Website Only</span>
+                  <span className="px-1.5 py-0.2 bg-black/20 rounded-full text-[10px]">
+                    {mobileAppConfig.banners.filter(b => b.visibility === 'WEB_ONLY').length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setBannerPlatformFilter('APP_ONLY')}
+                  className={`px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1.5 ${
+                    bannerPlatformFilter === 'APP_ONLY'
+                      ? 'bg-purple-600 text-white shadow-xs'
+                      : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
+                  }`}
+                >
+                  <span>📱 App Only</span>
+                  <span className="px-1.5 py-0.2 bg-black/20 rounded-full text-[10px]">
+                    {mobileAppConfig.banners.filter(b => b.visibility === 'APP_ONLY').length}
+                  </span>
                 </button>
               </div>
 
               <div className="space-y-3">
-                {mobileAppConfig.banners.map((banner, index) => (
+                {mobileAppConfig.banners
+                  .filter(b => (bannerPlatformFilter === 'ALL' ? true : b.visibility === bannerPlatformFilter))
+                  .map((banner, index) => (
                   <div
                     key={banner.id}
                     className={`p-4 rounded-2xl border transition bg-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
@@ -561,7 +613,21 @@ export const MobileAppManager: React.FC = () => {
                       </div>
 
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {banner.visibility === 'WEB_ONLY' ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800 flex items-center gap-1">
+                              🌐 Website Only
+                            </span>
+                          ) : banner.visibility === 'APP_ONLY' ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-black bg-purple-100 text-purple-800 flex items-center gap-1">
+                              📱 Mobile App Only
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                              🚀 Web & App
+                            </span>
+                          )}
+
                           <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700">
                             {banner.tag || banner.category}
                           </span>
@@ -1483,6 +1549,75 @@ export const MobileAppManager: React.FC = () => {
             </div>
 
             <form onSubmit={handleSaveBanner} className="space-y-4 text-xs">
+              {/* Target Platform & Visibility Selector */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2">
+                <label className="font-black text-slate-800 flex items-center justify-between text-xs">
+                  <span>🎯 Target Platform / Display On</span>
+                  <span className="text-[10px] text-indigo font-bold">Separate Web & App Banners</span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <label
+                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border cursor-pointer text-center transition ${
+                      bannerForm.visibility === 'ALL' || !bannerForm.visibility
+                        ? 'bg-emerald-50 border-emerald-500 text-emerald-900 shadow-2xs font-bold'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="visibility"
+                      value="ALL"
+                      checked={bannerForm.visibility === 'ALL' || !bannerForm.visibility}
+                      onChange={() => setBannerForm({ ...bannerForm, visibility: 'ALL' })}
+                      className="sr-only"
+                    />
+                    <span className="text-base">🚀</span>
+                    <span className="text-[11px] font-bold mt-1">Both (Web & App)</span>
+                    <span className="text-[9px] text-slate-400">Website + Flutter</span>
+                  </label>
+
+                  <label
+                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border cursor-pointer text-center transition ${
+                      bannerForm.visibility === 'WEB_ONLY'
+                        ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-2xs font-bold'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="visibility"
+                      value="WEB_ONLY"
+                      checked={bannerForm.visibility === 'WEB_ONLY'}
+                      onChange={() => setBannerForm({ ...bannerForm, visibility: 'WEB_ONLY' })}
+                      className="sr-only"
+                    />
+                    <span className="text-base">🌐</span>
+                    <span className="text-[11px] font-bold mt-1">Website Only</span>
+                    <span className="text-[9px] text-slate-400">Only on Browser</span>
+                  </label>
+
+                  <label
+                    className={`flex flex-col items-center justify-center p-2.5 rounded-xl border cursor-pointer text-center transition ${
+                      bannerForm.visibility === 'APP_ONLY'
+                        ? 'bg-purple-50 border-purple-500 text-purple-900 shadow-2xs font-bold'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="visibility"
+                      value="APP_ONLY"
+                      checked={bannerForm.visibility === 'APP_ONLY'}
+                      onChange={() => setBannerForm({ ...bannerForm, visibility: 'APP_ONLY' })}
+                      className="sr-only"
+                    />
+                    <span className="text-base">📱</span>
+                    <span className="text-[11px] font-bold mt-1">Mobile App Only</span>
+                    <span className="text-[9px] text-slate-400">Only in Android APK</span>
+                  </label>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-slate-700">Slide Title *</label>

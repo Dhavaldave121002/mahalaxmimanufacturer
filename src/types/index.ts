@@ -230,6 +230,7 @@ export interface AppBanner {
   tagline?: string;
   image: string;
   mobileImage?: string;
+  visibility?: 'ALL' | 'WEB_ONLY' | 'APP_ONLY';
   gradientFrom: string;
   gradientVia?: string;
   gradientTo: string;
