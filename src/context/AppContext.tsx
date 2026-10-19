@@ -829,7 +829,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           },
           {
             productId: 'prod-cotton-towel-01',
-            productName: 'Mahalaxmi Super-Plush 600 GSM Cotton Bath Towel',
+            productName: 'Mahalaxmi Enterprises Super-Plush 600 GSM Cotton Bath Towel',
             sku: 'MLE-COT-TWL-600',
             hsnCode: '630260',
             quantity: 50,
@@ -895,7 +895,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           },
           {
             productId: 'prod-cotton-towel-01',
-            productName: 'Mahalaxmi Super-Plush 600 GSM Cotton Bath Towel',
+            productName: 'Mahalaxmi Enterprises Super-Plush 600 GSM Cotton Bath Towel',
             sku: 'MLE-COT-TWL-600',
             hsnCode: '630260',
             quantity: 4,
@@ -916,7 +916,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         paymentStatus: 'PAID',
         status: 'MILL_PROCESSING',
         source: 'FLUTTER_APP',
-        deviceInfo: 'Android 14 (Mahalaxmi Flutter App v1.0.3)',
+        deviceInfo: 'Android 14 (Mahalaxmi Enterprises Flutter App v1.0.3)',
         shippingAddress: {
           id: 'addr-dhaval',
           fullName: 'Dhaval Dave',
@@ -939,7 +939,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         },
         estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString(),
         timeline: [
-          { status: 'PLACED', timestamp: new Date(Date.now() - 3600000 * 3).toISOString(), description: 'Order placed from Mahalaxmi Android App v1.0.3 via UPI GPay.' },
+          { status: 'PLACED', timestamp: new Date(Date.now() - 3600000 * 3).toISOString(), description: 'Order placed from Mahalaxmi Enterprises Android App v1.0.3 via UPI GPay.' },
           { status: 'MILL_PROCESSING', timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), description: 'Allocation confirmed at Surat Central Dispatch Loom 4.' }
         ]
       },
@@ -1059,7 +1059,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         items: [
           {
             productId: 'prod-cotton-towel-01',
-            productName: 'Mahalaxmi Super-Plush 600 GSM Cotton Bath Towel',
+            productName: 'Mahalaxmi Enterprises Super-Plush 600 GSM Cotton Bath Towel',
             sku: 'MLE-COT-TWL-600',
             quantity: 500,
             targetPrice: 210,
@@ -1750,7 +1750,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const defaultTimelineDesc = orderData.timelineNote || (
       pointsRedeemed > 0
         ? `Order booked. 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Mill Points redeemed (-₹${pointsRedeemed.toLocaleString('en-IN')}). Remaining balance ₹${amountPaid.toLocaleString('en-IN')} ${isCod ? 'payable on delivery (COD)' : 'paid via Razorpay'}.`
-        : 'Order placed successfully. Allocated to Mahalaxmi Surat Central Warehouse.'
+        : 'Order placed successfully. Allocated to Mahalaxmi Enterprises Surat Central Warehouse.'
     );
 
     const newOrder: Order = {

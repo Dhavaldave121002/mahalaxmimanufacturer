@@ -511,7 +511,7 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs font-extrabold text-navy">Mahalaxmi Mill Points Wallet</p>
+                      <p className="text-xs font-extrabold text-navy">Mahalaxmi Enterprises Points Wallet</p>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                         userWalletBalance > 0
                           ? 'bg-emerald-100 text-emerald-800 border-emerald-300'

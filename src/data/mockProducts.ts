@@ -171,7 +171,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   // ==========================================
   {
     id: 'prod-cotton-towel-01',
-    name: 'Mahalaxmi Super-Plush 600 GSM Combed Cotton Bath Towel (75 x 150 cm)',
+    name: 'Mahalaxmi Enterprises Super-Plush 600 GSM Combed Cotton Bath Towel (75 x 150 cm)',
     slug: 'mahalaxmi-600-gsm-plush-cotton-bath-towel',
     sku: 'MLE-COT-TWL-600',
     category: 'cotton-products',
@@ -536,7 +536,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-swatch-box-01',
-    name: 'Mahalaxmi Official Mill Fabric Swatch & Quality Assurance Sample Kit (100% Refundable)',
+    name: 'Mahalaxmi Enterprises Official Mill Fabric Swatch & Quality Assurance Sample Kit (100% Refundable)',
     slug: 'mill-fabric-swatch-sample-kit',
     sku: 'MLE-SWATCH-KIT-01',
     category: 'textile',
@@ -573,7 +573,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod-sample-bundle-all',
-    name: 'Mahalaxmi Complete Commercial Sample Bundle (All 4 Categories Swatch & Product Minis Box)',
+    name: 'Mahalaxmi Enterprises Complete Commercial Sample Bundle (All 4 Categories Swatch & Product Minis Box)',
     slug: 'mill-commercial-sample-bundle',
     sku: 'MLE-BUNDLE-SMP-01',
     category: 'textile',

@@ -1210,7 +1210,7 @@ export const WholesalePage: React.FC = () => {
                 <p className="text-xs text-slate-500">Harmonized System codes for fast overseas customs clearance at major international ports.</p>
               </div>
               <a
-                href="https://wa.me/919876543210?text=Hello%20Mahalaxmi%20Export%20Desk%2C%20I%20am%20an%20international%20buyer%20requesting%20FOB%2FCIF%20container%20quotation"
+                href="https://wa.me/919876543210?text=Hello%20Mahalaxmi%20Enterprises%20Export%20Desk%2C%20I%20am%20an%20international%20buyer%20requesting%20FOB%2FCIF%20container%20quotation"
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition shadow-sm w-fit"
@@ -1371,7 +1371,7 @@ export const WholesalePage: React.FC = () => {
             <div className="flex justify-between items-center text-xs pt-2">
               <div className="text-[11px] text-slate-500 space-y-1">
                 <p>E. & O.E. Subject to Surat jurisdiction.</p>
-                <p>Authorized Signatory: <strong>Mahalaxmi Loom Merchandising</strong></p>
+                <p>Authorized Signatory: <strong>Mahalaxmi Enterprises Loom Merchandising</strong></p>
               </div>
               <div className="space-y-1 text-right min-w-[200px]">
                 <div className="flex justify-between text-slate-600">

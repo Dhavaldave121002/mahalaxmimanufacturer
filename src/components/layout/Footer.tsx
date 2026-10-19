@@ -102,7 +102,7 @@ export const Footer: React.FC = () => {
                 className="w-10 h-10 rounded-full object-cover shadow-sm border border-navy-700 shrink-0"
               />
               <span className="font-black text-xl text-white tracking-tight">
-                MAHALAXMI<span className="text-champagne">.</span>
+                MAHALAXMI ENTERPRISES<span className="text-champagne">.</span>
               </span>
             </div>
             <p className="text-xs font-semibold text-champagne tracking-wider uppercase">

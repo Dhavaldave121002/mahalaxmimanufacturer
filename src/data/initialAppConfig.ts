@@ -130,7 +130,7 @@ export const INITIAL_MOBILE_APP_CONFIG: MobileAppConfig = {
     appVersion: '1.0.3+4',
     minSupportedVersion: '1.0.0',
     maintenanceMode: false,
-    maintenanceMessage: 'Mahalaxmi Mill servers are undergoing scheduled routine maintenance. App ordering will resume shortly.',
+    maintenanceMessage: 'Mahalaxmi Enterprises Mill servers are undergoing scheduled routine maintenance. App ordering will resume shortly.',
     supportPhone: '+91 85111 72099',
     supportEmail: 'dhavaldave121002@gmail.com',
     whatsappNumber: '918511172099',

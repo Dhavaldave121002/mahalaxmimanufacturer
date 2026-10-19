@@ -306,8 +306,8 @@ export const Header: React.FC = () => {
                     <span className="font-black text-sm sm:text-xl tracking-tight text-navy leading-none">
                       MAHALAXMI
                     </span>
-                    <span className="text-[7px] sm:text-[9px] bg-indigo text-white font-extrabold px-1 py-0.2 rounded uppercase">
-                      MILLS
+                    <span className="text-[7px] sm:text-[9px] bg-indigo text-white font-extrabold px-1.5 py-0.5 rounded uppercase">
+                      ENTERPRISES
                     </span>
                   </div>
                   <span className="text-[7px] sm:text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mt-0.5 hidden xs:block">
@@ -783,7 +783,7 @@ export const Header: React.FC = () => {
                     className="w-10 h-10 rounded-full object-cover shadow-sm border border-champagne/40 shrink-0"
                   />
                   <div>
-                    <h4 className="font-black text-sm tracking-tight leading-tight">MAHALAXMI</h4>
+                    <h4 className="font-black text-sm tracking-tight leading-tight">MAHALAXMI ENTERPRISES</h4>
                     <p className="text-[10px] text-champagne font-bold tracking-wider uppercase">Direct Mill Weaves</p>
                   </div>
                 </div>

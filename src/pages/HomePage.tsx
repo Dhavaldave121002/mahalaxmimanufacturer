@@ -150,7 +150,7 @@ export const HomePage: React.FC = () => {
       tag: "Verified Retail Stockist",
       rating: 5,
       verified: true,
-      text: "As a retail shop owner in Ahmedabad, Mahalaxmi's display boxes and low MOQ of 10 units allow me to stock fresh designs weekly with 40% profit margins. Fast 48-hour delivery.",
+      text: "As a retail shop owner in Ahmedabad, Mahalaxmi Enterprises' display boxes and low MOQ of 10 units allow me to stock fresh designs weekly with 40% profit margins. Fast 48-hour delivery.",
       savings: "40% Retail Margin",
       avatarColor: "bg-emerald-600",
       initials: "AP"
@@ -176,7 +176,7 @@ export const HomePage: React.FC = () => {
       tag: "Global Export Partner",
       rating: 5,
       verified: true,
-      text: "We export container-load institutional textiles to the Middle East. Mahalaxmi's batch consistency in yarn count, tensile strength, and packing accuracy is world-class.",
+      text: "We export container-load institutional textiles to the Middle East. Mahalaxmi Enterprises' batch consistency in yarn count, tensile strength, and packing accuracy is world-class.",
       savings: "Export FCL Grade",
       avatarColor: "bg-amber-600",
       initials: "RA"
@@ -325,7 +325,7 @@ export const HomePage: React.FC = () => {
                   )}
                   <img
                     src={normalizeImageUrl(currentHero.image)}
-                    alt={currentHero.title || 'Mahalaxmi Mill Promotion'}
+                    alt={currentHero.title || 'Mahalaxmi Enterprises Promotion'}
                     fetchPriority="high"
                     decoding="async"
                     className="w-full h-full object-cover opacity-100 transition-opacity duration-700"
@@ -505,7 +505,7 @@ export const HomePage: React.FC = () => {
         <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-subtle space-y-6">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <Badge variant="champagne" size="sm" className="font-bold">
-              THE MAHALAXMI MILL ADVANTAGE
+              THE MAHALAXMI ENTERPRISES ADVANTAGE
             </Badge>
             <h2 className="text-2xl sm:text-3xl font-black text-navy tracking-tight">
               Why Our Prices Beat Amazon, Flipkart & Traditional Traders
@@ -537,7 +537,7 @@ export const HomePage: React.FC = () => {
             <div className="p-6 rounded-2xl bg-emerald-50/70 border border-emerald-300 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-emerald-300">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm text-emerald-950">Mahalaxmi Direct Mill Model</span>
+                  <span className="font-bold text-sm text-emerald-950">Mahalaxmi Enterprises Direct Mill Model</span>
                   <Badge variant="success" size="sm">Factory Rate</Badge>
                 </div>
                 <span className="text-xs font-black text-emerald-800 bg-emerald-200 px-2.5 py-0.5 rounded-full">Save 50%+</span>

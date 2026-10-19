@@ -100,7 +100,7 @@ export const OrderTrackingPage: React.FC = () => {
         items: [
           {
             productId: 'prod-textile-live',
-            productName: 'Mahalaxmi Surat Mill Textile Consignment Batch',
+            productName: 'Mahalaxmi Enterprises Surat Mill Textile Consignment Batch',
             sku: 'MLE-SURAT-DISPATCH',
             hsnCode: '630221',
             quantity: 50,
