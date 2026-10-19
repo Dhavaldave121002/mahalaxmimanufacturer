@@ -76,6 +76,19 @@ export interface Address {
   isDefault?: boolean;
 }
 
+export interface WalletTransaction {
+  id: string;
+  userId?: string;
+  userEmail?: string;
+  type: 'CREDIT_REFUND' | 'WALLET_TOPUP' | 'ORDER_PAYMENT';
+  amount: number; // In Points / ₹ (1 Point = ₹1)
+  description: string;
+  orderId?: string;
+  orderNumber?: string;
+  balanceAfter: number;
+  timestamp: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -89,6 +102,8 @@ export interface User {
   addresses: Address[];
   creditLimit?: number;
   availableCredit?: number;
+  walletBalance?: number; // Mill Points Balance (1 Point = ₹1)
+  walletTransactions?: WalletTransaction[];
   password?: string;
 }
 
@@ -107,7 +122,7 @@ export type OrderStatus =
   | 'EXCHANGE_APPROVED'
   | 'RETURN_REJECTED';
 
-export type PaymentMethod = 'RAZORPAY' | 'UPI' | 'COD' | 'NET_BANKING' | 'CREDIT_30_DAYS';
+export type PaymentMethod = 'RAZORPAY' | 'UPI' | 'COD' | 'NET_BANKING' | 'WALLET_POINTS' | 'CREDIT_30_DAYS';
 export type PaymentStatus = 'PAID' | 'PENDING' | 'REFUNDED' | 'CREDIT_APPROVED';
 
 export interface OrderItem {

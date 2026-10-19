@@ -18,12 +18,19 @@ import {
   FileText,
   Send,
   Sparkles,
-  Star
+  Star,
+  Coins,
+  Wallet,
+  History,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Check,
+  X
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
 export const AccountPage: React.FC = () => {
-  const { currentUser, isLoggedIn, logout, updateUserProfile, addSavedAddress, orders, quotations, submitBusinessEnquiry } = useApp();
+  const { currentUser, isLoggedIn, logout, updateUserProfile, addSavedAddress, orders, quotations, submitBusinessEnquiry, topUpWallet } = useApp();
 
   const userOrdersCount = currentUser?.role === 'admin'
     ? (orders?.length || 0)
@@ -114,6 +121,34 @@ export const AccountPage: React.FC = () => {
       }, 2500);
     } finally {
       setEnquirySubmitting(false);
+    }
+  };
+
+  // Wallet Top-Up State
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState<number>(500);
+  const [customTopUpInput, setCustomTopUpInput] = useState<string>('500');
+  const [topUpPaymentMethod, setTopUpPaymentMethod] = useState<'UPI' | 'CARD' | 'NET_BANKING'>('UPI');
+  const [topUpSubmitting, setTopUpSubmitting] = useState(false);
+  const [topUpSuccessMsg, setTopUpSuccessMsg] = useState<string | null>(null);
+  const [showWalletLedger, setShowWalletLedger] = useState(false);
+
+  const handleTopUpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const amt = Number(customTopUpInput) || topUpAmount;
+    if (!amt || amt <= 0) return;
+    setTopUpSubmitting(true);
+    try {
+      const res = await topUpWallet(amt, `${topUpPaymentMethod}-PAY-${Date.now().toString().slice(-6)}`);
+      if (res.success) {
+        setTopUpSuccessMsg(res.message);
+        setTimeout(() => {
+          setTopUpSuccessMsg(null);
+          setShowTopUpModal(false);
+        }, 2000);
+      }
+    } finally {
+      setTopUpSubmitting(false);
     }
   };
 
@@ -310,30 +345,106 @@ export const AccountPage: React.FC = () => {
               </div>
             )}
 
-            {/* Credit Limit Meter for B2B */}
-            {currentUser.creditLimit && (
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
-                <div className="flex justify-between items-center font-bold text-navy">
-                  <span className="flex items-center gap-1.5">
-                    <CreditCard className="w-4 h-4 text-indigo" />
-                    <span>30-Day B2B Trade Line</span>
-                  </span>
-                  <span className="text-emerald-700">Active</span>
+            {/* ========================================================
+                MAHALAXMI MILL WALLET & POINTS SYSTEM (1 Point = ₹1)
+                ======================================================== */}
+            <div className="bg-gradient-to-br from-navy via-navy-800 to-indigo-950 text-white rounded-3xl p-5 border border-indigo-500/30 shadow-premium relative overflow-hidden space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10 relative z-10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-champagne text-navy flex items-center justify-center font-black shadow-sm">
+                    <Coins className="w-5 h-5 text-navy" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-sm text-white flex items-center gap-1.5">
+                      <span>Mill Points Wallet</span>
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                        1 Pt = ₹1
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-300">Instant Cashbacks, Auto-Refunds & Easy Buys</p>
+                  </div>
                 </div>
-                <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                  <div
-                    className="bg-indigo h-full rounded-full"
-                    style={{
-                      width: `${Math.round(((currentUser.availableCredit || 0) / currentUser.creditLimit) * 100)}%`
-                    }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-[11px] text-slate-500">
-                  <span>Available: ₹{currentUser.availableCredit?.toLocaleString('en-IN')}</span>
-                  <span>Total Limit: ₹{currentUser.creditLimit?.toLocaleString('en-IN')}</span>
-                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowTopUpModal(true)}
+                  className="px-3.5 py-1.5 bg-champagne hover:bg-champagne/90 text-navy font-black text-xs rounded-xl shadow transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Add Points</span>
+                </button>
               </div>
-            )}
+
+              {/* Balance Display */}
+              <div className="flex items-end justify-between relative z-10">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-slate-300 font-bold">Available Points Balance</p>
+                  <div className="flex items-baseline gap-2 mt-0.5">
+                    <span className="text-2xl sm:text-3xl font-black text-champagne tracking-tight">
+                      🪙 {(currentUser.walletBalance || 0).toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-xs text-slate-300 font-semibold">
+                      Points (Worth ₹{(currentUser.walletBalance || 0).toLocaleString('en-IN')})
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowWalletLedger(!showWalletLedger)}
+                  className="text-xs text-champagne hover:underline flex items-center gap-1 font-bold cursor-pointer"
+                >
+                  <History className="w-3.5 h-3.5" />
+                  <span>{showWalletLedger ? 'Hide Ledger' : `Ledger (${currentUser.walletTransactions?.length || 0})`}</span>
+                </button>
+              </div>
+
+              {/* Instant Refund Note */}
+              <div className="p-2.5 bg-white/5 rounded-xl border border-white/10 text-[11px] text-slate-300 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>
+                  Approved refunds for any returned product get <strong>instantly credited here</strong> as 100% usable points!
+                </span>
+              </div>
+
+              {/* Transaction Ledger Dropdown */}
+              {showWalletLedger && (
+                <div className="pt-3 border-t border-white/10 space-y-2 max-h-56 overflow-y-auto pr-1">
+                  <p className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Recent Transactions</p>
+                  {(!currentUser.walletTransactions || currentUser.walletTransactions.length === 0) ? (
+                    <p className="text-xs text-slate-400 py-2">No transactions recorded yet.</p>
+                  ) : (
+                    currentUser.walletTransactions.map(tx => (
+                      <div
+                        key={tx.id}
+                        className="p-2.5 bg-black/20 rounded-xl border border-white/5 flex items-center justify-between text-xs"
+                      >
+                        <div className="space-y-0.5">
+                          <p className="font-semibold text-white text-[11px]">{tx.description}</p>
+                          <p className="text-[10px] text-slate-400">
+                            {new Date(tx.timestamp).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span
+                            className={`font-black text-xs ${
+                              tx.type === 'CREDIT_REFUND'
+                                ? 'text-emerald-400'
+                                : tx.type === 'WALLET_TOPUP'
+                                ? 'text-cyan-300'
+                                : 'text-rose-400'
+                            }`}
+                          >
+                            {tx.type === 'ORDER_PAYMENT' ? '-' : '+'} 🪙 {tx.amount.toLocaleString('en-IN')}
+                          </span>
+                          <p className="text-[9px] text-slate-400">Bal: 🪙 {tx.balanceAfter?.toLocaleString('en-IN')}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Quick shortcuts */}
@@ -708,6 +819,138 @@ export const AccountPage: React.FC = () => {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          MODAL: ADD / TOP-UP MILL POINTS TO USER WALLET
+          ======================================================== */}
+      {showTopUpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 relative">
+            <button
+              onClick={() => setShowTopUpModal(false)}
+              className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-navy rounded-full bg-slate-100 transition"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-8 rounded-xl bg-champagne text-navy flex items-center justify-center font-black">
+                  🪙
+                </span>
+                <h3 className="text-lg font-black text-navy">Add Mill Points to Profile</h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                1 Point = ₹1. Points never expire and can be redeemed towards any order on Web and Flutter Mobile App.
+              </p>
+            </div>
+
+            {topUpSuccessMsg ? (
+              <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-2">
+                <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto">
+                  <Check className="w-6 h-6 stroke-[3]" />
+                </div>
+                <h4 className="font-black text-emerald-950 text-base">Points Added Successfully!</h4>
+                <p className="text-xs text-emerald-800">{topUpSuccessMsg}</p>
+              </div>
+            ) : (
+              <form onSubmit={handleTopUpSubmit} className="space-y-4 text-xs">
+                {/* Current points notice */}
+                <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-between text-indigo-900 font-semibold">
+                  <span>Current Points:</span>
+                  <span className="font-black text-sm">🪙 {(currentUser.walletBalance || 0).toLocaleString('en-IN')} Pts</span>
+                </div>
+
+                {/* Quick Select Buttons */}
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1.5">Select Points Pack:</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[200, 500, 1000, 2500].map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => {
+                          setTopUpAmount(val);
+                          setCustomTopUpInput(val.toString());
+                        }}
+                        className={`py-2 px-1 rounded-xl text-xs font-bold border transition ${
+                          customTopUpInput === val.toString()
+                            ? 'bg-navy text-champagne border-navy shadow-sm'
+                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        🪙 {val}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom Amount Input */}
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Or Enter Custom Points (₹):</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-slate-400 font-bold">₹</span>
+                    <input
+                      type="number"
+                      min="50"
+                      max="100000"
+                      required
+                      value={customTopUpInput}
+                      onChange={e => {
+                        setCustomTopUpInput(e.target.value);
+                        setTopUpAmount(Number(e.target.value) || 0);
+                      }}
+                      className="w-full pl-8 pr-3 py-2.5 border border-slate-300 rounded-xl outline-none font-bold text-navy focus:border-indigo"
+                      placeholder="e.g. 500"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    You will receive <strong>🪙 {Number(customTopUpInput) || 0} Mill Points</strong> in your wallet.
+                  </p>
+                </div>
+
+                {/* Payment Simulation Mode */}
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1.5">Payment Method:</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'UPI', label: 'UPI / QR' },
+                      { id: 'CARD', label: 'Card' },
+                      { id: 'NET_BANKING', label: 'Net Banking' }
+                    ].map(pm => (
+                      <button
+                        key={pm.id}
+                        type="button"
+                        onClick={() => setTopUpPaymentMethod(pm.id as any)}
+                        className={`py-2 px-2 rounded-xl text-[11px] font-bold border transition ${
+                          topUpPaymentMethod === pm.id
+                            ? 'bg-indigo text-white border-indigo'
+                            : 'bg-slate-50 text-slate-600 border-slate-200'
+                        }`}
+                      >
+                        {pm.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={topUpSubmitting || !(Number(customTopUpInput) > 0)}
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-sm text-sm cursor-pointer"
+                >
+                  <Coins className="w-4 h-4" />
+                  <span>
+                    {topUpSubmitting
+                      ? 'Processing Payment...'
+                      : `Pay ₹${Number(customTopUpInput) || 0} & Add ${Number(customTopUpInput) || 0} Points`}
+                  </span>
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}

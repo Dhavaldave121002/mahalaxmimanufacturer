@@ -32,6 +32,7 @@ export const CheckoutPage: React.FC = () => {
     updateUserProfile,
     addSavedAddress,
     createOrder,
+    redeemWalletPoints,
     deliveryInfo
   } = useApp();
 
@@ -199,17 +200,26 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
-    // B. NON-RAZORPAY FLOW (UPI, NET_BANKING, COD, 30_DAYS_CREDIT)
+    // B. NON-RAZORPAY FLOW (WALLET_POINTS, UPI, NET_BANKING, COD)
     setIsSubmitting(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       const order = createOrder({
         paymentMethod,
         shippingAddress: activeAddress,
         billingAddress: activeAddress
       });
+
+      // If paying with Wallet Points, redeem the points from the user's ledger
+      if (paymentMethod === 'WALLET_POINTS') {
+        const pointsToRedeem = Math.min(currentUser.walletBalance || 0, cartTotal);
+        if (pointsToRedeem > 0) {
+          await redeemWalletPoints(pointsToRedeem, order.orderNumber, order.id);
+        }
+      }
+
       setIsSubmitting(false);
       navigate(`/orders?success=${order.id}`);
-    }, 1200);
+    }, 1000);
   };
 
   return (
@@ -554,48 +564,39 @@ export const CheckoutPage: React.FC = () => {
                 />
               </label>
 
-              {/* 30-Day B2B Credit Option (Enabled for verified accounts) */}
+              {/* Mahalaxmi Mill Points Wallet Option (1 Point = ₹1) */}
               <label
-                onClick={() => {
-                  if (currentUser.role !== 'consumer') {
-                    setPaymentMethod('CREDIT_30_DAYS');
-                  }
-                }}
+                onClick={() => setPaymentMethod('WALLET_POINTS')}
                 className={`p-4 rounded-xl border flex items-center justify-between transition ${
-                  currentUser.role === 'consumer'
-                    ? 'opacity-50 cursor-not-allowed border-slate-200 bg-slate-50'
-                    : paymentMethod === 'CREDIT_30_DAYS'
-                    ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo cursor-pointer'
+                  paymentMethod === 'WALLET_POINTS'
+                    ? 'border-indigo bg-indigo-50/70 ring-2 ring-indigo cursor-pointer'
                     : 'border-slate-200 hover:bg-slate-50 cursor-pointer'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo/10 text-indigo rounded-lg">
-                    <Building2 className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-xl bg-champagne text-navy flex items-center justify-center font-black text-base shadow-sm">
+                    🪙
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-bold text-navy">30-Day B2B Trade Credit</p>
-                      {currentUser.role === 'consumer' ? (
-                        <span className="text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded font-semibold">
-                          Requires B2B Account
-                        </span>
-                      ) : (
-                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-bold">
-                          Approved (Limit: ₹{currentUser.availableCredit?.toLocaleString('en-IN')})
-                        </span>
-                      )}
+                      <p className="text-xs font-bold text-navy">Pay with Mill Points Wallet</p>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full font-bold">
+                        Available: 🪙 {(currentUser.walletBalance || 0).toLocaleString('en-IN')} Points (₹{(currentUser.walletBalance || 0).toLocaleString('en-IN')})
+                      </span>
                     </div>
-                    <p className="text-[10px] text-slate-500">Pay invoice within 30 days of dispatch</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      {(currentUser.walletBalance || 0) >= cartTotal
+                        ? '✓ 100% full order amount covered by your available points balance!'
+                        : `Points cover ₹${Math.min(currentUser.walletBalance || 0, cartTotal)}, balance payable via UPI/Cash.`}
+                    </p>
                   </div>
                 </div>
                 <input
                   type="radio"
                   name="payment"
-                  disabled={currentUser.role === 'consumer'}
-                  checked={paymentMethod === 'CREDIT_30_DAYS'}
-                  onChange={() => setPaymentMethod('CREDIT_30_DAYS')}
-                  className="accent-indigo"
+                  checked={paymentMethod === 'WALLET_POINTS'}
+                  onChange={() => setPaymentMethod('WALLET_POINTS')}
+                  className="accent-indigo w-4 h-4"
                 />
               </label>
             </div>

@@ -1111,10 +1111,10 @@ export const AdminDashboardPage: React.FC = () => {
                               <button
                                 onClick={() => updateOrderStatus(ord.id, 'REFUNDED')}
                                 className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] transition shadow-sm flex items-center gap-1 cursor-pointer"
-                                title="Approve Return & Issue 100% Refund"
+                                title={`Approve Return & Credit ₹${ord.totalAmount} as Mill Points into ${ord.customer.name}'s Profile Wallet`}
                               >
-                                <Check className="w-3 h-3" />
-                                <span>Approve & 100% Refund</span>
+                                <span>🪙</span>
+                                <span>Approve & Credit ₹{ord.totalAmount} to Points</span>
                               </button>
                               <button
                                 onClick={() => updateOrderStatus(ord.id, 'RETURN_REJECTED')}

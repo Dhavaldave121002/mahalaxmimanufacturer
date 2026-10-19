@@ -11,7 +11,20 @@
     "isGstVerified": false,
     "creditLimit": 500000,
     "availableCredit": 500000,
-    "addresses": []
+    "addresses": [],
+    "walletBalance": 1200,
+    "walletTransactions": [
+      {
+        "id": "wt-welcome-usr-1792224580738-435",
+        "userId": "usr-1792224580738-435",
+        "userEmail": "web.wholesaler.1792224580738@gmail.com",
+        "type": "WALLET_TOPUP",
+        "amount": 1200,
+        "description": "Welcome Bonus: Mill Points Credited",
+        "balanceAfter": 1200,
+        "timestamp": "2026-10-19T11:07:50.426Z"
+      }
+    ]
   },
   {
     "id": "usr-1792224580712-981",
@@ -25,7 +38,20 @@
     "isGstVerified": true,
     "creditLimit": 100000,
     "availableCredit": 100000,
-    "addresses": []
+    "addresses": [],
+    "walletBalance": 1200,
+    "walletTransactions": [
+      {
+        "id": "wt-welcome-usr-1792224580712-981",
+        "userId": "usr-1792224580712-981",
+        "userEmail": "flutter.buyer.1792224580711@gmail.com",
+        "type": "WALLET_TOPUP",
+        "amount": 1200,
+        "description": "Welcome Bonus: Mill Points Credited",
+        "balanceAfter": 1200,
+        "timestamp": "2026-10-19T11:07:50.435Z"
+      }
+    ]
   },
   {
     "id": "usr-1792224037150-215",
@@ -39,7 +65,20 @@
     "isGstVerified": true,
     "creditLimit": 100000,
     "availableCredit": 100000,
-    "addresses": []
+    "addresses": [],
+    "walletBalance": 1200,
+    "walletTransactions": [
+      {
+        "id": "wt-welcome-usr-1792224037150-215",
+        "userId": "usr-1792224037150-215",
+        "userEmail": "sync.tester.1792224037150@mahalaxmi.com",
+        "type": "WALLET_TOPUP",
+        "amount": 1200,
+        "description": "Welcome Bonus: Mill Points Credited",
+        "balanceAfter": 1200,
+        "timestamp": "2026-10-19T11:07:50.435Z"
+      }
+    ]
   },
   {
     "id": "usr-dhaval",
@@ -64,6 +103,19 @@
         "pincode": "394221",
         "addressType": "COMMERCIAL",
         "isDefault": true
+      }
+    ],
+    "walletBalance": 5000,
+    "walletTransactions": [
+      {
+        "id": "wt-welcome-usr-dhaval",
+        "userId": "usr-dhaval",
+        "userEmail": "dhavaldave121002@gmail.com",
+        "type": "WALLET_TOPUP",
+        "amount": 5000,
+        "description": "Welcome Bonus: Mill Points Credited",
+        "balanceAfter": 5000,
+        "timestamp": "2026-10-19T11:07:50.435Z"
       }
     ]
   },
@@ -91,6 +143,43 @@
         "addressType": "COMMERCIAL",
         "isDefault": true
       }
+    ],
+    "walletBalance": 5036,
+    "walletTransactions": [
+      {
+        "id": "wt-1792408548294-71",
+        "userId": "usr-admin",
+        "userEmail": "admin@mahalaxmienterprises.com",
+        "type": "ORDER_PAYMENT",
+        "amount": 464,
+        "description": "Redeemed 🪙 464 Points for Order #MLE-ORD-2026-25722",
+        "orderId": "ord-1792408548213",
+        "orderNumber": "MLE-ORD-2026-25722",
+        "balanceAfter": 5036,
+        "timestamp": "2026-10-19T11:15:48.294Z"
+      },
+      {
+        "id": "wt-1792408432019-120",
+        "userId": "usr-admin",
+        "userEmail": "admin@mahalaxmienterprises.com",
+        "type": "WALLET_TOPUP",
+        "amount": 500,
+        "description": "Added ₹500 to Mill Points (Payment Ref: UPI-PAY-431995)",
+        "orderId": "",
+        "orderNumber": "",
+        "balanceAfter": 5500,
+        "timestamp": "2026-10-19T11:13:52.019Z"
+      },
+      {
+        "id": "wt-welcome-usr-admin",
+        "userId": "usr-admin",
+        "userEmail": "admin@mahalaxmienterprises.com",
+        "type": "WALLET_TOPUP",
+        "amount": 5000,
+        "description": "Welcome Bonus: Mill Points Credited",
+        "balanceAfter": 5000,
+        "timestamp": "2026-10-19T11:07:50.435Z"
+      }
     ]
   },
   {
@@ -116,6 +205,19 @@
         "pincode": "395002",
         "addressType": "HOME",
         "isDefault": true
+      }
+    ],
+    "walletBalance": 350,
+    "walletTransactions": [
+      {
+        "id": "wt-welcome-usr-c01",
+        "userId": "usr-c01",
+        "userEmail": "rajesh.sharma@example.com",
+        "type": "WALLET_TOPUP",
+        "amount": 350,
+        "description": "Welcome Bonus: Mill Points Credited",
+        "balanceAfter": 350,
+        "timestamp": "2026-10-19T11:07:50.435Z"
       }
     ]
   },
@@ -144,6 +246,19 @@
         "addressType": "COMMERCIAL",
         "isDefault": true
       }
+    ],
+    "walletBalance": 1200,
+    "walletTransactions": [
+      {
+        "id": "wt-welcome-usr-r02",
+        "userId": "usr-r02",
+        "userEmail": "anand@pateltextiles.com",
+        "type": "WALLET_TOPUP",
+        "amount": 1200,
+        "description": "Welcome Bonus: Mill Points Credited",
+        "balanceAfter": 1200,
+        "timestamp": "2026-10-19T11:07:50.435Z"
+      }
     ]
   },
   {
@@ -170,6 +285,19 @@
         "pincode": "110037",
         "addressType": "WAREHOUSE",
         "isDefault": true
+      }
+    ],
+    "walletBalance": 1200,
+    "walletTransactions": [
+      {
+        "id": "wt-welcome-usr-w03",
+        "userId": "usr-w03",
+        "userEmail": "procurement@royalgrandhospitality.com",
+        "type": "WALLET_TOPUP",
+        "amount": 1200,
+        "description": "Welcome Bonus: Mill Points Credited",
+        "balanceAfter": 1200,
+        "timestamp": "2026-10-19T11:07:50.435Z"
       }
     ]
   }

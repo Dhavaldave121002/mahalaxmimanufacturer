@@ -43,6 +43,10 @@ function sanitizeUser(u) {
     isGstVerified: !!(u.is_gst_verified ?? u.isGstVerified),
     creditLimit: Number(u.credit_limit ?? u.creditLimit ?? 0),
     availableCredit: Number(u.available_credit ?? u.availableCredit ?? 0),
+    walletBalance: Number(u.wallet_balance ?? u.walletBalance ?? 0),
+    walletTransactions: typeof u.wallet_transactions === 'string'
+      ? JSON.parse(u.wallet_transactions || '[]')
+      : (u.walletTransactions || []),
     addresses: typeof u.addresses === 'string' ? JSON.parse(u.addresses || '[]') : (u.addresses || [])
   };
 }
@@ -307,6 +311,8 @@ export default async function handler(req, res) {
       const cleanCompany = (u.companyName || u.company_name || '').trim();
       const cleanPhone = (u.phone || u.mobile || '').trim();
       const cleanGst = (u.gstNumber || u.gst_number || '').trim().toUpperCase();
+      const newWalletBal = u.walletBalance !== undefined ? Number(u.walletBalance) : undefined;
+      const newWalletTxns = u.walletTransactions !== undefined ? JSON.stringify(u.walletTransactions) : undefined;
 
       if (!cleanEmail) {
         return res.status(400).json({ success: false, message: 'User email is required to update profile.' });
@@ -315,8 +321,8 @@ export default async function handler(req, res) {
       if (pool) {
         try {
           await pool.query(
-            'UPDATE users SET name = COALESCE(NULLIF(?, ""), name), company_name = COALESCE(NULLIF(?, ""), company_name), phone = COALESCE(NULLIF(?, ""), phone), gst_number = COALESCE(NULLIF(?, ""), gst_number) WHERE email = ?',
-            [cleanName, cleanCompany, cleanPhone, cleanGst, cleanEmail]
+            'UPDATE users SET name = COALESCE(NULLIF(?, ""), name), company_name = COALESCE(NULLIF(?, ""), company_name), phone = COALESCE(NULLIF(?, ""), phone), gst_number = COALESCE(NULLIF(?, ""), gst_number), wallet_balance = COALESCE(?, wallet_balance), wallet_transactions = COALESCE(?, wallet_transactions) WHERE email = ?',
+            [cleanName, cleanCompany, cleanPhone, cleanGst, newWalletBal, newWalletTxns, cleanEmail]
           );
           const [updatedRows] = await pool.query('SELECT * FROM users WHERE email = ?', [cleanEmail]);
           if (updatedRows && updatedRows.length > 0) {
@@ -339,6 +345,8 @@ export default async function handler(req, res) {
         if (cleanCompany) fallback[idx].companyName = cleanCompany;
         if (cleanPhone) fallback[idx].phone = cleanPhone;
         if (cleanGst) fallback[idx].gstNumber = cleanGst;
+        if (newWalletBal !== undefined) fallback[idx].walletBalance = newWalletBal;
+        if (u.walletTransactions !== undefined) fallback[idx].walletTransactions = u.walletTransactions;
         saveFallbackUsers(fallback);
         return res.status(200).json({
           success: true,
@@ -348,6 +356,109 @@ export default async function handler(req, res) {
       }
 
       return res.status(404).json({ success: false, message: 'Account not found to update.' });
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: WALLET OPERATIONS (TOP-UP, REFUND CREDIT, REDEEM/PAY)
+    // -------------------------------------------------------------
+    if (action === 'wallet_topup' || action === 'wallet_refund' || action === 'wallet_pay') {
+      const targetEmail = (req.body.email || req.body.userEmail || '').trim().toLowerCase();
+      const amount = Number(req.body.amount || 0);
+      const orderId = req.body.orderId || '';
+      const orderNumber = req.body.orderNumber || '';
+      const description = req.body.description || '';
+      const paymentRef = req.body.paymentRef || '';
+
+      if (!targetEmail) {
+        return res.status(400).json({ success: false, message: 'Customer email is required for wallet operations.' });
+      }
+      if (isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ success: false, message: 'A valid positive amount is required.' });
+      }
+
+      let matchedUser = null;
+      let matchedIndex = -1;
+
+      // 1. Fetch user from fallback or DB
+      const fallback = loadFallbackUsers();
+      matchedIndex = fallback.findIndex(f => f.email.toLowerCase() === targetEmail);
+      if (matchedIndex !== -1) {
+        matchedUser = fallback[matchedIndex];
+      }
+
+      if (!matchedUser) {
+        return res.status(404).json({ success: false, message: `User with email "${targetEmail}" was not found.` });
+      }
+
+      const currentBalance = Number(matchedUser.walletBalance || matchedUser.wallet_balance || 0);
+      let newBalance = currentBalance;
+      let txType = 'WALLET_TOPUP';
+      let txDesc = '';
+
+      if (action === 'wallet_topup') {
+        newBalance = currentBalance + amount;
+        txType = 'WALLET_TOPUP';
+        txDesc = description || `Added ₹${amount} to Mill Points (Payment Ref: ${paymentRef || 'UPI-' + Date.now().toString().slice(-6)})`;
+      } else if (action === 'wallet_refund') {
+        newBalance = currentBalance + amount;
+        txType = 'CREDIT_REFUND';
+        txDesc = description || `100% Refund of ₹${amount} credited as Mill Points for Order #${orderNumber || orderId}`;
+      } else if (action === 'wallet_pay') {
+        if (currentBalance < amount) {
+          return res.status(400).json({
+            success: false,
+            message: `Insufficient points balance! Available: 🪙 ${currentBalance}, Required: 🪙 ${amount}.`
+          });
+        }
+        newBalance = currentBalance - amount;
+        txType = 'ORDER_PAYMENT';
+        txDesc = description || `Redeemed 🪙 ${amount} Points towards Order #${orderNumber || orderId}`;
+      }
+
+      const newTx = {
+        id: `wt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        userId: matchedUser.id,
+        userEmail: targetEmail,
+        type: txType,
+        amount: amount,
+        description: txDesc,
+        orderId: orderId,
+        orderNumber: orderNumber,
+        balanceAfter: newBalance,
+        timestamp: new Date().toISOString()
+      };
+
+      const existingTxns = Array.isArray(matchedUser.walletTransactions)
+        ? matchedUser.walletTransactions
+        : (typeof matchedUser.wallet_transactions === 'string' ? JSON.parse(matchedUser.wallet_transactions || '[]') : []);
+
+      const updatedTxns = [newTx, ...existingTxns];
+
+      // Update in fallback
+      matchedUser.walletBalance = newBalance;
+      matchedUser.walletTransactions = updatedTxns;
+      fallback[matchedIndex] = matchedUser;
+      saveFallbackUsers(fallback);
+
+      // Update in MySQL if pool is available
+      if (pool) {
+        try {
+          await pool.query(
+            'UPDATE users SET wallet_balance = ?, wallet_transactions = ? WHERE email = ?',
+            [newBalance, JSON.stringify(updatedTxns), targetEmail]
+          );
+        } catch (dbErr) {
+          console.warn('MySQL wallet update warning:', dbErr.message);
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: txDesc,
+        walletBalance: newBalance,
+        transaction: newTx,
+        user: sanitizeUser(matchedUser)
+      });
     }
 
     if (action === 'reset_password') {

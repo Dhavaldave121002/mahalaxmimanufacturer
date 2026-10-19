@@ -66,19 +66,6 @@ export const WholesalePage: React.FC = () => {
   // Selected Quote for Printable Preview Modal
   const [selectedQuoteForPrint, setSelectedQuoteForPrint] = useState<Quotation | null>(null);
 
-  // Net-30 Trade Credit Modal State
-  const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
-  const [creditForm, setCreditForm] = useState({
-    businessName: currentUser.companyName || '',
-    gstin: currentUser.gstNumber || '',
-    annualTurnover: '₹50 Lakhs - ₹2 Crores',
-    requestedLimit: 250000,
-    panNumber: '',
-    bankAccount: '',
-    ifsc: ''
-  });
-  const [creditApproved, setCreditApproved] = useState(false);
-
   // Swatch Box Feedback
   const [swatchAdded, setSwatchAdded] = useState(false);
 
@@ -175,15 +162,6 @@ export const WholesalePage: React.FC = () => {
     setTimeout(() => setSwatchAdded(false), 3000);
   };
 
-  // Handle Trade Credit Application Submission
-  const handleCreditSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreditApproved(true);
-    setTimeout(() => {
-      setIsCreditModalOpen(false);
-      setCreditApproved(false);
-    }, 2500);
-  };
 
   // GSTIN Live Validation & Entity Lookup
   const handleValidateGstin = (value: string) => {
@@ -286,21 +264,21 @@ export const WholesalePage: React.FC = () => {
               <p className="text-[11px] text-slate-300">100% Verified ITC</p>
             </div>
             <div>
-              <p className="text-champagne font-black text-sm sm:text-base">Net-30 Credit</p>
-              <p className="text-[11px] text-slate-300">₹50K - ₹5L Pre-Approved</p>
+              <p className="text-champagne font-black text-sm sm:text-base">Mill Wallet Points</p>
+              <p className="text-[11px] text-slate-300">Instant Refunds & Cashbacks</p>
             </div>
           </div>
         </div>
 
         {/* Quick Action Badges on Top Right */}
         <div className="mt-6 sm:mt-0 sm:absolute sm:top-8 sm:right-8 flex flex-col gap-2.5 z-10">
-          <button
-            onClick={() => setIsCreditModalOpen(true)}
-            className="px-4 py-2.5 bg-champagne hover:bg-champagne/90 text-navy font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2"
+          <Link
+            to="/account"
+            className="px-4 py-2.5 bg-champagne hover:bg-champagne/90 text-navy font-black text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
           >
-            <CreditCard className="w-4 h-4 text-navy" />
-            <span>Apply 30-Day Trade Credit</span>
-          </button>
+            <Sparkles className="w-4 h-4 text-navy" />
+            <span>🪙 Mill Points Wallet</span>
+          </Link>
 
           <button
             onClick={handleOrderSwatchKit}
@@ -1317,115 +1295,7 @@ export const WholesalePage: React.FC = () => {
         </div>
       )}
 
-      {/* ========================================================
-          MODAL: 30-DAY COMMERCIAL TRADE CREDIT APPLICATION
-          ======================================================== */}
-      {isCreditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 relative">
-            <button
-              onClick={() => setIsCreditModalOpen(false)}
-              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-navy rounded-full bg-slate-100 transition"
-            >
-              <X className="w-4 h-4" />
-            </button>
 
-            <div>
-              <Badge variant="champagne" size="sm" className="font-bold">
-                INSTITUTIONAL FINANCING
-              </Badge>
-              <h3 className="text-xl font-black text-navy mt-1">
-                Apply for 30-Day Revolving Trade Credit (Net-30)
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Purchase bulk textiles and household inventory today, pay after 30 days with 0% interest for verified GST businesses.
-              </p>
-            </div>
-
-            {creditApproved ? (
-              <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-3">
-                <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto">
-                  <Check className="w-6 h-6 stroke-[3]" />
-                </div>
-                <h4 className="font-black text-emerald-950 text-lg">Provisional Credit Line Approved!</h4>
-                <p className="text-xs text-emerald-800">
-                  Credit Limit of <strong>₹{creditForm.requestedLimit.toLocaleString('en-IN')}</strong> activated under GSTIN <strong>{creditForm.gstin || '24AAECM8921P1ZA'}</strong>. You can now choose "30-Day Credit" during checkout.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleCreditSubmit} className="space-y-4 text-xs">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Company / Store Name:</label>
-                    <input
-                      type="text"
-                      required
-                      value={creditForm.businessName}
-                      onChange={e => setCreditForm({ ...creditForm, businessName: e.target.value })}
-                      placeholder="e.g. Shree Textiles"
-                      className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Business GSTIN:</label>
-                    <input
-                      type="text"
-                      required
-                      maxLength={15}
-                      value={creditForm.gstin}
-                      onChange={e => setCreditForm({ ...creditForm, gstin: e.target.value.toUpperCase() })}
-                      placeholder="e.g. 24AAECM8921P1ZA"
-                      className="w-full p-2.5 border border-slate-300 rounded-xl font-mono uppercase outline-none focus:border-indigo"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Annual Turnover:</label>
-                    <select
-                      value={creditForm.annualTurnover}
-                      onChange={e => setCreditForm({ ...creditForm, annualTurnover: e.target.value })}
-                      className="w-full p-2.5 border border-slate-300 rounded-xl outline-none bg-white text-navy font-semibold"
-                    >
-                      <option>₹10 Lakhs - ₹50 Lakhs</option>
-                      <option>₹50 Lakhs - ₹2 Crores</option>
-                      <option>₹2 Crores - ₹10 Crores</option>
-                      <option>Above ₹10 Crores</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">Requested Credit Line:</label>
-                    <select
-                      value={creditForm.requestedLimit}
-                      onChange={e => setCreditForm({ ...creditForm, requestedLimit: Number(e.target.value) })}
-                      className="w-full p-2.5 border border-slate-300 rounded-xl outline-none bg-white font-bold text-indigo"
-                    >
-                      <option value={50000}>₹50,000 (Starter)</option>
-                      <option value={150000}>₹1,50,000 (Growth)</option>
-                      <option value={250000}>₹2,50,000 (Wholesale)</option>
-                      <option value={500000}>₹5,00,000 (Enterprise Institutional)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500 space-y-1">
-                  <p className="font-semibold text-slate-700">Instant Soft Evaluation:</p>
-                  <p>No CIBIL bureau impact. Assessment performed against your GSTR-3B filings and Surat Mill trade verification.</p>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3.5 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-premium"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Submit Application for Instant Approval</span>
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ========================================================
           MODAL: FORMAL RFQ PRINTABLE QUOTATION SHEET

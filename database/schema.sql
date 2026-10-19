@@ -127,6 +127,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   `is_gst_verified` BOOLEAN DEFAULT FALSE,
   `credit_limit` DECIMAL(12,2) DEFAULT 0.00,
   `available_credit` DECIMAL(12,2) DEFAULT 0.00,
+  `wallet_balance` DECIMAL(12,2) DEFAULT 0.00,
+  `wallet_transactions` JSON,
   `addresses` JSON,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

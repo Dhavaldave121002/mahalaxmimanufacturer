@@ -16,7 +16,8 @@ import {
   MobileAppConfig,
   CouponOffer,
   PaymentMethod,
-  CollectionCategory
+  CollectionCategory,
+  WalletTransaction
 } from '../types';
 import { INITIAL_PRODUCTS, CATEGORIES_CONFIG } from '../data/mockProducts';
 import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
@@ -104,6 +105,11 @@ interface AppContextType {
   updateUserProfile: (profile: Partial<User>) => void;
   addSavedAddress: (address: Omit<Address, 'id'>) => void;
 
+  // Mill Points & Wallet Operations
+  topUpWallet: (amount: number, paymentRef?: string) => Promise<{ success: boolean; message: string; balance?: number }>;
+  creditRefundToWallet: (customerEmail: string, amount: number, orderNumber: string, orderId?: string) => Promise<{ success: boolean; message: string }>;
+  redeemWalletPoints: (amount: number, orderNumber: string, orderId?: string) => Promise<{ success: boolean; message: string }>;
+
   // Orders
   orders: Order[];
   createOrder: (orderData: {
@@ -170,6 +176,19 @@ const DEMO_USER_PROFILES: Record<string, User> = {
     password: 'password123',
     role: 'consumer',
     businessType: 'Individual',
+    walletBalance: 450,
+    walletTransactions: [
+      {
+        id: 'wt-c01-welcome',
+        userId: 'usr-c01',
+        userEmail: 'rajesh.sharma@example.com',
+        type: 'WALLET_TOPUP',
+        amount: 450,
+        description: 'Welcome Bonus: Mill Points Credited',
+        balanceAfter: 450,
+        timestamp: new Date().toISOString()
+      }
+    ],
     addresses: [
       {
         id: 'addr-1',
@@ -198,6 +217,19 @@ const DEMO_USER_PROFILES: Record<string, User> = {
     businessType: 'Retailer',
     creditLimit: 250000,
     availableCredit: 195000,
+    walletBalance: 2500,
+    walletTransactions: [
+      {
+        id: 'wt-r02-welcome',
+        userId: 'usr-r02',
+        userEmail: 'anand@pateltextiles.com',
+        type: 'WALLET_TOPUP',
+        amount: 2500,
+        description: 'Commercial Partner Welcome Grant',
+        balanceAfter: 2500,
+        timestamp: new Date().toISOString()
+      }
+    ],
     addresses: [
       {
         id: 'addr-2',
@@ -227,6 +259,19 @@ const DEMO_USER_PROFILES: Record<string, User> = {
     businessType: 'Hotel/Hospitality',
     creditLimit: 1000000,
     availableCredit: 820000,
+    walletBalance: 8500,
+    walletTransactions: [
+      {
+        id: 'wt-w03-welcome',
+        userId: 'usr-w03',
+        userEmail: 'procurement@royalgrandhospitality.com',
+        type: 'WALLET_TOPUP',
+        amount: 8500,
+        description: 'Institutional Rewards & Cashbacks',
+        balanceAfter: 8500,
+        timestamp: new Date().toISOString()
+      }
+    ],
     addresses: [
       {
         id: 'addr-3',
@@ -254,6 +299,19 @@ const DEMO_USER_PROFILES: Record<string, User> = {
     gstNumber: '24AAECM8921P1ZA',
     isGstVerified: true,
     businessType: 'Institution',
+    walletBalance: 15000,
+    walletTransactions: [
+      {
+        id: 'wt-admin-init',
+        userId: 'usr-admin',
+        userEmail: 'admin@mahalaxmienterprises.com',
+        type: 'WALLET_TOPUP',
+        amount: 15000,
+        description: 'Admin Treasury Float Initialized',
+        balanceAfter: 15000,
+        timestamp: new Date().toISOString()
+      }
+    ],
     addresses: [
       {
         id: 'addr-admin',
@@ -1759,10 +1817,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             {
               status,
               timestamp: new Date().toISOString(),
-              description: `Status updated to ${status} by logistics dispatcher.`
+              description: status === 'REFUNDED'
+                ? `Return approved and 100% refund credited as Mill Points to customer wallet.`
+                : `Status updated to ${status} by logistics dispatcher.`
             }
           ];
-          const isRefunded = status === 'REFUNDED' || status === 'RETURN_APPROVED' || status === 'CANCELLED';
+          const isRefunded = status === 'REFUNDED' || status === 'RETURN_APPROVED';
+
+          // When refund is approved, automatically credit the customer's wallet points!
+          if (isRefunded && ord.customer?.email) {
+            creditRefundToWallet(ord.customer.email, ord.totalAmount, ord.orderNumber, ord.id);
+          }
+
           return {
             ...ord,
             status,
@@ -1775,6 +1841,184 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return ord;
       })
     );
+  };
+
+  // Mill Points & Wallet Operations
+  const topUpWallet = async (amount: number, paymentRef?: string): Promise<{ success: boolean; message: string; balance?: number }> => {
+    if (!amount || amount <= 0) return { success: false, message: 'Please enter a valid amount to add.' };
+    const email = currentUser?.email?.toLowerCase();
+    if (!email) return { success: false, message: 'Please sign in to add points.' };
+
+    const ref = paymentRef || `UPI-${Math.floor(100000 + Math.random() * 900000)}`;
+    const newBalance = (currentUser.walletBalance || 0) + amount;
+    const newTx: WalletTransaction = {
+      id: `wt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      userId: currentUser.id,
+      userEmail: email,
+      type: 'WALLET_TOPUP',
+      amount,
+      description: `Added ₹${amount} to Mill Points (Payment Ref: ${ref})`,
+      balanceAfter: newBalance,
+      timestamp: new Date().toISOString()
+    };
+    const newTxns = [newTx, ...(currentUser.walletTransactions || [])];
+
+    setCurrentUser(prev => {
+      const updated = {
+        ...prev,
+        walletBalance: newBalance,
+        walletTransactions: newTxns
+      };
+      try {
+        localStorage.setItem('mle_current_user', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'wallet_topup',
+          email,
+          amount,
+          paymentRef: ref,
+          description: newTx.description
+        })
+      });
+    } catch (err) {
+      console.warn('Wallet topup sync warning:', err);
+    }
+
+    return {
+      success: true,
+      message: `🎉 Successfully added 🪙 ${amount} Mill Points to your wallet!`,
+      balance: newBalance
+    };
+  };
+
+  const creditRefundToWallet = async (
+    customerEmail: string,
+    amount: number,
+    orderNumber: string,
+    orderId?: string
+  ): Promise<{ success: boolean; message: string }> => {
+    const cleanEmail = customerEmail.trim().toLowerCase();
+    const isCurrent = currentUser?.email?.toLowerCase() === cleanEmail;
+
+    if (isCurrent) {
+      const newBalance = (currentUser.walletBalance || 0) + amount;
+      const newTx: WalletTransaction = {
+        id: `wt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        userId: currentUser.id,
+        userEmail: cleanEmail,
+        type: 'CREDIT_REFUND',
+        amount,
+        description: `100% Refund of ₹${amount} credited as Mill Points for Order #${orderNumber}`,
+        orderId,
+        orderNumber,
+        balanceAfter: newBalance,
+        timestamp: new Date().toISOString()
+      };
+      const newTxns = [newTx, ...(currentUser.walletTransactions || [])];
+
+      setCurrentUser(prev => {
+        const updated = {
+          ...prev,
+          walletBalance: newBalance,
+          walletTransactions: newTxns
+        };
+        try {
+          localStorage.setItem('mle_current_user', JSON.stringify(updated));
+        } catch {}
+        return updated;
+      });
+    }
+
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'wallet_refund',
+          email: cleanEmail,
+          amount,
+          orderNumber,
+          orderId,
+          description: `100% Refund credited for Order #${orderNumber}`
+        })
+      });
+    } catch (err) {
+      console.warn('Wallet refund sync warning:', err);
+    }
+
+    return {
+      success: true,
+      message: `₹${amount} credited as Mill Points to customer (${cleanEmail})!`
+    };
+  };
+
+  const redeemWalletPoints = async (
+    amount: number,
+    orderNumber: string,
+    orderId?: string
+  ): Promise<{ success: boolean; message: string }> => {
+    const email = currentUser?.email?.toLowerCase();
+    if (!email) return { success: false, message: 'Please sign in to redeem points.' };
+    const currentBal = currentUser.walletBalance || 0;
+    if (currentBal < amount) {
+      return { success: false, message: `Insufficient points! Available: 🪙 ${currentBal}` };
+    }
+
+    const newBalance = currentBal - amount;
+    const newTx: WalletTransaction = {
+      id: `wt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      userId: currentUser.id,
+      userEmail: email,
+      type: 'ORDER_PAYMENT',
+      amount,
+      description: `Redeemed 🪙 ${amount} Points for Order #${orderNumber}`,
+      orderId,
+      orderNumber,
+      balanceAfter: newBalance,
+      timestamp: new Date().toISOString()
+    };
+    const newTxns = [newTx, ...(currentUser.walletTransactions || [])];
+
+    setCurrentUser(prev => {
+      const updated = {
+        ...prev,
+        walletBalance: newBalance,
+        walletTransactions: newTxns
+      };
+      try {
+        localStorage.setItem('mle_current_user', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'wallet_pay',
+          email,
+          amount,
+          orderNumber,
+          orderId,
+          description: newTx.description
+        })
+      });
+    } catch (err) {
+      console.warn('Wallet redeem sync warning:', err);
+    }
+
+    return {
+      success: true,
+      message: `Redeemed ${amount} points successfully!`
+    };
   };
 
   const cancelOrder = async (orderId: string, reason?: string): Promise<{ success: boolean; message: string }> => {
@@ -2465,6 +2709,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         switchUserRole,
         updateUserProfile,
         addSavedAddress,
+        topUpWallet,
+        creditRefundToWallet,
+        redeemWalletPoints,
 
         orders,
         createOrder,

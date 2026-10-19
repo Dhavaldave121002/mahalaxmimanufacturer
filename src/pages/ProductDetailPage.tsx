@@ -870,7 +870,7 @@ export const ProductDetailPage: React.FC = () => {
               <li>All bulk consignments are billed with formal GST Tax Invoices from Surat jurisdiction (State Code 24).</li>
               <li>GST numbers entered during checkout automatically receive electronic GSTR-1 filings for instantaneous GSTR-2B input credit.</li>
               <li>Consignments above ₹50,000 include government-verified E-Way bills.</li>
-              <li>Verified business buyers can apply for 30-Day revolving commercial trade credit through the B2B portal.</li>
+              <li>Earn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.</li>
             </ul>
           </div>
         )}
