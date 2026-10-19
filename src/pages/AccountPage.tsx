@@ -128,7 +128,6 @@ export const AccountPage: React.FC = () => {
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState<number>(500);
   const [customTopUpInput, setCustomTopUpInput] = useState<string>('500');
-  const [topUpPaymentMethod, setTopUpPaymentMethod] = useState<'UPI' | 'CARD' | 'NET_BANKING'>('UPI');
   const [topUpSubmitting, setTopUpSubmitting] = useState(false);
   const [topUpSuccessMsg, setTopUpSuccessMsg] = useState<string | null>(null);
   const [showWalletLedger, setShowWalletLedger] = useState(false);
@@ -137,18 +136,67 @@ export const AccountPage: React.FC = () => {
     e.preventDefault();
     const amt = Number(customTopUpInput) || topUpAmount;
     if (!amt || amt <= 0) return;
+
+    const razorpayKey = (import.meta as any).env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TXxnGK4dKMgIdA';
+
+    if (typeof (window as any).Razorpay === 'undefined') {
+      alert('Razorpay Payment Gateway is loading. Please check your internet connection and try again.');
+      return;
+    }
+
     setTopUpSubmitting(true);
-    try {
-      const res = await topUpWallet(amt, `${topUpPaymentMethod}-PAY-${Date.now().toString().slice(-6)}`);
-      if (res.success) {
-        setTopUpSuccessMsg(res.message);
-        setTimeout(() => {
-          setTopUpSuccessMsg(null);
-          setShowTopUpModal(false);
-        }, 2000);
+
+    const options = {
+      key: razorpayKey,
+      amount: Math.round(amt * 100), // in paise
+      currency: 'INR',
+      name: 'Mahalaxmi Enterprises',
+      description: `Purchase 🪙 \${amt} Mill Points for Wallet (1 Point = ₹1)`,
+      image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=160&auto=format&fit=crop&q=80',
+      prefill: {
+        name: currentUser.name || 'Valued Buyer',
+        email: currentUser.email || 'customer@mahalaxmi.in',
+        contact: currentUser.phone || '8511172099',
+      },
+      notes: {
+        purpose: 'WALLET_TOPUP',
+        points: amt.toString(),
+        user_email: currentUser.email
+      },
+      theme: {
+        color: '#312E81'
+      },
+      handler: async function (response: any) {
+        console.log('[Razorpay TopUp Live Success]', response);
+        const paymentId = response.razorpay_payment_id || `RZP-\${Date.now().toString().slice(-6)}`;
+        const res = await topUpWallet(amt, paymentId);
+        setTopUpSubmitting(false);
+        if (res.success) {
+          setTopUpSuccessMsg(res.message);
+          setTimeout(() => {
+            setTopUpSuccessMsg(null);
+            setShowTopUpModal(false);
+          }, 2000);
+        }
+      },
+      modal: {
+        ondismiss: function () {
+          setTopUpSubmitting(false);
+        }
       }
-    } finally {
+    };
+
+    try {
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (resp: any) {
+        setTopUpSubmitting(false);
+        alert(`Payment failed: \${resp.error?.description || 'Transaction cancelled or declined.'}`);
+      });
+      rzp.open();
+    } catch (err: any) {
       setTopUpSubmitting(false);
+      console.error('Razorpay initialization error:', err);
+      alert('Unable to launch Razorpay gateway. Please try again.');
     }
   };
 
@@ -912,41 +960,30 @@ export const AccountPage: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Payment Simulation Mode */}
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1.5">Payment Method:</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: 'UPI', label: 'UPI / QR' },
-                      { id: 'CARD', label: 'Card' },
-                      { id: 'NET_BANKING', label: 'Net Banking' }
-                    ].map(pm => (
-                      <button
-                        key={pm.id}
-                        type="button"
-                        onClick={() => setTopUpPaymentMethod(pm.id as any)}
-                        className={`py-2 px-2 rounded-xl text-[11px] font-bold border transition ${
-                          topUpPaymentMethod === pm.id
-                            ? 'bg-indigo text-white border-indigo'
-                            : 'bg-slate-50 text-slate-600 border-slate-200'
-                        }`}
-                      >
-                        {pm.label}
-                      </button>
-                    ))}
+                {/* Secured by Razorpay notice */}
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-[11px] text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-indigo" />
+                    <div>
+                      <p className="font-bold text-navy">Secured by Razorpay</p>
+                      <p className="text-[10px] text-slate-400">GPay, PhonePe, Paytm, Cards, NetBanking</p>
+                    </div>
                   </div>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                    Instant Auto-Credit
+                  </span>
                 </div>
 
                 <button
                   type="submit"
                   disabled={topUpSubmitting || !(Number(customTopUpInput) > 0)}
-                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-sm text-sm cursor-pointer"
+                  className="w-full py-3.5 bg-indigo hover:bg-indigo-dark disabled:opacity-50 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-premium text-sm cursor-pointer"
                 >
-                  <Coins className="w-4 h-4" />
+                  <Coins className="w-4 h-4 text-champagne" />
                   <span>
                     {topUpSubmitting
-                      ? 'Processing Payment...'
-                      : `Pay ₹${Number(customTopUpInput) || 0} & Add ${Number(customTopUpInput) || 0} Points`}
+                      ? 'Opening Razorpay Gateway...'
+                      : `Pay ₹${Number(customTopUpInput) || 0} via Razorpay & Add Points`}
                   </span>
                 </button>
               </form>
