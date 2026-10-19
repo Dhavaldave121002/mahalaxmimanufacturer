@@ -667,15 +667,10 @@ export const ProductDetailPage: React.FC = () => {
                 <MapPin className="w-3.5 h-3.5 text-indigo shrink-0" />
                 <span>Direct Mill Dispatch to {deliveryInfo?.city || 'Surat'}, {deliveryInfo?.state || 'Gujarat'} & All India</span>
               </span>
-              <button
-                type="button"
-                onClick={() => setShowReturnModal(true)}
-                className="text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 shrink-0 flex items-center gap-1 cursor-pointer transition"
-                title="Click to view 7-Day Return, Exchange & 100% Refund Policy"
-              >
-                <span>🛡️ 7-Day Return / Exchange & 100% Refund</span>
-                <span className="text-[10px] text-emerald-800 underline font-semibold">(View Policy)</span>
-              </button>
+              <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200 shrink-0 flex items-center gap-1">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>100% Genuine Mill Weave</span>
+              </span>
             </div>
 
             {/* High-Conversion Trust Signals Grid */}
