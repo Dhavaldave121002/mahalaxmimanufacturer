@@ -318,26 +318,6 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* 2.2 Pan-India Wholesale City Delivery Network (Local SEO Matrix) */}
-          <div className="pt-4 border-t border-navy-800/60 text-[11px] text-slate-300">
-            <span className="font-bold text-slate-200 block mb-1">
-              Direct Mill Freight Corridor & Wholesale City Network:
-            </span>
-            <p className="leading-relaxed">
-              <Link to="/catalog?q=Surat+Textile" className="hover:text-champagne transition">Surat Textile Hub (Ring Road)</Link> •{' '}
-              <Link to="/catalog?q=Ahmedabad+Cotton" className="hover:text-champagne transition">Ahmedabad (Kalupur & Relief Road)</Link> •{' '}
-              <Link to="/catalog?q=Mumbai+Textile" className="hover:text-champagne transition">Mumbai (Mangaldas & Mulji Jetha Market)</Link> •{' '}
-              <Link to="/catalog?q=Delhi+Bedsheets" className="hover:text-champagne transition">Delhi NCR (Chandni Chowk & Gandhi Nagar)</Link> •{' '}
-              <Link to="/catalog?q=Tirupur+Cotton" className="hover:text-champagne transition">Tirupur (Cotton Hosiery Cluster)</Link> •{' '}
-              <Link to="/catalog?q=Bangalore+Linen" className="hover:text-champagne transition">Bangalore (Chickpet Commercial)</Link> •{' '}
-              <Link to="/catalog?q=Kolkata+Wholesale" className="hover:text-champagne transition">Kolkata (Burrabazar Wholesale)</Link> •{' '}
-              <Link to="/catalog?q=Jaipur+Textile" className="hover:text-champagne transition">Jaipur (Johari & Purohit Ji Ka Katla)</Link> •{' '}
-              <Link to="/catalog?q=Ludhiana+Towels" className="hover:text-champagne transition">Ludhiana (Clock Tower Hub)</Link> •{' '}
-              <Link to="/catalog?q=Hyderabad+Cotton" className="hover:text-champagne transition">Hyderabad (Madina Market)</Link> •{' '}
-              <Link to="/catalog?q=Chennai+Linen" className="hover:text-champagne transition">Chennai (Sowcarpet)</Link> •{' '}
-              <Link to="/catalog?q=Kanpur+Cotton" className="hover:text-champagne transition">Kanpur (General Ganj Hub)</Link>
-            </p>
-          </div>
         </div>
       </div>
 
