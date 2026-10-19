@@ -38,7 +38,7 @@ import {
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { products, submitBusinessEnquiry, addToCart } = useApp();
+  const { products, submitBusinessEnquiry, addToCart, categories } = useApp();
 
   // Hero Carousel State
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -581,7 +581,7 @@ export const HomePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {CATEGORIES_CONFIG.map(cat => (
+          {(categories && categories.length > 0 ? categories : CATEGORIES_CONFIG).map(cat => (
             <Link
               key={cat.id}
               to={`/category/${cat.id}`}

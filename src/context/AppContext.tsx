@@ -15,9 +15,10 @@ import {
   AppSettings,
   MobileAppConfig,
   CouponOffer,
-  PaymentMethod
+  PaymentMethod,
+  CollectionCategory
 } from '../types';
-import { INITIAL_PRODUCTS } from '../data/mockProducts';
+import { INITIAL_PRODUCTS, CATEGORIES_CONFIG } from '../data/mockProducts';
 import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
 import { INITIAL_COUPONS } from '../data/initialCoupons';
 
@@ -48,6 +49,10 @@ const PINCODE_DATABASE: Record<string, { city: string; state: string; days: numb
 interface AppContextType {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
+  categories: CollectionCategory[];
+  addCategory: (category: Omit<CollectionCategory, 'id'>) => void;
+  updateCategory: (id: string, updates: Partial<CollectionCategory>) => void;
+  deleteCategory: (id: string) => void;
   cart: CartItem[];
   addToCart: (product: Product, quantity?: number, variant?: ProductVariant) => void;
   removeFromCart: (itemId: string) => void;
@@ -295,6 +300,74 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [products, setProducts] = useState<Product[]>(() => {
     return safeLoadArray<Product>('mle_products', INITIAL_PRODUCTS);
   });
+
+  const [categories, setCategories] = useState<CollectionCategory[]>(() => {
+    return safeLoadArray<CollectionCategory>('mle_categories', CATEGORIES_CONFIG);
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('mle_categories', JSON.stringify(categories));
+    } catch {}
+  }, [categories]);
+
+  const addCategory = (categoryData: Omit<CollectionCategory, 'id'>) => {
+    const slugId = categoryData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+    const newCat: CollectionCategory = {
+      ...categoryData,
+      id: slugId || ('cat-' + Date.now())
+    };
+    setCategories(prev => [...prev, newCat]);
+
+    // Also sync to Flutter App categories
+    setMobileAppConfig(prev => ({
+      ...prev,
+      categories: [
+        ...prev.categories,
+        {
+          id: 'app-cat-' + newCat.id,
+          name: newCat.name,
+          color: newCat.color || '#312E81',
+          iconName: 'checkroom',
+          image: newCat.image,
+          productCountText: '0 Products',
+          isFeaturedInApp: true,
+          displayOrder: prev.categories.length + 1
+        }
+      ],
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const updateCategory = (id: string, updates: Partial<CollectionCategory>) => {
+    setCategories(prev => prev.map(c => (c.id === id ? { ...c, ...updates } : c)));
+
+    // Synchronize to mobileAppConfig as well
+    setMobileAppConfig(prev => ({
+      ...prev,
+      categories: prev.categories.map(ac => {
+        if (ac.id === 'app-cat-' + id || ac.name.toLowerCase() === id.toLowerCase()) {
+          return {
+            ...ac,
+            name: updates.name || ac.name,
+            image: updates.image || ac.image,
+            color: updates.color || ac.color
+          };
+        }
+        return ac;
+      }),
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
+
+  const deleteCategory = (id: string) => {
+    setCategories(prev => prev.filter(c => c.id !== id));
+    setMobileAppConfig(prev => ({
+      ...prev,
+      categories: prev.categories.filter(ac => ac.id !== 'app-cat-' + id && ac.name.toLowerCase() !== id.toLowerCase()),
+      lastSyncedAt: new Date().toISOString()
+    }));
+  };
 
   const [registeredUsers, setRegisteredUsers] = useState<User[]>(() => {
     return safeLoadArray<User>('mle_users', Object.values(DEMO_USER_PROFILES));
@@ -2413,6 +2486,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateProduct,
         deleteProduct,
         adjustProductStock,
+
+        // Categories & Collections
+        categories,
+        addCategory,
+        updateCategory,
+        deleteCategory,
 
         deliveryPincode,
         deliveryInfo,

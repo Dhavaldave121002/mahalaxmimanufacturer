@@ -8,12 +8,13 @@ import { Layers, ArrowLeft, CheckCircle2, SlidersHorizontal } from 'lucide-react
 
 export const CategoryPage: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
-  const { products } = useApp();
+  const { products, categories } = useApp();
 
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('relevance');
 
-  const categoryConfig = CATEGORIES_CONFIG.find(c => c.id === categoryId);
+  const allCats = categories && categories.length > 0 ? categories : CATEGORIES_CONFIG;
+  const categoryConfig = allCats.find(c => c.id === categoryId);
 
   if (!categoryConfig) {
     return (

@@ -247,6 +247,17 @@ export interface AppCategoryConfig {
   displayOrder: number;
 }
 
+export interface CollectionCategory {
+  id: string;
+  name: string;
+  tagline: string;
+  image: string;
+  description: string;
+  subcategories: string[];
+  color?: string;
+  isFeaturedInApp?: boolean;
+}
+
 export interface AppNotification {
   id: string;
   title: string;

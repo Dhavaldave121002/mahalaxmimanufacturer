@@ -41,6 +41,7 @@ import {
 import { Badge } from '../components/common/Badge';
 import { MobileAppManager } from '../components/admin/MobileAppManager';
 import { CouponOfferManager } from '../components/admin/CouponOfferManager';
+import { CategoryManager } from '../components/admin/CategoryManager';
 
 export const AdminDashboardPage: React.FC = () => {
   const {
@@ -56,7 +57,8 @@ export const AdminDashboardPage: React.FC = () => {
     enquiries,
     currentUser,
     switchUserRole,
-    coupons
+    coupons,
+    categories
   } = useApp();
 
   // Admin Security Gate State
@@ -86,9 +88,9 @@ export const AdminDashboardPage: React.FC = () => {
     setIsUnlocked(false);
   };
 
-  // Active Admin View: 'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'reviews' | 'import-export' | 'mobile-app' | 'coupons'
+  // Active Admin View: 'overview' | 'categories' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'reviews' | 'import-export' | 'mobile-app' | 'coupons'
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'reviews' | 'import-export' | 'mobile-app' | 'coupons'
+    'overview' | 'categories' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'reviews' | 'import-export' | 'mobile-app' | 'coupons'
   >('overview');
 
   // Product Add / Edit Modal state
@@ -490,6 +492,21 @@ export const AdminDashboardPage: React.FC = () => {
         </button>
 
         <button
+          onClick={() => setActiveTab('categories')}
+          className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap flex items-center gap-2 ${
+            activeTab === 'categories'
+              ? 'border-indigo text-indigo font-black'
+              : 'border-transparent text-slate-500 hover:text-navy'
+          }`}
+        >
+          <Layers className="w-4 h-4 text-indigo" />
+          <span>Collections & Categories ({categories.length})</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-indigo-100 text-indigo">
+            Web + App
+          </span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('products')}
           className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap flex items-center gap-2 ${
             activeTab === 'products'
@@ -730,6 +747,11 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* COLLECTIONS & CATEGORIES TAB: Full CRUD for Web & Mobile App */}
+      {activeTab === 'categories' && (
+        <CategoryManager />
       )}
 
       {/* 2. PRODUCTS TAB: Catalog CRUD & Stock adjustments */}
