@@ -328,60 +328,55 @@ export const HomePage: React.FC = () => {
                     alt={currentHero.title || 'Mahalaxmi Mill Promotion'}
                     fetchPriority="high"
                     decoding="async"
-                    className={`w-full h-full object-cover transition-opacity duration-700 ${
-                      hasOverlay ? 'opacity-85 sm:opacity-90' : 'opacity-100'
-                    }`}
+                    className="w-full h-full object-cover opacity-100 transition-opacity duration-700"
                   />
                 </picture>
-                {/* Deep dark gradient overlay ensuring 100% text legibility on both light and dark images */}
+                {/* Subtle soft vignette on the left edge only, keeping the entire image crisp & visible */}
                 {hasOverlay && (
-                  <>
-                    <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 md:via-slate-950/65 to-transparent pointer-events-none"></div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent pointer-events-none"></div>
-                  </>
+                  <div className="absolute inset-0 bg-gradient-to-r from-slate-950/30 via-transparent to-transparent pointer-events-none"></div>
                 )}
               </div>
 
-              {/* Content Container (Rendered ONLY when hasOverlay is true) */}
+              {/* Content Container with sleek one-side frosted dark card ensuring 100% text legibility */}
               {hasOverlay && (
-                <div className="relative z-10 max-w-7xl mx-auto w-full px-6 sm:pl-24 sm:pr-14 lg:pl-28 lg:pr-16 py-10 sm:py-16">
-                  <div className="max-w-2xl space-y-4">
+                <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:pl-20 sm:pr-14 lg:pl-24 lg:pr-16 py-8 sm:py-14">
+                  <div className="max-w-xl p-6 sm:p-8 rounded-3xl bg-slate-950/80 sm:bg-slate-950/75 backdrop-blur-md border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.4)] space-y-4">
                     {currentHero.badge && (
-                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-champagne/40 text-champagne text-xs font-black tracking-wide uppercase shadow-sm">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-champagne/40 text-champagne text-xs font-black tracking-wide uppercase shadow-sm">
                         <Zap className="w-3.5 h-3.5 fill-current text-champagne" />
                         <span>{currentHero.badge}</span>
                       </div>
                     )}
 
                     {currentHero.title && (
-                      <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                      <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight">
                         {currentHero.title}
                       </h1>
                     )}
 
                     {currentHero.subtitle && (
-                      <p className="text-sm sm:text-base text-slate-100 leading-relaxed font-semibold drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+                      <p className="text-xs sm:text-base text-slate-200 leading-relaxed font-medium">
                         {currentHero.subtitle}
                       </p>
                     )}
 
                     {currentHero.tagline && (
-                      <div className="pt-2 flex items-baseline gap-3">
-                        <span className="text-xs text-slate-200 uppercase tracking-wider font-bold drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                      <div className="pt-1 flex items-baseline gap-2.5">
+                        <span className="text-xs text-slate-300 uppercase tracking-wider font-bold">
                           Featured Pricing:
                         </span>
-                        <span className="text-xl sm:text-2xl font-black text-champagne drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)]">
+                        <span className="text-xl sm:text-2xl font-black text-champagne">
                           {currentHero.tagline}
                         </span>
                       </div>
                     )}
 
                     {/* Action Buttons */}
-                    <div className="pt-3 flex flex-wrap gap-4">
+                    <div className="pt-2 flex flex-wrap gap-3">
                       {currentHero.ctaText && (
                         <Link
                           to={currentHero.ctaLink}
-                          className="px-6 py-3.5 bg-indigo hover:bg-indigo-dark text-white rounded-2xl font-black text-xs sm:text-sm transition shadow-premium flex items-center gap-2 group"
+                          className="px-6 py-3 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-black text-xs sm:text-sm transition shadow-premium flex items-center gap-2 group"
                         >
                           <span>{currentHero.ctaText}</span>
                           <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -390,7 +385,7 @@ export const HomePage: React.FC = () => {
 
                       <Link
                         to="/wholesale"
-                        className="px-6 py-3.5 bg-slate-900/70 hover:bg-slate-900/90 backdrop-blur-md text-white border border-white/30 rounded-2xl font-bold text-xs sm:text-sm transition flex items-center gap-2 shadow-sm"
+                        className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-xl font-bold text-xs sm:text-sm transition flex items-center gap-2 shadow-sm"
                       >
                         <Building2 className="w-4 h-4 text-champagne" />
                         <span>Request Mill RFQ</span>
