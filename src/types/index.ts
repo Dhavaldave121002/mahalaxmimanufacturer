@@ -225,6 +225,9 @@ export interface AppBanner {
   subtitle: string;
   tag: string;
   cta: string;
+  ctaLink?: string;
+  badge?: string;
+  tagline?: string;
   image: string;
   gradientFrom: string;
   gradientVia?: string;

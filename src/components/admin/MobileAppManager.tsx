@@ -126,7 +126,10 @@ export const MobileAppManager: React.FC = () => {
     title: string;
     subtitle: string;
     tag: string;
+    badge?: string;
+    tagline?: string;
     cta: string;
+    ctaLink?: string;
     image: string;
     gradientFrom: string;
     gradientVia: string;
@@ -140,7 +143,10 @@ export const MobileAppManager: React.FC = () => {
     title: 'Home & Kitchen',
     subtitle: 'Kitchen Towels, Aprons & Table Linen',
     tag: 'KITCHEN & DINING',
+    badge: 'AUTHENTIC MILL CONTRACT RATES',
+    tagline: 'Direct Mill Sourcing From Surat',
     cta: 'Shop Wholesale',
+    ctaLink: '/catalog',
     image: 'assets/images/banner_home_kitchen.jpg',
     gradientFrom: '#0F172A',
     gradientVia: '#1E293B',
@@ -183,8 +189,11 @@ export const MobileAppManager: React.FC = () => {
       title: 'Festival Mill Collection',
       subtitle: 'Combed Cotton Bedsheets & Fabrics',
       tag: 'NEW ARRIVAL',
-      cta: 'Shop Direct Rates',
-      image: 'assets/images/banner_textile.jpg',
+      badge: 'AUTHENTIC MILL CONTRACT RATES',
+      tagline: '300 TC Combed Cotton Bedsheets From ₹489',
+      cta: 'Explore Mill Catalog',
+      ctaLink: '/catalog',
+      image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop',
       gradientFrom: '#1E1B4B',
       gradientVia: '#312E81',
       gradientTo: '#4338CA',
@@ -203,7 +212,10 @@ export const MobileAppManager: React.FC = () => {
       title: b.title,
       subtitle: b.subtitle,
       tag: b.tag,
+      badge: b.badge || b.tag || 'AUTHENTIC MILL CONTRACT RATES',
+      tagline: b.tagline || 'Direct Factory Sourcing From Surat',
       cta: b.cta,
+      ctaLink: b.ctaLink || '/catalog',
       image: b.image,
       gradientFrom: b.gradientFrom,
       gradientVia: b.gradientVia || '#1E293B',
@@ -1490,6 +1502,29 @@ export const MobileAppManager: React.FC = () => {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700">Top Pill Badge</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. AUTHENTIC MILL RATES"
+                    value={bannerForm.badge || ''}
+                    onChange={e => setBannerForm({ ...bannerForm, badge: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700">Featured Price Highlight</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Combed Cotton From ₹489"
+                    value={bannerForm.tagline || ''}
+                    onChange={e => setBannerForm({ ...bannerForm, tagline: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="font-bold text-slate-700">Subtitle / Tagline *</label>
                 <input
@@ -1525,6 +1560,17 @@ export const MobileAppManager: React.FC = () => {
                     className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700">CTA Click URL / Route (Website)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. /catalog or /category/textile or /wholesale"
+                  value={bannerForm.ctaLink || ''}
+                  onChange={e => setBannerForm({ ...bannerForm, ctaLink: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1 font-mono text-[11px]"
+                />
               </div>
 
               {/* Gradient Colors */}
@@ -1594,7 +1640,7 @@ export const MobileAppManager: React.FC = () => {
                   className="rounded text-indigo focus:ring-indigo"
                 />
                 <label htmlFor="activeCheck" className="font-bold text-slate-800">
-                  Slide is Active and visible on Flutter Mobile App
+                  Slide is Active and visible on both Website & Flutter Mobile App
                 </label>
               </div>
 

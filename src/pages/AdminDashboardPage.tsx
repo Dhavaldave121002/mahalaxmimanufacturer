@@ -474,7 +474,7 @@ export const AdminDashboardPage: React.FC = () => {
           <span>Operations Overview</span>
         </button>
 
-        {/* Flutter App Hub - Placed prominently near the front */}
+        {/* Banners & Flutter App Hub */}
         <button
           onClick={() => setActiveTab('mobile-app')}
           className={`pb-3 text-xs sm:text-sm font-black border-b-2 transition whitespace-nowrap flex items-center gap-2 px-2.5 rounded-t-xl ${
@@ -484,10 +484,10 @@ export const AdminDashboardPage: React.FC = () => {
           }`}
         >
           <Smartphone className="w-4 h-4 text-amber-600" />
-          <span>📱 Flutter App Hub</span>
+          <span>🎨 Hero Banners & App Hub</span>
           <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            App Control
+            Web + App Live
           </span>
         </button>
 

@@ -38,46 +38,42 @@ import {
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { products, submitBusinessEnquiry, addToCart, categories } = useApp();
+  const { products, submitBusinessEnquiry, addToCart, categories, mobileAppConfig } = useApp();
 
-  // Hero Carousel State
+  // Hero Carousel State: Dynamic from Admin & CMS
+  const activeBanners = (mobileAppConfig?.banners || []).filter(b => b.isActive);
+
+  const heroSlides = activeBanners.length > 0
+    ? activeBanners.map(b => ({
+        id: b.id,
+        title: b.title,
+        subtitle: b.subtitle,
+        highlight: b.tag || 'DIRECT MILL LOTS',
+        ctaText: b.cta || 'Shop Wholesale',
+        ctaLink: b.ctaLink || (b.category ? `/category/${b.category.toLowerCase().replace(/[^a-z0-9]/g, '-')}` : '/catalog'),
+        image: b.image || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop',
+        badge: b.badge || b.tag || 'AUTHENTIC MILL CONTRACT RATES',
+        tagline: b.tagline || 'Direct Factory Sourcing From Surat'
+      }))
+    : [
+        {
+          id: 'def-1',
+          title: "India's Premier Direct Mill Commerce",
+          subtitle: "Surat Weaving Units • Tirupur Cotton • Zero Middleman Markup",
+          highlight: "Save Up To 46% On Bulk",
+          ctaText: "Explore Mill Catalog",
+          ctaLink: "/catalog",
+          image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop",
+          badge: "AUTHENTIC MILL CONTRACT RATES",
+          tagline: "300 TC Combed Cotton Bedsheets From ₹489"
+        }
+      ];
+
   const [currentSlide, setCurrentSlide] = useState(0);
-
-  const heroSlides = [
-    {
-      title: "India's Premier Direct Mill Commerce",
-      subtitle: "Surat Weaving Units • Tirupur Cotton • Zero Middleman Markup",
-      highlight: "Save Up To 46% On Bulk",
-      ctaText: "Explore Mill Catalog",
-      ctaLink: "/catalog",
-      image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1200&auto=format&fit=crop",
-      badge: "AUTHENTIC MILL CONTRACT RATES",
-      tagline: "300 TC Combed Cotton Bedsheets From ₹489"
-    },
-    {
-      title: "Hospitality Grade 600 GSM Bath Towels",
-      subtitle: "5-Star Luxury Absorbency • Combed Gujarat Cotton • Chlorine Safe",
-      highlight: "Hotel Pallet Rates Available",
-      ctaText: "Shop Bath Linen",
-      ctaLink: "/category/cotton-products",
-      image: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=1200&auto=format&fit=crop",
-      badge: "HOSPITALITY PLUSH SERIE",
-      tagline: "Commercial Zero-Twist Weave From ₹225"
-    },
-    {
-      title: "Heavy Canvas Totes & Commercial Hygiene",
-      subtitle: "Eco-Friendly 380 GSM Canvas Shopping Bags & 350 GSM Microfiber Wipes",
-      highlight: "Ready For Brand Printing",
-      ctaText: "Order Bulk Supplies",
-      ctaLink: "/wholesale",
-      image: "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=1200&auto=format&fit=crop",
-      badge: "COMMERCIAL ESSENTIALS",
-      tagline: "Direct Factory Bags From ₹58"
-    }
-  ];
 
   // Auto advance hero slider
   useEffect(() => {
+    if (heroSlides.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % heroSlides.length);
     }, 5500);
