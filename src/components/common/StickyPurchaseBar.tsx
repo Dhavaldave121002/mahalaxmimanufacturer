@@ -21,29 +21,26 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
   onBuyNow,
   addedAnimation
 }) => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      const targetEl = document.getElementById('main-product-actions');
+      // The sticky bar must NOT appear at the top or while the user is still in the main right portion
+      // (title, pricing tiers, options, add to cart, delivery checker, etc.).
+      // It must ONLY appear once the entire right portion has finished and scrolled past above the viewport.
+      const targetEl = document.getElementById('product-right-column') || document.getElementById('main-product-actions');
       if (targetEl) {
         const rect = targetEl.getBoundingClientRect();
-        // Check if the actual on-page "Add to Cart" button is currently visible in viewport
-        const isMainButtonVisible = rect.top < (window.innerHeight - 40) && rect.bottom > 40;
-
-        // Sticky bar shows at the top (before main button is reached)
-        // AND shows when scrolled past (specs, reviews, FAQs).
-        // It ONLY hides when the actual main button is actively visible in the screen!
-        setIsVisible(!isMainButtonVisible);
+        setIsVisible(rect.bottom <= 0);
       } else {
-        setIsVisible(true);
+        setIsVisible(window.scrollY > 900);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll, { passive: true });
 
-    // Initial check
+    // Initial check (hidden by default when at top)
     handleScroll();
     const timeoutId = setTimeout(handleScroll, 150);
 

@@ -300,7 +300,7 @@ export const ProductDetailPage: React.FC = () => {
         </div>
 
         {/* Right Column: Pricing, Tiers, Variants, and Action Controls */}
-        <div className="lg:col-span-6 space-y-6">
+        <div id="product-right-column" className="lg:col-span-6 space-y-6">
           {/* Header & Title */}
           <div>
             <div className="flex items-center gap-2 mb-2">
