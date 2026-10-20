@@ -1,4 +1,28 @@
 import { getDbPool } from '../database/db.js';
+import fs from 'fs';
+import path from 'path';
+
+// Subscriber File Storage Helper
+function loadSubscribers() {
+  try {
+    const filePath = path.join(process.cwd(), 'public', 'subscribers.json');
+    if (fs.existsSync(filePath)) {
+      return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    }
+  } catch (err) {
+    console.warn('Subscribers read error:', err.message);
+  }
+  return [];
+}
+
+function saveSubscribers(list) {
+  try {
+    const filePath = path.join(process.cwd(), 'public', 'subscribers.json');
+    fs.writeFileSync(filePath, JSON.stringify(list, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('Subscribers write error:', err.message);
+  }
+}
 
 // Global In-Memory Cart Session Registry
 global.__mle_abandoned_carts = global.__mle_abandoned_carts || new Map();
@@ -24,6 +48,14 @@ if (!global.__mle_cart_interval) {
             couponCode: 'LAUNCH150'
           });
           console.log(`[AUTO 30-MIN ABANDONED CART] Successfully sent recovery email to ${email}`);
+
+          // Update subscriber status in file
+          const subs = loadSubscribers();
+          const target = subs.find(s => s.customerEmail === email);
+          if (target) {
+            target.status = 'Voucher Emailed';
+            saveSubscribers(subs);
+          }
         } catch (err) {
           console.error(`[AUTO 30-MIN ABANDONED CART] Error sending to ${email}:`, err.message);
         }
@@ -46,8 +78,9 @@ export default async function handler(req, res) {
     return;
   }
 
-  // GET: Check pending cart sessions & timers
+  // GET: Return all subscriber leads and cart sessions for Admin Dashboard
   if (req.method === 'GET') {
+    const subscribers = loadSubscribers();
     const now = Date.now();
     const sessions = [];
     for (const [email, cart] of global.__mle_abandoned_carts.entries()) {
@@ -65,11 +98,13 @@ export default async function handler(req, res) {
         source: cart.source
       });
     }
+
     return res.status(200).json({
       success: true,
       rule: 'Abandoned cart email is sent automatically after 30 minutes of inactivity',
       activeSessionsCount: sessions.length,
-      sessions
+      sessions,
+      subscribers
     });
   }
 
@@ -107,6 +142,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, error: 'Valid customerEmail is required.' });
   }
 
+  // 0. ACTION: DELETE (Admin deletes lead from subscribers table)
+  if (action === 'DELETE') {
+    const targetId = body.id || body.subscriberId;
+    let subs = loadSubscribers();
+    subs = subs.filter(s => s.id !== targetId && s.customerEmail !== customerEmail);
+    saveSubscribers(subs);
+    return res.status(200).json({ success: true, message: 'Subscriber lead deleted successfully.' });
+  }
+
   // 1. ACTION: CLEAR (Called when customer places order)
   if (action === 'CLEAR' || action === 'ORDER_COMPLETED') {
     if (global.__mle_abandoned_carts.has(customerEmail)) {
@@ -120,8 +164,43 @@ export default async function handler(req, res) {
     });
   }
 
+  // Helper to persist subscriber into subscribers.json
+  const persistSubscriberLead = (status) => {
+    try {
+      const subs = loadSubscribers();
+      const existingIdx = subs.findIndex(s => s.customerEmail === customerEmail);
+      const leadRecord = {
+        id: existingIdx >= 0 ? subs[existingIdx].id : `sub-${Date.now()}`,
+        customerName,
+        customerEmail,
+        customerPhone,
+        cartTotal,
+        itemsCount: items.length,
+        itemsSummary: items.length > 0
+          ? items.map(i => `${i.quantity || 1}x ${i.productName || i.name || 'Textile'}`).slice(0, 3).join(', ') + (items.length > 3 ? ` +${items.length - 3} more` : '')
+          : 'Active Cart Items',
+        couponCode: couponCode || 'LAUNCH150',
+        source: source === 'FLUTTER_APP' ? 'Mobile App' : 'Website',
+        status: status || 'Voucher Emailed',
+        createdAt: existingIdx >= 0 ? subs[existingIdx].createdAt : new Date().toISOString(),
+        lastActivity: new Date().toISOString()
+      };
+
+      if (existingIdx >= 0) {
+        subs[existingIdx] = { ...subs[existingIdx], ...leadRecord };
+      } else {
+        subs.unshift(leadRecord);
+      }
+      saveSubscribers(subs);
+    } catch (err) {
+      console.warn('Failed to update subscriber record:', err.message);
+    }
+  };
+
   // 2. ACTION: RECORD (Stores cart activity, timer fires after 30 mins)
   if (action === 'RECORD') {
+    persistSubscriberLead('Pending (30-Min)');
+
     global.__mle_abandoned_carts.set(customerEmail, {
       customerEmail,
       customerName,
@@ -143,6 +222,8 @@ export default async function handler(req, res) {
 
   // 3. ACTION: SEND_NOW (Instant test or explicit customer request)
   try {
+    persistSubscriberLead('Voucher Emailed');
+
     await sendAbandonedCartRecoveryEmails({
       customerName,
       customerEmail,

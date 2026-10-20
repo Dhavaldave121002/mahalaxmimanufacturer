@@ -2296,7 +2296,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
       const data = await res.json();
       if (data.success) {
-        return { success: true, message: `✅ Cart recovery email & ₹150 OFF coupon sent to ${targetEmail}!` };
+        return { success: true, message: `✅ Success! Exclusive voucher code & cart items have been dispatched to ${targetEmail}. Check your inbox!` };
       }
       return { success: false, message: data.error || 'Failed to dispatch email.' };
     } catch (e: any) {

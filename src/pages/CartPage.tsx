@@ -528,7 +528,7 @@ export const CartPage: React.FC = () => {
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 leading-snug">
-                Your cart is automatically saved! If you leave without checkout, we will automatically send your cart items with an instant discount voucher {featuredCoupons[0] ? <>(<strong>{featuredCoupons[0].code}</strong>)</> : ''} after 30 minutes of inactivity. Want it right now? Enter your email:
+                Your cart is automatically saved! Enter your email to immediately receive your cart items summary and an exclusive instant discount voucher code sent directly to your inbox:
               </p>
               <div className="flex gap-2">
                 <input

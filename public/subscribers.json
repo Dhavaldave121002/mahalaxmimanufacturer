@@ -1,0 +1,30 @@
+[
+  {
+    "id": "sub-1792488260557",
+    "customerName": "Suresh Agarwal (Ops Director)",
+    "customerEmail": "admin@mahalaxmienterprises.com",
+    "customerPhone": "+91 98765 00001",
+    "cartTotal": 1195,
+    "itemsCount": 2,
+    "itemsSummary": "5x Eco-Craft 380 GSM Heavy Duty Cotton Canvas Tote Bag with Reinforced Handles, 1x Mahalaxmi Complete Commercial Sample Bundle (All 4 Categories Swatch & Product Minis Box)",
+    "couponCode": "LAUNCH150",
+    "source": "Website",
+    "status": "Pending (30-Min)",
+    "createdAt": "2026-10-20T09:24:20.557Z",
+    "lastActivity": "2026-10-20T09:24:20.558Z"
+  },
+  {
+    "id": "sub-1729432000001",
+    "customerName": "Dhaval Dave",
+    "customerEmail": "dhavaldave121002@gmail.com",
+    "customerPhone": "+91 85111 72099",
+    "cartTotal": 899,
+    "itemsCount": 1,
+    "itemsSummary": "1x Glance 300 TC Bedsheet",
+    "couponCode": "LAUNCH150",
+    "source": "Website",
+    "status": "Voucher Emailed",
+    "createdAt": "2026-10-20T14:40:00.000Z",
+    "lastActivity": "2026-10-20T14:40:00.000Z"
+  }
+]
