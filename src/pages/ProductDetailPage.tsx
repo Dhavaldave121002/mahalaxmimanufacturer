@@ -327,78 +327,80 @@ export const ProductDetailPage: React.FC = () => {
       </div>
 
       {/* Main Product Layout: Gallery (Left) + Details & Tiers (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
         {/* Left Column: Image Gallery (Sticky on desktop until right column finishes) */}
-        <div className="lg:col-span-6 space-y-4 lg:sticky lg:top-24 self-start">
-          {/* Hero Main Image with Zoom container */}
-          <div className="relative aspect-[4/3] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-subtle group">
-            <img
-              src={product.images[selectedImageIndex] || product.images[0]}
-              alt={product.name}
-              onError={e => {
-                const target = e.target as HTMLImageElement;
-                if (target.src !== product.images[0]) target.src = product.images[0];
-              }}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
+        <div className="lg:col-span-6 lg:self-stretch">
+          <div className="lg:sticky lg:top-24 space-y-3.5 z-10">
+            {/* Hero Main Image with Zoom container */}
+            <div className="relative aspect-[4/3] max-h-[380px] sm:max-h-[400px] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-subtle group">
+              <img
+                src={product.images[selectedImageIndex] || product.images[0]}
+                alt={product.name}
+                onError={e => {
+                  const target = e.target as HTMLImageElement;
+                  if (target.src !== product.images[0]) target.src = product.images[0];
+                }}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
 
-            {/* Badges Overlay */}
-            <div className="absolute top-4 left-4 flex flex-col gap-1.5 items-start">
-              {product.isDirectMillDeal && (
-                <span className="badge-mill text-xs font-bold px-3 py-1 rounded shadow-sm flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 fill-current" />
-                  DIRECT MILL WEAVE
-                </span>
-              )}
-              {product.isBestSeller && (
-                <Badge variant="champagne" size="sm" className="font-bold">
-                  BEST SELLER
-                </Badge>
-              )}
+              {/* Badges Overlay */}
+              <div className="absolute top-4 left-4 flex flex-col gap-1.5 items-start">
+                {product.isDirectMillDeal && (
+                  <span className="badge-mill text-xs font-bold px-3 py-1 rounded shadow-sm flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 fill-current" />
+                    DIRECT MILL WEAVE
+                  </span>
+                )}
+                {product.isBestSeller && (
+                  <Badge variant="champagne" size="sm" className="font-bold">
+                    BEST SELLER
+                  </Badge>
+                )}
+              </div>
+
+              <div className="absolute bottom-4 right-4 bg-navy/80 backdrop-blur-md text-white text-[11px] px-2.5 py-1 rounded-full font-mono">
+                HSN {product.hsnCode} • GST {product.gstRate}%
+              </div>
             </div>
 
-            <div className="absolute bottom-4 right-4 bg-navy/80 backdrop-blur-md text-white text-[11px] px-2.5 py-1 rounded-full font-mono">
-              HSN {product.hsnCode} • GST {product.gstRate}%
-            </div>
-          </div>
+            {/* Thumbnails Row */}
+            {product.images.length > 1 && (
+              <div className="flex items-center gap-2.5 overflow-x-auto pb-1 hide-scrollbar">
+                {product.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    aria-label={`View photo ${idx + 1} of ${product.name}`}
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition shrink-0 ${
+                      selectedImageIndex === idx
+                        ? 'border-indigo ring-2 ring-indigo/20 scale-105'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`${product.name} thumbnail ${idx + 1}`}
+                      onError={e => {
+                        const target = e.target as HTMLImageElement;
+                        if (target.src !== product.images[0]) target.src = product.images[0];
+                      }}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
 
-          {/* Thumbnails Row */}
-          {product.images.length > 1 && (
-            <div className="flex items-center gap-3 overflow-x-auto pb-2 hide-scrollbar">
-              {product.images.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedImageIndex(idx)}
-                  aria-label={`View photo ${idx + 1} of ${product.name}`}
-                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition shrink-0 ${
-                    selectedImageIndex === idx
-                      ? 'border-indigo ring-2 ring-indigo/20'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <img
-                    src={img}
-                    alt={`${product.name} thumbnail ${idx + 1}`}
-                    onError={e => {
-                      const target = e.target as HTMLImageElement;
-                      if (target.src !== product.images[0]) target.src = product.images[0];
-                    }}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
+            {/* Factory Direct Assurance Notice */}
+            <div className="p-3.5 bg-ivory rounded-2xl border border-slate-200 text-xs space-y-1 text-slate-700">
+              <div className="flex items-center gap-2 text-navy font-bold">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="text-xs">Ahmedabad Direct Manufacturing & Inspection Guarantee</span>
+              </div>
+              <p className="text-slate-600 leading-relaxed text-[11px]">
+                Every batch undergoes 4-point fabric inspection for tensile strength, colorfastness, and dimensional stability before palletization.
+              </p>
             </div>
-          )}
-
-          {/* Factory Direct Assurance Notice */}
-          <div className="p-4 bg-ivory rounded-2xl border border-slate-200 text-xs space-y-2 text-slate-700">
-            <div className="flex items-center gap-2 text-navy font-bold">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Ahmedabad Direct Manufacturing & Inspection Guarantee</span>
-            </div>
-            <p className="text-slate-600 leading-relaxed text-[11px]">
-              Every batch undergoes 4-point fabric inspection for tensile strength, colorfastness, and dimensional stability before palletization.
-            </p>
           </div>
         </div>
 
