@@ -330,9 +330,9 @@ export const ProductDetailPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
         {/* Left Column: Image Gallery (Sticky on desktop until right column finishes) */}
         <div className="lg:col-span-6 lg:self-stretch">
-          <div className="lg:sticky lg:top-20 space-y-2.5 z-10">
+          <div className="lg:sticky lg:top-20 space-y-3 z-10">
             {/* Hero Main Image with Zoom container */}
-            <div className="relative aspect-[16/10] sm:aspect-[4/3] max-h-[290px] xl:max-h-[330px] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-subtle group">
+            <div className="relative w-full aspect-[4/3] sm:h-[420px] lg:h-[440px] xl:h-[480px] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-subtle group">
               <img
                 src={product.images[selectedImageIndex] || product.images[0]}
                 alt={product.name}
@@ -344,36 +344,36 @@ export const ProductDetailPage: React.FC = () => {
               />
 
               {/* Badges Overlay */}
-              <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 items-start">
+              <div className="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
                 {product.isDirectMillDeal && (
-                  <span className="badge-mill text-[10px] font-bold px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
-                    <Zap className="w-3 h-3 fill-current" />
+                  <span className="badge-mill text-xs font-bold px-3 py-1 rounded shadow-sm flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 fill-current" />
                     DIRECT MILL WEAVE
                   </span>
                 )}
                 {product.isBestSeller && (
-                  <Badge variant="champagne" size="sm" className="font-bold text-[9px] py-0.5 px-2">
+                  <Badge variant="champagne" size="sm" className="font-bold text-xs py-0.5 px-2.5">
                     BEST SELLER
                   </Badge>
                 )}
               </div>
 
-              <div className="absolute bottom-2.5 right-2.5 bg-navy/80 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-full font-mono">
+              <div className="absolute bottom-3.5 right-3.5 bg-navy/80 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full font-mono">
                 HSN {product.hsnCode} • GST {product.gstRate}%
               </div>
             </div>
 
             {/* Thumbnails Row */}
             {product.images.length > 1 && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-0.5 hide-scrollbar">
+              <div className="flex items-center gap-2.5 overflow-x-auto pb-1 hide-scrollbar">
                 {product.images.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImageIndex(idx)}
                     aria-label={`View photo ${idx + 1} of ${product.name}`}
-                    className={`w-11 h-11 sm:w-13 sm:h-13 rounded-lg overflow-hidden border-2 transition shrink-0 ${
+                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 transition shrink-0 ${
                       selectedImageIndex === idx
-                        ? 'border-indigo ring-2 ring-indigo/20 scale-105'
+                        ? 'border-indigo ring-2 ring-indigo/20 scale-105 shadow-sm'
                         : 'border-slate-200 hover:border-slate-300'
                     }`}
                   >
@@ -392,13 +392,13 @@ export const ProductDetailPage: React.FC = () => {
             )}
 
             {/* Factory Direct Assurance Notice */}
-            <div className="p-2.5 bg-ivory rounded-xl border border-slate-200 text-xs text-slate-700 flex items-start gap-2">
+            <div className="p-3 bg-ivory rounded-2xl border border-slate-200 text-xs text-slate-700 flex items-start gap-2.5">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
-                <div className="text-navy font-bold text-[11px] leading-tight">
+                <div className="text-navy font-bold text-xs">
                   Ahmedabad Direct Manufacturing & Inspection Guarantee
                 </div>
-                <p className="text-slate-600 leading-tight text-[10px]">
+                <p className="text-slate-600 leading-relaxed text-[11px]">
                   Every batch undergoes 4-point fabric inspection for tensile strength, colorfastness, and dimensional stability before palletization.
                 </p>
               </div>
