@@ -352,6 +352,8 @@ export interface CouponOffer {
   isActive: boolean;
   isFeatured: boolean;
   applicableFor: 'ALL' | 'B2B' | 'B2C';
+  suggestionMode?: 'PUBLIC_1CLICK' | 'SECRET_MANUAL_ONLY'; // Controls 1-Click suggestion display on Website & App
+  targetPlatform?: 'ALL' | 'WEB_ONLY' | 'APP_ONLY'; // Which platform shows this coupon
   usageLimit?: number;
   usedCount: number;
   createdAt: string;

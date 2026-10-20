@@ -19,7 +19,10 @@ import {
   Search,
   Calendar,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Lock,
+  Smartphone,
+  Globe
 } from 'lucide-react';
 import { INITIAL_COUPONS } from '../../data/initialCoupons';
 
@@ -54,6 +57,8 @@ export const CouponOfferManager: React.FC = () => {
     validUntil: string;
     isActive: boolean;
     isFeatured: boolean;
+    suggestionMode: 'PUBLIC_1CLICK' | 'SECRET_MANUAL_ONLY';
+    targetPlatform: 'ALL' | 'WEB_ONLY' | 'APP_ONLY';
   }>({
     code: '',
     title: '',
@@ -65,7 +70,9 @@ export const CouponOfferManager: React.FC = () => {
     applicableFor: 'ALL',
     validUntil: '',
     isActive: true,
-    isFeatured: true
+    isFeatured: true,
+    suggestionMode: 'PUBLIC_1CLICK',
+    targetPlatform: 'ALL'
   });
 
   const handleCopy = (code: string) => {
@@ -87,13 +94,16 @@ export const CouponOfferManager: React.FC = () => {
       applicableFor: 'ALL',
       validUntil: '',
       isActive: true,
-      isFeatured: true
+      isFeatured: true,
+      suggestionMode: 'PUBLIC_1CLICK',
+      targetPlatform: 'ALL'
     });
     setModalOpen(true);
   };
 
   const handleOpenEdit = (coupon: CouponOffer) => {
     setEditingCoupon(coupon);
+    const mode = coupon.suggestionMode || (coupon.isFeatured ? 'PUBLIC_1CLICK' : 'SECRET_MANUAL_ONLY');
     setFormData({
       code: coupon.code,
       title: coupon.title,
@@ -105,7 +115,9 @@ export const CouponOfferManager: React.FC = () => {
       applicableFor: coupon.applicableFor,
       validUntil: coupon.validUntil ? coupon.validUntil.slice(0, 10) : '',
       isActive: coupon.isActive,
-      isFeatured: coupon.isFeatured
+      isFeatured: mode === 'PUBLIC_1CLICK',
+      suggestionMode: mode,
+      targetPlatform: coupon.targetPlatform || 'ALL'
     });
     setModalOpen(true);
   };
@@ -114,6 +126,8 @@ export const CouponOfferManager: React.FC = () => {
     e.preventDefault();
     const cleanCode = formData.code.trim().toUpperCase().replace(/\s+/g, '');
     if (!cleanCode) return;
+
+    const isPublicSuggestion = formData.suggestionMode === 'PUBLIC_1CLICK';
 
     const payload = {
       code: cleanCode,
@@ -126,7 +140,9 @@ export const CouponOfferManager: React.FC = () => {
       applicableFor: formData.applicableFor,
       validUntil: formData.validUntil ? new Date(formData.validUntil).toISOString() : undefined,
       isActive: formData.isActive,
-      isFeatured: formData.isFeatured
+      isFeatured: isPublicSuggestion,
+      suggestionMode: formData.suggestionMode,
+      targetPlatform: formData.targetPlatform
     };
 
     if (editingCoupon) {
@@ -374,11 +390,21 @@ export const CouponOfferManager: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  {coupon.isFeatured && coupon.isActive && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {coupon.isFeatured && coupon.isActive ? (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
                       <Zap className="w-3 h-3 fill-amber-500 text-amber-600" />
-                      Featured Chip
+                      1-Click Suggestion
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200 flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-purple-600" />
+                      Secret Promo (Manual Type)
+                    </span>
+                  )}
+                  {coupon.targetPlatform && coupon.targetPlatform !== 'ALL' && (
+                    <span className="px-2 py-0.5 rounded-full text-[9.5px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                      {coupon.targetPlatform === 'WEB_ONLY' ? '💻 Web' : '📱 App'}
                     </span>
                   )}
                   <span
@@ -454,18 +480,24 @@ export const CouponOfferManager: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-[11px] text-slate-500 font-medium">1-Click Cart Chip</span>
+                  <span className="text-[11px] text-slate-500 font-medium">Suggestion Mode</span>
                   <button
-                    onClick={() => toggleCouponFeatured(coupon.id)}
+                    onClick={() => {
+                      const newFeatured = !coupon.isFeatured;
+                      updateCoupon(coupon.id, {
+                        isFeatured: newFeatured,
+                        suggestionMode: newFeatured ? 'PUBLIC_1CLICK' : 'SECRET_MANUAL_ONLY'
+                      });
+                    }}
                     className={`px-3 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1.5 ${
                       coupon.isFeatured
                         ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                        : 'bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200'
                     }`}
-                    title="Toggle whether this coupon appears directly on the Cart page for 1-click apply"
+                    title="Toggle whether this coupon appears directly in the 1-Click apply suggestion list on Website & App"
                   >
-                    <Zap className="w-3 h-3 fill-current" />
-                    <span>{coupon.isFeatured ? 'Featured on Cart' : 'Hidden from Cart'}</span>
+                    {coupon.isFeatured ? <Zap className="w-3 h-3 fill-amber-500 text-amber-600" /> : <Lock className="w-3 h-3 text-purple-600" />}
+                    <span>{coupon.isFeatured ? '1-Click Suggestion' : 'Secret (Manual Only)'}</span>
                   </button>
                 </div>
 
@@ -685,39 +717,100 @@ export const CouponOfferManager: React.FC = () => {
                 </div>
               </div>
 
-              {/* Checkboxes */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="w-4 h-4 text-indigo rounded"
-                  />
-                  <div>
-                    <span className="font-bold text-slate-800 block">Make Active Immediately</span>
-                    <span className="text-[10px] text-slate-500">
-                      Shoppers can redeem this code during checkout.
+              {/* 1-Click Suggestion & Display Visibility Section */}
+              <div className="bg-gradient-to-r from-indigo-50/70 to-purple-50/70 p-4 rounded-2xl border border-indigo-200/80 space-y-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-indigo" />
+                    <span className="font-extrabold text-xs text-navy">
+                      1-Click Apply & Suggestion Visibility Controls
                     </span>
                   </div>
-                </label>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo/10 text-indigo">
+                    Website & App
+                  </span>
+                </div>
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isFeatured}
-                    onChange={e => setFormData({ ...formData, isFeatured: e.target.checked })}
-                    className="w-4 h-4 text-amber-500 rounded"
-                  />
-                  <div>
-                    <span className="font-bold text-slate-800 block">
-                      Feature on Cart Page (1-Click Apply Chip)
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Mode 1: Public 1-Click Suggestion */}
+                  <label
+                    className={`p-3 rounded-xl border text-left cursor-pointer transition flex items-start gap-2.5 ${
+                      formData.isFeatured
+                        ? 'bg-white border-indigo ring-2 ring-indigo/20 shadow-xs'
+                        : 'bg-white/70 border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="suggestionMode"
+                      checked={formData.isFeatured}
+                      onChange={() => setFormData({ ...formData, isFeatured: true, suggestionMode: 'PUBLIC_1CLICK' })}
+                      className="mt-0.5 text-indigo"
+                    />
+                    <div>
+                      <span className="font-bold text-xs text-navy flex items-center gap-1">
+                        <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
+                        Public 1-Click Suggestion
+                      </span>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Displays in "Tap to apply" list on Cart & App so users can apply it with 1 click.
+                      </p>
+                    </div>
+                  </label>
+
+                  {/* Mode 2: Secret / Manual Code Only */}
+                  <label
+                    className={`p-3 rounded-xl border text-left cursor-pointer transition flex items-start gap-2.5 ${
+                      !formData.isFeatured
+                        ? 'bg-white border-purple-500 ring-2 ring-purple-500/20 shadow-xs'
+                        : 'bg-white/70 border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="suggestionMode"
+                      checked={!formData.isFeatured}
+                      onChange={() => setFormData({ ...formData, isFeatured: false, suggestionMode: 'SECRET_MANUAL_ONLY' })}
+                      className="mt-0.5 text-purple-600"
+                    />
+                    <div>
+                      <span className="font-bold text-xs text-purple-900 flex items-center gap-1">
+                        <Lock className="w-3.5 h-3.5 text-purple-600" />
+                        Secret Code (Manual Type Only)
+                      </span>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        HIDDEN from 1-click list. Only buyers who manually enter this code (Email/WhatsApp/RFQ) can redeem it.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="pt-2 border-t border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.isActive}
+                      onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
+                      className="w-4 h-4 text-emerald-600 rounded"
+                    />
+                    <span className="text-xs font-bold text-slate-800">
+                      Coupon is Active (Valid for Redemption)
                     </span>
-                    <span className="text-[10px] text-slate-500">
-                      Displays in the promotional chips box on the Cart so users don't need to type the code manually.
-                    </span>
+                  </label>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-slate-500 font-semibold">Platform:</span>
+                    <select
+                      value={formData.targetPlatform || 'ALL'}
+                      onChange={e => setFormData({ ...formData, targetPlatform: e.target.value as any })}
+                      className="text-xs font-bold bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-slate-700 outline-none"
+                    >
+                      <option value="ALL">🌐 Web & App</option>
+                      <option value="WEB_ONLY">💻 Web Only</option>
+                      <option value="APP_ONLY">📱 App Only</option>
+                    </select>
                   </div>
-                </label>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
