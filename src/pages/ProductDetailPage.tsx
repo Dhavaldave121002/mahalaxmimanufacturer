@@ -774,7 +774,7 @@ export const ProductDetailPage: React.FC = () => {
                       </span>
                     </h4>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      Customize logo branding, embroidery, dimensions & live fabric preview
+                      Customize logo branding, embroidery, custom dimensions & weave specifications
                     </p>
                   </div>
                 </div>
@@ -832,58 +832,6 @@ export const ProductDetailPage: React.FC = () => {
               {/* Active Customization Configuration Fields */}
               {customizationType !== 'No Customization' && (
                 <div className="space-y-4 pt-3 border-t border-purple-100">
-                  {/* Live Interactive Fabric Preview Canvas */}
-                  <div className="p-3 bg-white rounded-xl border border-purple-200 shadow-inner">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
-                        <Eye className="w-3.5 h-3.5 text-purple-600" />
-                        Live Fabric Preview
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium">Position: {logoPosition.toUpperCase()}</span>
-                    </div>
-
-                    <div className="relative w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-slate-200 bg-slate-900 group">
-                      <img
-                        src={product.images[selectedImageIndex] || product.images[0]}
-                        alt={product.name}
-                        className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none" />
-
-                      {/* Positioned Logo Watermark Preview */}
-                      <div
-                        className={`absolute transition-all duration-300 ${
-                          logoPosition === 'top-left'
-                            ? 'top-4 left-4'
-                            : logoPosition === 'top-right'
-                            ? 'top-4 right-4'
-                            : logoPosition === 'center'
-                            ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
-                            : 'bottom-4 right-4'
-                        }`}
-                      >
-                        <div
-                          className="px-3 py-1.5 rounded-lg border backdrop-blur-md shadow-lg flex items-center gap-1.5"
-                          style={{
-                            backgroundColor: 'rgba(15, 23, 42, 0.8)',
-                            borderColor: logoColor,
-                            color: logoColor
-                          }}
-                        >
-                          {logoEmblem === 'crown' && <Crown className="w-3.5 h-3.5 shrink-0" />}
-                          {logoEmblem === 'shield' && <Shield className="w-3.5 h-3.5 shrink-0" />}
-                          {logoEmblem === 'star' && <Star className="w-3.5 h-3.5 shrink-0 fill-current" />}
-                          <span className="font-extrabold font-mono tracking-widest text-xs uppercase">
-                            {logoText || 'YOUR LOGO'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="absolute bottom-2 left-2 text-[10px] bg-black/70 text-white px-2 py-0.5 rounded backdrop-blur-xs font-mono">
-                        {selectedSize} • {selectedGsm}
-                      </div>
-                    </div>
-                  </div>
 
                   {/* 2. Logo Text & Styling */}
                   {(customizationType.includes('Logo') ||
