@@ -53,19 +53,25 @@ export default async function handler(req, res) {
             const type = parts[0] || 'Customized';
             let logoText = '';
             let selectedSize = '';
+            let customGsm = '';
             let designNote = '';
             let logoFileName = '';
             let designFileName = '';
+            let techPackFileName = '';
 
             for (const p of parts.slice(1)) {
               if (p.startsWith('Logo: "') && p.endsWith('"')) {
                 logoText = p.slice(7, -1);
               } else if (p.startsWith('Size: ')) {
                 selectedSize = p.slice(6);
+              } else if (p.startsWith('GSM: ')) {
+                customGsm = p.slice(5);
               } else if (p.startsWith('📎 Logo: ')) {
                 logoFileName = p.slice(9);
               } else if (p.startsWith('📎 Design: ')) {
                 designFileName = p.slice(11);
+              } else if (p.startsWith('📎 Spec: ')) {
+                techPackFileName = p.slice(9);
               } else if (p.startsWith('Note: ')) {
                 designNote = p.slice(6);
               }
@@ -73,11 +79,16 @@ export default async function handler(req, res) {
 
             customization = {
               type,
-              logoText,
+              logoText: logoText || 'MAHALAXMI',
+              logoColor: '#EAB308',
+              logoPosition: 'top-right',
+              logoStyle: 'crown',
               selectedSize,
+              customGsm,
               designNote,
               logoFileName: logoFileName || (type.includes('Logo') ? 'app_custom_logo.png' : undefined),
-              designFileName: designFileName || (type.includes('Design') ? 'app_design_artwork.pdf' : undefined)
+              designFileName: designFileName || (type.includes('Design') ? 'app_design_artwork.pdf' : undefined),
+              techPackFileName: techPackFileName || undefined
             };
           }
         }

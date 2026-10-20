@@ -804,6 +804,80 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     return [
       {
+        id: 'ord-verified-999',
+        orderNumber: 'MLE-VERIFIED-999',
+        createdAt: new Date().toISOString(),
+        customer: {
+          id: 'usr-flutter-dhaval',
+          name: 'Dhaval Dave',
+          email: 'dhavaldave121002@gmail.com',
+          phone: '+91 85111 72099',
+          companyName: 'Mahalaxmi Enterprises Commercial Hub',
+          gstNumber: '24AAACP1234M1Z5',
+          isB2B: true
+        },
+        items: [
+          {
+            productId: 'prod-bedsheet-01',
+            productName: 'Glance 300 TC 100% Combed Cotton Double Bedsheet',
+            sku: 'MLE-TEX-BS-3001',
+            hsnCode: '630221',
+            quantity: 50,
+            unitPrice: 890,
+            totalPrice: 44500,
+            variantDescription: 'Customized [Design & Logo • Logo: "MAHALAXMI LUXURY EXPORTS" • Size: Super King (108" x 108") • GSM: 300 TC Combed Satin • 📎 Logo: mahalaxmi_gold_crest.png • 📎 Design: damask_jacquard_pattern.pdf • Note: Golden metallic zari embroidery on border hems, reactive colorfast dye]',
+            image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
+            gstRate: 5,
+            customization: {
+              type: 'Design & Logo',
+              logoText: 'MAHALAXMI LUXURY EXPORTS',
+              logoColor: '#EAB308',
+              logoPosition: 'top-right',
+              logoStyle: 'crown',
+              selectedSize: 'Super King (108" x 108")',
+              customGsm: '300 TC Combed Satin',
+              logoFileName: 'mahalaxmi_gold_crest.png',
+              designFileName: 'damask_jacquard_pattern.pdf',
+              techPackFileName: 'mill_weaving_spec_sheet.pdf',
+              designNote: 'Golden metallic zari embroidery on border hems, reactive colorfast dye with shrink-proof finish'
+            }
+          }
+        ],
+        subtotal: 42380.95,
+        taxBreakdown: { cgst: 1059.52, sgst: 1059.52, igst: 0, totalTax: 2119.05 },
+        shippingCharge: 0,
+        discount: 0,
+        totalAmount: 44500,
+        paymentMethod: 'RAZORPAY',
+        paymentStatus: 'PAID',
+        status: 'PLACED',
+        source: 'WEB',
+        deviceInfo: 'Desktop Chrome 130 (Storefront Production Order)',
+        shippingAddress: {
+          id: 'addr-dhaval',
+          fullName: 'Dhaval Dave',
+          phone: '+91 85111 72099',
+          street: '102, Shivalik Plaza, Near C.G. Road',
+          city: 'Ahmedabad',
+          state: 'Gujarat',
+          pincode: '380009',
+          addressType: 'COMMERCIAL'
+        },
+        billingAddress: {
+          id: 'addr-dhaval',
+          fullName: 'Dhaval Dave',
+          phone: '+91 85111 72099',
+          street: '102, Shivalik Plaza, Near C.G. Road',
+          city: 'Ahmedabad',
+          state: 'Gujarat',
+          pincode: '380009',
+          addressType: 'COMMERCIAL'
+        },
+        timeline: [
+          { status: 'PLACED', timestamp: new Date().toISOString(), description: 'Order verified & payment confirmed via Razorpay. Production specs sent to Loom 4.' }
+        ]
+      },
+      {
         id: 'ord-89412',
         orderNumber: 'MLE-ORD-2026-89412',
         createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
@@ -891,9 +965,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             quantity: 2,
             unitPrice: 899,
             totalPrice: 1798,
-            variantDescription: 'Royal Ivory Cream / Standard Set',
+            variantDescription: 'Customized [Design & Logo • Logo: "MAHALAXMI HERITAGE" • Size: King Set • 📎 Logo: app_custom_logo.png • 📎 Design: jacquard_artwork.pdf • Note: Embroidered logo on border]',
             image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
-            gstRate: 5
+            gstRate: 5,
+            customization: {
+              type: 'Design & Logo',
+              logoText: 'MAHALAXMI HERITAGE',
+              logoColor: '#312E81',
+              logoPosition: 'center',
+              logoStyle: 'crown',
+              selectedSize: 'King Set (100" x 108")',
+              logoFileName: 'app_custom_logo.png',
+              designFileName: 'jacquard_artwork.pdf',
+              designNote: 'Client uploaded mobile logo for computerized embroidery on pillow hems'
+            }
           },
           {
             productId: 'prod-cotton-towel-01',
@@ -1824,6 +1909,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (item.customization.logoText) parts.push(`Logo: "${item.customization.logoText}"`);
         if (item.customization.selectedSize) parts.push(`Size: ${item.customization.selectedSize}`);
         if (item.customization.customGsm) parts.push(`GSM: ${item.customization.customGsm}`);
+        if (item.customization.logoFileName) parts.push(`📎 Logo: ${item.customization.logoFileName}`);
+        if (item.customization.designFileName) parts.push(`📎 Design: ${item.customization.designFileName}`);
+        if (item.customization.techPackFileName) parts.push(`📎 Spec: ${item.customization.techPackFileName}`);
         if (item.customization.designNote) parts.push(`Note: ${item.customization.designNote}`);
         desc = `${item.selectedVariant?.name || 'Standard'} [${parts.join(' • ')}]`;
       }
