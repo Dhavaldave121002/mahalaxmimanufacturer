@@ -25,23 +25,33 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
 
   useEffect(() => {
     const handleScroll = () => {
-      // The sticky purchase bar appears as soon as the main Add to Cart / Buy Now action buttons
-      // (#main-product-actions) scroll out of view (rect.bottom <= 0), or when scrolled past 450px!
+      // 1. Mobile Experience: Always visible so mobile buyers always have instant 1-tap checkout
+      if (window.innerWidth < 768) {
+        setIsVisible(true);
+        return;
+      }
+
+      // 2. Desktop Experience:
+      // The sticky purchase bar appears whenever:
+      // - The main buttons (#main-product-actions) are NOT fully in the screen viewport (either scrolled past top, or hidden below the fold)
+      // - OR when the user has scrolled down past 150px
       const mainActions = document.getElementById('main-product-actions');
       if (mainActions) {
         const rect = mainActions.getBoundingClientRect();
-        setIsVisible(rect.bottom <= 0);
+        // Check if main action buttons are fully visible in the active viewport
+        const isMainFullyVisible = rect.top >= 40 && rect.bottom <= (window.innerHeight - 40);
+        setIsVisible(!isMainFullyVisible || window.scrollY > 150);
       } else {
-        setIsVisible(window.scrollY > 450);
+        setIsVisible(true);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll, { passive: true });
 
-    // Initial check
+    // Initial check on load
     handleScroll();
-    const timeoutId = setTimeout(handleScroll, 150);
+    const timeoutId = setTimeout(handleScroll, 100);
 
     return () => {
       clearTimeout(timeoutId);
