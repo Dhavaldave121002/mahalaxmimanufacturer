@@ -206,8 +206,7 @@ async function sendEnquiryEmails(data) {
     source
   } = data;
 
-  const DEFAULT_KEY_B64 = 'cmVfYUc4eUQ1bzVfQWJGUUJxeEZ2QTZRNFRGZmlDUU5iVHVw';
-  const RESEND_API_KEY = process.env.RESEND_API_KEY || Buffer.from(DEFAULT_KEY_B64, 'base64').toString('ascii');
+
   const adminRecipients = ['mahalaxmienterpriseuk@gmail.com', 'dhavaldave121002@gmail.com', 'deviltimeisback001@gmail.com'];
 
   const adminEmailHtml = `
@@ -273,57 +272,6 @@ async function sendEnquiryEmails(data) {
     </html>
   `;
 
-  // 1. Dispatch to Admin via Resend
-  if (RESEND_API_KEY) {
-    try {
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: 'Mahalaxmi Enterprises <orders@mahalaxmimanufacturer.com>',
-          to: adminRecipients,
-          subject: `🚨 New Business Requirement: ${businessName} (${expectedMonthlyVolume})`,
-          html: adminEmailHtml
-        })
-      });
-    } catch (err) {
-      console.warn('Resend admin enquiry error:', err.message);
-    }
-  }
-
-  // 2. Dispatch Customer Acknowledgment via Resend
-  if (email && email.includes('@') && RESEND_API_KEY) {
-    try {
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: 'Mahalaxmi Enterprises <orders@mahalaxmimanufacturer.com>',
-          to: [email],
-          subject: `We Received Your Requirement #${enquiryCode} | Mahalaxmi Enterprises`,
-          html: `
-            <div style="font-family: sans-serif; max-width: 540px; margin: 0 auto; padding: 20px; border: 1px solid #E2E8F0; border-radius: 16px;">
-              <h3 style="color: #14213D; margin-top: 0;">Namaste ${fullName},</h3>
-              <p style="color: #475569; font-size: 13px; line-height: 1.5;">
-                Thank you for submitting your manufacturing requirement (Ref #${enquiryCode}). Our Ahmedabad Mill production team is reviewing your volume request of <strong>${expectedMonthlyVolume}</strong> and will connect with your commercial quote within 2 business hours.
-              </p>
-              <div style="background: #F8FAFC; padding: 12px; border-radius: 10px; margin: 16px 0; font-size: 12px; color: #1E293B;">
-                <strong>Company:</strong> ${businessName}<br>
-                <strong>Notes:</strong> ${notes}
-              </div>
-              <p style="font-size: 12px; color: #64748B;">For urgent production queries, connect directly via WhatsApp at <strong>+91 85111 72099</strong>.</p>
-            </div>
-          `
-        })
-      });
-    } catch (_) {}
-  }
 
   // 3. Guaranteed Direct Gmail Dispatch via EmailJS Engine
   try {

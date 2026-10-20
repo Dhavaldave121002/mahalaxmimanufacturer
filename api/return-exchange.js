@@ -139,8 +139,7 @@ async function sendReturnEmails(data) {
     source
   } = data;
 
-  const adminEmail = process.env.ADMIN_EMAIL || 'dhavaldave121002@gmail.com';
-  const apiKey = process.env.RESEND_API_KEY || process.env.VITE_RESEND_API_KEY;
+
 
   const typeLabel = requestType === 'EXCHANGE' ? 'Exchange (સાઇઝ / ડિફેક્ટ બદલી)' : 'Return & Refund (રીટર્ન અને રિફંડ)';
   const badgeColor = requestType === 'EXCHANGE' ? '#2563EB' : '#DC2626';
@@ -231,37 +230,7 @@ async function sendReturnEmails(data) {
     </html>
   `;
 
-  if (apiKey) {
-    try {
-      // Send to Admin via Resend
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: 'Mahalaxmi Alerts <orders@mahalaxmimanufacturer.com>',
-          to: [adminEmail],
-          subject: `[${requestType}] Request for Order #${orderNumber} - ${customerName}`,
-          html: adminHtml
-        })
-      });
 
-      // Send to Customer via Resend
-      if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in')) {
-        await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            from: 'Mahalaxmi Customer Care <orders@mahalaxmimanufacturer.com>',
-            to: [customerEmail],
-            subject: `${requestType === 'EXCHANGE' ? 'Exchange' : 'Return'} Request Acknowledged - Order #${orderNumber}`,
-            html: customerHtml
-          })
-        });
-      }
-    } catch (err) {
-      console.warn('Resend email error in return-exchange:', err.message);
-    }
-  }
 
   // Guaranteed Direct EmailJS Dispatch
   try {

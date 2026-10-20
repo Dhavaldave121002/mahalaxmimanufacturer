@@ -1,7 +1,7 @@
 /**
  * Real Email OTP Dispatcher
  * Calls the secure Vercel Serverless Function `/api/send-otp`
- * which uses the Resend API to deliver official branded OTP emails.
+ * which uses Pure EmailJS to deliver official branded OTP emails.
  */
 export const sendOtpEmail = async (
   email: string,

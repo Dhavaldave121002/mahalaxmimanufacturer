@@ -2564,7 +2564,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setEnquiries(prev => [newEnquiry, ...prev]);
 
-    // Dispatch to MySQL & Resend Emails via /api/enquiry
+    // Dispatch to MySQL & Pure EmailJS via /api/enquiry
     fetch('/api/enquiry', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

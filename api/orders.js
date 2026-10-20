@@ -559,8 +559,6 @@ async function sendOrderNotificationEmails(data) {
   }
   if (!customerName) customerName = 'Valued Customer';
 
-  const DEFAULT_KEY_B64 = 'cmVfYUc4eUQ1bzVfQWJGUUJxeEZ2QTZRNFRGZmlDUU5iVHVw';
-  const RESEND_API_KEY = process.env.RESEND_API_KEY || Buffer.from(DEFAULT_KEY_B64, 'base64').toString('ascii');
   const primaryAdmin = process.env.ADMIN_EMAIL || 'mahalaxmienterpriseuk@gmail.com';
   const secondaryAdmin = 'deviltimeisback001@gmail.com';
 
