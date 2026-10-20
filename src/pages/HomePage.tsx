@@ -69,7 +69,7 @@ export const HomePage: React.FC = () => {
         {
           id: 'def-1',
           title: "India's Premier Direct Mill Commerce",
-          subtitle: "Surat Weaving Units • Tirupur Cotton • Zero Middleman Markup",
+          subtitle: "Ahmedabad Weaving Units • Tirupur Cotton • Zero Middleman Markup",
           highlight: "Save Up To 46% On Bulk",
           ctaText: "Explore Mill Catalog",
           ctaLink: "/catalog",
@@ -172,7 +172,7 @@ export const HomePage: React.FC = () => {
       id: 4,
       name: "Rajesh Agarwal",
       role: "Managing Partner",
-      company: "TexGlobal Exports, Surat & Dubai",
+      company: "TexGlobal Exports, Ahmedabad & Dubai",
       tag: "Global Export Partner",
       rating: 5,
       verified: true,
@@ -545,7 +545,7 @@ export const HomePage: React.FC = () => {
               <ul className="space-y-2.5 text-xs text-slate-700">
                 <li className="flex items-center gap-2 font-semibold text-emerald-900">
                   <Check className="w-4 h-4 text-emerald-600" />
-                  Direct Air-Jet Weaving from Surat Textile Park
+                  Direct Air-Jet Weaving from Ahmedabad Textile Cluster
                 </li>
                 <li className="flex items-center gap-2 font-semibold text-emerald-900">
                   <Check className="w-4 h-4 text-emerald-600" />
@@ -1238,13 +1238,13 @@ export const HomePage: React.FC = () => {
                 Submit a Bulk Order Enquiry or Commercial RFQ
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Need customized dimensions, custom GSM weaving, hotel logo embroidery, or multi-container orders? Our Surat merchandisers will prepare a formal GST quotation within 4 business hours.
+                Need customized dimensions, custom GSM weaving, hotel logo embroidery, or multi-container orders? Our Ahmedabad merchandisers will prepare a formal GST quotation within 4 business hours.
               </p>
 
               <div className="pt-2 text-xs text-slate-300 space-y-2">
                 <p>• Mill Sales Hotline: <span className="text-champagne font-bold">+91 98765 43210</span></p>
                 <p>• Official Procurement Desk: <span className="text-champagne font-bold">rfq@mahalaxmienterprises.com</span></p>
-                <p>• Address: Textile Park Phase II, Ring Road, Surat, Gujarat</p>
+                <p>• Address: Narol Textile Cluster, Ahmedabad, Gujarat 382405</p>
               </div>
             </div>
 

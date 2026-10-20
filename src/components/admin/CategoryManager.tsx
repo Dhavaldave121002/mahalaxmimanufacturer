@@ -187,7 +187,7 @@ export const CategoryManager: React.FC = () => {
             {/* Details */}
             <div className="p-4 flex-1 flex flex-col justify-between space-y-3 bg-white">
               <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                {cat.description || 'Direct mill woven collection crafted in Surat manufacturing unit.'}
+                {cat.description || 'Direct mill woven collection crafted in Ahmedabad manufacturing unit.'}
               </p>
 
               {/* Subcategories list */}
@@ -241,7 +241,7 @@ export const CategoryManager: React.FC = () => {
                 <label className="text-[11px] font-bold text-slate-700 block mb-1">Tagline / Subtitle</label>
                 <input
                   type="text"
-                  placeholder="e.g. 100% Pure Surat Rayon & Cotton Fabrics"
+                  placeholder="e.g. 100% Pure Ahmedabad Rayon & Cotton Fabrics"
                   value={formData.tagline}
                   onChange={e => setFormData({ ...formData, tagline: e.target.value })}
                   className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo"

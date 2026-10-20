@@ -503,7 +503,7 @@ export const CatalogPage: React.FC = () => {
                     onChange={e => setInStockOnly(e.target.checked)}
                     className="w-4 h-4 rounded text-indigo focus:ring-indigo/20 accent-indigo"
                   />
-                  <span className="font-medium text-slate-800">In-Stock Only (Surat Mill Ready)</span>
+                  <span className="font-medium text-slate-800">In-Stock Only (Ahmedabad Mill Ready)</span>
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer select-none">

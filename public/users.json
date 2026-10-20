@@ -33,7 +33,7 @@
     "phone": "+91 98250 11223",
     "role": "retailer",
     "businessType": "Retailer",
-    "companyName": "Patel Handloom Surat",
+    "companyName": "Patel Handloom Ahmedabad",
     "gstNumber": "24AAACP9988K1Z2",
     "isGstVerified": true,
     "creditLimit": 100000,
@@ -60,7 +60,7 @@
     "phone": "+91 99988 77766",
     "role": "retailer",
     "businessType": "Retailer",
-    "companyName": "Surat Fasteners & Fabric Ltd",
+    "companyName": "Ahmedabad Fasteners & Fabric Ltd",
     "gstNumber": "24ABCDE1234F1Z5",
     "isGstVerified": true,
     "creditLimit": 100000,
@@ -87,7 +87,7 @@
     "phone": "+91 85111 72099",
     "role": "admin",
     "businessType": "Manufacturer",
-    "companyName": "Mahalaxmi Enterprises Surat",
+    "companyName": "Mahalaxmi Enterprises Ahmedabad",
     "gstNumber": "24AAECM8921P1ZA",
     "isGstVerified": true,
     "creditLimit": 1000000,
@@ -97,24 +97,24 @@
         "id": "addr-dhaval",
         "fullName": "Dhaval Dave",
         "phone": "+91 85111 72099",
-        "street": "Plot 124, GIDC Industrial Estate, Pandesara",
-        "city": "Surat",
+        "street": "Narol Industrial Estate, Phase II",
+        "city": "Ahmedabad",
         "state": "Gujarat",
-        "pincode": "394221",
+        "pincode": "382405",
         "addressType": "COMMERCIAL",
         "isDefault": true
       }
     ],
-    "walletBalance": 5000,
+    "walletBalance": 450,
     "walletTransactions": [
       {
         "id": "wt-welcome-usr-dhaval",
         "userId": "usr-dhaval",
         "userEmail": "dhavaldave121002@gmail.com",
         "type": "WALLET_TOPUP",
-        "amount": 5000,
+        "amount": 450,
         "description": "Welcome Bonus: Mill Points Credited",
-        "balanceAfter": 5000,
+        "balanceAfter": 450,
         "timestamp": "2026-10-19T11:07:50.435Z"
       }
     ]
@@ -136,10 +136,10 @@
         "id": "addr-admin",
         "fullName": "Suresh Agarwal",
         "phone": "+91 98765 00001",
-        "street": "Plot 124, GIDC Industrial Estate, Pandesara",
-        "city": "Surat",
+        "street": "Narol Industrial Estate, Phase II",
+        "city": "Ahmedabad",
         "state": "Gujarat",
-        "pincode": "394221",
+        "pincode": "382405",
         "addressType": "COMMERCIAL",
         "isDefault": true
       }

@@ -49,6 +49,18 @@ export interface Product {
   gstRate: number; // e.g. 5 for 5% or 12 for 12%
 }
 
+export interface ProductCustomization {
+  type: string; // 'Design & Logo' | 'Only Logo' | 'Only Design' | 'Embroidery Branding' | 'Custom Weave & GSM' | 'No Customization' | 'Sample Request (1 Pc)' | 'Commercial Sample Bundle' | 'Pure Cotton Swatch Kit';
+  logoText?: string;
+  logoColor?: string;
+  logoPosition?: 'top-left' | 'top-right' | 'center' | 'bottom-right';
+  logoStyle?: string;
+  selectedSize?: string;
+  customGsm?: string;
+  designNote?: string;
+  previewUrl?: string;
+}
+
 export interface CartItem {
   id: string;
   productId: string;
@@ -58,6 +70,7 @@ export interface CartItem {
   unitPrice: number;
   totalPrice: number;
   appliedTier?: WholesaleTier;
+  customization?: ProductCustomization;
 }
 
 export type UserRole = 'consumer' | 'retailer' | 'wholesaler' | 'admin';
@@ -136,6 +149,7 @@ export interface OrderItem {
   variantDescription?: string;
   image: string;
   gstRate: number;
+  customization?: ProductCustomization;
 }
 
 export interface Order {

@@ -231,35 +231,88 @@ async function sendReturnEmails(data) {
     </html>
   `;
 
-  if (!apiKey) return;
-
-  try {
-    // Send to Admin
-    await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        from: 'Mahalaxmi Alerts <orders@mahalaxmimanufacturer.com>',
-        to: [adminEmail],
-        subject: `[${requestType}] Request for Order #${orderNumber} - ${customerName}`,
-        html: adminHtml
-      })
-    });
-
-    // Send to Customer
-    if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in')) {
+  if (apiKey) {
+    try {
+      // Send to Admin via Resend
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'Mahalaxmi Customer Care <orders@mahalaxmimanufacturer.com>',
-          to: [customerEmail],
-          subject: `${requestType === 'EXCHANGE' ? 'Exchange' : 'Return'} Request Acknowledged - Order #${orderNumber}`,
-          html: customerHtml
+          from: 'Mahalaxmi Alerts <orders@mahalaxmimanufacturer.com>',
+          to: [adminEmail],
+          subject: `[${requestType}] Request for Order #${orderNumber} - ${customerName}`,
+          html: adminHtml
         })
       });
+
+      // Send to Customer via Resend
+      if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in')) {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'Mahalaxmi Customer Care <orders@mahalaxmimanufacturer.com>',
+            to: [customerEmail],
+            subject: `${requestType === 'EXCHANGE' ? 'Exchange' : 'Return'} Request Acknowledged - Order #${orderNumber}`,
+            html: customerHtml
+          })
+        });
+      }
+    } catch (err) {
+      console.warn('Resend email error in return-exchange:', err.message);
     }
-  } catch (err) {
-    console.warn('Resend email error in return-exchange:', err.message);
+  }
+
+  // Guaranteed Direct EmailJS Dispatch
+  try {
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
+    const EMAILJS_TEMPLATE_ID = 'template_rxzob8r';
+    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || 'G6gT9XDN4SFBz6oqW';
+
+    if (EMAILJS_SERVICE_ID && EMAILJS_PUBLIC_KEY) {
+      // Send to Admin
+      await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Origin': 'https://mahalaxmimanufacturer.com' },
+        body: JSON.stringify({
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: {
+            to_email: adminEmail,
+            to_name: 'Mahalaxmi Admin',
+            subject: `🚨 [${requestType}] Request: #${orderNumber} - ${customerName}`,
+            headline: `${requestType} Request Received`,
+            code_box: `#${orderNumber}`,
+            subtext: `Reason: ${reason} • Customer: ${customerName}`,
+            message: `New ${requestType} request submitted by ${customerName} (${customerEmail}, ${customerPhone}) for Order #${orderNumber}. Reason: ${reason}. Comments: ${comments}`
+          }
+        })
+      }).catch(() => {});
+
+      // Send to Customer
+      if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in')) {
+        await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Origin': 'https://mahalaxmimanufacturer.com' },
+          body: JSON.stringify({
+            service_id: EMAILJS_SERVICE_ID,
+            template_id: EMAILJS_TEMPLATE_ID,
+            user_id: EMAILJS_PUBLIC_KEY,
+            template_params: {
+              to_email: customerEmail,
+              to_name: customerName,
+              subject: `${requestType === 'EXCHANGE' ? 'Exchange' : 'Return'} Acknowledged: #${orderNumber} | Mahalaxmi Enterprises`,
+              headline: `${requestType} Request Logged`,
+              code_box: `#${orderNumber}`,
+              subtext: `Status: Under Verification • Ahmedabad Mill Support`,
+              message: `Namaste ${customerName}! We have received your ${requestType} request for Order #${orderNumber} (Reason: ${reason}). Our logistics team will inspect and verify your request within 24 business hours.`
+            }
+          })
+        }).catch(() => {});
+      }
+    }
+  } catch (ejsErr) {
+    console.warn('[EmailJS Return-Exchange Warning]:', ejsErr);
   }
 }

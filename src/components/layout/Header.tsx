@@ -316,14 +316,14 @@ export const Header: React.FC = () => {
             <div className="hidden lg:flex items-center shrink-0">
               <button
                 onClick={() => setPinModalOpen(true)}
-                aria-label={`Delivery location: ${deliveryInfo?.city || 'Surat'} ${deliveryPincode}. Click to change pincode`}
+                aria-label={`Delivery location: ${deliveryInfo?.city || 'Ahmedabad'} ${deliveryPincode}. Click to change pincode`}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs hover:bg-slate-100 transition border border-slate-200/60 text-left bg-white/70"
               >
                 <MapPin className="w-4 h-4 text-indigo shrink-0" />
                 <div>
                   <p className="text-[10px] text-slate-500 uppercase font-semibold">Deliver to</p>
                   <p className="font-bold text-navy text-xs flex items-center gap-1">
-                    {deliveryInfo?.city || 'Surat'} {deliveryPincode}
+                    {deliveryInfo?.city || 'Ahmedabad'} {deliveryPincode}
                     <ChevronDown className="w-3 h-3 text-slate-500" />
                   </p>
                 </div>
@@ -465,12 +465,12 @@ export const Header: React.FC = () => {
               {/* Mobile PIN Code Quick Badge */}
               <button
                 onClick={() => setPinModalOpen(true)}
-                aria-label={`Delivery Pincode: ${deliveryInfo?.city || 'Surat'}`}
+                aria-label={`Delivery Pincode: ${deliveryInfo?.city || 'Ahmedabad'}`}
                 className="flex lg:hidden items-center gap-1 px-1.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition shrink-0"
                 title="Delivery Pincode"
               >
                 <MapPin className="w-3 h-3 text-indigo shrink-0" />
-                <span className="max-w-[42px] sm:max-w-[65px] truncate">{deliveryInfo?.city || 'Surat'}</span>
+                <span className="max-w-[42px] sm:max-w-[65px] truncate">{deliveryInfo?.city || 'Ahmedabad'}</span>
               </button>
 
               {/* Wholesale RFQ Link */}
@@ -831,7 +831,7 @@ export const Header: React.FC = () => {
                 >
                   <div className="flex items-center gap-1.5 truncate">
                     <MapPin className="w-3.5 h-3.5 text-champagne shrink-0" />
-                    <span className="truncate">Deliver to: {deliveryPincode} ({deliveryInfo?.city || 'Surat'})</span>
+                    <span className="truncate">Deliver to: {deliveryPincode} ({deliveryInfo?.city || 'Ahmedabad'})</span>
                   </div>
                   <span className="text-champagne font-bold shrink-0 ml-1">Change</span>
                 </button>
@@ -889,7 +889,7 @@ export const Header: React.FC = () => {
                   >
                     <div className="flex items-center gap-2.5">
                       <Download className="w-4 h-4 text-indigo shrink-0" />
-                      <span>Surat Mill Price Sheet</span>
+                      <span>Ahmedabad Mill Price Sheet</span>
                     </div>
                     <span className="text-[10px] text-slate-500 font-mono">PDF</span>
                   </Link>
@@ -1013,11 +1013,11 @@ export const Header: React.FC = () => {
                 rel="noreferrer"
                 className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-sm text-center"
               >
-                <span>💬 WhatsApp Surat Mill Desk</span>
+                <span>💬 WhatsApp Ahmedabad Mill Desk</span>
               </a>
 
               <div className="text-[10px] text-slate-400 text-center">
-                Surat Textile Park • GSTIN: 24AAECM8921P1ZA
+                Ahmedabad Textile Cluster • GSTIN: 24AAECM8921P1ZA
               </div>
             </div>
           </div>

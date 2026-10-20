@@ -42,9 +42,9 @@ export default async function handler(req, res) {
     // EmailJS Dispatch Engine (Direct Gmail delivery without Resend or sandbox restrictions)
     // ==========================================
     const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
-    let EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || process.env.VITE_EMAILJS_TEMPLATE_ID || 'rn6jeir';
-    if (!EMAILJS_TEMPLATE_ID || EMAILJS_TEMPLATE_ID === 'template_er89rta') {
-      EMAILJS_TEMPLATE_ID = 'rn6jeir';
+    let EMAILJS_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || process.env.VITE_EMAILJS_TEMPLATE_ID || 'template_rxzob8r';
+    if (!EMAILJS_TEMPLATE_ID || EMAILJS_TEMPLATE_ID === 'rn6jeir' || EMAILJS_TEMPLATE_ID === 'template_er89rta') {
+      EMAILJS_TEMPLATE_ID = 'template_rxzob8r';
     }
     const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID || 'G6gT9XDN4SFBz6oqW';
     const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;

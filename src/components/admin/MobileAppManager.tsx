@@ -148,7 +148,7 @@ export const MobileAppManager: React.FC = () => {
     subtitle: 'Kitchen Towels, Aprons & Table Linen',
     tag: 'KITCHEN & DINING',
     badge: 'AUTHENTIC MILL CONTRACT RATES',
-    tagline: 'Direct Mill Sourcing From Surat',
+    tagline: 'Direct Mill Sourcing From Ahmedabad',
     cta: 'Shop Wholesale',
     ctaLink: '/catalog',
     image: 'assets/images/banner_home_kitchen.jpg',
@@ -994,7 +994,7 @@ export const MobileAppManager: React.FC = () => {
                   <label className="text-xs font-bold text-slate-700">Message Content *</label>
                   <textarea
                     rows={2}
-                    placeholder="e.g. Surat factory dispatch open. Book bulk cotton bedsheets before stock sells out!"
+                    placeholder="e.g. Ahmedabad factory dispatch open. Book bulk cotton bedsheets before stock sells out!"
                     value={notifMessage}
                     onChange={e => setNotifMessage(e.target.value)}
                     required

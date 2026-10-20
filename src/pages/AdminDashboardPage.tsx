@@ -36,7 +36,11 @@ import {
   XCircle,
   Check,
   Truck,
-  Star
+  Star,
+  Palette,
+  Eye,
+  Copy,
+  Sparkles
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { MobileAppManager } from '../components/admin/MobileAppManager';
@@ -124,7 +128,7 @@ export const AdminDashboardPage: React.FC = () => {
     hsnCode: '630221',
     gstRate: 5,
     shortDescription: 'Direct mill combed cotton fabric.',
-    description: 'High-durability weaving from Surat looms.',
+    description: 'High-durability weaving from Ahmedabad looms.',
     image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop'
   });
 
@@ -137,6 +141,7 @@ export const AdminDashboardPage: React.FC = () => {
   // Invoice Modal state
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<Order | null>(null);
   const [invoiceType, setInvoiceType] = useState<'INVOICE' | 'PACKING_SLIP'>('INVOICE');
+  const [selectedCustomSpecsOrder, setSelectedCustomSpecsOrder] = useState<Order | null>(null);
 
   // Search queries and filters in admin
   const [productSearch, setProductSearch] = useState('');
@@ -270,7 +275,7 @@ export const AdminDashboardPage: React.FC = () => {
         tags: [productForm.category, productForm.subcategory.toLowerCase()],
         specifications: {
           'Composition': 'Commercial Cotton / Textile',
-          'Origin': 'Surat Textile Park'
+          'Origin': 'Ahmedabad Textile Cluster'
         },
         wholesaleTiers: [
           { minQty: 1, maxQty: 9, pricePerUnit: productForm.retailPrice, savingsPercent: 0, label: 'Standard Retail' },
@@ -400,7 +405,7 @@ export const AdminDashboardPage: React.FC = () => {
             <span className="badge-mill text-[11px] font-bold px-2 py-0.5 rounded uppercase">
               OPERATIONS DESK
             </span>
-            <span className="text-xs text-slate-400">Surat Central Warehouse Unit 1</span>
+            <span className="text-xs text-slate-400">Ahmedabad Central Warehouse Unit 1</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-navy tracking-tight mt-1">
             Mahalaxmi Enterprises Admin Dashboard
@@ -1046,6 +1051,13 @@ export const AdminDashboardPage: React.FC = () => {
                         <p className="text-[10px] text-slate-500 truncate mt-0.5">
                           {ord.customer.phone} {ord.customer.gstNumber ? `• GST: ${ord.customer.gstNumber}` : ''}
                         </p>
+                        {ord.items && ord.items.some(it => (it.customization && it.customization.type && it.customization.type !== 'No Customization') || (it.variantDescription && (it.variantDescription.includes('[') || it.variantDescription.toLowerCase().includes('custom')))) && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-black bg-purple-100 text-purple-800 border border-purple-200 shadow-xs">
+                              <Palette className="w-2.5 h-2.5 text-purple-600" /> Custom Specs Attached
+                            </span>
+                          </div>
+                        )}
                       </td>
 
                       <td className="py-3.5 px-4 text-right font-black text-navy whitespace-nowrap">
@@ -1174,6 +1186,16 @@ export const AdminDashboardPage: React.FC = () => {
                             </a>
                           )}
 
+                          {/* View Order Items & Customization Specs */}
+                          <button
+                            onClick={() => setSelectedCustomSpecsOrder(ord)}
+                            className="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold rounded-lg text-[10px] transition flex items-center gap-1 cursor-pointer"
+                            title="View Order Items & Customization Specifications"
+                          >
+                            <Palette className="w-3 h-3 text-purple-600" />
+                            <span>Specs ({ord.items?.length || 0})</span>
+                          </button>
+
                           {/* Update Status Button */}
                           <button
                             onClick={() => {
@@ -1202,7 +1224,7 @@ export const AdminDashboardPage: React.FC = () => {
                           {ord.customer?.phone && (
                             <a
                               href={`https://wa.me/${ord.customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                                `Namaste ${ord.customer.name}, Mahalaxmi Enterprises Surat se aapka order #${ord.orderNumber} (₹${ord.totalAmount.toLocaleString('en-IN')}) successfully verify ho gaya hai. Current Status: ${ord.status}. Kisi bhi help ke liye batayein.`
+                                `Namaste ${ord.customer.name}, Mahalaxmi Enterprises Ahmedabad se aapka order #${ord.orderNumber} (₹${ord.totalAmount.toLocaleString('en-IN')}) successfully verify ho gaya hai. Current Status: ${ord.status}. Kisi bhi help ke liye batayein.`
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -1673,6 +1695,217 @@ export const AdminDashboardPage: React.FC = () => {
           onClose={() => setSelectedInvoiceOrder(null)}
           type={invoiceType}
         />
+      )}
+
+      {/* ORDER ITEMS & CUSTOMIZATION PRODUCTION SPECS MODAL */}
+      {selectedCustomSpecsOrder && (
+        <div className="fixed inset-0 z-50 bg-navy/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-premium border border-slate-200 space-y-5 p-6 sm:p-8">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center shadow-md">
+                  <Palette className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-extrabold text-base text-navy">
+                      Order & Customization Specifications
+                    </h3>
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200">
+                      {selectedCustomSpecsOrder.orderNumber}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Client: <strong className="text-navy">{selectedCustomSpecsOrder.customer.companyName || selectedCustomSpecsOrder.customer.name}</strong> • Phone: {selectedCustomSpecsOrder.customer.phone}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedCustomSpecsOrder(null)}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition cursor-pointer"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Customer & Shipping Summary */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Billing & GST</span>
+                <p className="font-bold text-slate-800">{selectedCustomSpecsOrder.customer.name}</p>
+                {selectedCustomSpecsOrder.customer.companyName && <p className="text-slate-600">{selectedCustomSpecsOrder.customer.companyName}</p>}
+                <p className="text-slate-600">{selectedCustomSpecsOrder.customer.email}</p>
+                {selectedCustomSpecsOrder.customer.gstNumber && (
+                  <p className="text-indigo font-mono font-bold mt-0.5">GSTIN: {selectedCustomSpecsOrder.customer.gstNumber}</p>
+                )}
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Destination Address</span>
+                <p className="text-slate-700">{selectedCustomSpecsOrder.shippingAddress?.street}</p>
+                <p className="text-slate-700">
+                  {selectedCustomSpecsOrder.shippingAddress?.city}, {selectedCustomSpecsOrder.shippingAddress?.state} - {selectedCustomSpecsOrder.shippingAddress?.pincode}
+                </p>
+                <p className="text-slate-500 mt-0.5">Payment: <strong className="text-navy">{selectedCustomSpecsOrder.paymentMethod} ({selectedCustomSpecsOrder.paymentStatus})</strong></p>
+              </div>
+            </div>
+
+            {/* Ordered Items with Customization Specs Cards */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-navy uppercase tracking-wider">
+                  Order Consignment Items ({selectedCustomSpecsOrder.items?.length || 0})
+                </h4>
+                <span className="text-indigo font-bold text-xs">Total: ₹{selectedCustomSpecsOrder.totalAmount.toLocaleString('en-IN')}</span>
+              </div>
+
+              {selectedCustomSpecsOrder.items?.map((item, idx) => {
+                const custom = item.customization;
+                const hasCustom = (custom && custom.type && custom.type !== 'No Customization') || (item.variantDescription && item.variantDescription.includes('['));
+
+                return (
+                  <div
+                    key={idx}
+                    className={`p-4 rounded-2xl border transition space-y-3 ${
+                      hasCustom ? 'bg-purple-50/50 border-purple-200 shadow-xs' : 'bg-white border-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={item.image || 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=120&auto=format&fit=crop&q=80'}
+                          alt={item.productName}
+                          className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
+                        />
+                        <div>
+                          <h5 className="font-bold text-sm text-navy">{item.productName}</h5>
+                          <p className="text-xs text-slate-500 font-mono">
+                            SKU: {item.sku} • HSN: {item.hsnCode}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-bold text-slate-500 block">
+                          {item.quantity} Units × ₹{item.unitPrice}
+                        </span>
+                        <span className="text-sm font-black text-navy">
+                          ₹{item.totalPrice.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Customization Details Box */}
+                    {hasCustom ? (
+                      <div className="p-3 bg-white rounded-xl border border-purple-200 space-y-2 text-xs">
+                        <div className="flex items-center justify-between border-b border-purple-100 pb-2">
+                          <span className="font-extrabold text-purple-900 flex items-center gap-1.5 text-xs">
+                            <Palette className="w-3.5 h-3.5 text-purple-600" />
+                            Custom Specification: {custom?.type || 'Custom Manufacturing Request'}
+                          </span>
+                          <span className="text-[10px] font-bold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                            Production Ready
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                          {custom?.logoText && (
+                            <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
+                              <span className="text-[10px] text-slate-400 block font-bold">BRAND / LOGO TEXT</span>
+                              <span className="font-mono font-bold text-navy text-xs">"{custom.logoText}"</span>
+                            </div>
+                          )}
+                          {custom?.logoPosition && (
+                            <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
+                              <span className="text-[10px] text-slate-400 block font-bold">LOGO POSITION & EMBLEM</span>
+                              <span className="font-bold text-slate-800 capitalize">
+                                {custom.logoPosition} • {custom.logoStyle || 'Crown'}
+                              </span>
+                            </div>
+                          )}
+                          {custom?.logoColor && (
+                            <div className="p-2 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between">
+                              <div>
+                                <span className="text-[10px] text-slate-400 block font-bold">THREAD / PRINT COLOR</span>
+                                <span className="font-bold text-slate-800 font-mono">{custom.logoColor}</span>
+                              </div>
+                              <span
+                                className="w-5 h-5 rounded-full border border-slate-300 shadow-xs"
+                                style={{ backgroundColor: custom.logoColor }}
+                              />
+                            </div>
+                          )}
+                          {custom?.selectedSize && (
+                            <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
+                              <span className="text-[10px] text-slate-400 block font-bold">CUT SIZE / DIMENSION</span>
+                              <span className="font-bold text-navy">{custom.selectedSize}</span>
+                            </div>
+                          )}
+                          {custom?.customGsm && (
+                            <div className="p-2 bg-slate-50 rounded-lg border border-slate-100">
+                              <span className="text-[10px] text-slate-400 block font-bold">GSM DENSITY</span>
+                              <span className="font-bold text-indigo">{custom.customGsm}</span>
+                            </div>
+                          )}
+                          {custom?.designNote && (
+                            <div className="sm:col-span-2 p-2 bg-amber-50/70 rounded-lg border border-amber-200">
+                              <span className="text-[10px] text-amber-800 block font-bold">MILL PRODUCTION INSTRUCTIONS</span>
+                              <span className="font-medium text-amber-950">{custom.designNote}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {item.variantDescription && item.variantDescription.includes('[') && !custom && (
+                          <p className="text-slate-700 italic">{item.variantDescription}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-2 bg-slate-50 rounded-lg text-[11px] text-slate-500">
+                        Standard Factory Pack ({item.variantDescription || 'Standard Mill Specifications'})
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200">
+              <button
+                onClick={() => {
+                  const specsText = selectedCustomSpecsOrder.items?.map(it => {
+                    const c = it.customization;
+                    return `${it.productName} (Qty: ${it.quantity})\\nCustomization: ${c?.type || 'Standard'}${c?.logoText ? `\\nLogo: "${c.logoText}"` : ''}${c?.logoPosition ? `\\nPosition: ${c.logoPosition}` : ''}${c?.selectedSize ? `\\nSize: ${c.selectedSize}` : ''}${c?.designNote ? `\\nInstructions: ${c.designNote}` : ''}`;
+                  }).join('\\n---\\n');
+                  navigator.clipboard.writeText(`ORDER: ${selectedCustomSpecsOrder.orderNumber}\\nCLIENT: ${selectedCustomSpecsOrder.customer.name} (${selectedCustomSpecsOrder.customer.phone})\\n\\n${specsText}`);
+                  alert('Custom production specs copied to clipboard!');
+                }}
+                className="w-full sm:w-auto px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Specs for Loom/Mill WhatsApp</span>
+              </button>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => {
+                    setSelectedInvoiceOrder(selectedCustomSpecsOrder);
+                    setInvoiceType('PACKING_SLIP');
+                  }}
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Mill Dispatch Slip</span>
+                </button>
+                <button
+                  onClick={() => setSelectedCustomSpecsOrder(null)}
+                  className="flex-1 sm:flex-initial px-5 py-2 bg-navy hover:bg-navy-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

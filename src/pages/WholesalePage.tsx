@@ -239,7 +239,7 @@ export const WholesalePage: React.FC = () => {
               B2B ENTERPRISE WHOLESALE PORTAL
             </Badge>
             <span className="bg-emerald-500/20 text-emerald-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-400/30">
-              Direct Surat Loom Mill Rates
+              Direct Ahmedabad Loom Mill Rates
             </span>
           </div>
 
@@ -252,7 +252,7 @@ export const WholesalePage: React.FC = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-4 border-t border-slate-700 text-xs">
             <div>
-              <p className="text-champagne font-black text-sm sm:text-base">Surat & Tirupur</p>
+              <p className="text-champagne font-black text-sm sm:text-base">Ahmedabad & Tirupur</p>
               <p className="text-[11px] text-slate-300">Direct Mill Dispatch</p>
             </div>
             <div>
@@ -349,7 +349,7 @@ export const WholesalePage: React.FC = () => {
           }`}
         >
           <Download className="w-4 h-4" />
-          <span>Surat Mill Price Sheet</span>
+          <span>Ahmedabad Mill Price Sheet</span>
         </button>
 
         <button
@@ -544,7 +544,7 @@ export const WholesalePage: React.FC = () => {
                   Commercial Request for Quotation (RFQ)
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Submit customized volume requests (200+ units) directly to Surat mill production managers.
+                  Submit customized volume requests (200+ units) directly to Ahmedabad mill production managers.
                 </p>
               </div>
 
@@ -1003,7 +1003,7 @@ export const WholesalePage: React.FC = () => {
                   <span className="text-2xl font-black text-champagne">₹{annualItcSavings.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="text-[11px] text-slate-300 pt-2 border-t border-white/10">
-                  ✨ Automatically reflected in your GST portal under form GSTR-2B with Surat Mill E-Invoicing.
+                  ✨ Automatically reflected in your GST portal under form GSTR-2B with Ahmedabad Mill E-Invoicing.
                 </div>
               </div>
             </div>
@@ -1012,7 +1012,7 @@ export const WholesalePage: React.FC = () => {
       )}
 
       {/* ========================================================
-          TAB 5: SURAT MILL PRICE SHEET & HSN MASTER
+          TAB 5: AHMEDABAD MILL PRICE SHEET & HSN MASTER
           ======================================================== */}
       {activeTab === 'ratecard' && (
         <div className="space-y-6">
@@ -1021,12 +1021,12 @@ export const WholesalePage: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <Badge variant="champagne" size="sm" className="font-bold">
-                    OFFICIAL SURAT LOOM CATALOGUE
+                    OFFICIAL AHMEDABAD LOOM CATALOGUE
                   </Badge>
                   <span className="text-xs text-slate-400 font-mono">Q4 Direct Contract Rates</span>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-black text-navy mt-1">
-                  Surat Mill Wholesale Rate Card & HSN Master Sheet
+                  Ahmedabad Mill Wholesale Rate Card & HSN Master Sheet
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Direct commercial lot rates, HSN tax classifications, bale pack dimensions, and minimum order quantities.
@@ -1149,9 +1149,9 @@ export const WholesalePage: React.FC = () => {
             {/* Letterhead Footer Notice */}
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-[11px] text-slate-600 flex flex-col sm:flex-row justify-between items-center gap-2">
               <p>
-                <strong>Certification:</strong> Rates are Ex-Factory Surat Loom Gate. Valid for verified GST registered buyers. Freight computed per weight slab via SafeXpress or V-Trans.
+                <strong>Certification:</strong> Rates are Ex-Factory Ahmedabad Loom Gate. Valid for verified GST registered buyers. Freight computed per weight slab via SafeXpress or V-Trans.
               </p>
-              <span className="text-slate-400 shrink-0 font-mono">Mahalaxmi Enterprises © Surat, Gujarat</span>
+              <span className="text-slate-400 shrink-0 font-mono">Mahalaxmi Enterprises © Ahmedabad, Gujarat</span>
             </div>
           </div>
         </div>
@@ -1178,7 +1178,7 @@ export const WholesalePage: React.FC = () => {
               Direct Mill Exports to USA, UK, UAE, Europe, Canada &amp; Worldwide
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
-              Serving international hotel procurement directors, overseas retail distributors, and department stores worldwide. We supply 20ft &amp; 40ft High Cube containers (FCL) and consolidated pallet cargo (LCL) directly from our Surat powerloom plants with full export documentation (Certificate of Origin, Bill of Lading, Commercial Invoice, Packing List, Phyto-sanitary &amp; OEKO-TEX Standard 100 compliance).
+              Serving international hotel procurement directors, overseas retail distributors, and department stores worldwide. We supply 20ft &amp; 40ft High Cube containers (FCL) and consolidated pallet cargo (LCL) directly from our Ahmedabad powerloom plants with full export documentation (Certificate of Origin, Bill of Lading, Commercial Invoice, Packing List, Phyto-sanitary &amp; OEKO-TEX Standard 100 compliance).
             </p>
 
             {/* Quick Export Stats */}
@@ -1227,7 +1227,7 @@ export const WholesalePage: React.FC = () => {
                     <th className="py-3 px-4">Export Commodity</th>
                     <th className="py-3 px-4">Standard Specifications</th>
                     <th className="py-3 px-4">Export Packaging</th>
-                    <th className="py-3 px-4">FOB Surat/Hazira (USD)</th>
+                    <th className="py-3 px-4">FOB Mundra/Kandla/Hazira (USD)</th>
                     <th className="py-3 px-4 text-center">Inquiry</th>
                   </tr>
                 </thead>
@@ -1315,7 +1315,7 @@ export const WholesalePage: React.FC = () => {
               <div>
                 <h3 className="text-xl font-black text-navy tracking-tight">MAHALAXMI ENTERPRISES</h3>
                 <p className="text-[11px] text-slate-500">
-                  Ring Road Textile Market, Surat, Gujarat - 395002 • GSTIN: 24AAECM8921P1ZA
+                  Narol Textile Market, Ahmedabad, Gujarat - 382405 • GSTIN: 24AAECM8921P1ZA
                 </p>
                 <p className="text-[11px] text-slate-500 font-semibold">Direct Mill Manufacturer & Master Distributor</p>
               </div>
@@ -1370,7 +1370,7 @@ export const WholesalePage: React.FC = () => {
             {/* Financial Summary */}
             <div className="flex justify-between items-center text-xs pt-2">
               <div className="text-[11px] text-slate-500 space-y-1">
-                <p>E. & O.E. Subject to Surat jurisdiction.</p>
+                <p>E. & O.E. Subject to Ahmedabad jurisdiction.</p>
                 <p>Authorized Signatory: <strong>Mahalaxmi Enterprises Loom Merchandising</strong></p>
               </div>
               <div className="space-y-1 text-right min-w-[200px]">

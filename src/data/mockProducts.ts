@@ -13,7 +13,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     categoryName: 'Textile',
     subcategory: 'Double Bedsheets',
     shortDescription: 'Direct mill woven 300 Thread Count sateen weave double bedsheet engineered for 500+ commercial wash cycles.',
-    description: 'Crafted at our Surat weaving unit using long-staple Gujarat combed cotton. This 300 TC bedsheet offers hotel-grade luster, breathable skin feel, and extreme color fastness even under industrial hot-water washing. Comes with 2 matching Oxford pillow covers.',
+    description: 'Crafted at our Ahmedabad weaving unit using long-staple Gujarat combed cotton. This 300 TC bedsheet offers hotel-grade luster, breathable skin feel, and extreme color fastness even under industrial hot-water washing. Comes with 2 matching Oxford pillow covers.',
     images: [
       'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?q=80&w=1000&auto=format&fit=crop',
@@ -42,7 +42,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Sheet Dimensions': '108 x 108 inches (Super King / Double)',
       'Pillow Cover Size': '18 x 28 inches (Oxford border)',
       'Wash Care': 'Machine wash 40°C, colorfast dye, tumble dry low',
-      'Mill Location': 'Surat Textile Park, Gujarat'
+      'Mill Location': 'Narol Textile Cluster, Ahmedabad, Gujarat'
     },
     careInstructions: [
       'Machine wash gentle cycle with mild detergent',
@@ -291,7 +291,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'cotton-products',
     categoryName: 'Cotton Products',
     subcategory: 'Direct Mill Goods',
-    shortDescription: 'High purity 100% clean comber noil cotton waste baled directly at Surat spinning facility.',
+    shortDescription: 'High purity 100% clean comber noil cotton waste baled directly at Ahmedabad spinning facility.',
     description: 'Minimal trash content (<0.8%), high fiber micronaire. Ideal for surgical cotton manufacturing, yarn open-end spinning, mattress batting, and acoustic insulation.',
     images: [
       'https://images.unsplash.com/photo-1596704017254-9b121068fb31?q=80&w=1000&auto=format&fit=crop'
@@ -604,7 +604,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Bundle Contents': '12 Swatches (15x15cm) + 1 Cotton Towel + 1 Microfiber + 1 Kitchen Wipe',
       'Quality Standard': 'ISO 9001:2015 & Oeko-Tex Standard 100 Certified',
       'Rebate Guarantee': '100% Refundable via ₹300 Instant Voucher on next bulk order',
-      'Dispatch Speed': 'Same-Day Air Express Dispatch from Surat Mill'
+      'Dispatch Speed': 'Same-Day Air Express Dispatch from Ahmedabad Mill'
     },
     tags: ['sample bundle', 'sample pack', 'swatch kit', 'commercial sample', 'b2b testing', 'bundle']
   }
@@ -618,7 +618,7 @@ export const CATEGORIES_CONFIG = [
     icon: 'Layers',
     image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800&auto=format&fit=crop',
     subcategories: ['Double Bedsheets', 'Curtains', 'Premium Linen', 'Fabrics', 'Sample Bundles'],
-    description: 'Direct mill woven bedsheets, blackout curtains, hotel linen and raw fabrics manufactured in Surat & Tirupur.'
+    description: 'Direct mill woven bedsheets, blackout curtains, hotel linen and raw fabrics manufactured in Ahmedabad & Tirupur.'
   },
   {
     id: 'cotton-products',

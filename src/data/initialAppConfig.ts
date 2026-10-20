@@ -6,7 +6,7 @@ export const INITIAL_MOBILE_APP_CONFIG: MobileAppConfig = {
       id: 'banner-textile',
       category: 'Textile',
       title: "India's Premier Direct Mill Commerce",
-      subtitle: 'Surat Weaving Units • Tirupur Cotton • Zero Middleman Markup',
+      subtitle: 'Ahmedabad Weaving Units • Tirupur Cotton • Zero Middleman Markup',
       tag: 'PREMIUM LINEN',
       badge: 'AUTHENTIC MILL CONTRACT RATES',
       tagline: '300 TC Combed Cotton Bedsheets From ₹489',
@@ -153,7 +153,7 @@ export const INITIAL_MOBILE_APP_CONFIG: MobileAppConfig = {
     {
       id: 'notif-2',
       title: 'Order Dispatch Notification 🚚',
-      message: 'Surat Central Warehouse dispatch team has fulfilled B2B consignment for immediate logistics handoff.',
+      message: 'Ahmedabad Central Warehouse dispatch team has fulfilled B2B consignment for immediate logistics handoff.',
       timestamp: new Date(Date.now() - 3600000 * 24).toISOString(),
       type: 'ORDER',
       isSent: true

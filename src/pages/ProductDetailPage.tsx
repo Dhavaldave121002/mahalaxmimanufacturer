@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { ProductVariant } from '../types';
+import { ProductVariant, ProductCustomization } from '../types';
 import { Badge } from '../components/common/Badge';
 import { ProductCard } from '../components/common/ProductCard';
 import {
@@ -30,7 +30,11 @@ import {
   Package,
   Boxes,
   MessageSquare,
-  X
+  Camera,
+  X,
+  Palette,
+  Crown,
+  Shield
 } from 'lucide-react';
 import { StickyPurchaseBar } from '../components/common/StickyPurchaseBar';
 import { FrequentlyBoughtTogether } from '../components/common/FrequentlyBoughtTogether';
@@ -60,18 +64,72 @@ export const ProductDetailPage: React.FC = () => {
   const [quantity, setQuantity] = useState<number>(product?.moq || 1);
   const [pinInput, setPinInput] = useState(deliveryPincode);
   const [addedAnimation, setAddedAnimation] = useState(false);
+
+  // Interactive Customization Studio State (Matching Flutter App 1-to-1)
+  const [customizationType, setCustomizationType] = useState<string>('No Customization');
+  const [logoText, setLogoText] = useState<string>('MAHALAXMI');
+  const [logoColor, setLogoColor] = useState<string>('#EAB308'); // Mill Gold
+  const [logoPosition, setLogoPosition] = useState<'top-left' | 'top-right' | 'center' | 'bottom-right'>('top-right');
+  const [logoEmblem, setLogoEmblem] = useState<'crown' | 'shield' | 'star' | 'text-only'>('crown');
+  const [selectedSize, setSelectedSize] = useState<string>('Standard Mill Cut');
+  const [customSizeText, setCustomSizeText] = useState<string>('');
+  const [selectedGsm, setSelectedGsm] = useState<string>('Standard 450 GSM');
+  const [designNote, setDesignNote] = useState<string>('');
   
   // Live Reviews State
   const [reviewsList, setReviewsList] = useState<any[]>([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [reviewImage, setReviewImage] = useState<string | null>(null);
+  const [selectedImageModal, setSelectedImageModal] = useState<string | null>(null);
+  const [photosOnlyFilter, setPhotosOnlyFilter] = useState(false);
   const [newReview, setNewReview] = useState({
     rating: 5,
     name: currentUser?.name || '',
     email: currentUser?.email || '',
     comment: ''
   });
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Please select an image smaller than 10MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 800;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.82);
+          setReviewImage(compressed);
+        } else {
+          setReviewImage(event.target?.result as string);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const fetchLiveReviews = useCallback(async () => {
     if (!product?.id) return;
@@ -106,6 +164,8 @@ export const ProductDetailPage: React.FC = () => {
           customerEmail: newReview.email || currentUser?.email || '',
           rating: newReview.rating,
           comment: newReview.comment,
+          image: reviewImage || null,
+          imageUrl: reviewImage || null,
           source: 'WEBSITE'
         })
       });
@@ -115,6 +175,7 @@ export const ProductDetailPage: React.FC = () => {
         setTimeout(() => {
           setReviewSuccess(false);
           setShowReviewForm(false);
+          setReviewImage(null);
           setNewReview(prev => ({ ...prev, comment: '' }));
         }, 2000);
       }
@@ -167,14 +228,39 @@ export const ProductDetailPage: React.FC = () => {
   const gstAmount = Math.round(currentLineTotal * (product.gstRate / (100 + product.gstRate)));
   const netEffectiveCost = currentLineTotal - gstAmount;
 
+  const getCustomizationPayload = (): ProductCustomization | undefined => {
+    if (customizationType === 'No Customization') return undefined;
+    const effectiveSize =
+      selectedSize === 'Custom Dimensions' && customSizeText.trim()
+        ? `Custom (${customSizeText.trim()})`
+        : selectedSize;
+
+    return {
+      type: customizationType,
+      logoText:
+        (customizationType.includes('Logo') ||
+          customizationType.includes('Design') ||
+          customizationType === 'Embroidery Branding') &&
+        logoText.trim()
+          ? logoText.trim()
+          : undefined,
+      logoColor,
+      logoPosition,
+      logoStyle: logoEmblem,
+      selectedSize: effectiveSize,
+      customGsm: selectedGsm !== 'Standard 450 GSM' ? selectedGsm : undefined,
+      designNote: designNote.trim() || undefined
+    };
+  };
+
   const handleAddToCart = () => {
-    addToCart(product, quantity, selectedVariant);
+    addToCart(product, quantity, selectedVariant, getCustomizationPayload());
     setAddedAnimation(true);
     setTimeout(() => setAddedAnimation(false), 2000);
   };
 
   const handleBuyNow = () => {
-    addToCart(product, quantity, selectedVariant);
+    addToCart(product, quantity, selectedVariant, getCustomizationPayload());
     navigate('/checkout');
   };
 
@@ -185,14 +271,31 @@ export const ProductDetailPage: React.FC = () => {
       sku: `${product.sku}-SMP`,
       inStock: true
     };
-    addToCart(product, 1, sampleVariant);
+    addToCart(product, 1, sampleVariant, {
+      type: 'Sample Request (1 Pc)',
+      designNote: `1-Piece Evaluation Sample for ${product.name}`
+    });
     navigate('/cart');
   };
 
   const handleOrderSampleBundle = () => {
     const bundle = products.find(p => p.id === 'prod-sample-bundle-all') || products.find(p => p.id === 'prod-swatch-box-01');
     if (bundle) {
-      addToCart(bundle, 1);
+      addToCart(bundle, 1, undefined, {
+        type: 'Commercial Sample Bundle',
+        designNote: 'Mahalaxmi Complete Commercial Sample Bundle (₹299 • 12 Swatches + 4 Minis)'
+      });
+    }
+    navigate('/cart');
+  };
+
+  const handleOrderSwatchKit = () => {
+    const swatch = products.find(p => p.id === 'prod-swatch-box-01') || products.find(p => p.id === 'prod-sample-bundle-all');
+    if (swatch) {
+      addToCart(swatch, 1, undefined, {
+        type: 'Pure Cotton Swatch Kit',
+        designNote: 'Mahalaxmi Fabric Swatch Kit (₹199 • 12 Pure Cotton Cuts)'
+      });
     }
     navigate('/cart');
   };
@@ -210,7 +313,7 @@ export const ProductDetailPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-12 pb-20">
       {/* Dynamic SEO, Schema.org JSON-LD & City/State Geo Ranking */}
-      <SEOProductHead product={product} city={deliveryInfo?.city || 'Surat'} state={deliveryInfo?.state || 'Gujarat'} />
+      <SEOProductHead product={product} city={deliveryInfo?.city || 'Ahmedabad'} state={deliveryInfo?.state || 'Gujarat'} />
 
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -291,7 +394,7 @@ export const ProductDetailPage: React.FC = () => {
           <div className="p-4 bg-ivory rounded-2xl border border-slate-200 text-xs space-y-2 text-slate-700">
             <div className="flex items-center gap-2 text-navy font-bold">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Surat Direct Manufacturing & Inspection Guarantee</span>
+              <span>Ahmedabad Direct Manufacturing & Inspection Guarantee</span>
             </div>
             <p className="text-slate-600 leading-relaxed text-[11px]">
               Every batch undergoes 4-point fabric inspection for tensile strength, colorfastness, and dimensional stability before palletization.
@@ -341,7 +444,7 @@ export const ProductDetailPage: React.FC = () => {
                 <span className="text-slate-300">•</span>
                 <span className="flex items-center gap-1 font-semibold text-rose-700">
                   <Flame className="w-3.5 h-3.5 text-rose-600 fill-current shrink-0" />
-                  Only {Math.min(product.stock, 14)} packs left in Surat Mill lot
+                  Only {Math.min(product.stock, 14)} packs left in Ahmedabad Mill lot
                 </span>
               </div>
 
@@ -519,7 +622,7 @@ export const ProductDetailPage: React.FC = () => {
               <p className="text-[11px] text-slate-600 leading-relaxed">
                 Test fabric hand-feel, GSM weave weight, and wash durability before booking wholesale consignments. Sample costs are credited back 100% on your next bulk order:
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <button
                   type="button"
                   onClick={handleOrderSamplePiece}
@@ -547,6 +650,20 @@ export const ProductDetailPage: React.FC = () => {
                     <div className="text-[10px] text-slate-500 font-normal">₹299 • 12 Swatches + 4 Minis</div>
                   </div>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={handleOrderSwatchKit}
+                  className="w-full p-2.5 bg-white hover:bg-blue-50/80 border border-blue-300 text-navy rounded-xl font-bold text-xs transition flex items-center gap-2.5 shadow-sm text-left group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-700 shrink-0 group-hover:bg-blue-100 transition">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-navy text-xs truncate">Pure Cotton Swatch Kit</div>
+                    <div className="text-[10px] text-slate-500 font-normal">₹199 • 12 Cotton Cuts</div>
+                  </div>
+                </button>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[10px] text-amber-900 font-medium pt-0.5 gap-1">
@@ -561,6 +678,301 @@ export const ProductDetailPage: React.FC = () => {
                   Need 500+ Units? RFQ →
                 </Link>
               </div>
+            </div>
+
+            {/* INTERACTIVE CUSTOMIZATION STUDIO (Matching App 1-to-1) */}
+            <div className="p-4 sm:p-5 bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/60 border-2 border-purple-200/90 rounded-2xl shadow-sm space-y-4">
+              {/* Studio Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-purple-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-sm">
+                    <Palette className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-black text-navy uppercase tracking-wider flex items-center gap-1.5">
+                      <span>Interactive Customization Studio</span>
+                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black bg-purple-100 text-purple-700">
+                        Mill Direct
+                      </span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      Customize logo branding, embroidery, dimensions & live fabric preview
+                    </p>
+                  </div>
+                </div>
+                {customizationType !== 'No Customization' && (
+                  <span className="text-[10px] font-extrabold px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-200 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    Configured
+                  </span>
+                )}
+              </div>
+
+              {/* 1. Customization Type Chips */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                  1. Select Customization Type
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {[
+                    { type: 'Design & Logo', label: 'Design & Logo', icon: Palette, badge: 'Popular' },
+                    { type: 'Only Logo', label: 'Only Logo Print', icon: Star, badge: 'Branding' },
+                    { type: 'Embroidery Branding', label: 'Embroidery', icon: Sparkles, badge: 'Luxury' },
+                    { type: 'Custom Weave & GSM', label: 'Weave & GSM', icon: Layers, badge: 'Bulk Mill' },
+                    { type: 'No Customization', label: 'Standard Pack', icon: Check, badge: 'Default' }
+                  ].map(opt => {
+                    const isSelected = customizationType === opt.type;
+                    const IconComponent = opt.icon;
+                    return (
+                      <button
+                        key={opt.type}
+                        type="button"
+                        onClick={() => setCustomizationType(opt.type)}
+                        className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                          isSelected
+                            ? 'border-purple-600 bg-purple-600 text-white shadow-sm ring-2 ring-purple-300'
+                            : 'border-slate-200 bg-white hover:border-purple-300 text-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full mb-1">
+                          <IconComponent className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-300' : 'text-purple-600'}`} />
+                          <span
+                            className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded ${
+                              isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                            }`}
+                          >
+                            {opt.badge}
+                          </span>
+                        </div>
+                        <span className="font-bold text-xs leading-snug">{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Active Customization Configuration Fields */}
+              {customizationType !== 'No Customization' && (
+                <div className="space-y-4 pt-3 border-t border-purple-100">
+                  {/* Live Interactive Fabric Preview Canvas */}
+                  <div className="p-3 bg-white rounded-xl border border-purple-200 shadow-inner">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                        <Eye className="w-3.5 h-3.5 text-purple-600" />
+                        Live Fabric Preview
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">Position: {logoPosition.toUpperCase()}</span>
+                    </div>
+
+                    <div className="relative w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-slate-200 bg-slate-900 group">
+                      <img
+                        src={product.images[selectedImageIndex] || product.images[0]}
+                        alt={product.name}
+                        className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20 pointer-events-none" />
+
+                      {/* Positioned Logo Watermark Preview */}
+                      <div
+                        className={`absolute transition-all duration-300 ${
+                          logoPosition === 'top-left'
+                            ? 'top-4 left-4'
+                            : logoPosition === 'top-right'
+                            ? 'top-4 right-4'
+                            : logoPosition === 'center'
+                            ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
+                            : 'bottom-4 right-4'
+                        }`}
+                      >
+                        <div
+                          className="px-3 py-1.5 rounded-lg border backdrop-blur-md shadow-lg flex items-center gap-1.5"
+                          style={{
+                            backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                            borderColor: logoColor,
+                            color: logoColor
+                          }}
+                        >
+                          {logoEmblem === 'crown' && <Crown className="w-3.5 h-3.5 shrink-0" />}
+                          {logoEmblem === 'shield' && <Shield className="w-3.5 h-3.5 shrink-0" />}
+                          {logoEmblem === 'star' && <Star className="w-3.5 h-3.5 shrink-0 fill-current" />}
+                          <span className="font-extrabold font-mono tracking-widest text-xs uppercase">
+                            {logoText || 'YOUR LOGO'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="absolute bottom-2 left-2 text-[10px] bg-black/70 text-white px-2 py-0.5 rounded backdrop-blur-xs font-mono">
+                        {selectedSize} • {selectedGsm}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Logo Text & Styling */}
+                  {(customizationType.includes('Logo') ||
+                    customizationType.includes('Design') ||
+                    customizationType === 'Embroidery Branding') && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                          Logo / Brand Text to Print or Embroider *
+                        </label>
+                        <input
+                          type="text"
+                          value={logoText}
+                          onChange={e => setLogoText(e.target.value)}
+                          placeholder="e.g. TAJ HOTELS, RADISSON, MLE"
+                          className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:border-purple-600 focus:ring-1 focus:ring-purple-600 outline-none font-bold text-navy"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                          Logo Position on Fabric
+                        </label>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {[
+                            { id: 'top-left', label: 'Top-L' },
+                            { id: 'top-right', label: 'Top-R' },
+                            { id: 'center', label: 'Center' },
+                            { id: 'bottom-right', label: 'Btm-R' }
+                          ].map(pos => (
+                            <button
+                              key={pos.id}
+                              type="button"
+                              onClick={() => setLogoPosition(pos.id as any)}
+                              className={`py-1.5 px-2 rounded-lg text-[10px] font-bold border transition cursor-pointer ${
+                                logoPosition === pos.id
+                                  ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                              }`}
+                            >
+                              {pos.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                          Logo & Thread Color
+                        </label>
+                        <div className="flex items-center gap-2">
+                          {[
+                            { color: '#EAB308', name: 'Mill Gold' },
+                            { color: '#1E3A8A', name: 'Royal Navy' },
+                            { color: '#FFFFFF', name: 'Pure White' },
+                            { color: '#059669', name: 'Forest Emerald' },
+                            { color: '#E11D48', name: 'Crimson' },
+                            { color: '#0F172A', name: 'Jet Black' }
+                          ].map(c => (
+                            <button
+                              key={c.color}
+                              type="button"
+                              onClick={() => setLogoColor(c.color)}
+                              className={`w-6 h-6 rounded-full border-2 transition shadow-xs cursor-pointer ${
+                                logoColor === c.color ? 'ring-2 ring-purple-600 scale-110' : 'border-slate-300'
+                              }`}
+                              style={{ backgroundColor: c.color }}
+                              title={c.name}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                          Emblem / Crest Style
+                        </label>
+                        <div className="flex items-center gap-1.5">
+                          {[
+                            { id: 'crown', label: 'Crown' },
+                            { id: 'shield', label: 'Crest' },
+                            { id: 'star', label: 'Star' },
+                            { id: 'text-only', label: 'Text Only' }
+                          ].map(e => (
+                            <button
+                              key={e.id}
+                              type="button"
+                              onClick={() => setLogoEmblem(e.id as any)}
+                              className={`py-1.5 px-2.5 rounded-lg text-[10px] font-bold border transition cursor-pointer ${
+                                logoEmblem === e.id
+                                  ? 'bg-navy text-white border-navy'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                              }`}
+                            >
+                              {e.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3. Dimensions & GSM Weight Customization */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-purple-100/60">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                        Finished Cut Size / Dimension
+                      </label>
+                      <select
+                        value={selectedSize}
+                        onChange={e => setSelectedSize(e.target.value)}
+                        className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:border-purple-600 outline-none bg-white text-navy font-semibold"
+                      >
+                        <option value="Standard Mill Cut">Standard Mill Cut (Factory Default)</option>
+                        <option value="Medium Commercial Cut (50x100cm)">Medium Commercial Cut (50x100cm)</option>
+                        <option value="Large Hospitality Cut (75x150cm)">Large Hospitality Cut (75x150cm)</option>
+                        <option value="Custom Dimensions">Custom Dimensions (Enter below)</option>
+                      </select>
+                      {selectedSize === 'Custom Dimensions' && (
+                        <input
+                          type="text"
+                          value={customSizeText}
+                          onChange={e => setCustomSizeText(e.target.value)}
+                          placeholder="e.g. 70 x 140 cm / 27 x 54 inches"
+                          className="mt-1.5 w-full text-xs px-3 py-1.5 border border-purple-300 rounded-lg outline-none font-medium"
+                        />
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                        Yarn Density / GSM Weight
+                      </label>
+                      <select
+                        value={selectedGsm}
+                        onChange={e => setSelectedGsm(e.target.value)}
+                        className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:border-purple-600 outline-none bg-white text-navy font-semibold"
+                      >
+                        <option value="Standard 450 GSM">Standard Commercial 450 GSM</option>
+                        <option value="Heavy Duty 550 GSM">Heavy-Duty 550 GSM (High Absorbency)</option>
+                        <option value="Luxury Mill Grade 650 GSM">Luxury Mill Grade 650 GSM (5-Star Hotel Grade)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 4. Mill Production Notes & Instructions */}
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Special Mill Instructions / Weave Specifications (Optional)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={designNote}
+                      onChange={e => setDesignNote(e.target.value)}
+                      placeholder="e.g. Double-lock stitched borders, gold thread embroidery on right header, barcode label per pack..."
+                      className="w-full text-xs p-2.5 border border-slate-300 rounded-xl focus:border-purple-600 outline-none"
+                    />
+                  </div>
+
+                  <div className="p-2.5 bg-purple-100/70 border border-purple-200 rounded-xl text-[11px] text-purple-950 flex items-center justify-between">
+                    <span className="font-semibold flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-purple-700" />
+                      Custom specs will be attached to your cart item and sent to Ahmedabad Mill production desk.
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Purchase Action Row: Quantity + Add to Cart + Buy Now */}
@@ -665,7 +1077,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600 font-medium">
               <span className="flex items-center gap-1.5 text-navy font-bold">
                 <MapPin className="w-3.5 h-3.5 text-indigo shrink-0" />
-                <span>Direct Mill Dispatch to {deliveryInfo?.city || 'Surat'}, {deliveryInfo?.state || 'Gujarat'} & All India</span>
+                <span>Direct Mill Dispatch to {deliveryInfo?.city || 'Ahmedabad'}, {deliveryInfo?.state || 'Gujarat'} & All India</span>
               </span>
               <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200 shrink-0 flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -753,7 +1165,7 @@ export const ProductDetailPage: React.FC = () => {
                           💳 Prepaid Only for this location
                         </span>
                       )}
-                      <span className="text-slate-400">Direct Surat Mill Dispatch</span>
+                      <span className="text-slate-400">Direct Ahmedabad Mill Dispatch</span>
                     </div>
                   </>
                 ) : (
@@ -854,7 +1266,7 @@ export const ProductDetailPage: React.FC = () => {
           <div className="space-y-4 text-xs text-slate-700">
             <h4 className="font-bold text-sm text-navy">Wholesale Procurement Policy</h4>
             <ul className="space-y-2 list-disc list-inside text-slate-600">
-              <li>All bulk consignments are billed with formal GST Tax Invoices from Surat jurisdiction (State Code 24).</li>
+              <li>All bulk consignments are billed with formal GST Tax Invoices from Ahmedabad jurisdiction (State Code 24).</li>
               <li>GST numbers entered during checkout automatically receive electronic GSTR-1 filings for instantaneous GSTR-2B input credit.</li>
               <li>Consignments above ₹50,000 include government-verified E-Way bills.</li>
               <li>Earn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.</li>
@@ -976,6 +1388,53 @@ export const ProductDetailPage: React.FC = () => {
                       />
                     </div>
 
+                    {/* Attach Product Photo */}
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-navy flex items-center gap-1.5">
+                          <Camera className="w-4 h-4 text-indigo" />
+                          <span>Attach Product / Fabric Photo</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400">Optional (JPG, PNG, WebP)</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 transition shadow-xs">
+                          <Camera className="w-4 h-4 text-indigo" />
+                          <span>{reviewImage ? 'Change Photo' : 'Choose Photo from Device'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageSelect}
+                            className="hidden"
+                          />
+                        </label>
+
+                        {reviewImage && (
+                          <div className="relative group inline-block">
+                            <img
+                              src={reviewImage}
+                              alt="Review Preview"
+                              className="w-14 h-14 rounded-xl object-cover border-2 border-indigo shadow-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setReviewImage(null)}
+                              className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow transition"
+                              title="Remove photo"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      {reviewImage && (
+                        <p className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                          ✓ Photo attached and ready to submit with review
+                        </p>
+                      )}
+                    </div>
+
                     <div className="flex justify-end gap-2 pt-1">
                       <button
                         type="button"
@@ -997,9 +1456,9 @@ export const ProductDetailPage: React.FC = () => {
               </form>
             )}
 
-            {/* List of Published Reviews */}
-            <div className="space-y-3 pt-2">
-              {(reviewsList.length > 0 ? reviewsList : [
+            {/* Filter / Header for Published Reviews */}
+            {(() => {
+              const baseList = reviewsList.length > 0 ? reviewsList : [
                 {
                   id: 'seed-01',
                   customer_name: 'Harish M. (Grand Heritage Palace, Udaipur)',
@@ -1016,31 +1475,117 @@ export const ProductDetailPage: React.FC = () => {
                   comment: 'Packaging is clean and presentation is very premium for our retail shelves. Customers love the combed cotton hand-feel. Reordering another 50 packs today.',
                   created_at: new Date(Date.now() - 25 * 86400000).toISOString()
                 }
-              ]).map((rev: any) => (
-                <div key={rev.id} className="p-4 bg-white rounded-xl border border-slate-200 text-xs space-y-1 shadow-sm">
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold text-navy flex items-center gap-2">
-                      {rev.customer_name || rev.customerName || 'Verified Buyer'}
-                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">✓ Verified Buyer</span>
-                    </span>
-                    <span className="text-slate-400 text-[10px]">
-                      {new Date(rev.created_at || rev.createdAt || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
+              ];
+              const photosCount = baseList.filter(r => !!(r.image_url || r.imageUrl || r.image)).length;
+              const displayed = photosOnlyFilter
+                ? baseList.filter(r => !!(r.image_url || r.imageUrl || r.image))
+                : baseList;
+
+              return (
+                <div className="space-y-3 pt-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPhotosOnlyFilter(false)}
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition ${!photosOnlyFilter ? 'bg-navy text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                      >
+                        All Reviews ({baseList.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPhotosOnlyFilter(true)}
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${photosOnlyFilter ? 'bg-indigo text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        <span>With Photos ({photosCount})</span>
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex text-amber-500 pt-0.5">
-                    {[1, 2, 3, 4, 5].map(s => (
-                      <Star key={s} className={`w-3.5 h-3.5 ${s <= Math.round(Number(rev.rating || 5)) ? 'fill-current' : 'text-slate-200'}`} />
-                    ))}
-                  </div>
-                  <p className="text-slate-600 pt-1 leading-relaxed">
-                    "{rev.comment}"
-                  </p>
+
+                  {displayed.length === 0 ? (
+                    <div className="text-center py-8 text-slate-400 text-xs">
+                      No reviews with customer photos found for this product yet.
+                    </div>
+                  ) : (
+                    displayed.map((rev: any) => (
+                      <div key={rev.id} className="p-4 bg-white rounded-xl border border-slate-200 text-xs space-y-1 shadow-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-navy flex items-center gap-2">
+                            {rev.customer_name || rev.customerName || 'Verified Buyer'}
+                            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">✓ Verified Buyer</span>
+                          </span>
+                          <span className="text-slate-400 text-[10px]">
+                            {new Date(rev.created_at || rev.createdAt || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <div className="flex text-amber-500 pt-0.5">
+                          {[1, 2, 3, 4, 5].map(s => (
+                            <Star key={s} className={`w-3.5 h-3.5 ${s <= Math.round(Number(rev.rating || 5)) ? 'fill-current' : 'text-slate-200'}`} />
+                          ))}
+                        </div>
+                        <p className="text-slate-600 pt-1 leading-relaxed">
+                          "{rev.comment}"
+                        </p>
+
+                        {(rev.image_url || rev.imageUrl || rev.image) && (
+                          <div className="pt-2">
+                            <div
+                              onClick={() => setSelectedImageModal(rev.image_url || rev.imageUrl || rev.image)}
+                              className="inline-block relative cursor-pointer group rounded-xl overflow-hidden border border-slate-200 shadow-xs hover:shadow-md transition"
+                              title="Click to view full photo"
+                            >
+                              <img
+                                src={rev.image_url || rev.imageUrl || rev.image}
+                                alt="Customer review fabric"
+                                className="w-20 h-20 sm:w-24 sm:h-24 object-cover group-hover:scale-105 transition-transform duration-200"
+                              />
+                              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold">
+                                <span>🔍 View</span>
+                              </div>
+                            </div>
+                            <span className="block text-[10px] text-slate-400 font-semibold mt-1">📷 Customer Verified Photo</span>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
         )}
       </div>
+
+      {/* Zoom / Lightbox Modal for Review Photo */}
+      {selectedImageModal && (
+        <div
+          onClick={() => setSelectedImageModal(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
+          <div className="relative max-w-2xl w-full bg-white rounded-3xl overflow-hidden shadow-2xl p-4 space-y-3" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+              <span className="text-xs font-bold text-navy flex items-center gap-1.5">
+                <Camera className="w-4 h-4 text-indigo" />
+                Customer Verified Review Photo
+              </span>
+              <button
+                onClick={() => setSelectedImageModal(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center p-2">
+              <img
+                src={selectedImageModal}
+                alt="Enlarged customer photo"
+                className="max-h-[70vh] w-auto max-w-full object-contain rounded-xl"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Related Products Recommendation Row */}
       {relatedProducts.length > 0 && (

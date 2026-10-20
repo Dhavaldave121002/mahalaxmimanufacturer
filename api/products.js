@@ -43,6 +43,7 @@ async function ensureReviewsTable(pool) {
         customer_email VARCHAR(150),
         rating DECIMAL(2,1) NOT NULL DEFAULT 5.0,
         comment TEXT NOT NULL,
+        image_url LONGTEXT,
         status ENUM('APPROVED', 'PENDING', 'REJECTED') DEFAULT 'APPROVED',
         verified_buyer TINYINT(1) DEFAULT 1,
         source VARCHAR(32) DEFAULT 'WEB',
@@ -51,6 +52,9 @@ async function ensureReviewsTable(pool) {
         INDEX idx_rev_email (customer_email)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+    try {
+      await pool.query(`ALTER TABLE product_reviews ADD COLUMN image_url LONGTEXT;`);
+    } catch (_) {}
     reviewsTableEnsured = true;
   } catch (e) {
     console.warn('ensureReviewsTable warning:', e.message);
@@ -274,6 +278,7 @@ export default async function handler(req, res) {
       const customerEmail = (p.customerEmail || p.email || '').trim().toLowerCase();
       const rating = Number(p.rating || 5.0);
       const comment = (p.comment || p.notes || '').trim();
+      const imageUrl = (p.imageUrl || p.image_url || p.image || '').trim() || null;
       const source = p.source || 'WEB';
 
       if (!productId || !comment) {
@@ -285,9 +290,9 @@ export default async function handler(req, res) {
           await ensureReviewsTable(pool);
           await pool.query(
             `INSERT INTO product_reviews 
-              (id, product_id, product_title, customer_name, customer_email, rating, comment, status, verified_buyer, source)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'APPROVED', 1, ?)`,
-            [reviewId, productId, productTitle, customerName, customerEmail, rating, comment, source]
+              (id, product_id, product_title, customer_name, customer_email, rating, comment, image_url, status, verified_buyer, source)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'APPROVED', 1, ?)`,
+            [reviewId, productId, productTitle, customerName, customerEmail, rating, comment, imageUrl, source]
           );
 
           try {
@@ -310,6 +315,7 @@ export default async function handler(req, res) {
         customer_email: customerEmail,
         rating,
         comment,
+        image_url: imageUrl,
         status: 'APPROVED',
         verified_buyer: 1,
         source,

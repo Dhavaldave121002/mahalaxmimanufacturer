@@ -4,7 +4,7 @@ export const INITIAL_COUPONS: CouponOffer[] = [
   {
     id: 'coup-launch150',
     code: 'LAUNCH150',
-    title: 'Surat Mill Launch Promo',
+    title: 'Ahmedabad Mill Launch Promo',
     description: 'Flat ₹150 OFF on your first direct loom purchase',
     discountType: 'FLAT',
     discountValue: 150,

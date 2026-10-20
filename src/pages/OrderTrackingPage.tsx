@@ -100,8 +100,8 @@ export const OrderTrackingPage: React.FC = () => {
         items: [
           {
             productId: 'prod-textile-live',
-            productName: 'Mahalaxmi Enterprises Surat Mill Textile Consignment Batch',
-            sku: 'MLE-SURAT-DISPATCH',
+            productName: 'Mahalaxmi Enterprises Ahmedabad Mill Textile Consignment Batch',
+            sku: 'MLE-AHMEDABAD-DISPATCH',
             hsnCode: '630221',
             quantity: 50,
             unitPrice: 899,
@@ -127,7 +127,7 @@ export const OrderTrackingPage: React.FC = () => {
           fullName: currentUser?.name || 'Consignment Receiver',
           phone: currentUser?.phone || '+91 85111 72099',
           street: 'Plot 124, GIDC Industrial Textile Estate, Pandesara',
-          city: 'Surat',
+          city: 'Ahmedabad',
           state: 'Gujarat',
           pincode: '394221',
           addressType: 'COMMERCIAL'
@@ -137,14 +137,14 @@ export const OrderTrackingPage: React.FC = () => {
           fullName: currentUser?.name || 'Consignment Receiver',
           phone: currentUser?.phone || '+91 85111 72099',
           street: 'Plot 124, GIDC Industrial Textile Estate, Pandesara',
-          city: 'Surat',
+          city: 'Ahmedabad',
           state: 'Gujarat',
           pincode: '394221',
           addressType: 'COMMERCIAL'
         },
         estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString(),
         timeline: [
-          { status: 'PLACED', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), description: 'Order Booked and Allocated to Loom 4 Surat Central Facility.' },
+          { status: 'PLACED', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), description: 'Order Booked and Allocated to Loom 4 Ahmedabad Central Facility.' },
           { status: 'MILL_PROCESSING', timestamp: new Date(Date.now() - 86400000 * 1.5).toISOString(), description: 'Quality checking, barcode tagging & folding completed.' },
           { status: 'PACKED', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), description: 'E-Way bill generated & loaded into dispatch freight container.' },
           { status: 'DISPATCHED', timestamp: new Date(Date.now() - 3600000 * 18).toISOString(), description: `Handed over to Tirupati Courier & Logistics (AWB: ${searchQuery.trim().toUpperCase()}).` },
@@ -307,7 +307,7 @@ export const OrderTrackingPage: React.FC = () => {
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-champagne/20 border border-champagne/40 text-champagne text-xs font-bold uppercase tracking-wider">
             <Truck className="w-3.5 h-3.5" />
-            <span>Official Surat Central Mill Dispatch Tracker</span>
+            <span>Official Ahmedabad Central Mill Dispatch Tracker</span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
@@ -682,10 +682,22 @@ export const OrderTrackingPage: React.FC = () => {
                                 alt={item.productName}
                                 className="w-10 h-10 object-cover rounded-lg border border-slate-100 shrink-0"
                               />
-                              <div>
-                                <p className="font-bold text-navy line-clamp-1">{item.productName}</p>
-                                <p className="text-[10px] text-slate-400">SKU: {item.sku}</p>
-                              </div>
+                                <div>
+                                  <p className="font-bold text-navy line-clamp-1">{item.productName}</p>
+                                  <p className="text-[10px] text-slate-400">SKU: {item.sku}</p>
+                                  {item.variantDescription && item.variantDescription.includes('[') && (
+                                    <div className="mt-1 px-2 py-0.5 rounded bg-purple-50 border border-purple-200 text-purple-900 text-[10px] font-medium max-w-sm">
+                                      🎨 {item.variantDescription}
+                                    </div>
+                                  )}
+                                  {item.customization && item.customization.type && item.customization.type !== 'No Customization' && !item.variantDescription?.includes('[') && (
+                                    <div className="mt-1 px-2 py-0.5 rounded bg-purple-50 border border-purple-200 text-purple-900 text-[10px] font-medium">
+                                      🎨 Customization: {item.customization.type}
+                                      {item.customization.logoText && ` • Logo: "${item.customization.logoText}"`}
+                                      {item.customization.selectedSize && ` • Size: ${item.customization.selectedSize}`}
+                                    </div>
+                                  )}
+                                </div>
                             </div>
                           </td>
                           <td className="py-3 px-2 text-center font-mono text-slate-500">{item.hsnCode}</td>
@@ -783,7 +795,7 @@ export const OrderTrackingPage: React.FC = () => {
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Are you sure you want to cancel Order <strong className="font-mono text-navy font-black">{currentOrder.orderNumber}</strong>? An automated cancellation confirmation email will be dispatched to <strong className="text-navy">{currentOrder.customer?.email}</strong> and Surat Mill Dispatch.
+              Are you sure you want to cancel Order <strong className="font-mono text-navy font-black">{currentOrder.orderNumber}</strong>? An automated cancellation confirmation email will be dispatched to <strong className="text-navy">{currentOrder.customer?.email}</strong> and Ahmedabad Mill Dispatch.
             </p>
 
             <div className="space-y-1.5">

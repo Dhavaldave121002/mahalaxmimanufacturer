@@ -7,6 +7,16 @@ let usersCache = null;
 
 function loadFallbackUsers() {
   if (usersCache && usersCache.length > 0) return usersCache;
+  // Check /tmp first for runtime persisted updates
+  try {
+    const tmpDir = process.platform === 'win32' ? (process.env.TEMP || 'C:\\Windows\\Temp') : '/tmp';
+    const tmpPath = path.join(tmpDir, 'users.json');
+    if (fs.existsSync(tmpPath)) {
+      usersCache = JSON.parse(fs.readFileSync(tmpPath, 'utf8'));
+      if (usersCache && usersCache.length > 0) return usersCache;
+    }
+  } catch (_) {}
+
   try {
     const filePath = path.join(process.cwd(), 'public', 'users.json');
     if (fs.existsSync(filePath)) {
@@ -21,12 +31,18 @@ function loadFallbackUsers() {
 
 function saveFallbackUsers(users) {
   usersCache = users;
+  // Save to /tmp for serverless runtime persistence
+  try {
+    const tmpDir = process.platform === 'win32' ? (process.env.TEMP || 'C:\\Windows\\Temp') : '/tmp';
+    const tmpPath = path.join(tmpDir, 'users.json');
+    fs.writeFileSync(tmpPath, JSON.stringify(users, null, 2), 'utf8');
+  } catch (_) {}
+
+  // Also save to public/users.json if filesystem is writable
   try {
     const filePath = path.join(process.cwd(), 'public', 'users.json');
     fs.writeFileSync(filePath, JSON.stringify(users, null, 2), 'utf8');
-  } catch (err) {
-    console.warn('Fallback users write warning:', err.message);
-  }
+  } catch (_) {}
 }
 
 // Sanitize user: NEVER leak password_hash to client!
@@ -497,7 +513,91 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, message: 'Password reset successfully!' });
       }
 
-      return res.status(404).json({ success: false, message: 'Account not found.' });
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: DELETE_ACCOUNT (User self-deletion to reduce server load)
+    // -------------------------------------------------------------
+    if (action === 'delete_account') {
+      const targetEmail = ((req.body?.email || req.body?.identifier || '').trim().toLowerCase());
+      const targetId = ((req.body?.id || req.body?.userId || '').trim());
+
+      // STRICT SECURITY GUARD: ADMIN MASTER ACCOUNTS CAN NEVER BE DELETED!
+      const PROTECTED_ADMIN_EMAILS = [
+        'admin@mahalaxmienterprises.com',
+        'admin@mahalaxmi.in',
+        'mahalaxmienterpriseuk@gmail.com',
+        'deviltimeisback001@gmail.com'
+      ];
+
+      if (PROTECTED_ADMIN_EMAILS.includes(targetEmail)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Security Alert: Administrator accounts cannot be deleted.'
+        });
+      }
+
+      // Check if user is admin in fallback cache
+      const fallback = loadFallbackUsers();
+      const fallbackUser = fallback.find(
+        f => (targetEmail && f.email?.toLowerCase() === targetEmail) || (targetId && f.id === targetId)
+      );
+
+      if (fallbackUser && (fallbackUser.role === 'admin' || PROTECTED_ADMIN_EMAILS.includes((fallbackUser.email || '').toLowerCase()))) {
+        return res.status(403).json({
+          success: false,
+          message: 'Security Alert: Administrator master accounts cannot be deleted.'
+        });
+      }
+
+      // Check in MySQL as well
+      if (pool) {
+        try {
+          const [rows] = await pool.query(
+            'SELECT * FROM users WHERE email = ? OR id = ? LIMIT 1',
+            [targetEmail, targetId]
+          );
+          if (rows && rows.length > 0) {
+            const dbUser = rows[0];
+            if (dbUser.role === 'admin' || PROTECTED_ADMIN_EMAILS.includes((dbUser.email || '').toLowerCase())) {
+              return res.status(403).json({
+                success: false,
+                message: 'Security Alert: Administrator master accounts cannot be deleted.'
+              });
+            }
+          }
+        } catch (dbErr) {
+          console.warn('MySQL admin verification lookup error:', dbErr.message);
+        }
+      }
+
+      // Deletion from MySQL database
+      let deletedFromDb = false;
+      if (pool) {
+        try {
+          const [delRes] = await pool.query(
+            'DELETE FROM users WHERE email = ? OR id = ?',
+            [targetEmail, targetId]
+          );
+          if (delRes && delRes.affectedRows > 0) {
+            deletedFromDb = true;
+          }
+        } catch (dbErr) {
+          console.warn('MySQL delete user error:', dbErr.message);
+        }
+      }
+
+      // Deletion from fallback users.json and memory cache
+      const updatedFallback = fallback.filter(
+        f => !((targetEmail && f.email?.toLowerCase() === targetEmail) || (targetId && f.id === targetId))
+      );
+      saveFallbackUsers(updatedFallback);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Your account and personal data have been completely deleted from our servers.',
+        deletedFromDb
+      });
     }
 
     return res.status(400).json({ success: false, message: 'Invalid action.' });

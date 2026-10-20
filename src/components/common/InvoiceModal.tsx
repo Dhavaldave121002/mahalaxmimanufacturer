@@ -70,7 +70,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 <p className="text-xs text-slate-600 mt-1 font-medium">Direct Mill Rates & Wholesale Essentials</p>
                 <div className="text-[11px] sm:text-xs text-slate-600 mt-2 space-y-0.5">
                   <p>Plot No. 42-45, Ring Road Textile Park Phase II</p>
-                  <p>Surat, Gujarat - 395002, India</p>
+                  <p>Ahmedabad, Gujarat - 382405, India</p>
                   <p><span className="font-semibold text-slate-800">GSTIN:</span> 24AAECM8921P1ZA | <span className="font-semibold text-slate-800">PAN:</span> AAECM8921P</p>
                   <p><span className="font-semibold text-slate-800">State Code:</span> 24 (Gujarat) | <span className="font-semibold text-slate-800">Email:</span> billing@mahalaxmienterprises.com</p>
                 </div>
@@ -178,7 +178,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
               </div>
 
               <div className="text-[10px] sm:text-[11px] text-slate-500 space-y-1">
-                <p>1. Goods sold under direct mill rate contract are subject to standard Surat jurisdiction.</p>
+                <p>1. Goods sold under direct mill rate contract are subject to standard Ahmedabad jurisdiction.</p>
                 <p>2. E-Way bill reference generated under GSTIN 24AAECM8921P1ZA.</p>
                 <p>3. This is a computer generated tax invoice in compliance with CGST Rule 46.</p>
               </div>

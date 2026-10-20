@@ -38,7 +38,7 @@ export const Footer: React.FC = () => {
             <div>
               <h4 className="font-bold text-sm text-white">Direct Mill Rates</h4>
               <p className="text-xs text-slate-300 mt-1">
-                Zero intermediary markup. Genuine factory prices directly from Surat & Tirupur looms.
+                Zero intermediary markup. Genuine factory prices directly from Ahmedabad & Tirupur looms.
               </p>
             </div>
           </div>
@@ -116,7 +116,7 @@ export const Footer: React.FC = () => {
             <div className="pt-2 text-xs text-slate-300 space-y-1.5">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-champagne shrink-0" />
-                <span>Textile Park Phase II, Ring Road, Surat, Gujarat 395002</span>
+                <span>Narol Textile Cluster, Ahmedabad, Gujarat 382405</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-champagne shrink-0" />
@@ -241,7 +241,7 @@ export const Footer: React.FC = () => {
               </li>
               <li className="flex items-center gap-1.5 text-slate-300">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Surat Loom Quality Tested Guarantee</span>
+                <span>Ahmedabad Loom Quality Tested Guarantee</span>
               </li>
               <li>
                 <Link to="/account" className="text-xs text-slate-300 hover:text-champagne transition flex items-center gap-1.5 pt-0.5">
@@ -362,7 +362,7 @@ export const Footer: React.FC = () => {
                     <span>Hassle-Free Doorstep Reverse Pickup & 100% Refund</span>
                   </div>
                   <p className="leading-relaxed">
-                    At Mahalaxmi Enterprises, we stand firmly behind every piece of fabric produced in our Surat & Tirupur looms. If you are not completely satisfied with your order, we offer a straightforward 7-Day return, exchange, or refund with zero hidden deductions.
+                    At Mahalaxmi Enterprises, we stand firmly behind every piece of fabric produced in our Ahmedabad & Tirupur looms. If you are not completely satisfied with your order, we offer a straightforward 7-Day return, exchange, or refund with zero hidden deductions.
                   </p>
                 </div>
 
@@ -396,7 +396,7 @@ export const Footer: React.FC = () => {
                   <h4 className="font-bold text-navy">How to Request a Return or Exchange:</h4>
                   <div className="space-y-1 text-slate-600">
                     <p>• <strong>Method 1 (Instant Online):</strong> Visit <Link to="/orders" onClick={() => setLegalModal(null)} className="text-indigo font-bold underline">Track Order / Consignments</Link>, select your delivered order, and click the <strong>"🔄 Return / Exchange"</strong> button.</p>
-                    <p>• <strong>Method 2 (WhatsApp Desk):</strong> Ping our Surat Mill dispatch helpline on WhatsApp at <a href="https://wa.me/918511172099" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">+91 85111 72099</a> with your Order ID.</p>
+                    <p>• <strong>Method 2 (WhatsApp Desk):</strong> Ping our Ahmedabad Mill dispatch helpline on WhatsApp at <a href="https://wa.me/918511172099" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">+91 85111 72099</a> with your Order ID.</p>
                     <p>• <strong>Method 3 (Email):</strong> Email our team at <a href="mailto:orders@mahalaxmienterprises.com" className="text-indigo font-bold underline">orders@mahalaxmienterprises.com</a>.</p>
                   </div>
                 </div>
@@ -410,7 +410,7 @@ export const Footer: React.FC = () => {
                   <h3 className="text-lg font-black">Terms of Commercial Supply</h3>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  All commercial textile purchases from Mahalaxmi Enterprises are executed under standard Surat Mill trade covenants. Minimum Order Quantities (MOQ) apply per SKU. Goods are dispatched ex-mill upon receipt of payment or under approved B2B 30-day revolving credit line.
+                  All commercial textile purchases from Mahalaxmi Enterprises are executed under standard Ahmedabad Mill trade covenants. Minimum Order Quantities (MOQ) apply per SKU. Goods are dispatched ex-mill upon receipt of payment or under approved B2B 30-day revolving credit line.
                 </p>
                 <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
                   <li>Direct mill billing with legal GST compliance.</li>

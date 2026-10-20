@@ -11,7 +11,7 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product, city = 
   useEffect(() => {
     if (!product) return;
 
-    const baseTitle = `${product.name} - Direct Mill Wholesale ₹${product.retailPrice} | Surat Textile Manufacturer India`;
+    const baseTitle = `${product.name} - Direct Mill Wholesale ₹${product.retailPrice} | Ahmedabad Textile Manufacturer India`;
     const metaDesc = `Buy ${product.name} direct from Surat textile mill at wholesale price ₹${product.retailPrice} (MRP ₹${product.mrp}). 100% genuine cotton, GST invoice, pan-India fast dispatch to ${city}, ${state}, Mumbai, Delhi, Ahmedabad, Bengaluru & all 28 states.`;
 
     // 1. Update Document Title
@@ -41,7 +41,7 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product, city = 
 
     // 2. Standard Meta Tags
     setMeta('name', 'description', metaDesc);
-    const keywords = `${product.name}, ${product.categoryName} wholesale, direct mill rates surat, buy ${product.name} bulk, ${product.name} supplier ${city}, ${product.name} manufacturer ${state}, textile manufacturer surat, cotton linen exporter india`;
+    const keywords = `${product.name}, ${product.categoryName} wholesale, direct mill rates ahmedabad, buy ${product.name} bulk, ${product.name} supplier ${city}, ${product.name} manufacturer ${state}, textile manufacturer ahmedabad, cotton linen exporter india`;
     setMeta('name', 'keywords', keywords);
 
     // 3. GEO Target Meta Tags for National & Local Top Search Rankings
@@ -92,7 +92,7 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product, city = 
           },
           "manufacturer": {
             "@type": "Organization",
-            "name": "Mahalaxmi Enterprises Surat Textile Mills",
+            "name": "Mahalaxmi Enterprises Ahmedabad Textile Mills",
             "url": "https://mahalaxmimanufacturer.com"
           },
           "offers": {

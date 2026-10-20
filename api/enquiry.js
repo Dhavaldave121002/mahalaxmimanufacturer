@@ -294,7 +294,7 @@ async function sendEnquiryEmails(data) {
     }
   }
 
-  // 2. Dispatch Customer Acknowledgment
+  // 2. Dispatch Customer Acknowledgment via Resend
   if (email && email.includes('@') && RESEND_API_KEY) {
     try {
       await fetch('https://api.resend.com/emails', {
@@ -311,7 +311,7 @@ async function sendEnquiryEmails(data) {
             <div style="font-family: sans-serif; max-width: 540px; margin: 0 auto; padding: 20px; border: 1px solid #E2E8F0; border-radius: 16px;">
               <h3 style="color: #14213D; margin-top: 0;">Namaste ${fullName},</h3>
               <p style="color: #475569; font-size: 13px; line-height: 1.5;">
-                Thank you for submitting your manufacturing requirement (Ref #${enquiryCode}). Our Surat Mill production team is reviewing your volume request of <strong>${expectedMonthlyVolume}</strong> and will connect with your commercial quote within 2 business hours.
+                Thank you for submitting your manufacturing requirement (Ref #${enquiryCode}). Our Ahmedabad Mill production team is reviewing your volume request of <strong>${expectedMonthlyVolume}</strong> and will connect with your commercial quote within 2 business hours.
               </p>
               <div style="background: #F8FAFC; padding: 12px; border-radius: 10px; margin: 16px 0; font-size: 12px; color: #1E293B;">
                 <strong>Company:</strong> ${businessName}<br>
@@ -323,5 +323,64 @@ async function sendEnquiryEmails(data) {
         })
       });
     } catch (_) {}
+  }
+
+  // 3. Guaranteed Direct Gmail Dispatch via EmailJS Engine
+  try {
+    const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
+    const EMAILJS_TEMPLATE_ID = 'template_rxzob8r';
+    const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || 'G6gT9XDN4SFBz6oqW';
+
+    if (EMAILJS_SERVICE_ID && EMAILJS_PUBLIC_KEY) {
+      // Send Admin Alert
+      await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Origin': 'https://mahalaxmimanufacturer.com'
+        },
+        body: JSON.stringify({
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: {
+            to_email: 'mahalaxmienterpriseuk@gmail.com',
+            to_name: 'Mahalaxmi Mill Admin',
+            subject: `🚨 New Business Enquiry: ${businessName} (${expectedMonthlyVolume})`,
+            headline: 'New Business Enquiry',
+            code_box: `#${enquiryCode}`,
+            subtext: `From: ${fullName} (${phone}) • Vol: ${expectedMonthlyVolume}`,
+            message: `New requirement from ${fullName} (${businessName}, ${businessType})! Phone: ${phone}, Email: ${email}. Target Volume: ${expectedMonthlyVolume}. Notes: ${notes}`
+          }
+        })
+      }).catch(() => {});
+
+      // Send Customer Acknowledgment
+      if (email && email.includes('@')) {
+        await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Origin': 'https://mahalaxmimanufacturer.com'
+          },
+          body: JSON.stringify({
+            service_id: EMAILJS_SERVICE_ID,
+            template_id: EMAILJS_TEMPLATE_ID,
+            user_id: EMAILJS_PUBLIC_KEY,
+            template_params: {
+              to_email: email,
+              to_name: fullName,
+              subject: `Requirement Confirmed: #${enquiryCode} | Mahalaxmi Enterprises`,
+              headline: 'Requirement Received',
+              code_box: `#${enquiryCode}`,
+              subtext: `Ahmedabad Mill Production Desk • Vol: ${expectedMonthlyVolume}`,
+              message: `Namaste ${fullName}! Thank you for your inquiry for ${businessName}. Our Ahmedabad Mill team is reviewing your volume request (${expectedMonthlyVolume}) and will contact you shortly.`
+            }
+          })
+        }).catch(() => {});
+      }
+    }
+  } catch (ejsErr) {
+    console.warn('[EmailJS Enquiry Dispatch Warning]:', ejsErr);
   }
 }

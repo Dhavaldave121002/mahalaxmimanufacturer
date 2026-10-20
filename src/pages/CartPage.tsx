@@ -18,7 +18,8 @@ import {
   Lock,
   Check,
   Zap,
-  Mail
+  Mail,
+  Palette
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 
@@ -156,7 +157,7 @@ export const CartPage: React.FC = () => {
               {formatTime(timeLeft)}
             </span>
             <p className="text-[11px] text-amber-800">
-              Complete checkout before timer expires to guarantee Surat mill batch pricing.
+              Complete checkout before timer expires to guarantee Ahmedabad mill batch pricing.
             </p>
           </div>
         </div>
@@ -234,7 +235,6 @@ export const CartPage: React.FC = () => {
                     </p>
                   )}
 
-                  {/* Applied Wholesale Tier Tag */}
                   {item.appliedTier && item.appliedTier.savingsPercent > 0 ? (
                     <span className="inline-block text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
                       {item.appliedTier.label} ({item.appliedTier.savingsPercent}% Bulk Discount Applied)
@@ -243,6 +243,41 @@ export const CartPage: React.FC = () => {
                     <span className="text-[10px] text-slate-400">
                       Standard retail pricing ({item.product.wholesaleTiers?.[1]?.minQty ? `Order ${item.product.wholesaleTiers[1].minQty}+ for wholesale rate` : ''})
                     </span>
+                  )}
+
+                  {/* Customization & Branding Specs */}
+                  {item.customization && item.customization.type && item.customization.type !== 'No Customization' && (
+                    <div className="mt-2 p-2.5 bg-purple-50 border border-purple-200 rounded-xl text-[11px] text-purple-900 space-y-1">
+                      <div className="flex flex-wrap items-center gap-1.5 font-bold">
+                        <span className="px-1.5 py-0.5 bg-purple-600 text-white rounded text-[10px] flex items-center gap-1">
+                          <Palette className="w-3 h-3" />
+                          {item.customization.type}
+                        </span>
+                        {item.customization.logoText && (
+                          <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-purple-200 text-navy">
+                            "{item.customization.logoText}"
+                          </span>
+                        )}
+                        {item.customization.logoPosition && (
+                          <span className="text-[10px] text-slate-500 uppercase font-semibold">
+                            • Pos: {item.customization.logoPosition}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-[10px] text-purple-800">
+                        {item.customization.selectedSize && (
+                          <span>📐 Size: <strong>{item.customization.selectedSize}</strong></span>
+                        )}
+                        {item.customization.customGsm && (
+                          <span>🧶 GSM: <strong>{item.customization.customGsm}</strong></span>
+                        )}
+                        {item.customization.designNote && (
+                          <span className="text-slate-600 truncate max-w-xs italic">
+                            📝 Note: {item.customization.designNote}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

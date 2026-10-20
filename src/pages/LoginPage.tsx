@@ -392,7 +392,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                 {activeTab === 'forgot' && 'Reset your commercial account password'}
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Source 300 TC bedsheets, 600 GSM bath towels, and institutional linen directly from Surat with zero middlemen markup.
+                Source 300 TC bedsheets, 600 GSM bath towels, and institutional linen directly from Ahmedabad with zero middlemen markup.
               </p>
             </div>
 
@@ -985,7 +985,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               256-bit SSL Direct Mill Encryption
             </span>
-            <span>Surat Mill Desk: +91 94291 87611</span>
+            <span>Ahmedabad Mill Desk: +91 94291 87611</span>
           </div>
 
         </div>

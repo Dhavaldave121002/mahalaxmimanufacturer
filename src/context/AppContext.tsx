@@ -17,7 +17,8 @@ import {
   CouponOffer,
   PaymentMethod,
   CollectionCategory,
-  WalletTransaction
+  WalletTransaction,
+  ProductCustomization
 } from '../types';
 import { INITIAL_PRODUCTS, CATEGORIES_CONFIG } from '../data/mockProducts';
 import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
@@ -33,8 +34,8 @@ interface PinCodeInfo {
 }
 
 const PINCODE_DATABASE: Record<string, { city: string; state: string; days: number }> = {
-  '395002': { city: 'Surat', state: 'Gujarat', days: 1 },
-  '395001': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '395002': { city: 'Ahmedabad', state: 'Gujarat', days: 1 },
+  '395001': { city: 'Ahmedabad', state: 'Gujarat', days: 1 },
   '380001': { city: 'Ahmedabad', state: 'Gujarat', days: 2 },
   '400001': { city: 'Mumbai', state: 'Maharashtra', days: 2 },
   '110001': { city: 'New Delhi', state: 'Delhi', days: 3 },
@@ -55,7 +56,7 @@ interface AppContextType {
   updateCategory: (id: string, updates: Partial<CollectionCategory>) => void;
   deleteCategory: (id: string) => void;
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number, variant?: ProductVariant) => void;
+  addToCart: (product: Product, quantity?: number, variant?: ProductVariant, customization?: ProductCustomization) => void;
   removeFromCart: (itemId: string) => void;
   updateCartQuantity: (itemId: string, newQty: number) => void;
   clearCart: () => void;
@@ -99,6 +100,7 @@ interface AppContextType {
     gstNumber?: string;
   }) => { success: boolean; message: string; user?: User };
   logout: () => void;
+  deleteAccount: () => Promise<{ success: boolean; message: string }>;
   requestOtp: (identifier: string) => { success: boolean; message: string; otp?: string };
   resetPassword: (identifier: string, otp: string, newPassword: string) => { success: boolean; message: string };
   switchUserRole: (role: 'consumer' | 'retailer' | 'wholesaler' | 'admin') => void;
@@ -199,7 +201,7 @@ const DEMO_USER_PROFILES: Record<string, User> = {
         phone: '+91 98201 12345',
         street: 'Flat 402, Lotus Greens, Ring Road',
         landmark: 'Opposite City Mall',
-        city: 'Surat',
+        city: 'Ahmedabad',
         state: 'Gujarat',
         pincode: '395002',
         addressType: 'HOME',
@@ -322,7 +324,7 @@ const DEMO_USER_PROFILES: Record<string, User> = {
         companyName: 'Mahalaxmi Enterprises Unit 1',
         phone: '+91 98765 00001',
         street: 'Plot 72, GIDC Textile Estate, Ring Road',
-        city: 'Surat',
+        city: 'Ahmedabad',
         state: 'Gujarat',
         pincode: '395002',
         addressType: 'COMMERCIAL',
@@ -773,7 +775,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [deliveryPincode, setDeliveryPincode] = useState<string>('395002');
   const [deliveryInfo, setDeliveryInfo] = useState<PinCodeInfo | null>({
     pincode: '395002',
-    city: 'Surat',
+    city: 'Ahmedabad',
     state: 'Gujarat',
     serviceable: true,
     estimatedDays: 1,
@@ -863,9 +865,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         estimatedDelivery: new Date(Date.now() + 86400000).toISOString(),
         timeline: [
           { status: 'PLACED', timestamp: '2026-10-12T10:30:00Z', description: 'Order verified & wholesale payment confirmed via RTGS.' },
-          { status: 'MILL_PROCESSING', timestamp: '2026-10-12T14:15:00Z', description: 'Batch inspected at Surat Mill Dispatch Unit 2.' },
+          { status: 'MILL_PROCESSING', timestamp: '2026-10-12T14:15:00Z', description: 'Batch inspected at Ahmedabad Mill Dispatch Unit 2.' },
           { status: 'PACKED', timestamp: '2026-10-13T09:00:00Z', description: 'Pallet shrink-wrapped and barcoded for freight.' },
-          { status: 'IN_TRANSIT', timestamp: '2026-10-13T18:00:00Z', description: 'Departed Surat Hub towards Ahmedabad Central Yard.', location: 'Surat Cargo Terminal' }
+          { status: 'IN_TRANSIT', timestamp: '2026-10-13T18:00:00Z', description: 'Departed Ahmedabad Central Hub towards Regional Yard.', location: 'Ahmedabad Cargo Terminal' }
         ]
       },
       {
@@ -940,7 +942,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString(),
         timeline: [
           { status: 'PLACED', timestamp: new Date(Date.now() - 3600000 * 3).toISOString(), description: 'Order placed from Mahalaxmi Enterprises Android App v1.0.3 via UPI GPay.' },
-          { status: 'MILL_PROCESSING', timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), description: 'Allocation confirmed at Surat Central Dispatch Loom 4.' }
+          { status: 'MILL_PROCESSING', timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), description: 'Allocation confirmed at Ahmedabad Central Dispatch Loom 4.' }
         ]
       },
       {
@@ -1004,7 +1006,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         estimatedDelivery: new Date(Date.now() - 86400000).toISOString(),
         timeline: [
           { status: 'PLACED', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), description: 'Order placed & payment verified.' },
-          { status: 'MILL_PROCESSING', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), description: 'Batch packaged at Surat Mill.' },
+          { status: 'MILL_PROCESSING', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), description: 'Batch packaged at Ahmedabad Mill.' },
           { status: 'IN_TRANSIT', timestamp: new Date(Date.now() - 86400000 * 1.5).toISOString(), description: 'Arrived at Ahmedabad Delivery Hub.' },
           { status: 'DELIVERED', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), description: 'Consignment successfully handed over to customer. 7-Day Return / Exchange Guarantee is now active.' }
         ]
@@ -1245,11 +1247,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { unitPrice: product.retailPrice };
   };
 
-  const addToCart = (product: Product, quantity: number = 1, variant?: ProductVariant) => {
+  const addToCart = (
+    product: Product,
+    quantity: number = 1,
+    variant?: ProductVariant,
+    customization?: ProductCustomization
+  ) => {
     setCart(prev => {
-      const existingIndex = prev.findIndex(
-        item => item.productId === product.id && item.selectedVariant?.id === variant?.id
-      );
+      // Find existing item matching product ID, variant ID, and customization type/text
+      const existingIndex = prev.findIndex(item => {
+        const matchesProduct = item.productId === product.id;
+        const matchesVariant = item.selectedVariant?.id === variant?.id;
+        const matchesCustom =
+          (!item.customization && !customization) ||
+          (item.customization?.type === customization?.type &&
+            item.customization?.logoText === customization?.logoText &&
+            item.customization?.selectedSize === customization?.selectedSize);
+        return matchesProduct && matchesVariant && matchesCustom;
+      });
 
       if (existingIndex > -1) {
         const currentItem = prev[existingIndex];
@@ -1262,20 +1277,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           quantity: newTotalQty,
           unitPrice,
           totalPrice: unitPrice * newTotalQty,
-          appliedTier
+          appliedTier,
+          customization: customization || currentItem.customization
         };
         return updated;
       } else {
         const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(product, quantity);
         const newItem: CartItem = {
-          id: `${product.id}-${variant?.id || 'std'}-${Date.now()}`,
+          id: `${product.id}-${variant?.id || 'std'}-${customization?.type ? 'custom-' : ''}${Date.now()}`,
           productId: product.id,
           product,
           quantity,
           selectedVariant: variant,
           unitPrice,
           totalPrice: unitPrice * quantity,
-          appliedTier
+          appliedTier,
+          customization
         };
         return [...prev, newItem];
       }
@@ -1623,6 +1640,76 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsLoggedIn(false);
   };
 
+  const deleteAccount = async (): Promise<{ success: boolean; message: string }> => {
+    if (!currentUser) return { success: false, message: 'No active session found.' };
+
+    const email = (currentUser.email || '').toLowerCase().trim();
+    const PROTECTED_ADMIN_EMAILS = [
+      'admin@mahalaxmienterprises.com',
+      'admin@mahalaxmi.in',
+      'mahalaxmienterpriseuk@gmail.com',
+      'deviltimeisback001@gmail.com'
+    ];
+
+    // STRICT ADMINISTRATIVE DATA SAFEGUARD
+    if (currentUser.role === 'admin' || PROTECTED_ADMIN_EMAILS.includes(email)) {
+      return {
+        success: false,
+        message: 'Security Alert: Administrator accounts cannot be deleted.'
+      };
+    }
+
+    try {
+      // 1. Delete user from Central Database & Backend
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_account',
+          email: currentUser.email,
+          id: currentUser.id
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 403) {
+        return {
+          success: false,
+          message: data.message || 'Administrator accounts cannot be deleted.'
+        };
+      }
+
+      // 2. Clear user from local registered users state
+      setRegisteredUsers(prev => prev.filter(u => u.email.toLowerCase() !== email && u.id !== currentUser.id));
+
+      // 3. Clear user-specific storage keys
+      try {
+        localStorage.removeItem(`mle_wishlist_${email}`);
+        localStorage.removeItem('mle_current_user');
+      } catch {}
+
+      // 4. Logout and reset session to default consumer
+      setIsLoggedIn(false);
+      setCurrentUser(DEMO_USER_PROFILES.consumer);
+
+      return {
+        success: true,
+        message: 'Your account and personal data have been completely deleted from our servers.'
+      };
+    } catch (err: any) {
+      console.warn('Delete account network warning:', err);
+      // Clean up client side state
+      setRegisteredUsers(prev => prev.filter(u => u.email.toLowerCase() !== email && u.id !== currentUser.id));
+      setIsLoggedIn(false);
+      setCurrentUser(DEMO_USER_PROFILES.consumer);
+      return {
+        success: true,
+        message: 'Your account has been deleted locally.'
+      };
+    }
+  };
+
   const resetPassword = (
     identifier: string,
     otp: string,
@@ -1730,18 +1817,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }): Order => {
     const orderNum = `MLE-ORD-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
 
-    const orderItems = cart.map(item => ({
-      productId: item.productId,
-      productName: item.product.name,
-      sku: item.product.sku,
-      hsnCode: item.product.hsnCode,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      totalPrice: item.totalPrice,
-      variantDescription: item.selectedVariant?.name || `${item.quantity} standard pack`,
-      image: item.product.images[0],
-      gstRate: item.product.gstRate
-    }));
+    const orderItems = cart.map(item => {
+      let desc = item.selectedVariant?.name || `${item.quantity} standard pack`;
+      if (item.customization && item.customization.type && item.customization.type !== 'No Customization') {
+        const parts = [item.customization.type];
+        if (item.customization.logoText) parts.push(`Logo: "${item.customization.logoText}"`);
+        if (item.customization.selectedSize) parts.push(`Size: ${item.customization.selectedSize}`);
+        if (item.customization.customGsm) parts.push(`GSM: ${item.customization.customGsm}`);
+        if (item.customization.designNote) parts.push(`Note: ${item.customization.designNote}`);
+        desc = `${item.selectedVariant?.name || 'Standard'} [${parts.join(' • ')}]`;
+      }
+
+      return {
+        productId: item.productId,
+        productName: item.product.name,
+        sku: item.product.sku,
+        hsnCode: item.product.hsnCode,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+        variantDescription: desc,
+        image: item.product.images[0],
+        gstRate: item.product.gstRate,
+        customization: item.customization
+      };
+    });
 
     const pointsRedeemed = orderData.pointsRedeemed || 0;
     const amountPaid = orderData.amountPaid !== undefined ? orderData.amountPaid : Math.max(0, cartTotal - pointsRedeemed);
@@ -1750,7 +1850,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const defaultTimelineDesc = orderData.timelineNote || (
       pointsRedeemed > 0
         ? `Order booked. 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Mill Points redeemed (-₹${pointsRedeemed.toLocaleString('en-IN')}). Remaining balance ₹${amountPaid.toLocaleString('en-IN')} ${isCod ? 'payable on delivery (COD)' : 'paid via Razorpay'}.`
-        : 'Order placed successfully. Allocated to Mahalaxmi Enterprises Surat Central Warehouse.'
+        : 'Order placed successfully. Allocated to Mahalaxmi Enterprises Ahmedabad Central Warehouse.'
     );
 
     const newOrder: Order = {
@@ -2722,6 +2822,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         login,
         register,
         logout,
+        deleteAccount,
         requestOtp,
         resetPassword,
         switchUserRole,

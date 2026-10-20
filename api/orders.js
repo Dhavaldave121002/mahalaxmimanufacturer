@@ -444,6 +444,11 @@ async function sendOrderNotificationEmails(data) {
                   <div style="font-size: 11px; color: #64748B; margin-top: 3px;">
                     ${item.variantDescription || item.sku || 'Standard Mill Pack'}
                   </div>
+                  ${item.customization && item.customization.type && item.customization.type !== 'No Customization' ? `
+                    <div style="display: inline-block; background-color: #FAF5FF; border: 1px solid #D8B4FE; color: #6B21A8; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-top: 4px;">
+                      🎨 Customization: ${item.customization.type}${item.customization.logoText ? ` • Logo: "${item.customization.logoText}"` : ''}${item.customization.selectedSize ? ` • Size: ${item.customization.selectedSize}` : ''}
+                    </div>
+                  ` : ''}
                 </td>
               </tr>
             </table>
@@ -699,12 +704,54 @@ async function sendOrderNotificationEmails(data) {
   // Concurrent EmailJS Dispatch Engine (Customer Confirmation + Store Admin Alert)
   try {
     const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
-    const EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_ORDER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID || 'rn6jeir';
+    let EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_ORDER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID || 'template_rxzob8r';
+    if (EMAILJS_ORDER_TEMPLATE_ID === 'rn6jeir' || !EMAILJS_ORDER_TEMPLATE_ID) {
+      EMAILJS_ORDER_TEMPLATE_ID = 'template_rxzob8r';
+    }
     const EMAILJS_PUBLIC_KEY = process.env.EMAILJS_PUBLIC_KEY || process.env.VITE_EMAILJS_PUBLIC_KEY || process.env.EMAILJS_USER_ID || 'G6gT9XDN4SFBz6oqW';
     const EMAILJS_PRIVATE_KEY = process.env.EMAILJS_PRIVATE_KEY;
 
     if (EMAILJS_SERVICE_ID && EMAILJS_ORDER_TEMPLATE_ID && EMAILJS_PUBLIC_KEY) {
       const dispatches = [];
+
+      // Helper function to dispatch EmailJS with automatic fallback
+      const sendEmailJsWithFallback = async (payload, targetEmail, label) => {
+        try {
+          let res = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Origin': 'https://mahalaxmimanufacturer.com'
+            },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            console.log(`[EmailJS] ${label} delivered successfully to ${targetEmail}`);
+            return;
+          }
+          // Retry with template_rxzob8r if primary returned non-200
+          if (payload.template_id !== 'template_rxzob8r') {
+            payload.template_id = 'template_rxzob8r';
+            let retryRes = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Origin': 'https://mahalaxmimanufacturer.com'
+              },
+              body: JSON.stringify(payload)
+            });
+            if (retryRes.ok) {
+              console.log(`[EmailJS] ${label} delivered via fallback template_rxzob8r to ${targetEmail}`);
+            } else {
+              console.warn(`[EmailJS] ${label} retry failed:`, await retryRes.text());
+            }
+          } else {
+            console.warn(`[EmailJS] ${label} error response:`, await res.text());
+          }
+        } catch (e) {
+          console.warn(`[EmailJS] ${label} network error:`, e);
+        }
+      };
 
       // 1. Dispatch Customer Confirmation Email (Priority)
       if (customerEmail && customerEmail.includes('@') && !customerEmail.includes('customer@mahalaxmi.in')) {
@@ -718,31 +765,16 @@ async function sendOrderNotificationEmails(data) {
             subject: `Order Confirmed: #${orderNumber} | Mahalaxmi Enterprises`,
             headline: 'Order Confirmed!',
             code_box: `#${orderNumber}`,
-            subtext: `Total Value: ₹${Number(totalAmount).toLocaleString('en-IN')} • Surat Mill`,
+            subtext: `Total Value: ₹${Number(totalAmount).toLocaleString('en-IN')} • Ahmedabad Mill`,
             order_number: orderNumber,
             total_amount: Number(totalAmount).toLocaleString('en-IN'),
             items_block: orderItemsBlock,
-            message: `Thank you for your order! Your consignment #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')} is confirmed and being packed at Surat Direct Mill.`
+            message: `Thank you for your order! Your consignment #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')} is confirmed and being packed at Ahmedabad Direct Mill.`
           }
         };
         if (EMAILJS_PRIVATE_KEY) customerPayload.accessToken = EMAILJS_PRIVATE_KEY;
 
-        dispatches.push(
-          fetch('https://api.emailjs.com/api/v1.0/email/send', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Origin': 'https://mahalaxmimanufacturer.com'
-            },
-            body: JSON.stringify(customerPayload)
-          }).then(async r => {
-            if (r.ok) {
-              console.log(`[EmailJS] Customer order confirmation delivered successfully to ${customerEmail}`);
-            } else {
-              console.warn('[EmailJS] Customer order confirmation dispatch response:', await r.text());
-            }
-          }).catch(e => console.warn('[EmailJS] Customer network error:', e))
-        );
+        dispatches.push(sendEmailJsWithFallback(customerPayload, customerEmail, 'Customer order confirmation'));
       }
 
       // 2. Dispatch Store Admin Alert Email
@@ -768,22 +800,7 @@ async function sendOrderNotificationEmails(data) {
         };
         if (EMAILJS_PRIVATE_KEY) adminPayload.accessToken = EMAILJS_PRIVATE_KEY;
 
-        dispatches.push(
-          fetch('https://api.emailjs.com/api/v1.0/email/send', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Origin': 'https://mahalaxmimanufacturer.com'
-            },
-            body: JSON.stringify(adminPayload)
-          }).then(async r => {
-            if (r.ok) {
-              console.log(`[EmailJS] Admin alert delivered successfully to ${primaryAdmin}`);
-            } else {
-              console.warn('[EmailJS] Admin alert dispatch response:', await r.text());
-            }
-          }).catch(e => console.warn('[EmailJS] Admin network error:', e))
-        );
+        dispatches.push(sendEmailJsWithFallback(adminPayload, primaryAdmin, 'Store admin alert'));
       }
 
       await Promise.allSettled(dispatches);

@@ -55,7 +55,7 @@ export const CheckoutPage: React.FC = () => {
     phone: currentUser.phone,
     street: '',
     landmark: '',
-    city: deliveryInfo?.city || 'Surat',
+    city: deliveryInfo?.city || 'Ahmedabad',
     state: deliveryInfo?.state || 'Gujarat',
     pincode: deliveryInfo?.pincode || '395002',
     addressType: isB2B ? 'COMMERCIAL' : 'HOME'
@@ -78,7 +78,7 @@ export const CheckoutPage: React.FC = () => {
     fullName: currentUser.name,
     phone: currentUser.phone,
     street: 'Plot 402, Ring Road Textile Hub',
-    city: 'Surat',
+    city: 'Ahmedabad',
     state: 'Gujarat',
     pincode: '395002',
     addressType: 'COMMERCIAL' as const
@@ -92,7 +92,7 @@ export const CheckoutPage: React.FC = () => {
     if (cleanPin.startsWith('38') || cleanPin.startsWith('39') || cleanPin.startsWith('36')) {
       autoState = 'Gujarat';
       if (cleanPin.startsWith('380')) autoCity = 'Ahmedabad';
-      else if (cleanPin.startsWith('395')) autoCity = 'Surat';
+      else if (cleanPin.startsWith('395')) autoCity = 'Ahmedabad';
       else if (cleanPin.startsWith('390')) autoCity = 'Vadodara';
       else if (cleanPin.startsWith('360')) autoCity = 'Rajkot';
     } else if (cleanPin.startsWith('40') || cleanPin.startsWith('41')) {
@@ -152,7 +152,7 @@ export const CheckoutPage: React.FC = () => {
           billingAddress: activeAddress,
           pointsRedeemed: pointsRedeemed,
           amountPaid: 0,
-          timelineNote: `Order 100% fully paid using 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Mill Points. Allocated to Surat warehouse.`
+          timelineNote: `Order 100% fully paid using 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Mill Points. Allocated to Ahmedabad warehouse.`
         });
 
         await redeemWalletPoints(pointsRedeemed, order.orderNumber, order.id);
@@ -180,7 +180,7 @@ export const CheckoutPage: React.FC = () => {
         name: 'Mahalaxmi Enterprises',
         description: pointsRedeemed > 0
           ? `Consignment Payment - ₹${remainingPayable.toLocaleString('en-IN')} (🪙 ${pointsRedeemed.toLocaleString('en-IN')} Points Redeemed)`
-          : `Consignment Payment - ${cart.length} items (Surat Direct Mill)`,
+          : `Consignment Payment - ${cart.length} items (Ahmedabad Direct Mill)`,
         image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=160&auto=format&fit=crop&q=80',
         prefill: {
           name: activeAddress.fullName || currentUser.name || 'Valued Buyer',
@@ -250,7 +250,7 @@ export const CheckoutPage: React.FC = () => {
         amountPaid: remainingPayable,
         timelineNote: pointsRedeemed > 0
           ? `Order booked with partial points. 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Mill Points deducted. Remaining ₹${remainingPayable.toLocaleString('en-IN')} to be collected on delivery.`
-          : 'Order placed successfully under Cash on Delivery. Dispatched from Surat Central Warehouse.'
+          : 'Order placed successfully under Cash on Delivery. Dispatched from Ahmedabad Central Warehouse.'
       });
 
       // Deduct points immediately so balance cannot be double-spent
@@ -272,7 +272,7 @@ export const CheckoutPage: React.FC = () => {
             Secure Commercial Checkout
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Order Reference: {cart.length} items • Direct Surat Mill Dispatch • 100% Legal GST Invoice
+            Order Reference: {cart.length} items • Direct Ahmedabad Mill Dispatch • 100% Legal GST Invoice
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 font-semibold">
@@ -702,6 +702,11 @@ export const CheckoutPage: React.FC = () => {
                     <p className="text-[11px] text-slate-500">
                       Qty: <span className="font-bold">{item.quantity}</span> × ₹{item.unitPrice}
                     </p>
+                    {item.customization && item.customization.type && item.customization.type !== 'No Customization' && (
+                      <p className="text-[10px] text-purple-700 font-semibold truncate mt-0.5">
+                        🎨 {item.customization.type}{item.customization.logoText ? `: "${item.customization.logoText}"` : ''}
+                      </p>
+                    )}
                   </div>
                   <span className="font-bold text-navy whitespace-nowrap">
                     ₹{item.totalPrice.toLocaleString('en-IN')}
@@ -812,7 +817,7 @@ export const CheckoutPage: React.FC = () => {
                 (isB2B && gstNumber ? `Company: ${companyName} | GSTIN: ${gstNumber}\n` : '') +
                 `Total Order: ₹${cartTotal}\n` +
                 (pointsRedeemed > 0 ? `Points Cut: 🪙 ${pointsRedeemed} (-₹${pointsRedeemed})\n` : '') +
-                `Net Payable: ₹${remainingPayable} (Payment Mode: ${isFullyCoveredByPoints ? 'Mill Points 100%' : secondaryPaymentMethod})\n\nPlease confirm dispatch from Surat Mill.`
+                `Net Payable: ₹${remainingPayable} (Payment Mode: ${isFullyCoveredByPoints ? 'Mill Points 100%' : secondaryPaymentMethod})\n\nPlease confirm dispatch from Ahmedabad Mill.`
               )}`}
               target="_blank"
               rel="noreferrer"
