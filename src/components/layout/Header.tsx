@@ -325,26 +325,28 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Desktop-only Mega Search Bar (Hidden on mobile) */}
-            <div className="hidden md:block flex-1 max-w-2xl relative z-40" ref={searchContainerRef}>
-              <form onSubmit={handleSearchSubmit} className="flex rounded-xl overflow-hidden shadow-subtle border border-slate-300 focus-within:border-indigo focus-within:ring-2 focus-within:ring-indigo/20 transition bg-white">
-                <div className="hidden sm:flex items-center bg-slate-100 border-r border-slate-300 px-2 text-xs text-slate-700 font-semibold cursor-pointer">
+            <div className="hidden md:block flex-1 max-w-3xl relative z-40 mx-2 lg:mx-4" ref={searchContainerRef}>
+              <form onSubmit={handleSearchSubmit} className="flex items-center rounded-2xl overflow-hidden shadow-subtle border border-slate-200/90 bg-slate-50/80 hover:bg-white focus-within:bg-white focus-within:border-indigo focus-within:ring-4 focus-within:ring-indigo/10 transition-all p-1">
+                {/* Compact Category Dropdown */}
+                <div className="hidden xl:flex items-center pl-2.5 pr-2 border-r border-slate-200 text-xs font-bold text-slate-600 shrink-0">
                   <select
                     id="header-department-select"
                     name="department"
                     aria-label="Select Shopping Department"
                     value={searchCategory}
                     onChange={e => setSearchCategory(e.target.value)}
-                    className="bg-transparent border-none outline-none pr-1 cursor-pointer"
+                    className="bg-transparent border-none outline-none pr-1 cursor-pointer text-xs font-bold text-slate-700 hover:text-navy transition"
                   >
-                    <option value="all">All Departments</option>
+                    <option value="all">All Items</option>
                     <option value="textile">Textile</option>
-                    <option value="cotton-products">Cotton Products</option>
-                    <option value="home-kitchen">Home & Kitchen</option>
+                    <option value="cotton-products">Cotton</option>
+                    <option value="home-kitchen">Home</option>
                     <option value="household">Household</option>
                   </select>
                 </div>
 
-                <div className="relative flex-1 flex items-center">
+                <div className="relative flex-1 flex items-center min-w-0">
+                  <Search className="w-4 h-4 text-slate-400 ml-2.5 mr-1 shrink-0" />
                   <input
                     id="header-search-input"
                     name="search"
@@ -356,8 +358,8 @@ export const Header: React.FC = () => {
                       setSearchOpen(true);
                     }}
                     onFocus={() => setSearchOpen(true)}
-                    placeholder="Search 300 TC bedsheets, 600 GSM bath towels, microfiber wipers, canvas bags..."
-                    className="w-full text-navy text-xs sm:text-sm pl-4 pr-3 py-2.5 outline-none placeholder:text-slate-500"
+                    placeholder="Search 300 TC bedsheets, 600 GSM towels, canvas tote bags..."
+                    className="w-full text-navy text-xs sm:text-sm px-2 py-1.5 outline-none bg-transparent placeholder:text-slate-400"
                   />
                   {searchInput && (
                     <button
@@ -367,7 +369,7 @@ export const Header: React.FC = () => {
                         setSearchOpen(false);
                       }}
                       aria-label="Clear search input"
-                      className="p-1.5 text-slate-500 hover:text-navy mr-1 rounded-full transition"
+                      className="p-1 text-slate-400 hover:text-navy mr-1 rounded-full transition"
                       title="Clear search"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -378,10 +380,10 @@ export const Header: React.FC = () => {
                 <button
                   type="submit"
                   aria-label="Submit search"
-                  className="px-5 bg-indigo hover:bg-indigo-dark text-white text-xs font-bold transition flex items-center justify-center shrink-0"
+                  className="px-4 py-2 bg-navy hover:bg-indigo text-white text-xs font-bold rounded-xl transition flex items-center justify-center shrink-0 shadow-sm"
                 >
-                  <Search className="w-4 h-4" />
-                  <span className="ml-1.5 hidden md:inline">Search</span>
+                  <Search className="w-3.5 h-3.5" />
+                  <span className="ml-1.5 hidden lg:inline">Search</span>
                 </button>
               </form>
 
