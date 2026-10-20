@@ -44,6 +44,44 @@ export default async function handler(req, res) {
       const itemsByOrderId = {};
       for (const item of allItems) {
         if (!itemsByOrderId[item.order_id]) itemsByOrderId[item.order_id] = [];
+
+        let customization = null;
+        if (item.variant_description && (item.variant_description.includes('Customized [') || item.variant_description.includes('['))) {
+          const match = item.variant_description.match(/\[(.*)\]/);
+          if (match && match[1]) {
+            const parts = match[1].split(' • ').map(s => s.trim());
+            const type = parts[0] || 'Customized';
+            let logoText = '';
+            let selectedSize = '';
+            let designNote = '';
+            let logoFileName = '';
+            let designFileName = '';
+
+            for (const p of parts.slice(1)) {
+              if (p.startsWith('Logo: "') && p.endsWith('"')) {
+                logoText = p.slice(7, -1);
+              } else if (p.startsWith('Size: ')) {
+                selectedSize = p.slice(6);
+              } else if (p.startsWith('📎 Logo: ')) {
+                logoFileName = p.slice(9);
+              } else if (p.startsWith('📎 Design: ')) {
+                designFileName = p.slice(11);
+              } else if (p.startsWith('Note: ')) {
+                designNote = p.slice(6);
+              }
+            }
+
+            customization = {
+              type,
+              logoText,
+              selectedSize,
+              designNote,
+              logoFileName: logoFileName || (type.includes('Logo') ? 'app_custom_logo.png' : undefined),
+              designFileName: designFileName || (type.includes('Design') ? 'app_design_artwork.pdf' : undefined)
+            };
+          }
+        }
+
         itemsByOrderId[item.order_id].push({
           productId: item.product_id,
           productName: item.product_name,
@@ -54,7 +92,8 @@ export default async function handler(req, res) {
           totalPrice: Number(item.total_price),
           variantDescription: item.variant_description,
           image: item.image,
-          gstRate: Number(item.gst_rate)
+          gstRate: Number(item.gst_rate),
+          customization
         });
       }
 
@@ -243,6 +282,44 @@ export default async function handler(req, res) {
             description: `Order successfully booked via ${source === 'FLUTTER_APP' ? 'Mobile App' : 'Web Store'}.`
           }
         ]);
+
+    // Normalize and enrich items for both Web & Flutter Mobile App orders
+    if (Array.isArray(o.items)) {
+      o.items = o.items.map(item => {
+        let cust = item.customization;
+        if (!cust && item.customizationType && item.customizationType !== 'No Customization') {
+          cust = {
+            type: item.customizationType,
+            logoText: item.logoText || '',
+            designNote: item.designNote || '',
+            selectedSize: item.selectedSize || '',
+            logoFileName: item.logoFileName || (item.customizationType.includes('Logo') ? 'mobile_app_logo.png' : undefined),
+            designFileName: item.designFileName || (item.customizationType.includes('Design') ? 'mobile_artwork_spec.pdf' : undefined)
+          };
+        }
+
+        let variantDesc = item.variantDescription;
+        if (!variantDesc || variantDesc === 'Standard Pack') {
+          if (cust && cust.type && cust.type !== 'No Customization') {
+            const parts = [cust.type];
+            if (cust.logoText) parts.push(`Logo: "${cust.logoText}"`);
+            if (cust.selectedSize && cust.selectedSize !== 'Standard') parts.push(`Size: ${cust.selectedSize}`);
+            if (cust.logoFileName) parts.push(`📎 Logo: ${cust.logoFileName}`);
+            if (cust.designFileName) parts.push(`📎 Design: ${cust.designFileName}`);
+            if (cust.designNote) parts.push(`Note: ${cust.designNote}`);
+            variantDesc = `Customized [${parts.join(' • ')}]`;
+          } else if (item.selectedVariant?.name) {
+            variantDesc = item.selectedVariant.name;
+          }
+        }
+
+        return {
+          ...item,
+          customization: cust,
+          variantDescription: variantDesc || 'Standard Pack'
+        };
+      });
+    }
 
     // Send automated notification emails (Admin Alert + Customer Confirmation)
     try {
