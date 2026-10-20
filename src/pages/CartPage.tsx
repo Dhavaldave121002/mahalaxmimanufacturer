@@ -143,58 +143,72 @@ export const CartPage: React.FC = () => {
         </button>
       </div>
 
-      {/* High-Conversion Scarcity & Cart Reservation Banner */}
-      <div className="bg-amber-50/90 border border-amber-300/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2.5 text-amber-950">
-          <div className="p-1.5 bg-amber-200/70 rounded-lg text-amber-800">
-            <Timer className="w-4 h-4 animate-pulse" />
-          </div>
-          <div>
-            <span className="font-extrabold text-slate-900">
-              High Demand: Direct Mill Rates Reserved for:
-            </span>{' '}
-            <span className="font-black text-rose-700 font-mono text-sm tracking-wider">
-              {formatTime(timeLeft)}
-            </span>
-            <p className="text-[11px] text-amber-800">
-              Complete checkout before timer expires to guarantee Ahmedabad mill batch pricing.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-800 bg-white/90 border border-emerald-200 px-3 py-1.5 rounded-xl shrink-0">
-          <Lock className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Inventory Locked</span>
-        </div>
-      </div>
-
-      {/* Interactive Free Shipping Progress Bar */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-subtle space-y-2">
-        <div className="flex items-center justify-between text-xs font-bold">
-          <div className="flex items-center gap-2 text-navy">
-            <Truck className="w-4 h-4 text-indigo" />
-            <span>
+      {/* Unified Luxury Shipping & Reserved Pricing Guarantee Banner */}
+      <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-subtle space-y-3">
+        {/* Top Header Row: Delivery Goal & Reserved Timer */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Free Shipping Status */}
+          <div className="flex items-center gap-3 text-xs">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              cartSubtotal >= 1499 ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo/10 text-indigo'
+            }`}>
+              <Truck className="w-5 h-5" />
+            </div>
+            <div>
               {cartSubtotal >= 1499 ? (
-                <span className="text-emerald-700">🎉 Congratulations! You unlocked FREE Direct Mill Freight</span>
+                <div className="font-extrabold text-emerald-800 flex items-center gap-1.5 text-xs sm:text-sm">
+                  <span>🎉 FREE Direct Mill Delivery Unlocked!</span>
+                </div>
               ) : (
-                <span>
-                  Add <strong className="text-indigo">₹{(1499 - cartSubtotal).toLocaleString('en-IN')}</strong> more for FREE Direct Mill Freight
-                </span>
+                <div className="font-extrabold text-navy text-xs sm:text-sm">
+                  Add <span className="text-indigo">₹{(1499 - cartSubtotal).toLocaleString('en-IN')}</span> more for <span className="text-emerald-700">FREE Direct Mill Delivery</span>
+                </div>
               )}
-            </span>
+              <p className="text-[11px] text-slate-500">
+                Direct mill dispatch with 4-point fabric inspection guarantee.
+              </p>
+            </div>
           </div>
-          <span className="text-xs font-mono font-bold text-slate-500">
-            {Math.min(100, Math.round((cartSubtotal / 1499) * 100))}%
-          </span>
+
+          {/* Reserved Pricing Timer Pill */}
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50/80 border border-amber-200 rounded-xl text-xs">
+              <span className="flex h-2 w-2 relative shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+              <span className="font-bold text-amber-900 text-[11px]">Rates Reserved:</span>
+              <span className="font-black font-mono text-rose-700 text-xs tracking-wider">
+                {formatTime(timeLeft)}
+              </span>
+            </div>
+            <div className="hidden xs:flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-xl">
+              <Lock className="w-3 h-3 text-emerald-600" />
+              <span>Locked</span>
+            </div>
+          </div>
         </div>
 
-        {/* Progress meter bar */}
-        <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-          <div
-            className={`h-full transition-all duration-500 rounded-full ${
-              cartSubtotal >= 1499 ? 'bg-emerald-500' : 'bg-gradient-to-r from-indigo to-indigo-light'
-            }`}
-            style={{ width: `${Math.min(100, Math.round((cartSubtotal / 1499) * 100))}%` }}
-          ></div>
+        {/* Progress Bar with Milestones */}
+        <div className="space-y-1.5 pt-1">
+          <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-200/50">
+            <div
+              className={`h-full transition-all duration-700 rounded-full ${
+                cartSubtotal >= 1499
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                  : 'bg-gradient-to-r from-indigo via-indigo-500 to-indigo-600'
+              }`}
+              style={{ width: `${Math.min(100, Math.round((cartSubtotal / 1499) * 100))}%` }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+            <span>₹0 (Standard Rate)</span>
+            <span className="font-bold text-indigo font-mono">
+              {Math.min(100, Math.round((cartSubtotal / 1499) * 100))}% Reached
+            </span>
+            <span className="font-bold text-emerald-700">₹1,499 (FREE Delivery)</span>
+          </div>
         </div>
       </div>
 

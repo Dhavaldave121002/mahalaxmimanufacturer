@@ -215,16 +215,10 @@ export const Header: React.FC = () => {
               DIRECT MILL RATE
             </span>
             <span className="text-slate-200 text-[11px] hidden sm:inline">
-              🚚 Free Delivery above ₹1,499 • {topPromo ? (
-                <>⚡ Live Offer: <strong className="text-champagne font-mono font-black">{topPromo.code}</strong> ({topPromo.discountType === 'FLAT' ? `Flat ₹${topPromo.discountValue} Off` : `${topPromo.discountValue}% Off`}) • </>
-              ) : null}🏢 100% GST ITC Invoicing
+              🚚 Free Delivery above ₹1,499 • ⚡ Instant Mill Discount Vouchers • 🏢 100% GST ITC Invoicing
             </span>
             <span className="text-slate-200 text-[11px] sm:hidden">
-              {topPromo ? (
-                <>⚡ Offer: <strong className="text-champagne font-mono font-black">{topPromo.code}</strong> ({topPromo.discountType === 'FLAT' ? `Flat ₹${topPromo.discountValue} Off` : `${topPromo.discountValue}% Off`})</>
-              ) : (
-                <>⚡ Direct Mill Rates • 100% Cotton</>
-              )}
+              🚚 Free Delivery above ₹1,499 • ⚡ Mill Direct
             </span>
           </div>
 
