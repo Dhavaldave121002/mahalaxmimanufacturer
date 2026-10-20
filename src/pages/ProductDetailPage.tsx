@@ -16,6 +16,7 @@ import {
   Layers,
   MapPin,
   ChevronRight,
+  ChevronLeft,
   Info,
   Clock,
   Share2,
@@ -58,6 +59,17 @@ export const ProductDetailPage: React.FC = () => {
 
   // States
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isHoveredGallery, setIsHoveredGallery] = useState(false);
+
+  // Auto-slide / fade product image every 3.5 seconds (pauses on hover)
+  useEffect(() => {
+    if (!product?.images || product.images.length <= 1 || isHoveredGallery) return;
+    const timer = setInterval(() => {
+      setSelectedImageIndex(prev => (prev + 1) % product.images.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [product?.images, isHoveredGallery]);
+
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product?.variants?.[0]
   );
@@ -331,20 +343,82 @@ export const ProductDetailPage: React.FC = () => {
         {/* Left Column: Image Gallery (Sticky on desktop until right column finishes) */}
         <div className="lg:col-span-6 lg:self-stretch">
           <div className="lg:sticky lg:top-20 space-y-3 z-10">
-            {/* Hero Main Image with Zoom container */}
-            <div className="relative w-full aspect-[4/3] sm:h-[420px] lg:h-[440px] xl:h-[480px] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-subtle group">
-              <img
-                src={product.images[selectedImageIndex] || product.images[0]}
-                alt={product.name}
-                onError={e => {
-                  const target = e.target as HTMLImageElement;
-                  if (target.src !== product.images[0]) target.src = product.images[0];
-                }}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
+            {/* Hero Main Image with Auto-Slide, Cross-fade & Zoom container */}
+            <div 
+              onMouseEnter={() => setIsHoveredGallery(true)}
+              onMouseLeave={() => setIsHoveredGallery(false)}
+              className="relative w-full aspect-[4/3] sm:h-[420px] lg:h-[440px] xl:h-[480px] rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-subtle group select-none"
+            >
+              {/* Layered Cross-fade Slide Images */}
+              {product.images.map((img, idx) => (
+                <div
+                  key={idx}
+                  className={`absolute inset-0 w-full h-full transition-all duration-700 ease-in-out transform ${
+                    selectedImageIndex === idx
+                      ? 'opacity-100 scale-100 pointer-events-auto z-0'
+                      : 'opacity-0 scale-105 pointer-events-none -z-10'
+                  }`}
+                >
+                  <img
+                    src={img}
+                    alt={`${product.name} photo ${idx + 1}`}
+                    onError={e => {
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== product.images[0]) target.src = product.images[0];
+                    }}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+              ))}
+
+              {/* Prev / Next Slide Arrow Controls (visible on hover or mobile) */}
+              {product.images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImageIndex(prev => (prev - 1 + product.images.length) % product.images.length);
+                    }}
+                    aria-label="Previous image"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/85 hover:bg-white text-navy shadow-md flex items-center justify-center opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm active:scale-95"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImageIndex(prev => (prev + 1) % product.images.length);
+                    }}
+                    aria-label="Next image"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/85 hover:bg-white text-navy shadow-md flex items-center justify-center opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm active:scale-95"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+
+                  {/* Dot Progress Indicators */}
+                  <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full">
+                    {product.images.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedImageIndex(idx);
+                        }}
+                        aria-label={`Go to slide ${idx + 1}`}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          selectedImageIndex === idx ? 'w-5 bg-white shadow-sm' : 'w-1.5 bg-white/50 hover:bg-white/80'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
 
               {/* Badges Overlay */}
-              <div className="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start">
+              <div className="absolute top-3.5 left-3.5 flex flex-col gap-1.5 items-start z-10 pointer-events-none">
                 {product.isDirectMillDeal && (
                   <span className="badge-mill text-xs font-bold px-3 py-1 rounded shadow-sm flex items-center gap-1.5">
                     <Zap className="w-3.5 h-3.5 fill-current" />
@@ -358,7 +432,7 @@ export const ProductDetailPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="absolute bottom-3.5 right-3.5 bg-navy/80 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full font-mono">
+              <div className="absolute bottom-3.5 right-3.5 bg-navy/80 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full font-mono z-10 pointer-events-none">
                 HSN {product.hsnCode} • GST {product.gstRate}%
               </div>
             </div>
