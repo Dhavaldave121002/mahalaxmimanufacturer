@@ -111,6 +111,8 @@ export const AdminDashboardPage: React.FC = () => {
     subcategory: string;
     mrp: number;
     retailPrice: number;
+    tier1Price: number;
+    tier2Price: number;
     stock: number;
     moq: number;
     hsnCode: string;
@@ -126,6 +128,8 @@ export const AdminDashboardPage: React.FC = () => {
     subcategory: 'Double Bedsheets',
     mrp: 1499,
     retailPrice: 799,
+    tier1Price: 599,
+    tier2Price: 499,
     stock: 200,
     moq: 1,
     hsnCode: '630221',
@@ -216,6 +220,8 @@ export const AdminDashboardPage: React.FC = () => {
 
   // Open Product Modal for Edit
   const handleEditProduct = (p: Product) => {
+    const t1 = p.wholesaleTiers?.find(t => t.minQty === 10)?.pricePerUnit ?? p.wholesaleTiers?.[1]?.pricePerUnit ?? Math.round(p.retailPrice * 0.75);
+    const t2 = p.wholesaleTiers?.find(t => t.minQty === 50)?.pricePerUnit ?? p.wholesaleTiers?.[2]?.pricePerUnit ?? Math.round(p.retailPrice * 0.65);
     setEditingProductId(p.id);
     setProductForm({
       name: p.name,
@@ -225,6 +231,8 @@ export const AdminDashboardPage: React.FC = () => {
       subcategory: p.subcategory,
       mrp: p.mrp,
       retailPrice: p.retailPrice,
+      tier1Price: t1,
+      tier2Price: t2,
       stock: p.stock,
       moq: p.moq,
       hsnCode: p.hsnCode,
@@ -238,6 +246,14 @@ export const AdminDashboardPage: React.FC = () => {
 
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
+    const savings1 = Math.max(0, Math.round(((productForm.retailPrice - productForm.tier1Price) / (productForm.retailPrice || 1)) * 100));
+    const savings2 = Math.max(0, Math.round(((productForm.retailPrice - productForm.tier2Price) / (productForm.retailPrice || 1)) * 100));
+    const computedTiers = [
+      { minQty: 1, maxQty: 9, pricePerUnit: productForm.retailPrice, savingsPercent: 0, label: 'Standard Rate' },
+      { minQty: 10, maxQty: 49, pricePerUnit: productForm.tier1Price, savingsPercent: savings1, label: 'Wholesale Tier 1' },
+      { minQty: 50, pricePerUnit: productForm.tier2Price, savingsPercent: savings2, label: 'Direct Mill Contract' }
+    ];
+
     if (editingProductId) {
       updateProduct(editingProductId, {
         name: productForm.name,
@@ -253,7 +269,8 @@ export const AdminDashboardPage: React.FC = () => {
         gstRate: productForm.gstRate,
         shortDescription: productForm.shortDescription,
         description: productForm.description,
-        images: [productForm.image]
+        images: [productForm.image],
+        wholesaleTiers: computedTiers
       });
     } else {
       addProduct({
@@ -280,11 +297,7 @@ export const AdminDashboardPage: React.FC = () => {
           'Composition': 'Commercial Cotton / Textile',
           'Origin': 'Ahmedabad Textile Cluster'
         },
-        wholesaleTiers: [
-          { minQty: 1, maxQty: 9, pricePerUnit: productForm.retailPrice, savingsPercent: 0, label: 'Standard Retail' },
-          { minQty: 10, maxQty: 49, pricePerUnit: Math.round(productForm.retailPrice * 0.75), savingsPercent: 25, label: 'Wholesale Tier 1' },
-          { minQty: 50, pricePerUnit: Math.round(productForm.retailPrice * 0.65), savingsPercent: 35, label: 'Direct Mill Contract' }
-        ]
+        wholesaleTiers: computedTiers
       });
     }
     setProductModalOpen(false);
@@ -441,6 +454,8 @@ export const AdminDashboardPage: React.FC = () => {
                 subcategory: 'Double Bedsheets',
                 mrp: 1699,
                 retailPrice: 849,
+                tier1Price: 649,
+                tier2Price: 549,
                 stock: 300,
                 moq: 1,
                 hsnCode: '630221',
@@ -1590,6 +1605,50 @@ export const AdminDashboardPage: React.FC = () => {
                     onChange={e => setProductForm({ ...productForm, moq: Number(e.target.value) })}
                     className="w-full p-2 border border-slate-300 rounded-lg outline-none"
                   />
+                </div>
+              </div>
+
+              {/* Wholesale Volume Pricing Tiers (Connected to Database) */}
+              <div className="p-3.5 bg-indigo/5 rounded-2xl border border-indigo/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-navy flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-indigo" />
+                    <span>Database Wholesale Volume Pricing Tiers</span>
+                  </label>
+                  <span className="text-[10px] text-indigo font-bold bg-indigo/10 px-2 py-0.5 rounded">Auto Applied on Volume</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-2.5 bg-white rounded-xl border border-slate-200">
+                    <span className="text-[10px] font-bold text-slate-500 block">Tier 0: 1-9 Pcs (Standard)</span>
+                    <p className="font-black text-sm text-navy mt-1">₹{productForm.retailPrice || 0}</p>
+                    <span className="text-[9.5px] text-slate-400 font-semibold">Base retail rate</span>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Tier 1: 10-49 Pcs Rate (₹)</label>
+                    <input
+                      type="number"
+                      required
+                      value={productForm.tier1Price}
+                      onChange={e => setProductForm({ ...productForm, tier1Price: Number(e.target.value) })}
+                      className="w-full p-2 border border-slate-300 rounded-lg outline-none font-bold text-indigo bg-white"
+                    />
+                    <span className="text-[9.5px] text-emerald-600 font-semibold block mt-0.5">
+                      {productForm.retailPrice > productForm.tier1Price ? `${Math.round(((productForm.retailPrice - productForm.tier1Price) / (productForm.retailPrice || 1)) * 100)}% Bulk Discount` : 'No discount'}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Tier 2: 50+ Pcs Rate (₹)</label>
+                    <input
+                      type="number"
+                      required
+                      value={productForm.tier2Price}
+                      onChange={e => setProductForm({ ...productForm, tier2Price: Number(e.target.value) })}
+                      className="w-full p-2 border border-slate-300 rounded-lg outline-none font-bold text-emerald-700 bg-white"
+                    />
+                    <span className="text-[9.5px] text-emerald-600 font-semibold block mt-0.5">
+                      {productForm.retailPrice > productForm.tier2Price ? `${Math.round(((productForm.retailPrice - productForm.tier2Price) / (productForm.retailPrice || 1)) * 100)}% Direct Mill Discount` : 'No discount'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
