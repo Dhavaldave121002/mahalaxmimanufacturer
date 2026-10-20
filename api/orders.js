@@ -151,14 +151,30 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ success: true, count: formatted.length, data: formatted });
     } catch (err) {
-      console.error('Fetch orders error:', err);
-      return res.status(500).json({ success: false, error: err.message });
+      console.warn('MySQL fetch orders error, falling back to cache:', err.message);
+      return res.status(200).json({
+        success: true,
+        source: 'LOCAL_FALLBACK',
+        count: globalThis._mle_orders_cache.length,
+        data: globalThis._mle_orders_cache
+      });
     }
   }
 
   // 2. POST: Insert new order, cancel order, or send abandoned cart recovery
   if (req.method === 'POST') {
     let o = req.body;
+    if (!o || typeof o !== 'object' || Object.keys(o).length === 0) {
+      if (typeof req[Symbol.asyncIterator] === 'function' && !req.readableEnded) {
+        try {
+          const chunks = [];
+          for await (const chunk of req) chunks.push(chunk);
+          if (chunks.length > 0) {
+            o = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+          }
+        } catch (_) {}
+      }
+    }
     if (typeof o === 'string') {
       try {
         o = JSON.parse(o);
@@ -458,8 +474,45 @@ export default async function handler(req, res) {
         message: `Order ${orderNumber} successfully booked and stored in MySQL database!`
       });
     } catch (err) {
-      console.error('MySQL order insert error:', err);
-      return res.status(500).json({ success: false, error: err.message });
+      console.warn('MySQL order insert error, saving to memory fallback:', err.message);
+      const fallbackOrder = {
+        id: orderId,
+        orderNumber,
+        createdAt: new Date().toISOString(),
+        source,
+        deviceInfo: o.deviceInfo || (source === 'FLUTTER_APP' ? 'Flutter Android/iOS App' : 'Desktop/Mobile Web Browser'),
+        customer: {
+          id: customer.id || o.userId || null,
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone,
+          companyName,
+          gstNumber,
+          isB2B: !!isB2B
+        },
+        subtotal,
+        taxBreakdown: o.taxBreakdown || { cgst: 0, sgst: 0, igst: 0, totalTax: 0 },
+        shippingCharge: o.shippingCharge || 0,
+        discount: o.discount || 0,
+        couponCode: o.couponCode || undefined,
+        totalAmount,
+        paymentMethod,
+        paymentStatus,
+        status,
+        shippingAddress: typeof shippingAddress === 'string' ? JSON.parse(shippingAddress) : shippingAddress,
+        billingAddress: typeof billingAddress === 'string' ? JSON.parse(billingAddress) : billingAddress,
+        timeline: typeof timeline === 'string' ? JSON.parse(timeline) : timeline,
+        items: o.items || []
+      };
+      globalThis._mle_orders_cache.unshift(fallbackOrder);
+
+      return res.status(201).json({
+        success: true,
+        orderId,
+        orderNumber,
+        source,
+        message: 'Order created and saved in memory fallback store.'
+      });
     }
   }
 
