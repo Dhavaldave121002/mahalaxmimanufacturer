@@ -327,9 +327,9 @@ export const ProductDetailPage: React.FC = () => {
       </div>
 
       {/* Main Product Layout: Gallery (Left) + Details & Tiers (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Left Column: Image Gallery */}
-        <div className="lg:col-span-6 space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        {/* Left Column: Image Gallery (Sticky on desktop until right column finishes) */}
+        <div className="lg:col-span-6 space-y-4 lg:sticky lg:top-24 self-start">
           {/* Hero Main Image with Zoom container */}
           <div className="relative aspect-[4/3] rounded-3xl overflow-hidden bg-slate-100 border border-slate-200 shadow-subtle group">
             <img
