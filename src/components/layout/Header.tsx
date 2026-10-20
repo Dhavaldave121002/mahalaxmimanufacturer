@@ -306,29 +306,29 @@ export const Header: React.FC = () => {
               </Link>
             </div>
 
-            {/* Desktop Location Delivery Selector (Amazon-style) */}
-            <div className="hidden lg:flex items-center shrink-0">
-              <button
-                onClick={() => setPinModalOpen(true)}
-                aria-label={`Delivery location: ${deliveryInfo?.city || 'Ahmedabad'} ${deliveryPincode}. Click to change pincode`}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs hover:bg-slate-100 transition border border-slate-200/60 text-left bg-white/70"
-              >
-                <MapPin className="w-4 h-4 text-indigo shrink-0" />
-                <div>
-                  <p className="text-[10px] text-slate-500 uppercase font-semibold">Deliver to</p>
-                  <p className="font-bold text-navy text-xs flex items-center gap-1">
-                    {deliveryInfo?.city || 'Ahmedabad'} {deliveryPincode}
-                    <ChevronDown className="w-3 h-3 text-slate-500" />
-                  </p>
-                </div>
-              </button>
-            </div>
-
-            {/* Desktop-only Mega Search Bar (Hidden on mobile) */}
-            <div className="hidden md:block flex-1 max-w-3xl relative z-40 mx-2 lg:mx-4" ref={searchContainerRef}>
+            {/* Desktop-only Mega Search Bar with Integrated Delivery Pincode */}
+            <div className="hidden md:block flex-1 max-w-4xl xl:max-w-5xl relative z-40 mx-2 lg:mx-4" ref={searchContainerRef}>
               <form onSubmit={handleSearchSubmit} className="flex items-center rounded-2xl overflow-hidden shadow-subtle border border-slate-200/90 bg-slate-50/80 hover:bg-white focus-within:bg-white focus-within:border-indigo focus-within:ring-4 focus-within:ring-indigo/10 transition-all p-1">
+                {/* Integrated Delivery Location Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setPinModalOpen(true)}
+                  aria-label={`Delivery location: ${deliveryInfo?.city || 'Ahmedabad'} ${deliveryPincode}. Click to change pincode`}
+                  className="flex items-center gap-1.5 pl-2.5 pr-2.5 sm:pl-3 sm:pr-3 py-1 hover:bg-slate-200/70 rounded-xl transition text-left shrink-0 border-r border-slate-200/90 group cursor-pointer"
+                  title="Click to change delivery location"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-indigo shrink-0 group-hover:scale-110 transition-transform" />
+                  <div className="flex flex-col leading-none">
+                    <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Deliver to</span>
+                    <span className="font-extrabold text-navy text-xs flex items-center gap-0.5 mt-0.5 whitespace-nowrap">
+                      {deliveryInfo?.city || 'Ahmedabad'} {deliveryPincode}
+                      <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-navy transition-colors" />
+                    </span>
+                  </div>
+                </button>
+
                 {/* Compact Category Dropdown */}
-                <div className="hidden xl:flex items-center pl-2.5 pr-2 border-r border-slate-200 text-xs font-bold text-slate-600 shrink-0">
+                <div className="hidden xl:flex items-center pl-2.5 pr-2 border-r border-slate-200/90 text-xs font-bold text-slate-600 shrink-0">
                   <select
                     id="header-department-select"
                     name="department"
@@ -369,7 +369,7 @@ export const Header: React.FC = () => {
                         setSearchOpen(false);
                       }}
                       aria-label="Clear search input"
-                      className="p-1 text-slate-400 hover:text-navy mr-1 rounded-full transition"
+                      className="p-1 text-slate-400 hover:text-navy mr-1 rounded-full transition cursor-pointer"
                       title="Clear search"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -380,7 +380,7 @@ export const Header: React.FC = () => {
                 <button
                   type="submit"
                   aria-label="Submit search"
-                  className="px-4 py-2 bg-navy hover:bg-indigo text-white text-xs font-bold rounded-xl transition flex items-center justify-center shrink-0 shadow-sm"
+                  className="px-5 py-2 bg-navy hover:bg-indigo text-white text-xs font-bold rounded-xl transition flex items-center justify-center shrink-0 shadow-sm cursor-pointer"
                 >
                   <Search className="w-3.5 h-3.5" />
                   <span className="ml-1.5 hidden lg:inline">Search</span>
@@ -462,7 +462,7 @@ export const Header: React.FC = () => {
               <button
                 onClick={() => setPinModalOpen(true)}
                 aria-label={`Delivery Pincode: ${deliveryInfo?.city || 'Ahmedabad'}`}
-                className="flex lg:hidden items-center gap-1 px-1.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition shrink-0"
+                className="flex md:hidden items-center gap-1 px-1.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition shrink-0 cursor-pointer"
                 title="Delivery Pincode"
               >
                 <MapPin className="w-3 h-3 text-indigo shrink-0" />
