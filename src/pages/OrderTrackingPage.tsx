@@ -688,6 +688,9 @@ export const OrderTrackingPage: React.FC = () => {
                                   {item.variantDescription && item.variantDescription.includes('[') && (
                                     <div className="mt-1 px-2 py-0.5 rounded bg-purple-50 border border-purple-200 text-purple-900 text-[10px] font-medium max-w-sm">
                                       🎨 {item.variantDescription}
+                                      {item.customization?.logoFileName && <span className="block font-bold">📎 Attached Logo: {item.customization.logoFileName}</span>}
+                                      {item.customization?.designFileName && <span className="block font-bold">📎 Attached Design: {item.customization.designFileName}</span>}
+                                      {item.customization?.techPackFileName && <span className="block font-bold">📎 Attached Tech-Pack: {item.customization.techPackFileName}</span>}
                                     </div>
                                   )}
                                   {item.customization && item.customization.type && item.customization.type !== 'No Customization' && !item.variantDescription?.includes('[') && (
@@ -695,6 +698,9 @@ export const OrderTrackingPage: React.FC = () => {
                                       🎨 Customization: {item.customization.type}
                                       {item.customization.logoText && ` • Logo: "${item.customization.logoText}"`}
                                       {item.customization.selectedSize && ` • Size: ${item.customization.selectedSize}`}
+                                      {item.customization.logoFileName && ` • 📎 Logo: ${item.customization.logoFileName}`}
+                                      {item.customization.designFileName && ` • 📎 Design: ${item.customization.designFileName}`}
+                                      {item.customization.techPackFileName && ` • 📎 Spec: ${item.customization.techPackFileName}`}
                                     </div>
                                   )}
                                 </div>

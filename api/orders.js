@@ -446,7 +446,7 @@ async function sendOrderNotificationEmails(data) {
                   </div>
                   ${item.customization && item.customization.type && item.customization.type !== 'No Customization' ? `
                     <div style="display: inline-block; background-color: #FAF5FF; border: 1px solid #D8B4FE; color: #6B21A8; font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-top: 4px;">
-                      🎨 Customization: ${item.customization.type}${item.customization.logoText ? ` • Logo: "${item.customization.logoText}"` : ''}${item.customization.selectedSize ? ` • Size: ${item.customization.selectedSize}` : ''}
+                      🎨 Customization: ${item.customization.type}${item.customization.logoText ? ` • Logo: "${item.customization.logoText}"` : ''}${item.customization.selectedSize ? ` • Size: ${item.customization.selectedSize}` : ''}${item.customization.logoFileName ? ` • 📎 Logo: ${item.customization.logoFileName}` : ''}${item.customization.designFileName ? ` • 📎 Design: ${item.customization.designFileName}` : ''}${item.customization.techPackFileName ? ` • 📎 Spec: ${item.customization.techPackFileName}` : ''}
                     </div>
                   ` : ''}
                 </td>

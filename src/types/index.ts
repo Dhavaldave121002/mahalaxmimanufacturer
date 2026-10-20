@@ -59,6 +59,12 @@ export interface ProductCustomization {
   customGsm?: string;
   designNote?: string;
   previewUrl?: string;
+  logoFile?: string;
+  logoFileName?: string;
+  designFile?: string;
+  designFileName?: string;
+  techPackFile?: string;
+  techPackFileName?: string;
 }
 
 export interface CartItem {

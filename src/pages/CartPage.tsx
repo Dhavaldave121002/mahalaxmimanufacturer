@@ -285,6 +285,21 @@ export const CartPage: React.FC = () => {
                         {item.customization.customGsm && (
                           <span>🧶 GSM: <strong>{item.customization.customGsm}</strong></span>
                         )}
+                        {item.customization.logoFileName && (
+                          <span className="bg-white px-1.5 py-0.5 rounded border border-purple-200 text-purple-900 font-bold">
+                            📎 Logo: {item.customization.logoFileName}
+                          </span>
+                        )}
+                        {item.customization.designFileName && (
+                          <span className="bg-white px-1.5 py-0.5 rounded border border-purple-200 text-purple-900 font-bold">
+                            📎 Design: {item.customization.designFileName}
+                          </span>
+                        )}
+                        {item.customization.techPackFileName && (
+                          <span className="bg-white px-1.5 py-0.5 rounded border border-purple-200 text-purple-900 font-bold">
+                            📎 Tech-Pack: {item.customization.techPackFileName}
+                          </span>
+                        )}
                         {item.customization.designNote && (
                           <span className="text-slate-600 truncate max-w-xs italic">
                             📝 Note: {item.customization.designNote}

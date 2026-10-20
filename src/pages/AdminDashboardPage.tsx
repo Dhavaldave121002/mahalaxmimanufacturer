@@ -41,7 +41,8 @@ import {
   Palette,
   Eye,
   Copy,
-  Sparkles
+  Sparkles,
+  Paperclip
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { MobileAppManager } from '../components/admin/MobileAppManager';
@@ -1069,10 +1070,15 @@ export const AdminDashboardPage: React.FC = () => {
                           {ord.customer.phone} {ord.customer.gstNumber ? `• GST: ${ord.customer.gstNumber}` : ''}
                         </p>
                         {ord.items && ord.items.some(it => (it.customization && it.customization.type && it.customization.type !== 'No Customization') || (it.variantDescription && (it.variantDescription.includes('[') || it.variantDescription.toLowerCase().includes('custom')))) && (
-                          <div className="mt-1">
+                          <div className="mt-1 flex flex-wrap gap-1">
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-black bg-purple-100 text-purple-800 border border-purple-200 shadow-xs">
                               <Palette className="w-2.5 h-2.5 text-purple-600" /> Custom Specs Attached
                             </span>
+                            {ord.items.some(it => it.customization?.logoFile || it.customization?.designFile || it.customization?.techPackFile) && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">
+                                <Paperclip className="w-2.5 h-2.5 text-emerald-600" /> Artwork Files Uploaded
+                              </span>
+                            )}
                           </div>
                         )}
                       </td>
@@ -1874,6 +1880,84 @@ export const AdminDashboardPage: React.FC = () => {
                               <span className="font-medium text-amber-950">{custom.designNote}</span>
                             </div>
                           )}
+
+                          {/* Uploaded Brand Logo File */}
+                          {custom?.logoFile && (
+                            <div className="sm:col-span-2 p-3 bg-purple-50/70 rounded-xl border border-purple-200 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-purple-900 flex items-center gap-1.5">
+                                  <Paperclip className="w-3.5 h-3.5 text-purple-600" />
+                                  Attached Brand Logo File: <strong className="font-mono text-navy">{custom.logoFileName || 'brand_logo'}</strong>
+                                </span>
+                                <a
+                                  href={custom.logoFile}
+                                  download={custom.logoFileName || `logo-${selectedCustomSpecsOrder.orderNumber}.png`}
+                                  className="px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-bold rounded-lg transition flex items-center gap-1 shadow-xs cursor-pointer"
+                                >
+                                  <Download className="w-3 h-3" />
+                                  <span>Download Logo</span>
+                                </a>
+                              </div>
+                              {custom.logoFile.startsWith('data:image') && (
+                                <div className="flex items-center gap-3 pt-1">
+                                  <img
+                                    src={custom.logoFile}
+                                    alt="Brand Logo"
+                                    className="h-16 max-w-xs object-contain rounded-lg border border-slate-200 bg-white p-1 shadow-xs"
+                                  />
+                                  <span className="text-[10px] text-slate-500 font-medium">Original resolution uploaded by client</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Uploaded Design Pattern / Artwork File */}
+                          {custom?.designFile && (
+                            <div className="sm:col-span-2 p-3 bg-indigo-50/70 rounded-xl border border-indigo-200 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-bold text-indigo-900 flex items-center gap-1.5">
+                                  <Palette className="w-3.5 h-3.5 text-indigo" />
+                                  Attached Design Pattern / Artwork: <strong className="font-mono text-navy">{custom.designFileName || 'design_artwork'}</strong>
+                                </span>
+                                <a
+                                  href={custom.designFile}
+                                  download={custom.designFileName || `design-${selectedCustomSpecsOrder.orderNumber}`}
+                                  className="px-2.5 py-1 bg-indigo hover:bg-indigo-dark text-white text-[10px] font-bold rounded-lg transition flex items-center gap-1 shadow-xs cursor-pointer"
+                                >
+                                  <Download className="w-3 h-3" />
+                                  <span>Download Design</span>
+                                </a>
+                              </div>
+                              {custom.designFile.startsWith('data:image') && (
+                                <div className="flex items-center gap-3 pt-1">
+                                  <img
+                                    src={custom.designFile}
+                                    alt="Design Artwork"
+                                    className="h-20 max-w-xs object-cover rounded-lg border border-slate-200 bg-white p-1 shadow-xs"
+                                  />
+                                  <span className="text-[10px] text-slate-500 font-medium">Fabric pattern for printing / weaving</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Uploaded Tech-Pack / Spec Sheet */}
+                          {custom?.techPackFile && (
+                            <div className="sm:col-span-2 p-3 bg-amber-50/70 rounded-xl border border-amber-200 flex items-center justify-between">
+                              <span className="text-[11px] font-bold text-amber-900 flex items-center gap-1.5">
+                                <FileText className="w-3.5 h-3.5 text-amber-700" />
+                                Attached Tech-Pack / Spec Sheet: <strong className="font-mono text-navy">{custom.techPackFileName || 'spec_sheet'}</strong>
+                              </span>
+                              <a
+                                href={custom.techPackFile}
+                                download={custom.techPackFileName || `spec-${selectedCustomSpecsOrder.orderNumber}`}
+                                className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold rounded-lg transition flex items-center gap-1 shadow-xs cursor-pointer"
+                              >
+                                <Download className="w-3 h-3" />
+                                <span>Download Spec</span>
+                              </a>
+                            </div>
+                          )}
                         </div>
 
                         {item.variantDescription && item.variantDescription.includes('[') && !custom && (
@@ -1896,7 +1980,7 @@ export const AdminDashboardPage: React.FC = () => {
                 onClick={() => {
                   const specsText = selectedCustomSpecsOrder.items?.map(it => {
                     const c = it.customization;
-                    return `${it.productName} (Qty: ${it.quantity})\\nCustomization: ${c?.type || 'Standard'}${c?.logoText ? `\\nLogo: "${c.logoText}"` : ''}${c?.logoPosition ? `\\nPosition: ${c.logoPosition}` : ''}${c?.selectedSize ? `\\nSize: ${c.selectedSize}` : ''}${c?.designNote ? `\\nInstructions: ${c.designNote}` : ''}`;
+                    return `${it.productName} (Qty: ${it.quantity})\\nCustomization: ${c?.type || 'Standard'}${c?.logoText ? `\\nLogo: "${c.logoText}"` : ''}${c?.logoPosition ? `\\nPosition: ${c.logoPosition}` : ''}${c?.selectedSize ? `\\nSize: ${c.selectedSize}` : ''}${c?.logoFileName ? `\\nLogo File: ${c.logoFileName}` : ''}${c?.designFileName ? `\\nDesign File: ${c.designFileName}` : ''}${c?.designNote ? `\\nInstructions: ${c.designNote}` : ''}`;
                   }).join('\\n---\\n');
                   navigator.clipboard.writeText(`ORDER: ${selectedCustomSpecsOrder.orderNumber}\\nCLIENT: ${selectedCustomSpecsOrder.customer.name} (${selectedCustomSpecsOrder.customer.phone})\\n\\n${specsText}`);
                   alert('Custom production specs copied to clipboard!');

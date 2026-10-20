@@ -35,7 +35,11 @@ import {
   X,
   Palette,
   Crown,
-  Shield
+  Shield,
+  UploadCloud,
+  FileText,
+  Trash2,
+  Paperclip
 } from 'lucide-react';
 import { StickyPurchaseBar } from '../components/common/StickyPurchaseBar';
 import { FrequentlyBoughtTogether } from '../components/common/FrequentlyBoughtTogether';
@@ -87,6 +91,59 @@ export const ProductDetailPage: React.FC = () => {
   const [customSizeText, setCustomSizeText] = useState<string>('');
   const [selectedGsm, setSelectedGsm] = useState<string>('Standard 450 GSM');
   const [designNote, setDesignNote] = useState<string>('');
+
+  // Uploaded Files State for Logo, Design & Tech Pack
+  const [logoFile, setLogoFile] = useState<string | null>(null);
+  const [logoFileName, setLogoFileName] = useState<string>('');
+  const [designFile, setDesignFile] = useState<string | null>(null);
+  const [designFileName, setDesignFileName] = useState<string>('');
+  const [techPackFile, setTechPackFile] = useState<string | null>(null);
+  const [techPackFileName, setTechPackFileName] = useState<string>('');
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      alert('Logo file must be smaller than 15MB');
+      return;
+    }
+    setLogoFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setLogoFile(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDesignUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      alert('Design artwork file must be smaller than 20MB');
+      return;
+    }
+    setDesignFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setDesignFile(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleTechPackUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      alert('Tech-pack / spec sheet must be smaller than 20MB');
+      return;
+    }
+    setTechPackFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setTechPackFile(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
   
   // Live Reviews State
   const [reviewsList, setReviewsList] = useState<any[]>([]);
@@ -261,7 +318,13 @@ export const ProductDetailPage: React.FC = () => {
       logoStyle: logoEmblem,
       selectedSize: effectiveSize,
       customGsm: selectedGsm !== 'Standard 450 GSM' ? selectedGsm : undefined,
-      designNote: designNote.trim() || undefined
+      designNote: designNote.trim() || undefined,
+      logoFile: logoFile || undefined,
+      logoFileName: logoFileName || undefined,
+      designFile: designFile || undefined,
+      designFileName: designFileName || undefined,
+      techPackFile: techPackFile || undefined,
+      techPackFileName: techPackFileName || undefined
     };
   };
 
@@ -832,6 +895,292 @@ export const ProductDetailPage: React.FC = () => {
               {/* Active Customization Configuration Fields */}
               {customizationType !== 'No Customization' && (
                 <div className="space-y-4 pt-3 border-t border-purple-100">
+
+                  {/* DYNAMIC FILE UPLOAD SECTION BASED ON SELECTED CUSTOMIZATION */}
+                  <div className="space-y-3 p-3.5 bg-white/90 rounded-2xl border border-purple-200/80 shadow-xs">
+                    <div className="flex items-center justify-between border-b border-purple-100 pb-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-navy">
+                        <UploadCloud className="w-4 h-4 text-purple-600" />
+                        <span>Upload Custom Artwork & Reference Files</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-medium">PNG, JPG, PDF, SVG up to 20MB</span>
+                    </div>
+
+                    {/* Case 1: Design & Logo (Dual Upload) */}
+                    {customizationType === 'Design & Logo' && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Logo Upload Card */}
+                        <div className="p-3 bg-slate-50/80 rounded-xl border-2 border-dashed border-purple-200 hover:border-purple-400 transition flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-bold text-navy flex items-center gap-1.5">
+                                <Paperclip className="w-3.5 h-3.5 text-purple-600" />
+                                Brand Logo File
+                              </span>
+                              {logoFile && (
+                                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                                  ✓ Attached
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-500 mb-2">
+                              Vector logo, transparent PNG, or SVG for print & embroidery.
+                            </p>
+                          </div>
+
+                          {logoFile ? (
+                            <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {logoFile.startsWith('data:image') ? (
+                                  <img src={logoFile} alt="Logo" className="w-8 h-8 rounded object-contain border border-slate-200 bg-slate-50 shrink-0" />
+                                ) : (
+                                  <FileText className="w-6 h-6 text-indigo shrink-0" />
+                                )}
+                                <span className="text-xs font-bold text-navy truncate" title={logoFileName}>
+                                  {logoFileName}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => { setLogoFile(null); setLogoFileName(''); }}
+                                className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                title="Remove file"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-purple-50 text-purple-700 border border-purple-300 rounded-xl text-xs font-bold cursor-pointer transition shadow-xs">
+                              <UploadCloud className="w-4 h-4 text-purple-600" />
+                              <span>Select Logo File</span>
+                              <input
+                                type="file"
+                                accept="image/*,.pdf,.svg,.eps,.ai"
+                                onChange={handleLogoUpload}
+                                className="hidden"
+                              />
+                            </label>
+                          )}
+                        </div>
+
+                        {/* Design Artwork Upload Card */}
+                        <div className="p-3 bg-slate-50/80 rounded-xl border-2 border-dashed border-purple-200 hover:border-purple-400 transition flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-bold text-navy flex items-center gap-1.5">
+                                <Palette className="w-3.5 h-3.5 text-indigo" />
+                                Design Pattern / Artwork
+                              </span>
+                              {designFile && (
+                                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                                  ✓ Attached
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-slate-500 mb-2">
+                              Fabric layout pattern, jacquard weave draft, or full design PDF.
+                            </p>
+                          </div>
+
+                          {designFile ? (
+                            <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {designFile.startsWith('data:image') ? (
+                                  <img src={designFile} alt="Design" className="w-8 h-8 rounded object-cover border border-slate-200 bg-slate-50 shrink-0" />
+                                ) : (
+                                  <FileText className="w-6 h-6 text-purple-600 shrink-0" />
+                                )}
+                                <span className="text-xs font-bold text-navy truncate" title={designFileName}>
+                                  {designFileName}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => { setDesignFile(null); setDesignFileName(''); }}
+                                className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                title="Remove file"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-indigo-50 text-indigo border border-indigo-300 rounded-xl text-xs font-bold cursor-pointer transition shadow-xs">
+                              <UploadCloud className="w-4 h-4 text-indigo" />
+                              <span>Select Design Artwork</span>
+                              <input
+                                type="file"
+                                accept="image/*,.pdf,.svg,.eps,.ai,.cdr,.psd"
+                                onChange={handleDesignUpload}
+                                className="hidden"
+                              />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Case 2: Only Logo Print */}
+                    {customizationType === 'Only Logo' && (
+                      <div className="p-3 bg-slate-50/80 rounded-xl border-2 border-dashed border-purple-200 hover:border-purple-400 transition">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-bold text-navy flex items-center gap-1.5">
+                            <Paperclip className="w-3.5 h-3.5 text-purple-600" />
+                            Upload Brand Logo (for Loom Printing)
+                          </span>
+                          {logoFile && (
+                            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                              ✓ Attached
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-500 mb-2">
+                          Upload high-resolution logo (PNG with transparent background, SVG, AI, or PDF).
+                        </p>
+
+                        {logoFile ? (
+                          <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {logoFile.startsWith('data:image') ? (
+                                <img src={logoFile} alt="Logo" className="w-8 h-8 rounded object-contain border border-slate-200 bg-slate-50 shrink-0" />
+                              ) : (
+                                <FileText className="w-6 h-6 text-indigo shrink-0" />
+                              )}
+                              <span className="text-xs font-bold text-navy truncate" title={logoFileName}>
+                                {logoFileName}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => { setLogoFile(null); setLogoFileName(''); }}
+                              className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                              title="Remove file"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-purple-50 text-purple-700 border border-purple-300 rounded-xl text-xs font-bold cursor-pointer transition shadow-xs">
+                            <UploadCloud className="w-4 h-4 text-purple-600" />
+                            <span>Select Brand Logo File</span>
+                            <input
+                              type="file"
+                              accept="image/*,.pdf,.svg,.eps,.ai"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Case 3: Embroidery Branding */}
+                    {customizationType === 'Embroidery Branding' && (
+                      <div className="p-3 bg-slate-50/80 rounded-xl border-2 border-dashed border-purple-200 hover:border-purple-400 transition">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-bold text-navy flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                            Upload Embroidery Crest / Punching Vector
+                          </span>
+                          {logoFile && (
+                            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                              ✓ Attached
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-500 mb-2">
+                          Upload crest artwork or embroidery punching file (DST, EMB, PDF, SVG, high-res PNG).
+                        </p>
+
+                        {logoFile ? (
+                          <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {logoFile.startsWith('data:image') ? (
+                                <img src={logoFile} alt="Embroidery Artwork" className="w-8 h-8 rounded object-contain border border-slate-200 bg-slate-50 shrink-0" />
+                              ) : (
+                                <FileText className="w-6 h-6 text-amber-500 shrink-0" />
+                              )}
+                              <span className="text-xs font-bold text-navy truncate" title={logoFileName}>
+                                {logoFileName}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => { setLogoFile(null); setLogoFileName(''); }}
+                              className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                              title="Remove file"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-purple-50 text-purple-700 border border-purple-300 rounded-xl text-xs font-bold cursor-pointer transition shadow-xs">
+                            <UploadCloud className="w-4 h-4 text-purple-600" />
+                            <span>Select Embroidery Artwork File</span>
+                            <input
+                              type="file"
+                              accept="image/*,.pdf,.svg,.eps,.dst,.emb"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Case 4: Custom Weave & GSM */}
+                    {customizationType === 'Custom Weave & GSM' && (
+                      <div className="p-3 bg-slate-50/80 rounded-xl border-2 border-dashed border-indigo-200 hover:border-indigo-400 transition">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-bold text-navy flex items-center gap-1.5">
+                            <Layers className="w-3.5 h-3.5 text-indigo" />
+                            Upload Tech-Pack / Fabric Spec Sheet (Optional)
+                          </span>
+                          {techPackFile && (
+                            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                              ✓ Attached
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-500 mb-2">
+                          Attach your institution's technical specification document, GSM tolerance sheet, or weave construction draft.
+                        </p>
+
+                        {techPackFile ? (
+                          <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {techPackFile.startsWith('data:image') ? (
+                                <img src={techPackFile} alt="Tech-pack" className="w-8 h-8 rounded object-cover border border-slate-200 bg-slate-50 shrink-0" />
+                              ) : (
+                                <FileText className="w-6 h-6 text-indigo shrink-0" />
+                              )}
+                              <span className="text-xs font-bold text-navy truncate" title={techPackFileName}>
+                                {techPackFileName}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => { setTechPackFile(null); setTechPackFileName(''); }}
+                              className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                              title="Remove file"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-indigo-50 text-indigo border border-indigo-300 rounded-xl text-xs font-bold cursor-pointer transition shadow-xs">
+                            <UploadCloud className="w-4 h-4 text-indigo" />
+                            <span>Attach Tech-Pack / Spec Sheet</span>
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.xlsx"
+                              onChange={handleTechPackUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* 2. Logo Text & Styling */}
                   {(customizationType.includes('Logo') ||
