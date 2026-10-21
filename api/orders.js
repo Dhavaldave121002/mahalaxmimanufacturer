@@ -1,8 +1,41 @@
 import { getDbPool } from '../database/db.js';
+import fs from 'fs';
+import path from 'path';
 
-// Global fallback cache for serverless environments when MySQL pool is offline
+// Global fallback cache with persistent public/orders.json backing
 if (!globalThis._mle_orders_cache) {
   globalThis._mle_orders_cache = [];
+}
+
+function readFallbackOrders() {
+  if (globalThis._mle_orders_cache && globalThis._mle_orders_cache.length > 0) {
+    return globalThis._mle_orders_cache;
+  }
+  try {
+    const fPath = path.join(process.cwd(), 'public', 'orders.json');
+    if (fs.existsSync(fPath)) {
+      const parsed = JSON.parse(fs.readFileSync(fPath, 'utf8'));
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        globalThis._mle_orders_cache = parsed;
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('readFallbackOrders warning:', e.message);
+  }
+  return globalThis._mle_orders_cache || [];
+}
+
+function saveFallbackOrders(orders) {
+  globalThis._mle_orders_cache = orders;
+  try {
+    const pubDir = path.join(process.cwd(), 'public');
+    if (!fs.existsSync(pubDir)) fs.mkdirSync(pubDir, { recursive: true });
+    const fPath = path.join(pubDir, 'orders.json');
+    fs.writeFileSync(fPath, JSON.stringify(orders, null, 2), 'utf8');
+  } catch (e) {
+    console.warn('saveFallbackOrders warning:', e.message);
+  }
 }
 
 export default async function handler(req, res) {
@@ -23,12 +56,13 @@ export default async function handler(req, res) {
 
   // 1. GET: Fetch all live orders with attached items
   if (req.method === 'GET') {
+    const fallbackOrders = readFallbackOrders();
     if (!pool) {
       return res.status(200).json({
         success: true,
         source: 'LOCAL_FALLBACK',
-        count: globalThis._mle_orders_cache.length,
-        data: globalThis._mle_orders_cache
+        count: fallbackOrders.length,
+        data: fallbackOrders
       });
     }
     try {
@@ -398,7 +432,7 @@ export default async function handler(req, res) {
         timeline: typeof timeline === 'string' ? JSON.parse(timeline) : timeline,
         items: o.items || []
       };
-      globalThis._mle_orders_cache.unshift(fallbackOrder);
+      saveFallbackOrders([fallbackOrder, ...readFallbackOrders().filter(o => o.id !== orderId && o.orderNumber !== orderNumber)]);
 
       return res.status(201).json({
         success: true,
@@ -515,7 +549,7 @@ export default async function handler(req, res) {
         timeline: typeof timeline === 'string' ? JSON.parse(timeline) : timeline,
         items: o.items || []
       };
-      globalThis._mle_orders_cache.unshift(fallbackOrder);
+      saveFallbackOrders([fallbackOrder, ...readFallbackOrders().filter(o => o.id !== orderId && o.orderNumber !== orderNumber)]);
 
       return res.status(201).json({
         success: true,

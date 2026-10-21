@@ -43,6 +43,7 @@ export interface Product {
   isTrending?: boolean;
   specifications: Record<string, string>;
   careInstructions?: string[];
+  b2bPolicy?: string[];
   variants?: ProductVariant[];
   tags: string[];
   hsnCode: string;

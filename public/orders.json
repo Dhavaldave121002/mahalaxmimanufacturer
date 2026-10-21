@@ -1,0 +1,162 @@
+[
+  {
+    "id": "ord-verified-999",
+    "orderNumber": "MLE-VERIFIED-999",
+    "createdAt": "2026-10-21T05:00:00.000Z",
+    "source": "WEB",
+    "deviceInfo": "Desktop Chrome (Direct Mill Production Order)",
+    "customer": {
+      "id": "usr-dhaval",
+      "name": "Dhaval Dave",
+      "email": "dhavaldave121002@gmail.com",
+      "phone": "+91 85111 72099",
+      "companyName": "Mahalaxmi Enterprises Commercial Hub",
+      "gstNumber": "24AAACP1234M1Z5",
+      "isB2B": true
+    },
+    "subtotal": 44500,
+    "taxBreakdown": {
+      "cgst": 1112.5,
+      "sgst": 1112.5,
+      "igst": 0,
+      "totalTax": 2225
+    },
+    "shippingCharge": 0,
+    "discount": 0,
+    "totalAmount": 44500,
+    "paymentMethod": "UPI",
+    "paymentStatus": "PAID",
+    "status": "PLACED",
+    "shippingAddress": {
+      "fullName": "Dhaval Dave",
+      "phone": "+91 85111 72099",
+      "street": "102, Shivalik Plaza, Near C.G. Road",
+      "city": "Ahmedabad",
+      "state": "Gujarat",
+      "pincode": "380009"
+    },
+    "billingAddress": {
+      "fullName": "Dhaval Dave",
+      "phone": "+91 85111 72099",
+      "street": "102, Shivalik Plaza, Near C.G. Road",
+      "city": "Ahmedabad",
+      "state": "Gujarat",
+      "pincode": "380009"
+    },
+    "timeline": [
+      {
+        "status": "PLACED",
+        "timestamp": "2026-10-21T05:00:00.000Z",
+        "description": "Order verified & payment confirmed via UPI. Production specs allocated to Loom 4."
+      }
+    ],
+    "items": [
+      {
+        "productId": "prod-bedsheet-01",
+        "productName": "Glance 300 TC 100% Combed Cotton Double Bedsheet",
+        "sku": "MLE-TEX-BS-3001",
+        "hsnCode": "630221",
+        "quantity": 50,
+        "unitPrice": 890,
+        "totalPrice": 44500,
+        "variantDescription": "Customized [Design & Logo • Logo: \"MAHALAXMI LUXURY EXPORTS\" • Size: Super King (108\" x 108\") • GSM: 300 TC Combed Satin • 📎 Logo: mahalaxmi_gold_crest.png • 📎 Design: damask_jacquard_pattern.pdf]",
+        "image": "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop",
+        "gstRate": 5,
+        "customization": {
+          "type": "Design & Logo",
+          "logoText": "MAHALAXMI LUXURY EXPORTS",
+          "logoColor": "#EAB308",
+          "logoPosition": "top-right",
+          "logoStyle": "crown",
+          "selectedSize": "Super King (108\" x 108\")",
+          "customGsm": "300 TC Combed Satin",
+          "logoFileName": "mahalaxmi_gold_crest.png",
+          "designFileName": "damask_jacquard_pattern.pdf",
+          "designNote": "Golden metallic zari embroidery on border hems, reactive colorfast dye with shrink-proof finish"
+        }
+      }
+    ]
+  },
+  {
+    "id": "ord-app-custom-102",
+    "orderNumber": "MLE-APP-2026-48219",
+    "createdAt": "2026-10-21T04:15:00.000Z",
+    "source": "FLUTTER_APP",
+    "deviceInfo": "Flutter Android App v2.4 (Samsung Galaxy S24)",
+    "customer": {
+      "id": "usr-anand",
+      "name": "Anand Patel",
+      "email": "anand@pateltextiles.com",
+      "phone": "+91 94261 54321",
+      "companyName": "Patel Handloom & Textile Emporium",
+      "gstNumber": "24AABCP1357K1ZT",
+      "isB2B": true
+    },
+    "subtotal": 27450,
+    "taxBreakdown": {
+      "cgst": 686.25,
+      "sgst": 686.25,
+      "igst": 0,
+      "totalTax": 1372.5
+    },
+    "shippingCharge": 0,
+    "discount": 0,
+    "totalAmount": 27450,
+    "paymentMethod": "UPI",
+    "paymentStatus": "PAID",
+    "status": "MILL_PROCESSING",
+    "shippingAddress": {
+      "fullName": "Anand Patel",
+      "phone": "+91 94261 54321",
+      "street": "402, Ring Road Textile Market",
+      "city": "Surat",
+      "state": "Gujarat",
+      "pincode": "395002"
+    },
+    "billingAddress": {
+      "fullName": "Anand Patel",
+      "phone": "+91 94261 54321",
+      "street": "402, Ring Road Textile Market",
+      "city": "Surat",
+      "state": "Gujarat",
+      "pincode": "395002"
+    },
+    "timeline": [
+      {
+        "status": "PLACED",
+        "timestamp": "2026-10-21T04:15:00.000Z",
+        "description": "Order booked via Mahalaxmi Flutter Mobile App."
+      },
+      {
+        "status": "MILL_PROCESSING",
+        "timestamp": "2026-10-21T04:45:00.000Z",
+        "description": "Custom Embroidery proof verified by Mill Master. Yarns dyed."
+      }
+    ],
+    "items": [
+      {
+        "productId": "cotton-bath-towels",
+        "productName": "Super Soft 500 GSM 100% Combed Cotton Bath Towels",
+        "sku": "MLE-TEX-TW-5002",
+        "hsnCode": "630260",
+        "quantity": 100,
+        "unitPrice": 274.5,
+        "totalPrice": 27450,
+        "variantDescription": "Customized [Embroidery Branding • Logo: \"PATEL ROYAL SUITES\" • GSM: 500 GSM Luxury Plush • 📎 Logo: patel_suites_crest.png • Note: Navy Blue Viscose Thread]",
+        "image": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop",
+        "gstRate": 5,
+        "customization": {
+          "type": "Embroidery Branding",
+          "logoText": "PATEL ROYAL SUITES",
+          "logoColor": "#312E81",
+          "logoPosition": "top-right",
+          "logoStyle": "shield",
+          "selectedSize": "Bath Towel (75cm x 150cm)",
+          "customGsm": "500 GSM Luxury Plush",
+          "logoFileName": "patel_suites_crest.png",
+          "designNote": "Navy blue thread embroidery on lower right hem, pre-washed sanforized finish"
+        }
+      }
+    ]
+  }
+]

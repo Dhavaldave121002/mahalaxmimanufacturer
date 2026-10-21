@@ -133,6 +133,12 @@ export const CheckoutPage: React.FC = () => {
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (!cart || cart.length === 0) {
+      alert('Your cart is empty. Please add items to your cart before proceeding to checkout.');
+      navigate('/');
+      return;
+    }
+
     // Save company and GST if entered
     if (isB2B && gstNumber) {
       updateUserProfile({

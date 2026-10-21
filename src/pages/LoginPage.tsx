@@ -350,14 +350,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     }, 450);
   };
 
-  // 1-Click Demo Login
-  const handleQuickDemoLogin = (role: 'consumer' | 'retailer' | 'wholesaler') => {
-    switchUserRole(role);
-    setSuccessMsg(`Switched to demo ${role} profile!`);
-    setTimeout(() => {
-      navigate(redirectPath);
-    }, 500);
-  };
 
   return (
     <div className="min-h-[85vh] py-8 sm:py-12 px-4 sm:px-6 flex items-center justify-center relative">
@@ -424,33 +416,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
             </div>
           </div>
 
-          {/* Quick Demo Switcher (Bottom Left) */}
-          <div className="pt-6 mt-6 border-t border-white/15 relative z-10">
-            <p className="text-[11px] font-bold text-champagne uppercase tracking-wider mb-2">
-              ⚡ 1-Click Instant Demo Login:
-            </p>
-            <div className="flex flex-wrap gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('consumer')}
-                className="px-2.5 py-1 bg-white/15 hover:bg-white text-white hover:text-navy rounded-xl font-semibold transition"
-              >
-                Retail Buyer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('retailer')}
-                className="px-2.5 py-1 bg-white/15 hover:bg-white text-white hover:text-navy rounded-xl font-semibold transition"
-              >
-                Store Retailer
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('wholesaler')}
-                className="px-2.5 py-1 bg-white/15 hover:bg-white text-white hover:text-navy rounded-xl font-semibold transition"
-              >
-                Hotelier B2B
-              </button>
+          {/* Verified Official Manufacturer Trust Banner */}
+          <div className="pt-4 mt-6 border-t border-white/15 relative z-10">
+            <div className="flex items-center gap-2 text-champagne text-xs font-semibold">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>Official Direct Mill Account • GST Invoice Backed</span>
             </div>
           </div>
         </div>

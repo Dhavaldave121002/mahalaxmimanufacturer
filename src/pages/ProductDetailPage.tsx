@@ -1639,12 +1639,17 @@ export const ProductDetailPage: React.FC = () => {
         {/* Tab 2: Commercial Wholesale Terms */}
         {activeTab === 'tiers' && (
           <div className="space-y-4 text-xs text-slate-700">
-            <h4 className="font-bold text-sm text-navy">Wholesale Procurement Policy</h4>
-            <ul className="space-y-2 list-disc list-inside text-slate-600">
-              <li>All bulk consignments are billed with formal GST Tax Invoices from Ahmedabad jurisdiction (State Code 24).</li>
-              <li>GST numbers entered during checkout automatically receive electronic GSTR-1 filings for instantaneous GSTR-2B input credit.</li>
-              <li>Consignments above ₹50,000 include government-verified E-Way bills.</li>
-              <li>Earn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.</li>
+            <h4 className="font-bold text-sm text-navy">Wholesale Procurement Policy & B2B Terms</h4>
+            <ul className="space-y-2.5 list-disc list-inside text-slate-600">
+              {(product.b2bPolicy && product.b2bPolicy.length > 0 ? product.b2bPolicy : [
+                'All bulk consignments are billed with formal GST Tax Invoices from Ahmedabad jurisdiction (State Code 24).',
+                'GST numbers entered during checkout automatically receive electronic GSTR-1 filings for instantaneous GSTR-2B input credit.',
+                'Consignments above ₹50,000 include government-verified E-Way bills.',
+                'Earn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.',
+                'Commercial sample cost credited back 100% on subsequent wholesale consignment booking.'
+              ]).map((term, idx) => (
+                <li key={idx} className="leading-relaxed">{term}</li>
+              ))}
             </ul>
           </div>
         )}

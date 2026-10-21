@@ -195,45 +195,6 @@
     ]
   },
   {
-    "id": "usr-c01",
-    "name": "Rajesh Sharma",
-    "email": "rajesh.sharma@example.com",
-    "phone": "+91 98201 12345",
-    "role": "consumer",
-    "businessType": "Individual",
-    "companyName": "",
-    "gstNumber": "",
-    "isGstVerified": false,
-    "creditLimit": 0,
-    "availableCredit": 0,
-    "addresses": [
-      {
-        "id": "addr-1",
-        "fullName": "Rajesh Sharma",
-        "phone": "+91 98201 12345",
-        "street": "Flat 402, Lotus Greens, Ring Road",
-        "city": "Surat",
-        "state": "Gujarat",
-        "pincode": "395002",
-        "addressType": "HOME",
-        "isDefault": true
-      }
-    ],
-    "walletBalance": 350,
-    "walletTransactions": [
-      {
-        "id": "wt-welcome-usr-c01",
-        "userId": "usr-c01",
-        "userEmail": "rajesh.sharma@example.com",
-        "type": "WALLET_TOPUP",
-        "amount": 350,
-        "description": "Welcome Bonus: Mill Points Credited",
-        "balanceAfter": 350,
-        "timestamp": "2026-10-19T11:07:50.435Z"
-      }
-    ]
-  },
-  {
     "id": "usr-r02",
     "name": "Anand Patel",
     "email": "anand@pateltextiles.com",

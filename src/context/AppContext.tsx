@@ -1227,18 +1227,47 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
         setOrders(prev => {
           const map = new Map<string, Order>();
-          // Priority 1: Central backend / MySQL live orders
-          for (const ord of json.data) {
+          // 1. Load existing local orders
+          for (const ord of prev) {
             const key = (ord.orderNumber || ord.id || '').trim().toLowerCase();
             if (key) map.set(key, ord);
           }
-          // Priority 2: Keep any local test orders if not present in backend
-          for (const ord of prev) {
+
+          // 2. Merge backend live orders without losing local artwork files
+          for (const ord of json.data) {
             const key = (ord.orderNumber || ord.id || '').trim().toLowerCase();
-            if (key && !map.has(key)) {
+            if (!key) continue;
+            const existing = map.get(key);
+            if (!existing) {
               map.set(key, ord);
+            } else {
+              const mergedItems = (ord.items && ord.items.length > 0)
+                ? ord.items.map((it: any, idx: number) => {
+                    const localItem = existing.items?.[idx] || existing.items?.find(li => li.productId === it.productId);
+                    if (localItem?.customization) {
+                      return {
+                        ...it,
+                        customization: {
+                          ...it.customization,
+                          ...localItem.customization,
+                          logoFile: localItem.customization.logoFile || it.customization?.logoFile,
+                          designFile: localItem.customization.designFile || it.customization?.designFile,
+                          logoFileName: localItem.customization.logoFileName || it.customization?.logoFileName,
+                          designFileName: localItem.customization.designFileName || it.customization?.designFileName,
+                        }
+                      };
+                    }
+                    return it;
+                  })
+                : (existing.items || []);
+
+              map.set(key, {
+                ...ord,
+                items: mergedItems
+              });
             }
           }
+
           const merged = Array.from(map.values()).sort((a, b) => {
             const timeA = new Date(a.createdAt || 0).getTime();
             const timeB = new Date(b.createdAt || 0).getTime();

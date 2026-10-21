@@ -120,6 +120,13 @@ export const AdminDashboardPage: React.FC = () => {
     shortDescription: string;
     description: string;
     image: string;
+    threadCount: string;
+    fabric: string;
+    closure: string;
+    certification: string;
+    dimensions: string;
+    careInstructions: string;
+    b2bPolicy: string;
   }>({
     name: '',
     sku: '',
@@ -136,7 +143,14 @@ export const AdminDashboardPage: React.FC = () => {
     gstRate: 5,
     shortDescription: 'Direct mill combed cotton fabric.',
     description: 'High-durability weaving from Ahmedabad looms.',
-    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop'
+    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
+    threadCount: '400 TC Percale Weave',
+    fabric: '100% Long Staple Cotton',
+    closure: 'Concealed high-tensile nylon zipper',
+    certification: 'OEKO-TEX Standard 100',
+    dimensions: 'Double (90" x 108")',
+    careInstructions: 'Wash before first use in cold water\nMachine wash gentle cycle with mild liquid detergent\nDo not use harsh chlorine bleach\nTumble dry low heat or line dry in shade',
+    b2bPolicy: 'All bulk consignments are billed with formal GST Tax Invoices from Ahmedabad jurisdiction (State Code 24).\nGST numbers entered during checkout automatically receive electronic GSTR-1 filings for instantaneous GSTR-2B input credit.\nConsignments above ₹50,000 include government-verified E-Way bills.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
   });
 
   // Quotation Editor Modal state
@@ -239,7 +253,18 @@ export const AdminDashboardPage: React.FC = () => {
       gstRate: p.gstRate,
       shortDescription: p.shortDescription,
       description: p.description,
-      image: p.images[0]
+      image: p.images[0] || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
+      threadCount: p.specifications?.['Thread Count'] || '400 TC Percale Weave',
+      fabric: p.specifications?.['Fabric'] || '100% Long Staple Cotton',
+      closure: p.specifications?.['Closure'] || 'Concealed high-tensile nylon zipper',
+      certification: p.specifications?.['Certification'] || 'OEKO-TEX Standard 100',
+      dimensions: p.specifications?.['Dimensions'] || 'Double (90" x 108")',
+      careInstructions: (p.careInstructions && p.careInstructions.length > 0)
+        ? p.careInstructions.join('\n')
+        : 'Wash before first use in cold water\nMachine wash gentle cycle with mild liquid detergent\nDo not use harsh chlorine bleach\nTumble dry low heat or line dry in shade',
+      b2bPolicy: (p.b2bPolicy && p.b2bPolicy.length > 0)
+        ? p.b2bPolicy.join('\n')
+        : 'All bulk consignments are billed with formal GST Tax Invoices from Ahmedabad jurisdiction (State Code 24).\nGST numbers entered during checkout automatically receive electronic GSTR-1 filings for instantaneous GSTR-2B input credit.\nConsignments above ₹50,000 include government-verified E-Way bills.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
     });
     setProductModalOpen(true);
   };
@@ -253,6 +278,26 @@ export const AdminDashboardPage: React.FC = () => {
       { minQty: 10, maxQty: 49, pricePerUnit: productForm.tier1Price, savingsPercent: savings1, label: 'Wholesale Tier 1' },
       { minQty: 50, pricePerUnit: productForm.tier2Price, savingsPercent: savings2, label: 'Direct Mill Contract' }
     ];
+
+    const currentProd = editingProductId ? products.find(p => p.id === editingProductId) : null;
+    const computedSpecs: Record<string, string> = {
+      ...(currentProd?.specifications || {}),
+      'Thread Count': productForm.threadCount.trim() || '400 TC Percale Weave',
+      'Fabric': productForm.fabric.trim() || '100% Long Staple Cotton',
+      'Closure': productForm.closure.trim() || 'Concealed high-tensile nylon zipper',
+      'Certification': productForm.certification.trim() || 'OEKO-TEX Standard 100',
+      'Dimensions': productForm.dimensions.trim() || 'Double (90" x 108")'
+    };
+
+    const computedCare = productForm.careInstructions
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const computedB2b = productForm.b2bPolicy
+      .split('\n')
+      .map(s => s.trim())
+      .filter(Boolean);
 
     if (editingProductId) {
       updateProduct(editingProductId, {
@@ -270,7 +315,10 @@ export const AdminDashboardPage: React.FC = () => {
         shortDescription: productForm.shortDescription,
         description: productForm.description,
         images: [productForm.image],
-        wholesaleTiers: computedTiers
+        wholesaleTiers: computedTiers,
+        specifications: computedSpecs,
+        careInstructions: computedCare,
+        b2bPolicy: computedB2b
       });
     } else {
       addProduct({
@@ -293,10 +341,9 @@ export const AdminDashboardPage: React.FC = () => {
         description: productForm.description,
         images: [productForm.image],
         tags: [productForm.category, productForm.subcategory.toLowerCase()],
-        specifications: {
-          'Composition': 'Commercial Cotton / Textile',
-          'Origin': 'Ahmedabad Textile Cluster'
-        },
+        specifications: computedSpecs,
+        careInstructions: computedCare,
+        b2bPolicy: computedB2b,
         wholesaleTiers: computedTiers
       });
     }
@@ -462,7 +509,14 @@ export const AdminDashboardPage: React.FC = () => {
                 gstRate: 5,
                 shortDescription: '100% Combed Indian Cotton product.',
                 description: 'Direct mill woven fabric with high thread density.',
-                image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop'
+                image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
+                threadCount: '400 TC Percale Weave',
+                fabric: '100% Long Staple Cotton',
+                closure: 'Concealed high-tensile nylon zipper',
+                certification: 'OEKO-TEX Standard 100',
+                dimensions: 'Double (90" x 108")',
+                careInstructions: 'Wash before first use in cold water\nMachine wash gentle cycle with mild liquid detergent\nDo not use harsh chlorine bleach\nTumble dry low heat or line dry in shade',
+                b2bPolicy: 'All bulk consignments are billed with formal GST Tax Invoices from Ahmedabad jurisdiction (State Code 24).\nGST numbers entered during checkout automatically receive electronic GSTR-1 filings for instantaneous GSTR-2B input credit.\nConsignments above ₹50,000 include government-verified E-Way bills.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
               });
               setProductModalOpen(true);
             }}
@@ -1077,34 +1131,90 @@ export const AdminDashboardPage: React.FC = () => {
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4 min-w-[200px]">
+                      <td className="py-3.5 px-4 min-w-[240px]">
                         <p className="font-bold text-navy truncate" title={ord.customer.companyName || ord.customer.name}>
                           {ord.customer.companyName || ord.customer.name}
                         </p>
                         <p className="text-[10px] text-slate-500 truncate mt-0.5">
                           {ord.customer.phone} {ord.customer.gstNumber ? `• GST: ${ord.customer.gstNumber}` : ''}
                         </p>
-                        {ord.items && ord.items.some(it => (it.customization && it.customization.type && it.customization.type !== 'No Customization') || (it.variantDescription && (it.variantDescription.includes('[') || it.variantDescription.toLowerCase().includes('custom')))) && (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            <button
-                              type="button"
-                              onClick={() => setSelectedCustomSpecsOrder(ord)}
-                              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9.5px] font-black bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 shadow-xs cursor-pointer transition"
-                              title="Click to view full Logo, Design & Customization Specs"
-                            >
-                              <Palette className="w-2.5 h-2.5 text-purple-600" /> Custom Specs Attached
-                            </button>
-                            {ord.items.some(it => it.customization?.logoFile || it.customization?.designFile || it.customization?.techPackFile || it.customization?.logoFileName || it.customization?.designFileName) && (
-                              <button
-                                type="button"
-                                onClick={() => setSelectedCustomSpecsOrder(ord)}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-black bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300 shadow-xs cursor-pointer transition"
-                                title="Click to view uploaded Artwork & Logo Files"
-                              >
-                                <Paperclip className="w-2.5 h-2.5 text-emerald-600" /> Artwork Files Ready
-                              </button>
+
+                        {/* Order Item & Customization Branding Preview */}
+                        {ord.items && ord.items.length > 0 ? (
+                          <div className="mt-1.5 space-y-1">
+                            {ord.items.slice(0, 2).map((it, idx) => {
+                              const cust = it.customization;
+                              const hasCustom = !!(cust && cust.type && cust.type !== 'No Customization') ||
+                                                (it.variantDescription && (it.variantDescription.includes('[') || it.variantDescription.toLowerCase().includes('custom')));
+                              const logoName = cust?.logoFileName || (cust?.logoText ? `${cust.logoText}_logo.png` : undefined);
+                              const designName = cust?.designFileName;
+
+                              return (
+                                <div key={idx} className="p-1.5 bg-slate-50 rounded-lg border border-slate-200 text-[10px]">
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="font-semibold text-slate-800 truncate" title={it.productName}>
+                                      {it.productName}
+                                    </span>
+                                    <span className="font-black text-navy shrink-0">{it.quantity} Pcs</span>
+                                  </div>
+
+                                  {hasCustom && (
+                                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedCustomSpecsOrder(ord)}
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-100 hover:bg-purple-200 text-purple-800 font-extrabold text-[9px] border border-purple-200 transition cursor-pointer"
+                                        title="Click to view full specs & embroidery proof"
+                                      >
+                                        <Palette className="w-2.5 h-2.5 text-purple-600" />
+                                        <span>{cust?.type || 'Customized'}</span>
+                                      </button>
+
+                                      {cust?.logoText && (
+                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 border border-amber-200 text-[9px] font-bold">
+                                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cust.logoColor || '#EAB308' }} />
+                                          <span>"{cust.logoText}"</span>
+                                        </span>
+                                      )}
+
+                                      {logoName && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setSelectedCustomSpecsOrder(ord)}
+                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[9px] font-semibold cursor-pointer"
+                                          title={`Attached Logo: ${logoName}`}
+                                        >
+                                          <Paperclip className="w-2.5 h-2.5 text-emerald-600" />
+                                          <span className="truncate max-w-[90px]">{logoName}</span>
+                                        </button>
+                                      )}
+
+                                      {designName && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setSelectedCustomSpecsOrder(ord)}
+                                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo border border-indigo-200 text-[9px] font-semibold cursor-pointer"
+                                          title={`Attached Artwork: ${designName}`}
+                                        >
+                                          <Palette className="w-2.5 h-2.5 text-indigo" />
+                                          <span className="truncate max-w-[90px]">{designName}</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                            {ord.items.length > 2 && (
+                              <span className="text-[9px] text-slate-400 font-medium pl-1">
+                                + {ord.items.length - 2} more items
+                              </span>
                             )}
                           </div>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 italic block mt-1">
+                            Direct Commercial Pack Order
+                          </span>
                         )}
                       </td>
 
@@ -1694,6 +1804,106 @@ export const AdminDashboardPage: React.FC = () => {
                   onChange={e => setProductForm({ ...productForm, image: e.target.value })}
                   className="w-full p-2 border border-slate-300 rounded-lg outline-none"
                 />
+              </div>
+
+              {/* LIVE PRODUCT DETAIL TABS INPUT SECTION (Syncs 1:1 with Storefront & Mobile App) */}
+              <div className="p-4 bg-gradient-to-br from-slate-50 to-indigo/5 rounded-2xl border border-indigo/20 space-y-4">
+                <div className="flex items-center justify-between border-b border-indigo/10 pb-2">
+                  <div className="flex items-center gap-1.5 text-xs font-black text-navy uppercase tracking-wider">
+                    <SlidersHorizontal className="w-4 h-4 text-indigo" />
+                    <span>Storefront & App Product Tabs (Specs, B2B Terms, Laundering)</span>
+                  </div>
+                  <span className="text-[9.5px] font-bold bg-indigo/10 text-indigo px-2 py-0.5 rounded-full">
+                    Database Synced
+                  </span>
+                </div>
+
+                {/* Tab 1: Technical Specifications */}
+                <div className="space-y-2">
+                  <span className="text-[10.5px] font-bold text-slate-700 block uppercase tracking-wide">
+                    1. Technical Specifications (Fabric, Weave & Quality)
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[9.5px] font-semibold text-slate-500 block mb-0.5">Thread Count / Weave</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 400 TC Percale Weave"
+                        value={productForm.threadCount}
+                        onChange={e => setProductForm({ ...productForm, threadCount: e.target.value })}
+                        className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9.5px] font-semibold text-slate-500 block mb-0.5">Fabric Composition</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 100% Long Staple Cotton"
+                        value={productForm.fabric}
+                        onChange={e => setProductForm({ ...productForm, fabric: e.target.value })}
+                        className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9.5px] font-semibold text-slate-500 block mb-0.5">Closure / Hem Style</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Concealed high-tensile nylon zipper"
+                        value={productForm.closure}
+                        onChange={e => setProductForm({ ...productForm, closure: e.target.value })}
+                        className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[9.5px] font-semibold text-slate-500 block mb-0.5">Quality Certification</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. OEKO-TEX Standard 100"
+                        value={productForm.certification}
+                        onChange={e => setProductForm({ ...productForm, certification: e.target.value })}
+                        className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none text-xs"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-[9.5px] font-semibold text-slate-500 block mb-0.5">Cut Dimensions / Sizing</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Double (90&quot; x 108&quot;) / King (108&quot; x 108&quot;)"
+                        value={productForm.dimensions}
+                        onChange={e => setProductForm({ ...productForm, dimensions: e.target.value })}
+                        className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tab 2: Care & Laundering */}
+                <div className="space-y-1.5 pt-2 border-t border-slate-200">
+                  <label className="text-[10.5px] font-bold text-slate-700 block uppercase tracking-wide">
+                    2. Care & Commercial Laundering Instructions (1 bullet per line)
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Enter care instructions, one per line..."
+                    value={productForm.careInstructions}
+                    onChange={e => setProductForm({ ...productForm, careInstructions: e.target.value })}
+                    className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none text-xs font-mono leading-relaxed"
+                  />
+                </div>
+
+                {/* Tab 3: Commercial B2B Terms & ITC Policy */}
+                <div className="space-y-1.5 pt-2 border-t border-slate-200">
+                  <label className="text-[10.5px] font-bold text-slate-700 block uppercase tracking-wide">
+                    3. Commercial B2B Terms & ITC Policy (1 bullet per line)
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Enter B2B terms and GST ITC guidelines, one per line..."
+                    value={productForm.b2bPolicy}
+                    onChange={e => setProductForm({ ...productForm, b2bPolicy: e.target.value })}
+                    className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none text-xs font-mono leading-relaxed"
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-200">
