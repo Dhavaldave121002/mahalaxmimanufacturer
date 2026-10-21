@@ -18,13 +18,14 @@ function readFallbackCoupons() {
     {
       id: 'coup-launch150',
       code: 'LAUNCH150',
-      title: 'Surat Mill Launch Promo',
-      description: 'Flat ₹150 OFF on your direct loom purchase',
+      title: 'Subscriber Welcome Email Voucher',
+      description: 'Exclusive ₹150 OFF voucher sent via email for new subscribers & signups',
       discountType: 'FLAT',
       discountValue: 150,
       minOrderValue: 0,
       isActive: true,
-      isFeatured: true,
+      isFeatured: false,
+      suggestionMode: 'SECRET_MANUAL_ONLY',
       applicableFor: 'ALL',
       usedCount: 42,
       createdAt: '2026-10-01T00:00:00.000Z'
@@ -91,7 +92,11 @@ function saveFallbackCoupons(couponsList) {
       try {
         const rawConfig = fs.readFileSync(appConfigPath, 'utf8');
         const config = JSON.parse(rawConfig);
-        config.coupons = couponsList.filter(c => c.isActive);
+        // Only public 1-click coupons should be published to Flutter App's live coupon list
+        // Secret vouchers like LAUNCH150 sent via email are hidden from 1-click lists
+        config.coupons = couponsList.filter(
+          c => c.isActive && c.isFeatured && c.suggestionMode !== 'SECRET_MANUAL_ONLY' && (c.code || '').toUpperCase() !== 'LAUNCH150'
+        );
         config.lastSyncedAt = new Date().toISOString();
         fs.writeFileSync(appConfigPath, JSON.stringify(config, null, 2), 'utf8');
       } catch (err) {
@@ -126,12 +131,28 @@ async function ensureCouponsTable(pool) {
         applicable_for VARCHAR(32) DEFAULT 'ALL',
         usage_limit INT DEFAULT NULL,
         used_count INT DEFAULT 0,
+        suggestion_mode VARCHAR(32) DEFAULT 'PUBLIC_1CLICK',
+        target_platform VARCHAR(32) DEFAULT 'ALL',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_code (code),
         INDEX idx_active (is_active)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    // Ensure columns exist on legacy tables
+    try {
+      await pool.query("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS suggestion_mode VARCHAR(32) DEFAULT 'PUBLIC_1CLICK'");
+    } catch {}
+    try {
+      await pool.query("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS target_platform VARCHAR(32) DEFAULT 'ALL'");
+    } catch {}
+
+    // Enforce that LAUNCH150 is always a secret, subscriber-only email voucher in MySQL
+    try {
+      await pool.query("UPDATE coupons SET is_featured = 0, suggestion_mode = 'SECRET_MANUAL_ONLY' WHERE UPPER(code) = 'LAUNCH150'");
+    } catch {}
+
     tableEnsured = true;
   } catch (err) {
     console.warn('MySQL ensureCouponsTable error:', err.message);
@@ -176,7 +197,9 @@ export default async function handler(req, res) {
             maxDiscountAmount: r.max_discount_amount ? Number(r.max_discount_amount) : undefined,
             validUntil: r.valid_until ? new Date(r.valid_until).toISOString() : undefined,
             isActive: Boolean(r.is_active),
-            isFeatured: Boolean(r.is_featured),
+            isFeatured: Boolean(r.is_featured) && r.code !== 'LAUNCH150' && r.suggestion_mode !== 'SECRET_MANUAL_ONLY',
+            suggestionMode: r.suggestion_mode || (r.code === 'LAUNCH150' || !r.is_featured ? 'SECRET_MANUAL_ONLY' : 'PUBLIC_1CLICK'),
+            targetPlatform: r.target_platform || 'ALL',
             applicableFor: r.applicable_for || 'ALL',
             usageLimit: r.usage_limit ? Number(r.usage_limit) : undefined,
             usedCount: Number(r.used_count || 0),
@@ -228,8 +251,12 @@ export default async function handler(req, res) {
     const maxDiscountAmount = body.maxDiscountAmount ? Number(body.maxDiscountAmount) : null;
     const validUntil = body.validUntil ? new Date(body.validUntil) : null;
     const isActive = body.isActive !== false ? 1 : 0;
-    const isFeatured = body.isFeatured !== false ? 1 : 0;
+    const rawSuggestionMode = body.suggestionMode || (body.isFeatured ? 'PUBLIC_1CLICK' : 'SECRET_MANUAL_ONLY');
+    const isSecret = rawSuggestionMode === 'SECRET_MANUAL_ONLY' || rawCode === 'LAUNCH150';
+    const suggestionMode = isSecret ? 'SECRET_MANUAL_ONLY' : 'PUBLIC_1CLICK';
+    const isFeatured = isSecret ? 0 : (body.isFeatured !== false ? 1 : 0);
     const applicableFor = ['ALL', 'B2B', 'B2C'].includes(body.applicableFor) ? body.applicableFor : 'ALL';
+    const targetPlatform = ['ALL', 'WEB_ONLY', 'APP_ONLY'].includes(body.targetPlatform) ? body.targetPlatform : 'ALL';
     const usedCount = Number(body.usedCount) || 0;
 
     let dbSaved = false;
@@ -239,8 +266,8 @@ export default async function handler(req, res) {
         await ensureCouponsTable(pool);
         await pool.query(
           `INSERT INTO coupons 
-           (id, code, title, description, discount_type, discount_value, min_order_value, max_discount_amount, valid_until, is_active, is_featured, applicable_for, used_count)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           (id, code, title, description, discount_type, discount_value, min_order_value, max_discount_amount, valid_until, is_active, is_featured, applicable_for, used_count, suggestion_mode, target_platform)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE
              title=VALUES(title),
              description=VALUES(description),
@@ -252,7 +279,9 @@ export default async function handler(req, res) {
              is_active=VALUES(is_active),
              is_featured=VALUES(is_featured),
              applicable_for=VALUES(applicable_for),
-             used_count=VALUES(used_count)`,
+             used_count=VALUES(used_count),
+             suggestion_mode=VALUES(suggestion_mode),
+             target_platform=VALUES(target_platform)`,
           [
             couponId,
             rawCode,
@@ -266,7 +295,9 @@ export default async function handler(req, res) {
             isActive,
             isFeatured,
             applicableFor,
-            usedCount
+            usedCount,
+            suggestionMode,
+            targetPlatform
           ]
         );
         dbSaved = true;
@@ -289,6 +320,8 @@ export default async function handler(req, res) {
       validUntil: validUntil ? validUntil.toISOString() : undefined,
       isActive: Boolean(isActive),
       isFeatured: Boolean(isFeatured),
+      suggestionMode,
+      targetPlatform,
       applicableFor,
       usedCount,
       createdAt: body.createdAt || new Date().toISOString()

@@ -569,7 +569,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const saved = localStorage.getItem('mle_coupons');
       if (saved && saved !== 'undefined' && saved !== 'null') {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Normalize: Enforce that LAUNCH150 and any SECRET_MANUAL_ONLY coupon is NOT publicly featured
+          return parsed.map((c: CouponOffer) => {
+            const code = (c.code || '').trim().toUpperCase();
+            if (code === 'LAUNCH150' || c.suggestionMode === 'SECRET_MANUAL_ONLY') {
+              return {
+                ...c,
+                isFeatured: false,
+                suggestionMode: 'SECRET_MANUAL_ONLY' as const
+              };
+            }
+            return c;
+          });
+        }
       }
     } catch (e) {
       console.warn('Failed to parse mle_coupons, resetting:', e);
@@ -594,12 +607,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
         setCoupons(prev => {
           const map = new Map<string, CouponOffer>();
-          for (const c of json.data) {
+          for (const raw of json.data) {
+            const c = { ...raw };
             const key = (c.code || c.id || '').trim().toUpperCase();
+            if (key === 'LAUNCH150' || c.suggestionMode === 'SECRET_MANUAL_ONLY') {
+              c.isFeatured = false;
+              c.suggestionMode = 'SECRET_MANUAL_ONLY';
+            }
             if (key) map.set(key, c);
           }
-          for (const c of prev) {
+          for (const raw of prev) {
+            const c = { ...raw };
             const key = (c.code || c.id || '').trim().toUpperCase();
+            if (key === 'LAUNCH150' || c.suggestionMode === 'SECRET_MANUAL_ONLY') {
+              c.isFeatured = false;
+              c.suggestionMode = 'SECRET_MANUAL_ONLY';
+            }
             if (key && !map.has(key)) {
               map.set(key, c);
             }
@@ -756,7 +779,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCoupons(prev =>
       prev.map(c => {
         if (c.id === id) {
-          updatedCoupon = { ...c, isFeatured: !c.isFeatured };
+          const newFeatured = !c.isFeatured;
+          updatedCoupon = {
+            ...c,
+            isFeatured: newFeatured,
+            suggestionMode: newFeatured ? 'PUBLIC_1CLICK' : 'SECRET_MANUAL_ONLY'
+          };
           return updatedCoupon;
         }
         return c;

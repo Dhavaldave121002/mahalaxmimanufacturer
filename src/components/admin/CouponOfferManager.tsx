@@ -175,7 +175,9 @@ export const CouponOfferManager: React.FC = () => {
             maxDiscountAmount: ic.maxDiscountAmount,
             applicableFor: ic.applicableFor,
             isActive: ic.isActive,
-            isFeatured: ic.isFeatured
+            isFeatured: ic.isFeatured,
+            suggestionMode: ic.suggestionMode,
+            targetPlatform: ic.targetPlatform
           });
         }
       });
@@ -394,12 +396,12 @@ export const CouponOfferManager: React.FC = () => {
                   {coupon.isFeatured && coupon.isActive ? (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
                       <Zap className="w-3 h-3 fill-amber-500 text-amber-600" />
-                      1-Click Suggestion
+                      🌐 Public 1-Click (Cart & App)
                     </span>
                   ) : (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200 flex items-center gap-1">
                       <Lock className="w-3 h-3 text-purple-600" />
-                      Secret Promo (Manual Type)
+                      🔒 Secret (Email Voucher / Manual)
                     </span>
                   )}
                   {coupon.targetPlatform && coupon.targetPlatform !== 'ALL' && (
@@ -750,10 +752,10 @@ export const CouponOfferManager: React.FC = () => {
                     <div>
                       <span className="font-bold text-xs text-navy flex items-center gap-1">
                         <Zap className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-                        Public 1-Click Suggestion
+                        🌐 Public 1-Click Suggestion (Cart & App)
                       </span>
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        Displays in "Tap to apply" list on Cart & App so users can apply it with 1 click.
+                        Displays openly in "Tap to apply" list on Web Cart & Mobile App so all buyers can apply with 1 click.
                       </p>
                     </div>
                   </label>
@@ -776,10 +778,10 @@ export const CouponOfferManager: React.FC = () => {
                     <div>
                       <span className="font-bold text-xs text-purple-900 flex items-center gap-1">
                         <Lock className="w-3.5 h-3.5 text-purple-600" />
-                        Secret Code (Manual Type Only)
+                        🔒 Secret / Subscriber Email Only (Manual Type)
                       </span>
                       <p className="text-[11px] text-slate-500 mt-0.5">
-                        HIDDEN from 1-click list. Only buyers who manually enter this code (Email/WhatsApp/RFQ) can redeem it.
+                        HIDDEN from 1-click lists on Web Cart & Mobile App. Given exclusively via Email (welcome newsletter / cart recovery) or manual code entry.
                       </p>
                     </div>
                   </label>

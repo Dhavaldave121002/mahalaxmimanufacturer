@@ -177,20 +177,6 @@
   ],
   "coupons": [
     {
-      "id": "coup-launch150",
-      "code": "LAUNCH150",
-      "title": "Surat Mill Launch Promo",
-      "description": "Flat ₹150 OFF on your first direct loom purchase",
-      "discountType": "FLAT",
-      "discountValue": 150,
-      "minOrderValue": 0,
-      "isActive": true,
-      "isFeatured": true,
-      "applicableFor": "ALL",
-      "usedCount": 42,
-      "createdAt": "2026-10-01T00:00:00.000Z"
-    },
-    {
       "id": "coup-milldirect10",
       "code": "MILLDIRECT10",
       "title": "Direct Loom 10% Discount",

@@ -48,9 +48,15 @@ export const CartPage: React.FC = () => {
   const [couponMsg, setCouponMsg] = useState<{ text: string; success: boolean } | null>(null);
   const [timeLeft, setTimeLeft] = useState(899); // 14 mins 59 secs
 
-  // Active & Featured storefront coupons configured by Admin (Excluding APP_ONLY coupons)
+  // Active & Public 1-Click coupons configured by Admin for Storefront
+  // (Excludes secret/email-only voucher codes like LAUNCH150 and APP_ONLY coupons)
   const featuredCoupons = coupons.filter(
-    c => c.isActive && c.isFeatured && c.targetPlatform !== 'APP_ONLY'
+    c =>
+      c.isActive &&
+      c.isFeatured &&
+      c.suggestionMode !== 'SECRET_MANUAL_ONLY' &&
+      (c.code || '').trim().toUpperCase() !== 'LAUNCH150' &&
+      c.targetPlatform !== 'APP_ONLY'
   );
 
   // Abandoned cart email recovery state
@@ -412,6 +418,10 @@ export const CartPage: React.FC = () => {
                 </button>
               </form>
             )}
+
+            <p className="text-[10.5px] text-slate-400">
+              💡 Received a subscriber voucher via email? Enter your secret promo code above and tap Apply.
+            </p>
 
             {couponMsg && (
               <p className={`text-[11px] font-semibold ${couponMsg.success ? 'text-emerald-700' : 'text-error'}`}>

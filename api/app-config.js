@@ -412,7 +412,10 @@ export default async function handler(req, res) {
 
       let formattedCoupons = [];
       try {
-        const [couponsRows] = await pool.query('SELECT * FROM coupons WHERE is_active = 1 ORDER BY is_featured DESC, created_at DESC');
+        // Only return Public 1-Click coupons for Mobile App (exclude WEB_ONLY, exclude SECRET_MANUAL_ONLY, exclude LAUNCH150)
+        const [couponsRows] = await pool.query(
+          "SELECT * FROM coupons WHERE is_active = 1 AND is_featured = 1 AND (suggestion_mode IS NULL OR suggestion_mode != 'SECRET_MANUAL_ONLY') AND (target_platform IS NULL OR target_platform != 'WEB_ONLY') AND UPPER(code) != 'LAUNCH150' ORDER BY created_at DESC"
+        );
         if (Array.isArray(couponsRows)) {
           formattedCoupons = couponsRows.map(c => ({
             id: c.id,
@@ -424,7 +427,7 @@ export default async function handler(req, res) {
             minOrderValue: Number(c.min_order_value || 0),
             maxDiscountAmount: c.max_discount_amount ? Number(c.max_discount_amount) : undefined,
             isActive: Boolean(c.is_active),
-            isFeatured: Boolean(c.is_featured),
+            isFeatured: true,
             applicableFor: c.applicable_for || 'ALL'
           }));
         }
@@ -432,7 +435,10 @@ export default async function handler(req, res) {
         // quiet fallback
       }
 
-      const fallbackCoupons = readFallbackConfig()?.coupons || [];
+      const rawFallbackCoupons = readFallbackConfig()?.coupons || [];
+      const fallbackCoupons = rawFallbackCoupons.filter(
+        c => c.isActive && c.isFeatured !== false && c.suggestionMode !== 'SECRET_MANUAL_ONLY' && (c.code || '').toUpperCase() !== 'LAUNCH150' && c.targetPlatform !== 'WEB_ONLY'
+      );
 
       return res.status(200).json({
         success: true,

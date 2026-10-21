@@ -4,13 +4,14 @@ export const INITIAL_COUPONS: CouponOffer[] = [
   {
     id: 'coup-launch150',
     code: 'LAUNCH150',
-    title: 'Ahmedabad Mill Launch Promo',
-    description: 'Flat ₹150 OFF on your first direct loom purchase',
+    title: 'Subscriber Welcome Email Voucher',
+    description: 'Exclusive ₹150 OFF voucher sent via email for new subscribers & signups',
     discountType: 'FLAT',
     discountValue: 150,
     minOrderValue: 0,
     isActive: true,
-    isFeatured: true,
+    isFeatured: false,
+    suggestionMode: 'SECRET_MANUAL_ONLY',
     applicableFor: 'ALL',
     usedCount: 42,
     createdAt: '2026-10-01T00:00:00.000Z'
