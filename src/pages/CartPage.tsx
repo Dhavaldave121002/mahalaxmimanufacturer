@@ -59,8 +59,8 @@ export const CartPage: React.FC = () => {
       c.targetPlatform !== 'APP_ONLY'
   );
 
-  // Abandoned cart email recovery state
-  const [emailCartInput, setEmailCartInput] = useState(currentUser?.email || '');
+  // Abandoned cart email recovery state (Empty by default so user enters their own email)
+  const [emailCartInput, setEmailCartInput] = useState('');
   const [emailCartSending, setEmailCartSending] = useState(false);
   const [emailCartStatus, setEmailCartStatus] = useState<string | null>(null);
 
@@ -71,9 +71,12 @@ export const CartPage: React.FC = () => {
     }
     setEmailCartSending(true);
     setEmailCartStatus(null);
-    const res = await sendAbandonedCartEmail(emailCartInput.trim(), currentUser?.name);
+    const res = await sendAbandonedCartEmail(emailCartInput.trim(), currentUser?.name || 'Valued Customer');
     setEmailCartSending(false);
     setEmailCartStatus(res.message);
+    if (res.success) {
+      setEmailCartInput('');
+    }
   };
 
   React.useEffect(() => {
@@ -602,7 +605,7 @@ export const CartPage: React.FC = () => {
                   type="email"
                   value={emailCartInput}
                   onChange={e => setEmailCartInput(e.target.value)}
-                  placeholder="Enter email address"
+                  placeholder="Enter your email to receive cart & voucher..."
                   className="flex-1 px-3 py-2 text-xs bg-white rounded-xl border border-slate-300 outline-none focus:border-indigo"
                 />
                 <button
