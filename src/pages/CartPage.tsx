@@ -22,6 +22,7 @@ import {
   Palette
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
+import { PaymentTrustBadges } from '../components/common/PaymentTrustBadges';
 
 export const CartPage: React.FC = () => {
   const navigate = useNavigate();
@@ -632,14 +633,7 @@ export const CartPage: React.FC = () => {
               </div>
 
               {/* Supported Payment Channels */}
-              <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] font-bold text-slate-600">
-                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">UPI / QR</span>
-                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">Google Pay</span>
-                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">PhonePe</span>
-                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">RuPay</span>
-                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">NetBanking</span>
-                <span className="px-2 py-0.5 bg-slate-100 rounded border border-slate-200">Cash on Delivery</span>
-              </div>
+              <PaymentTrustBadges showSslNotice={false} />
 
               {/* B2B Trust Notice */}
               <div className="pt-2 text-[11px] text-slate-500 space-y-1">

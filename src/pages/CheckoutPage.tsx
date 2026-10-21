@@ -17,6 +17,7 @@ import {
   Lock
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
+import { PaymentTrustBadges } from '../components/common/PaymentTrustBadges';
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
@@ -832,8 +833,9 @@ export const CheckoutPage: React.FC = () => {
               <span>💬 Confirm & Finalize via WhatsApp</span>
             </a>
 
-            <div className="pt-2 border-t border-slate-100 flex flex-col gap-1.5 text-center">
-              <div className="flex items-center justify-center gap-3 text-[10px] font-bold text-slate-500">
+            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2 text-center">
+              <PaymentTrustBadges showSslNotice={false} />
+              <div className="flex items-center justify-center gap-3 text-[10px] font-bold text-slate-500 pt-1">
                 <span>🔒 256-Bit SSL Encrypted</span>
                 <span>•</span>
                 <span>🛡️ SafeXpress / V-Trans Express</span>
