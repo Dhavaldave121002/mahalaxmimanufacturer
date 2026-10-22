@@ -41,6 +41,7 @@ export const CheckoutPage: React.FC = () => {
     deliveryInfo,
     checkPincode
   } = useApp();
+  const checkoutUnavailable = import.meta.env.PROD;
 
   useEffect(() => {
     if (cart.length === 0) navigate('/cart');
@@ -315,10 +316,7 @@ export const CheckoutPage: React.FC = () => {
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    if (import.meta.env.PROD) {
-      alert('Checkout is temporarily unavailable until server-side pricing, inventory, and payment verification are configured.');
-      return;
-    }
+    if (checkoutUnavailable) return;
 
     if (!cart || cart.length === 0) {
       alert('Your cart is empty. Please add items to your cart before proceeding to checkout.');
@@ -1186,16 +1184,33 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             {/* Place Order CTA Button */}
+            {checkoutUnavailable && (
+              <div
+                role="status"
+                className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs leading-relaxed text-amber-950"
+              >
+                <p className="font-bold">Online checkout is temporarily unavailable.</p>
+                <p className="mt-1">
+                  Orders can’t be confirmed until server-side pricing, stock, and payment verification are ready.
+                  You can ask us to verify this cart on WhatsApp; that request does not place an order.
+                </p>
+              </div>
+            )}
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || checkoutUnavailable}
               className={`w-full py-4 rounded-xl font-bold text-xs transition shadow-premium flex items-center justify-center gap-2 ${
-                isSubmitting
+                isSubmitting || checkoutUnavailable
                   ? 'bg-slate-400 cursor-not-allowed text-white'
                   : 'bg-indigo hover:bg-indigo-dark text-white'
               }`}
             >
-              {isSubmitting ? (
+              {checkoutUnavailable ? (
+                <>
+                  <Lock className="w-4 h-4" />
+                  <span>Online Checkout Temporarily Unavailable</span>
+                </>
+              ) : isSubmitting ? (
                 <>
                   <Clock className="w-4 h-4 animate-spin" />
                   <span>Processing Order & GST Invoice...</span>
@@ -1227,19 +1242,18 @@ export const CheckoutPage: React.FC = () => {
             {/* 1-Click WhatsApp Checkout Fallback */}
             <a
               href={`https://wa.me/919876543210?text=${encodeURIComponent(
-                `Hello Mahalaxmi Enterprises, I am ready to checkout my order:\n` +
+                `Hello Mahalaxmi Enterprises, please verify pricing and availability for this cart:\n` +
                 `Name: ${activeAddress.fullName} (${activeAddress.phone})\n` +
                 `Delivery Address: ${activeAddress.street}, ${activeAddress.city}, ${activeAddress.state} - ${activeAddress.pincode}\n` +
                 (isB2B && gstNumber ? `Company: ${companyName} | GSTIN: ${gstNumber}\n` : '') +
-                `Total Order: ₹${cartTotal}\n` +
-                (pointsRedeemed > 0 ? `Points Cut: 🪙 ${pointsRedeemed} (-₹${pointsRedeemed})\n` : '') +
-                `Net Payable: ₹${remainingPayable} (Payment Mode: ${isFullyCoveredByPoints ? 'Mill Points 100%' : secondaryPaymentMethod})\n\nPlease confirm dispatch from Ahmedabad Mill.`
+                `Items:\n${cart.map(item => `${item.quantity} x ${item.product.name} (displayed ₹${item.totalPrice})`).join('\n')}\n` +
+                `Displayed cart total: ₹${cartTotal}\n\nPlease confirm current prices and stock. This is an enquiry only, not a confirmed order.`
               )}`}
               target="_blank"
               rel="noreferrer"
               className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm text-center"
             >
-              <span>💬 Confirm & Finalize via WhatsApp</span>
+              <span>💬 Ask About This Cart on WhatsApp</span>
             </a>
 
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2 text-center">
