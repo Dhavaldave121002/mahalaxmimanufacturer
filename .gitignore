@@ -27,3 +27,4 @@ dist-ssr
 *.sw?
 
 scratch/
+private-data/

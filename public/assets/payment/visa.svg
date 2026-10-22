@@ -1,41 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<meta charset="utf-8">
-<title>Wikimedia Error</title>
-<style>
-* { margin: 0; padding: 0; }
-body { background: #fff; font: 15px/1.6 sans-serif; color: #333; }
-.content { margin: 7% auto 0; padding: 2em 1em 1em; max-width: 640px; display: flex; flex-direction: row; flex-wrap: wrap; }
-.footer { clear: both; margin-top: 14%; border-top: 1px solid #e5e5e5; background: #f9f9f9; padding: 2em 0; font-size: 0.8em; text-align: center; }
-img { margin: 0 2em 2em 0; }
-a img { border: 0; }
-h1 { margin-top: 1em; font-size: 1.2em; }
-.content-text { flex: 1; }
-p { margin: 0.7em 0 1em 0; }
-a { color: #0645ad; text-decoration: none; }
-a:hover { text-decoration: underline; }
-code { font-family: sans-serif; }
-summary { font-weight: bold; cursor: pointer; }
-details[open] { background: #970302; color: #dfdedd; }
-.text-muted { color: #777; }
-@media (prefers-color-scheme: dark) {
-  a { color: #9e9eff; }
-  body { background: transparent; color: #ddd; }
-  .footer { border-top: 1px solid #444; background: #060606; }
-  #logo { filter: invert(1) hue-rotate(180deg); }
-  .text-muted { color: #888; }
-}
-</style>
-<meta name="color-scheme" content="light dark">
-<div class="content" role="main">
-<a href="https://www.wikimedia.org"><img id="logo" src="https://www.wikimedia.org/static/images/wmf-logo.png" srcset="https://www.wikimedia.org/static/images/wmf-logo-2x.png 2x" alt="Wikimedia" width="135" height="101">
-</a>
-<div class="content-text">
-<h1>Error</h1>
-
-<p>Too many requests (76af2b0)</p>
-</div>
-</div>
-<div class="footer"><p>If you report this error to the Wikimedia System Administrators, please include the details below.</p><p class="text-muted"><code>Request served via cp5029 cp5029, Varnish XID 276463996<br>Upstream caches: cp5029 int<br>Error: 429, Too many requests (76af2b0) at Wed, 21 Oct 2026 05:55:16 GMT<br><details><summary>Sensitive client information</summary>IP address: 2401:4900:8fed:2aa9:d145:2027:d7f:9557</details></code></p>
-</div>
-</html>
+<svg width="128" height="128" viewBox="0 44 126 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="128" height="128" fill="white"/>
+<path d="M47.3052 44.707L30.9936 83.3949H20.3516L12.3246 52.5202C11.8373 50.6185 11.4136 49.9218 9.93148 49.1206C7.51172 47.8156 3.51576 46.5913 0 45.8314L0.238796 44.707H17.3692C19.5528 44.707 21.5157 46.152 22.0115 48.6516L26.2508 71.0384L36.728 44.7064L47.3052 44.707ZM89.0024 70.7636C89.0452 60.5527 74.7992 59.9902 74.8972 55.4288C74.9276 54.0406 76.2572 52.5647 79.1676 52.188C80.61 52.0002 84.5844 51.857 89.0924 53.9194L90.8608 45.7153C88.4384 44.8412 85.3216 44 81.444 44C71.4928 44 64.49 49.2587 64.4308 56.7887C64.3668 62.3583 69.4296 65.4663 73.2436 67.317C77.1676 69.2122 78.4844 70.4301 78.4692 72.1254C78.4416 74.7206 75.3396 75.8662 72.4412 75.9114C67.3808 75.9888 64.4444 74.5502 62.104 73.4684L60.2792 81.9441C62.6316 83.0169 66.9732 83.9529 71.4748 84C82.0512 84 88.97 78.8065 89.0024 70.7636ZM115.279 83.3949H124.59L116.463 44.707H107.868C105.936 44.707 104.306 45.8256 103.584 47.5454L88.4772 83.3949H99.0488L101.147 77.6163H114.064L115.279 83.3949ZM104.046 69.687L109.345 55.1612L112.395 69.687H104.046ZM61.6892 44.707L53.3644 83.3949H43.2976L51.6256 44.707H61.6892Z" fill="#1434CB"/>
+</svg>

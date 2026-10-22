@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 function getFallbackFile() {
-  return path.join(process.cwd(), 'public', 'user-wishlists.json');
+  return path.join(process.cwd(), 'private-data', 'fixtures', 'user-wishlists.json');
 }
 
 function readFallbackWishlists() {
@@ -37,6 +37,13 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(503).json({
+      success: false,
+      error: 'Wishlist synchronization is unavailable until customer authentication is configured.'
+    });
   }
 
   const pool = getDbPool();

@@ -1,11 +1,12 @@
 import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
+import { requireAdminSession } from './_lib/admin-session.js';
 
 // Subscriber File Storage Helper
 function loadSubscribers() {
   try {
-    const filePath = path.join(process.cwd(), 'public', 'subscribers.json');
+    const filePath = path.join(process.cwd(), 'private-data', 'fixtures', 'subscribers.json');
     if (fs.existsSync(filePath)) {
       return JSON.parse(fs.readFileSync(filePath, 'utf8'));
     }
@@ -17,7 +18,7 @@ function loadSubscribers() {
 
 function saveSubscribers(list) {
   try {
-    const filePath = path.join(process.cwd(), 'public', 'subscribers.json');
+    const filePath = path.join(process.cwd(), 'private-data', 'fixtures', 'subscribers.json');
     fs.writeFileSync(filePath, JSON.stringify(list, null, 2), 'utf8');
   } catch (err) {
     console.warn('Subscribers write error:', err.message);
@@ -78,8 +79,17 @@ export default async function handler(req, res) {
     return;
   }
 
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(503).json({
+      success: false,
+      error: 'Abandoned-cart tracking is unavailable until durable database storage is configured.'
+    });
+  }
+
   // GET: Return all subscriber leads and cart sessions for Admin Dashboard
   if (req.method === 'GET') {
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
     const subscribers = loadSubscribers();
     const now = Date.now();
     const sessions = [];

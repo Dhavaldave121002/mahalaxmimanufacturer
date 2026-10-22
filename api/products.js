@@ -1,6 +1,7 @@
 import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
+import { requireAdminSession, requirePersistentDatabase } from './_lib/admin-session.js';
 
 function readFallbackProducts() {
   try {
@@ -44,7 +45,7 @@ async function ensureReviewsTable(pool) {
         rating DECIMAL(2,1) NOT NULL DEFAULT 5.0,
         comment TEXT NOT NULL,
         image_url LONGTEXT,
-        status ENUM('APPROVED', 'PENDING', 'REJECTED') DEFAULT 'APPROVED',
+        status ENUM('APPROVED', 'PENDING', 'REJECTED') DEFAULT 'PENDING',
         verified_buyer TINYINT(1) DEFAULT 1,
         source VARCHAR(32) DEFAULT 'WEB',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -63,7 +64,7 @@ async function ensureReviewsTable(pool) {
 
 function loadFallbackReviews() {
   try {
-    const fPath = path.join(process.cwd(), 'public', 'reviews.json');
+    const fPath = path.join(process.cwd(), 'private-data', 'fixtures', 'reviews.json');
     if (fs.existsSync(fPath)) {
       return JSON.parse(fs.readFileSync(fPath, 'utf8'));
     }
@@ -100,7 +101,7 @@ function loadFallbackReviews() {
 
 function saveFallbackReviews(revs) {
   try {
-    const fPath = path.join(process.cwd(), 'public', 'reviews.json');
+    const fPath = path.join(process.cwd(), 'private-data', 'fixtures', 'reviews.json');
     fs.writeFileSync(fPath, JSON.stringify(revs, null, 2), 'utf8');
   } catch (_) {}
 }
@@ -115,7 +116,7 @@ async function ensureProductsTable(pool) {
         name VARCHAR(255) NOT NULL,
         slug VARCHAR(255) NOT NULL,
         sku VARCHAR(64) NOT NULL UNIQUE,
-        category VARCHAR(64) NOT NULL,
+        category_id VARCHAR(64) NOT NULL,
         category_name VARCHAR(64) NOT NULL,
         subcategory VARCHAR(100) NOT NULL,
         mrp DECIMAL(10,2) NOT NULL,
@@ -125,7 +126,7 @@ async function ensureProductsTable(pool) {
         rating DECIMAL(3,2) DEFAULT 4.80,
         review_count INT DEFAULT 0,
         is_bestseller TINYINT(1) DEFAULT 0,
-        is_direct_mill TINYINT(1) DEFAULT 1,
+        is_direct_mill_deal TINYINT(1) DEFAULT 1,
         is_trending TINYINT(1) DEFAULT 0,
         hsn_code VARCHAR(32) DEFAULT '630221',
         gst_rate DECIMAL(4,2) DEFAULT 5.00,
@@ -139,9 +140,20 @@ async function ensureProductsTable(pool) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_sku (sku),
-        INDEX idx_category (category)
+        INDEX idx_category (category_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+    const [columns] = await pool.query(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products'`
+    );
+    const columnNames = new Set(columns.map(column => column.COLUMN_NAME));
+    if (columnNames.has('category') && !columnNames.has('category_id')) {
+      await pool.query('ALTER TABLE products CHANGE COLUMN category category_id VARCHAR(64) NOT NULL');
+    }
+    if (columnNames.has('is_direct_mill') && !columnNames.has('is_direct_mill_deal')) {
+      await pool.query('ALTER TABLE products CHANGE COLUMN is_direct_mill is_direct_mill_deal TINYINT(1) DEFAULT 1');
+    }
     tableEnsured = true;
   } catch (e) {
     console.warn('ensureProductsTable warning:', e.message);
@@ -174,6 +186,12 @@ export default async function handler(req, res) {
   if (req.method === 'GET' && (req.query?.action === 'reviews' || req.query?.type === 'reviews')) {
     const productId = req.query?.productId || req.query?.product_id;
     const email = req.query?.email ? req.query.email.trim().toLowerCase() : null;
+    const includePrivateReviews = req.query?.all === 'true' || Boolean(email);
+    if (includePrivateReviews) {
+      const admin = await requireAdminSession(req, res);
+      if (!admin) return;
+      if (!requirePersistentDatabase(pool, res)) return;
+    }
 
     if (pool) {
       try {
@@ -191,20 +209,32 @@ export default async function handler(req, res) {
         }
         query += ' ORDER BY created_at DESC';
         const [rows] = await pool.query(query, params);
-        return res.status(200).json({ success: true, count: rows.length, reviews: rows });
+        const visibleRows = includePrivateReviews
+          ? rows
+          : rows.map(({ customer_email: _customerEmail, ...review }) => review);
+        return res.status(200).json({ success: true, count: visibleRows.length, reviews: visibleRows });
       } catch (e) {
         console.warn('MySQL reviews fetch warning:', e.message);
       }
     }
 
     const fallback = loadFallbackReviews();
+    const slug = req.query?.slug;
     let filtered = fallback;
-    if (productId) {
-      filtered = fallback.filter(f => f.product_id === productId);
+    if (productId || slug) {
+      filtered = fallback.filter(f =>
+        (productId && (f.product_id === productId || f.productId === productId)) ||
+        (slug && (f.slug === slug || f.product_id === slug)) ||
+        (productId === 'prod-bedsheet-01' && (f.product_id === 'cotton-double-bedsheet' || f.slug === 'glance-300-tc-cotton-double-bedsheet')) ||
+        (productId === 'prod-cotton-towel-01' && (f.product_id === 'cotton-bath-towels'))
+      );
     } else if (email) {
       filtered = fallback.filter(f => (f.customer_email || '').toLowerCase() === email);
     }
-    return res.status(200).json({ success: true, count: filtered.length, reviews: filtered });
+    const visibleReviews = includePrivateReviews
+      ? filtered
+      : filtered.filter(review => review.status === 'APPROVED').map(({ customer_email: _customerEmail, ...review }) => review);
+    return res.status(200).json({ success: true, count: visibleReviews.length, reviews: visibleReviews });
   }
 
   if (req.method === 'GET') {
@@ -218,7 +248,7 @@ export default async function handler(req, res) {
             name: r.name,
             slug: r.slug,
             sku: r.sku,
-            category: r.category,
+            category: r.category_id,
             categoryName: r.category_name,
             subcategory: r.subcategory,
             mrp: Number(r.mrp),
@@ -228,7 +258,7 @@ export default async function handler(req, res) {
             rating: Number(r.rating || 4.8),
             reviewCount: Number(r.review_count || 0),
             isBestSeller: Boolean(r.is_bestseller),
-            isDirectMillDeal: Boolean(r.is_direct_mill),
+            isDirectMillDeal: Boolean(r.is_direct_mill_deal),
             isTrending: Boolean(r.is_trending),
             hsnCode: r.hsn_code || '630221',
             gstRate: Number(r.gst_rate || 5),
@@ -291,16 +321,9 @@ export default async function handler(req, res) {
           await pool.query(
             `INSERT INTO product_reviews 
               (id, product_id, product_title, customer_name, customer_email, rating, comment, image_url, status, verified_buyer, source)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'APPROVED', 1, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', 0, ?)`,
             [reviewId, productId, productTitle, customerName, customerEmail, rating, comment, imageUrl, source]
           );
-
-          try {
-            await pool.query(
-              'UPDATE products SET review_count = review_count + 1 WHERE id = ?',
-              [productId]
-            );
-          } catch (_) {}
         } catch (dbErr) {
           console.warn('MySQL review insert warning:', dbErr.message);
         }
@@ -316,8 +339,8 @@ export default async function handler(req, res) {
         rating,
         comment,
         image_url: imageUrl,
-        status: 'APPROVED',
-        verified_buyer: 1,
+        status: 'PENDING',
+        verified_buyer: 0,
         source,
         created_at: new Date().toISOString()
       };
@@ -326,7 +349,7 @@ export default async function handler(req, res) {
 
       return res.status(201).json({
         success: true,
-        message: 'Review submitted successfully! Thank you for your feedback.',
+        message: 'Review submitted for moderation. Thank you for your feedback.',
         review: newRev
       });
     }
@@ -335,6 +358,8 @@ export default async function handler(req, res) {
     // POST ACTION: DELETE REVIEW (Admin)
     // ----------------------------------------------------
     if (p.action === 'delete_review') {
+      const admin = await requireAdminSession(req, res);
+      if (!admin) return;
       const targetId = p.id || p.reviewId;
       if (pool && targetId) {
         try {
@@ -346,6 +371,10 @@ export default async function handler(req, res) {
       saveFallbackReviews(filtered);
       return res.status(200).json({ success: true, message: 'Review removed successfully.' });
     }
+
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
+    if (!requirePersistentDatabase(pool, res)) return;
 
     if (!p.name || !p.sku) {
       return res.status(400).json({ success: false, error: 'Product name and SKU are required.' });
@@ -376,13 +405,13 @@ export default async function handler(req, res) {
         await ensureProductsTable(pool);
         await pool.query(
           `INSERT INTO products (
-            id, name, slug, sku, category, category_name, subcategory,
+            id, name, slug, sku, category_id, category_name, subcategory,
             mrp, retail_price, stock, moq, rating, review_count,
             hsn_code, gst_rate, short_description, description,
             images, tags, specifications, wholesale_tiers, variants
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON DUPLICATE KEY UPDATE
-            name=VALUES(name), slug=VALUES(slug), category=VALUES(category), category_name=VALUES(category_name),
+            name=VALUES(name), slug=VALUES(slug), category_id=VALUES(category_id), category_name=VALUES(category_name),
             subcategory=VALUES(subcategory), mrp=VALUES(mrp), retail_price=VALUES(retail_price),
             stock=VALUES(stock), moq=VALUES(moq), hsn_code=VALUES(hsn_code), gst_rate=VALUES(gst_rate),
             short_description=VALUES(short_description), description=VALUES(description),
@@ -399,7 +428,13 @@ export default async function handler(req, res) {
         dbSaved = true;
       } catch (err) {
         console.warn('MySQL product save warning:', err.message);
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({ success: false, error: 'Product changes could not be saved to the database.' });
+        }
       }
+    }
+    if (!dbSaved && process.env.NODE_ENV === 'production') {
+      return res.status(503).json({ success: false, error: 'Product changes were not persisted.' });
     }
 
     // Persist to fallback JSON
@@ -441,6 +476,9 @@ export default async function handler(req, res) {
   // PATCH: Quick Stock Adjustment
   // ----------------------------------------------------
   if (req.method === 'PATCH') {
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
+    if (!requirePersistentDatabase(pool, res)) return;
     let body = req.body;
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch { body = {}; }
@@ -455,6 +493,7 @@ export default async function handler(req, res) {
         await pool.query('UPDATE products SET stock = GREATEST(0, stock + ?) WHERE id = ?', [delta, id]);
       } catch (e) {
         console.warn('MySQL stock adjust warning:', e.message);
+        return res.status(503).json({ success: false, error: 'Stock adjustment could not be saved.' });
       }
     }
 
@@ -469,6 +508,9 @@ export default async function handler(req, res) {
   // DELETE: Remove Product
   // ----------------------------------------------------
   if (req.method === 'DELETE') {
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
+    if (!requirePersistentDatabase(pool, res)) return;
     let body = req.body;
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch { body = {}; }
@@ -483,6 +525,7 @@ export default async function handler(req, res) {
         await pool.query('DELETE FROM products WHERE id = ?', [targetId]);
       } catch (e) {
         console.warn('MySQL product delete warning:', e.message);
+        return res.status(503).json({ success: false, error: 'Product deletion could not be saved.' });
       }
     }
 

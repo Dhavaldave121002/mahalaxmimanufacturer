@@ -360,4 +360,18 @@ export interface CouponOffer {
   createdAt: string;
 }
 
+// ==========================================
+// FREQUENTLY BOUGHT TOGETHER / BUNDLE CONFIG
+// ==========================================
+export interface BundleOfferConfig {
+  enabled: boolean;
+  title: string;
+  subtitle: string;
+  badgeText: string;
+  discountPercentage: number;
+  minItemsForDiscount: number;
+  savingsNote: string;
+  bundleMaxProducts: number;
+}
+
 

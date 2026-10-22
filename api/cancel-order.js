@@ -1,4 +1,5 @@
 import { getDbPool } from '../database/db.js';
+import { requireAdminSession } from './_lib/admin-session.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -16,6 +17,12 @@ export default async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method Not Allowed' });
+  }
+  const admin = await requireAdminSession(req, res);
+  if (!admin) return;
+  const pool = getDbPool();
+  if (!pool) {
+    return res.status(503).json({ success: false, error: 'Order cancellation requires a configured database.' });
   }
 
   let body = req.body;
@@ -49,16 +56,18 @@ export default async function handler(req, res) {
   const paymentStatus = body.paymentStatus || 'PENDING';
 
   // 1. Update status in Central MySQL Database
-  const pool = getDbPool();
-  if (pool) {
-    try {
-      await pool.query(
-        "UPDATE orders SET status = 'CANCELLED' WHERE order_number = ? OR id = ?",
-        [orderNumber, orderId || orderNumber]
-      );
-    } catch (dbErr) {
-      console.warn('MySQL update status to CANCELLED warning:', dbErr.message);
-    }
+  let updateResult;
+  try {
+    [updateResult] = await pool.query(
+      "UPDATE orders SET status = 'CANCELLED' WHERE order_number = ? OR id = ?",
+      [orderNumber, orderId || orderNumber]
+    );
+  } catch (dbErr) {
+    console.error('Order cancellation persistence failed:', dbErr);
+    return res.status(503).json({ success: false, error: 'The order could not be cancelled in the database.' });
+  }
+  if (!updateResult.affectedRows) {
+    return res.status(404).json({ success: false, error: 'Order not found.' });
   }
 
   // 2. Dispatch Automated Cancellation Emails

@@ -33,7 +33,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   const [searchParams] = useSearchParams();
   const redirectPath = searchParams.get('redirect') || '/account';
 
-  const { login, register, resetPassword, requestOtp, currentUser, isLoggedIn, switchUserRole, registeredUsers } = useApp();
+  const { login, register, resetPassword, requestOtp, currentUser, isLoggedIn, registeredUsers } = useApp();
 
   const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>(defaultTab);
 
@@ -115,7 +115,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
       }
     }
 
-    const effectivePassword = loginMode === 'password' ? (loginPassword || 'password123') : undefined;
+    const effectivePassword = loginMode === 'password' ? loginPassword : undefined;
     const effectiveOtp = loginMode === 'otp' ? loginOtp.trim() : undefined;
 
     setLoading(true);
@@ -141,6 +141,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   // Send Login OTP via Real Email
   const handleSendLoginOtp = async () => {
     clearMessages();
+    if (import.meta.env.PROD) {
+      setErrorMsg('Customer OTP sign-in is unavailable until server-side authentication is configured.');
+      return;
+    }
     const id = loginIdentifier.trim().toLowerCase();
     if (!id) {
       setErrorMsg('Please enter your registered email address first.');
@@ -155,7 +159,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     // Check if email is registered in system
     const isRegistered = registeredUsers.some(
       u => u.email.toLowerCase() === id || u.phone.includes(id)
-    ) || id === 'dhavaldave121002@gmail.com' || id === 'deviltimeisback001@gmail.com' || id === 'mahalaxmienterpriseuk@gmail.com';
+    );
 
     if (!isRegistered) {
       setErrorMsg('Email address not registered! Please enter a registered email or click "Create Account" to sign up.');
@@ -185,6 +189,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearMessages();
+    if (import.meta.env.PROD) {
+      setErrorMsg('Customer registration is unavailable until server-side authentication is configured.');
+      return;
+    }
 
     if (!registerForm.name.trim()) {
       setErrorMsg('Please enter your full name.');
@@ -281,6 +289,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   // 3. Handle Forgot Password
   const handleSendForgotOtp = async () => {
     clearMessages();
+    if (import.meta.env.PROD) {
+      setErrorMsg('Password recovery is unavailable until server-side authentication is configured.');
+      return;
+    }
     const id = forgotIdentifier.trim().toLowerCase();
     if (!id || !id.includes('@')) {
       setErrorMsg('Please enter your registered email address.');
@@ -288,7 +300,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     }
 
     const isRegistered = registeredUsers.some(u => u.email.toLowerCase() === id);
-    if (!isRegistered && id !== 'dhavaldave121002@gmail.com') {
+    if (!isRegistered) {
       setErrorMsg('Email address not registered! Please enter a registered email.');
       return;
     }
@@ -315,6 +327,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   const handleForgotSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     clearMessages();
+    if (import.meta.env.PROD) {
+      setErrorMsg('Password recovery is unavailable until server-side authentication is configured.');
+      return;
+    }
 
     if (!forgotIdentifier.trim()) {
       setErrorMsg('Please enter your registered email.');
@@ -537,7 +553,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
                       <span>{loginMode === 'otp' ? 'Registered Email Address' : 'Email Address or Mobile'}</span>
-                      <span className="text-[10px] text-slate-400">e.g. dhavaldave121002@gmail.com</span>
+                      <span className="text-[10px] text-slate-400">e.g. you@example.com</span>
                     </label>
                     <div className="relative flex items-center">
                       <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />

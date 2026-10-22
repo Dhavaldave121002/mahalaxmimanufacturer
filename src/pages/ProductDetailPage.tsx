@@ -203,19 +203,41 @@ export const ProductDetailPage: React.FC = () => {
   const fetchLiveReviews = useCallback(async () => {
     if (!product?.id) return;
     try {
-      const res = await fetch(`/api/products?action=reviews&productId=${product.id}`);
+      const res = await fetch(`/api/products?action=reviews&productId=${encodeURIComponent(product.id)}&slug=${encodeURIComponent(product.slug || '')}`);
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.reviews)) {
           setReviewsList(json.reviews);
+          return;
         }
       }
     } catch (_) {}
-  }, [product?.id]);
+
+    // Static fallback from reviews.json for local/offline dev
+    try {
+      const res = await fetch('/reviews.json');
+      if (res.ok) {
+        const all: any[] = await res.json();
+        const filtered = all.filter(f =>
+          (product.id && (f.product_id === product.id || f.productId === product.id)) ||
+          (product.slug && (f.slug === product.slug || f.product_id === product.slug)) ||
+          (product.id === 'prod-bedsheet-01' && (f.product_id === 'cotton-double-bedsheet' || f.slug === 'glance-300-tc-cotton-double-bedsheet')) ||
+          (product.id === 'prod-cotton-towel-01' && f.product_id === 'cotton-bath-towels')
+        );
+        setReviewsList(filtered);
+      }
+    } catch (_) {}
+  }, [product?.id, product?.slug]);
 
   useEffect(() => {
     fetchLiveReviews();
   }, [fetchLiveReviews]);
+
+  // Real Reviews Statistics (Strictly derived from actual reviews)
+  const actualReviewCount = reviewsList.length;
+  const actualAverageRating = actualReviewCount > 0
+    ? Number((reviewsList.reduce((acc, r) => acc + (Number(r.rating) || 5), 0) / actualReviewCount).toFixed(1))
+    : (product?.rating || 5.0);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,6 +278,18 @@ export const ProductDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'specs' | 'tiers' | 'care' | 'reviews'>('specs');
   const [showReturnModal, setShowReturnModal] = useState(false);
 
+  const activeWholesaleTier = useMemo(() => {
+    if (!product?.wholesaleTiers || product.wholesaleTiers.length === 0) return null;
+    const sorted = [...product.wholesaleTiers].sort((a, b) => b.minQty - a.minQty);
+    return sorted.find(t => quantity >= t.minQty) || product.wholesaleTiers[0];
+  }, [product, quantity]);
+
+  const nextTier = useMemo(() => {
+    if (!product?.wholesaleTiers || product.wholesaleTiers.length === 0) return null;
+    const sorted = [...product.wholesaleTiers].sort((a, b) => a.minQty - b.minQty);
+    return sorted.find(t => t.minQty > quantity) || null;
+  }, [product, quantity]);
+
   if (!product) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center space-y-4">
@@ -269,12 +303,6 @@ export const ProductDetailPage: React.FC = () => {
   }
 
   // Dynamic Wholesale Tier Calculation for current selected quantity
-  const activeWholesaleTier = useMemo(() => {
-    if (!product.wholesaleTiers || product.wholesaleTiers.length === 0) return null;
-    const sorted = [...product.wholesaleTiers].sort((a, b) => b.minQty - a.minQty);
-    return sorted.find(t => quantity >= t.minQty) || product.wholesaleTiers[0];
-  }, [product, quantity]);
-
   const currentUnitPrice = activeWholesaleTier
     ? activeWholesaleTier.pricePerUnit
     : product.retailPrice;
@@ -283,19 +311,8 @@ export const ProductDetailPage: React.FC = () => {
   const standardRetailTotal = product.retailPrice * quantity;
   const wholesaleSavings = standardRetailTotal - currentLineTotal;
 
-  // Next tier progress calculation
-  const nextTier = useMemo(() => {
-    if (!product.wholesaleTiers || product.wholesaleTiers.length === 0) return null;
-    const sorted = [...product.wholesaleTiers].sort((a, b) => a.minQty - b.minQty);
-    return sorted.find(t => t.minQty > quantity) || null;
-  }, [product, quantity]);
-
   const pcsNeededForNextTier = nextTier ? nextTier.minQty - quantity : 0;
   const nextTierSavingsPerPc = nextTier ? currentUnitPrice - nextTier.pricePerUnit : 0;
-
-  // GST ITC calculation
-  const gstAmount = Math.round(currentLineTotal * (product.gstRate / (100 + product.gstRate)));
-  const netEffectiveCost = currentLineTotal - gstAmount;
 
   const getCustomizationPayload = (): ProductCustomization | undefined => {
     if (customizationType === 'No Customization') return undefined;
@@ -388,7 +405,7 @@ export const ProductDetailPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-12 pb-20">
       {/* Dynamic SEO, Schema.org JSON-LD & City/State Geo Ranking */}
-      <SEOProductHead product={product} city={deliveryInfo?.city || 'Ahmedabad'} state={deliveryInfo?.state || 'Gujarat'} />
+      <SEOProductHead product={product} city={deliveryInfo?.city || 'Surat'} state={deliveryInfo?.state || 'Gujarat'} />
 
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -557,42 +574,29 @@ export const ProductDetailPage: React.FC = () => {
               {product.name}
             </h1>
 
-            {/* Ratings & Review summary */}
-            <div className="flex items-center gap-3 mt-2.5 text-xs">
-              <div className="flex items-center text-amber-500 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                <Star className="w-3.5 h-3.5 fill-current" />
-                <span className="ml-1 text-slate-900">{product.rating}</span>
-              </div>
-              <span className="text-slate-500">({product.reviewCount} verified ratings)</span>
+            {/* Real Ratings & Review summary */}
+            <div className="flex items-center gap-3 mt-2.5 text-xs flex-wrap">
+              {actualReviewCount > 0 ? (
+                <>
+                  <div className="flex items-center text-amber-500 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                    <Star className="w-3.5 h-3.5 fill-current" />
+                    <span className="ml-1 text-slate-900">{actualAverageRating}</span>
+                  </div>
+                  <span className="text-slate-500 font-medium">
+                    ({actualReviewCount} verified {actualReviewCount === 1 ? 'rating' : 'ratings'})
+                  </span>
+                </>
+              ) : (
+                <div className="flex items-center gap-1.5 text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 text-[11px] font-semibold">
+                  <Star className="w-3 h-3 text-amber-400 fill-current" />
+                  <span>No reviews yet</span>
+                </div>
+              )}
               <span className="text-slate-300">•</span>
               <span className="text-emerald-700 font-semibold flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 In Stock ({product.stock} units available at mill)
               </span>
-            </div>
-
-            {/* High-Conversion Scarcity & Urgency Triggers */}
-            <div className="mt-3.5 p-3 bg-amber-50/70 border border-amber-200/80 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-2 text-amber-900 font-medium flex-wrap">
-                <span className="flex h-2 w-2 relative shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="flex items-center gap-1 font-bold text-slate-800">
-                  <Eye className="w-3.5 h-3.5 text-indigo shrink-0" />
-                  24 buyers active
-                </span>
-                <span className="text-slate-300">•</span>
-                <span className="flex items-center gap-1 font-semibold text-rose-700">
-                  <Flame className="w-3.5 h-3.5 text-rose-600 fill-current shrink-0" />
-                  Only {Math.min(product.stock, 14)} packs left in Ahmedabad Mill lot
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1.5 text-slate-700 font-medium text-[11px] bg-white/80 px-2 py-1 rounded-lg border border-amber-200/50">
-                <Timer className="w-3.5 h-3.5 text-indigo shrink-0" />
-                <span>Order within <strong>2h 15m</strong> for same-day shipping</span>
-              </div>
             </div>
           </div>
 
@@ -628,24 +632,6 @@ export const ProductDetailPage: React.FC = () => {
                 <span className="font-bold">You save ₹{wholesaleSavings.toLocaleString('en-IN')} vs retail</span>
               </div>
             )}
-
-            {/* GSTR-2B Input Tax Credit Callout */}
-            <div className="p-3 bg-indigo-50/70 border border-indigo-200/80 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-start sm:items-center gap-2.5">
-                <Building2 className="w-4 h-4 text-indigo shrink-0 mt-0.5 sm:mt-0" />
-                <div>
-                  <span className="font-bold text-navy block">
-                    GST Registered Business? Claim ₹{gstAmount.toLocaleString('en-IN')} via GSTR-2B ITC
-                  </span>
-                  <span className="text-[11px] text-slate-500">
-                    Net effective landed cost: <strong className="text-navy">₹{netEffectiveCost.toLocaleString('en-IN')}</strong> (₹{Math.round(netEffectiveCost / quantity)}/pc)
-                  </span>
-                </div>
-              </div>
-              <span className="text-[10px] font-black bg-indigo/10 text-indigo px-2 py-1 rounded whitespace-nowrap self-start sm:self-auto">
-                100% ITC REBATE
-              </span>
-            </div>
           </div>
 
           {/* Wholesale Quantity Pricing Tiers Grid */}
@@ -1540,7 +1526,7 @@ export const ProductDetailPage: React.FC = () => {
                           💳 Prepaid Only for this location
                         </span>
                       )}
-                      <span className="text-slate-400">Direct Ahmedabad Mill Dispatch</span>
+                      <span className="text-slate-400">Direct Surat Mill Dispatch</span>
                     </div>
                   </>
                 ) : (
@@ -1603,7 +1589,7 @@ export const ProductDetailPage: React.FC = () => {
                 : 'border-transparent text-slate-500 hover:text-navy'
             }`}
           >
-            Verified Client Reviews ({product.reviewCount})
+            Verified Client Reviews ({actualReviewCount})
           </button>
         </div>
 
@@ -1680,14 +1666,21 @@ export const ProductDetailPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-gradient-to-br from-slate-50 to-white rounded-2xl border border-slate-200 shadow-sm">
               <div className="flex items-center gap-4">
                 <div className="text-center pr-6 border-r border-slate-200">
-                  <span className="text-3xl font-black text-navy">{product.rating}</span>
+                  <span className="text-3xl font-black text-navy">{actualReviewCount > 0 ? actualAverageRating : '—'}</span>
                   <div className="flex text-amber-500 justify-center mt-1">
                     {[1, 2, 3, 4, 5].map(st => (
-                      <Star key={st} className="w-3.5 h-3.5 fill-current" />
+                      <Star
+                        key={st}
+                        className={`w-3.5 h-3.5 ${
+                          actualReviewCount > 0 && st <= Math.round(actualAverageRating)
+                            ? 'fill-current'
+                            : 'text-slate-200'
+                        }`}
+                      />
                     ))}
                   </div>
-                  <span className="text-[11px] text-slate-500 mt-0.5 block">
-                    {reviewsList.length > 0 ? reviewsList.length : product.reviewCount} Verified Reviews
+                  <span className="text-[11px] text-slate-500 mt-0.5 block font-medium">
+                    {actualReviewCount} Verified {actualReviewCount === 1 ? 'Review' : 'Reviews'}
                   </span>
                 </div>
                 <div className="text-xs text-slate-600 space-y-1">
@@ -1838,28 +1831,37 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* Filter / Header for Published Reviews */}
             {(() => {
-              const baseList = reviewsList.length > 0 ? reviewsList : [
-                {
-                  id: 'seed-01',
-                  customer_name: 'Harish M. (Grand Heritage Palace, Udaipur)',
-                  customer_email: 'harish@grandheritage.com',
-                  rating: 5,
-                  comment: 'Outstanding fabric quality and dimensional stability. Surpassed 40 industrial wash cycles with zero shrinkage. Direct mill rates saved our property over ₹45,000 compared to regional distributors.',
-                  created_at: new Date(Date.now() - 14 * 86400000).toISOString()
-                },
-                {
-                  id: 'seed-02',
-                  customer_name: 'Sanjay K. (Kalyan Handlooms, Ahmedabad)',
-                  customer_email: 'sanjay@kalyan.in',
-                  rating: 5,
-                  comment: 'Packaging is clean and presentation is very premium for our retail shelves. Customers love the combed cotton hand-feel. Reordering another 50 packs today.',
-                  created_at: new Date(Date.now() - 25 * 86400000).toISOString()
-                }
-              ];
+              const baseList = reviewsList;
               const photosCount = baseList.filter(r => !!(r.image_url || r.imageUrl || r.image)).length;
               const displayed = photosOnlyFilter
                 ? baseList.filter(r => !!(r.image_url || r.imageUrl || r.image))
                 : baseList;
+
+              if (baseList.length === 0) {
+                return (
+                  <div className="text-center py-10 px-4 bg-slate-50/70 border border-slate-200/80 rounded-2xl space-y-3">
+                    <div className="w-12 h-12 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center mx-auto text-amber-500">
+                      <Star className="w-6 h-6 fill-current" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-800 text-sm">No Customer Reviews Yet</h4>
+                      <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                        Be the first verified customer to share feedback for this product directly from the mill.
+                      </p>
+                    </div>
+                    {!showReviewForm && (
+                      <button
+                        type="button"
+                        onClick={() => setShowReviewForm(true)}
+                        className="px-4 py-2 bg-indigo text-white font-bold text-xs rounded-xl hover:bg-indigo-dark transition inline-flex items-center gap-1.5"
+                      >
+                        <Star className="w-3.5 h-3.5 fill-current text-amber-300" />
+                        <span>Write the First Review</span>
+                      </button>
+                    )}
+                  </div>
+                );
+              }
 
               return (
                 <div className="space-y-3 pt-2">

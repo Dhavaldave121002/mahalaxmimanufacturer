@@ -1,6 +1,7 @@
 import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
+import { requireAdminSession } from './_lib/admin-session.js';
 
 // Helper to read fallback coupons from public/coupons.json
 function readFallbackCoupons() {
@@ -186,7 +187,9 @@ export default async function handler(req, res) {
         const [rows] = await pool.query('SELECT * FROM coupons ORDER BY created_at DESC');
 
         if (Array.isArray(rows) && rows.length > 0) {
-          const formatted = rows.map(r => ({
+          const formatted = rows
+            .filter(r => r.is_active && r.suggestion_mode !== 'SECRET_MANUAL_ONLY' && r.code !== 'LAUNCH150')
+            .map(r => ({
             id: r.id,
             code: r.code,
             title: r.title,
@@ -204,7 +207,7 @@ export default async function handler(req, res) {
             usageLimit: r.usage_limit ? Number(r.usage_limit) : undefined,
             usedCount: Number(r.used_count || 0),
             createdAt: r.created_at ? new Date(r.created_at).toISOString() : new Date().toISOString()
-          }));
+            }));
 
           return res.status(200).json({
             success: true,
@@ -218,7 +221,9 @@ export default async function handler(req, res) {
       }
     }
 
-    const fallback = readFallbackCoupons();
+    const fallback = readFallbackCoupons().filter(
+      coupon => coupon.isActive && coupon.suggestionMode !== 'SECRET_MANUAL_ONLY' && coupon.code !== 'LAUNCH150'
+    );
     return res.status(200).json({
       success: true,
       source: 'SECURE_STORAGE',
@@ -231,6 +236,8 @@ export default async function handler(req, res) {
   // POST / PUT: Create or Update Coupon
   // ----------------------------------------------------
   if (req.method === 'POST' || req.method === 'PUT') {
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
     let body = req.body;
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch { body = {}; }
@@ -306,6 +313,10 @@ export default async function handler(req, res) {
       }
     }
 
+    if (process.env.NODE_ENV === 'production' && !dbSaved) {
+      return res.status(503).json({ success: false, error: 'The coupon could not be saved to the database.' });
+    }
+
     // Also persist to public/coupons.json & public/app-config.json
     const existing = readFallbackCoupons();
     const cleanObj = {
@@ -344,6 +355,8 @@ export default async function handler(req, res) {
   // DELETE: Remove Coupon
   // ----------------------------------------------------
   if (req.method === 'DELETE') {
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
     let body = req.body;
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch { body = {}; }
@@ -360,6 +373,9 @@ export default async function handler(req, res) {
         await pool.query('DELETE FROM coupons WHERE id = ? OR code = ?', [targetId, targetCode]);
       } catch (err) {
         console.warn('MySQL coupon delete warning:', err.message);
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({ success: false, error: 'The coupon could not be removed from the database.' });
+        }
       }
     }
 

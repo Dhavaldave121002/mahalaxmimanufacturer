@@ -33,8 +33,50 @@ export const CouponOfferManager: React.FC = () => {
     updateCoupon,
     deleteCoupon,
     toggleCouponActive,
-    toggleCouponFeatured
+    toggleCouponFeatured,
+    bundleOffer,
+    updateBundleOffer
   } = useApp();
+
+  // Frequently Bought Together Bundle Config State
+  const [bundleForm, setBundleForm] = useState({
+    enabled: bundleOffer?.enabled ?? true,
+    title: bundleOffer?.title || 'Frequently Bought Together • Mill Saver Bundle',
+    subtitle: bundleOffer?.subtitle || 'Customers frequently combine these complementary mill-grade essentials',
+    badgeText: bundleOffer?.badgeText || 'Extra 15% Bundle Discount Applied',
+    discountPercentage: bundleOffer?.discountPercentage ?? 15,
+    minItemsForDiscount: bundleOffer?.minItemsForDiscount ?? 2
+  });
+  const [savingBundle, setSavingBundle] = useState(false);
+  const [bundleSavedSuccess, setBundleSavedSuccess] = useState(false);
+
+  // Sync when bundleOffer loads from backend/server
+  React.useEffect(() => {
+    if (bundleOffer) {
+      setBundleForm({
+        enabled: bundleOffer.enabled ?? true,
+        title: bundleOffer.title || 'Frequently Bought Together • Mill Saver Bundle',
+        subtitle: bundleOffer.subtitle || 'Customers frequently combine these complementary mill-grade essentials',
+        badgeText: bundleOffer.badgeText || 'Extra 15% Bundle Discount Applied',
+        discountPercentage: bundleOffer.discountPercentage ?? 15,
+        minItemsForDiscount: bundleOffer.minItemsForDiscount ?? 2
+      });
+    }
+  }, [bundleOffer]);
+
+  const handleSaveBundle = async () => {
+    setSavingBundle(true);
+    const success = await updateBundleOffer({
+      ...bundleForm,
+      discountPercentage: Number(bundleForm.discountPercentage),
+      minItemsForDiscount: Number(bundleForm.minItemsForDiscount)
+    });
+    setSavingBundle(false);
+    if (success) {
+      setBundleSavedSuccess(true);
+      setTimeout(() => setBundleSavedSuccess(false), 3000);
+    }
+  };
 
   const [search, setSearch] = useState('');
   const [filterAudience, setFilterAudience] = useState<'ALL' | 'B2B' | 'B2C'>('ALL');
@@ -285,6 +327,147 @@ export const CouponOfferManager: React.FC = () => {
           </div>
           <p className="text-2xl font-black text-emerald-600">{totalClaims}</p>
           <p className="text-[11px] text-slate-500">Orders redeemed with coupons</p>
+        </div>
+      </div>
+
+      {/* Frequently Bought Together • Mill Saver Bundle Admin Control Panel */}
+      <div className="bg-gradient-to-br from-indigo-50/70 via-white to-amber-50/40 rounded-3xl p-6 border border-indigo-200/80 shadow-subtle space-y-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-indigo-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo text-white flex items-center justify-center shrink-0 shadow-sm">
+              <Sparkles className="w-5 h-5 text-champagne" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-black text-base text-navy">
+                  Frequently Bought Together • Mill Saver Bundle Settings
+                </h3>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${bundleForm.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                  {bundleForm.enabled ? '● Active on Store' : '○ Disabled'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Control the automated combo cross-sell widget displayed on product detail pages. Changes sync to database & live storefront instantly.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            <label className="flex items-center gap-2 cursor-pointer bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-sm">
+              <input
+                type="checkbox"
+                checked={bundleForm.enabled}
+                onChange={e => setBundleForm(prev => ({ ...prev, enabled: e.target.checked }))}
+                className="rounded text-indigo focus:ring-indigo h-4 w-4"
+              />
+              <span className="text-xs font-bold text-slate-700 select-none">
+                {bundleForm.enabled ? 'Widget Enabled' : 'Widget Disabled'}
+              </span>
+            </label>
+
+            <button
+              onClick={handleSaveBundle}
+              disabled={savingBundle}
+              className={`px-5 py-2.5 rounded-xl font-black text-xs transition flex items-center gap-2 shadow-sm ${
+                bundleSavedSuccess
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-indigo hover:bg-indigo-dark text-white'
+              }`}
+            >
+              {savingBundle ? (
+                <span>Saving...</span>
+              ) : bundleSavedSuccess ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Saved to Database!</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 text-champagne" />
+                  <span>Save Bundle Offer</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-600 uppercase">
+              Bundle Title
+            </label>
+            <input
+              type="text"
+              value={bundleForm.title}
+              onChange={e => setBundleForm(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Frequently Bought Together • Mill Saver Bundle"
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:border-indigo outline-none bg-white"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-600 uppercase">
+              Subtitle / Description
+            </label>
+            <input
+              type="text"
+              value={bundleForm.subtitle}
+              onChange={e => setBundleForm(prev => ({ ...prev, subtitle: e.target.value }))}
+              placeholder="Customers frequently combine these complementary mill-grade essentials"
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-indigo outline-none bg-white"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-600 uppercase">
+              Highlight Badge Text
+            </label>
+            <input
+              type="text"
+              value={bundleForm.badgeText}
+              onChange={e => setBundleForm(prev => ({ ...prev, badgeText: e.target.value }))}
+              placeholder="Extra 15% Bundle Discount Applied"
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-indigo outline-none bg-white"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-600 uppercase">
+              Bundle Combo Discount (%)
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                min="0"
+                max="90"
+                value={bundleForm.discountPercentage}
+                onChange={e => setBundleForm(prev => ({ ...prev, discountPercentage: Number(e.target.value) }))}
+                className="w-full pl-3 pr-8 py-2 border border-slate-200 rounded-xl text-xs font-bold text-indigo focus:border-indigo outline-none bg-white"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-600 uppercase">
+              Min Items For Combo Discount
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={bundleForm.minItemsForDiscount}
+              onChange={e => setBundleForm(prev => ({ ...prev, minItemsForDiscount: Number(e.target.value) }))}
+              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-navy focus:border-indigo outline-none bg-white"
+            />
+          </div>
+
+          <div className="bg-white/80 border border-indigo-100 rounded-xl p-3 flex flex-col justify-center">
+            <span className="text-[10px] font-bold uppercase text-indigo tracking-wider">Storefront Live Effect</span>
+            <p className="text-xs font-bold text-slate-700 mt-0.5">
+              Buyers purchasing {bundleForm.minItemsForDiscount}+ items will receive an automatic <span className="text-indigo font-black">{bundleForm.discountPercentage}% discount</span> on the combined bundle!
+            </p>
+          </div>
         </div>
       </div>
 

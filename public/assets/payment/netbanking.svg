@@ -1,0 +1,8 @@
+<svg viewBox="0 0 74 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 8L10 3L16 8V9H4V8Z" fill="#2563EB"/>
+  <rect x="5" y="10" width="2" height="6" fill="#2563EB"/>
+  <rect x="9" y="10" width="2" height="6" fill="#2563EB"/>
+  <rect x="13" y="10" width="2" height="6" fill="#2563EB"/>
+  <rect x="3" y="16" width="14" height="2" fill="#2563EB"/>
+  <text x="21" y="14" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="10" fill="#334155" letter-spacing="-0.2">NetBanking</text>
+</svg>

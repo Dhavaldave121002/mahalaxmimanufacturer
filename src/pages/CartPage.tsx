@@ -22,7 +22,6 @@ import {
   Palette
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
-import { PaymentTrustBadges } from '../components/common/PaymentTrustBadges';
 
 export const CartPage: React.FC = () => {
   const navigate = useNavigate();
@@ -47,7 +46,41 @@ export const CartPage: React.FC = () => {
 
   const [couponInput, setCouponInput] = useState('');
   const [couponMsg, setCouponMsg] = useState<{ text: string; success: boolean } | null>(null);
-  const [timeLeft, setTimeLeft] = useState(899); // 14 mins 59 secs
+
+  // Persistent Reservation Timer: Survives page refreshes using real-time timestamp
+  const getInitialReservedTime = () => {
+    try {
+      if (!cart || cart.length === 0) {
+        localStorage.removeItem('mahalaxmi_cart_reserved_until');
+        return 15 * 60;
+      }
+      const stored = localStorage.getItem('mahalaxmi_cart_reserved_until');
+      if (stored) {
+        const target = parseInt(stored, 10);
+        const diff = Math.floor((target - Date.now()) / 1000);
+        if (diff > 0) return diff;
+      }
+      const newTarget = Date.now() + 15 * 60 * 1000; // 15 mins from now
+      localStorage.setItem('mahalaxmi_cart_reserved_until', newTarget.toString());
+      return 15 * 60;
+    } catch {
+      return 15 * 60;
+    }
+  };
+
+  const [timeLeft, setTimeLeft] = useState<number>(getInitialReservedTime);
+
+  // Notify user when coupon is automatically removed due to quantity decrease
+  const prevAppliedCouponRef = React.useRef(appliedCoupon);
+  React.useEffect(() => {
+    if (prevAppliedCouponRef.current && !appliedCoupon) {
+      setCouponMsg({
+        text: `⚠️ Coupon "${prevAppliedCouponRef.current}" removed: Minimum order value not met.`,
+        success: false
+      });
+    }
+    prevAppliedCouponRef.current = appliedCoupon;
+  }, [appliedCoupon]);
 
   // Active & Public 1-Click coupons configured by Admin for Storefront
   // (Excludes secret/email-only voucher codes like LAUNCH150 and APP_ONLY coupons)
@@ -81,11 +114,41 @@ export const CartPage: React.FC = () => {
   };
 
   React.useEffect(() => {
-    const timer = setInterval(() => {
+    if (!cart || cart.length === 0) {
+      try {
+        localStorage.removeItem('mahalaxmi_cart_reserved_until');
+      } catch {}
+      setTimeLeft(15 * 60);
+      return;
+    }
+
+    // When cart has items, ensure a valid future timestamp exists
+    try {
+      const stored = localStorage.getItem('mahalaxmi_cart_reserved_until');
+      if (!stored || parseInt(stored, 10) <= Date.now()) {
+        const newTarget = Date.now() + 15 * 60 * 1000;
+        localStorage.setItem('mahalaxmi_cart_reserved_until', newTarget.toString());
+        setTimeLeft(15 * 60);
+      }
+    } catch {}
+
+    const updateTime = () => {
+      try {
+        const stored = localStorage.getItem('mahalaxmi_cart_reserved_until');
+        if (stored) {
+          const target = parseInt(stored, 10);
+          const diff = Math.floor((target - Date.now()) / 1000);
+          setTimeLeft(diff > 0 ? diff : 0);
+          return;
+        }
+      } catch {}
       setTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
+    };
+
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [cart?.length]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -546,22 +609,6 @@ export const CartPage: React.FC = () => {
                 </span>
               </div>
               <p className="text-[10px] text-slate-400 text-right">Inclusive of all taxes & shipping</p>
-
-              {/* B2B GST Input Tax Credit (ITC) Callout */}
-              <div className="p-3 bg-emerald-50/80 border border-emerald-200 rounded-xl text-xs space-y-1 mt-2">
-                <div className="flex justify-between items-center font-bold text-emerald-950">
-                  <span className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    Business GST Credit (ITC):
-                  </span>
-                  <span className="text-emerald-700 font-black">
-                    ₹{Math.round(cartTax.totalTax).toLocaleString('en-IN')} Back
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-600">
-                  Enter GSTIN at checkout to claim 100% GSTR-2B input tax credit. Net landed cost: <strong className="text-navy">₹{Math.round(cartTotal - cartTax.totalTax).toLocaleString('en-IN')}</strong>.
-                </p>
-              </div>
             </div>
 
             {/* Checkout Button */}
@@ -631,9 +678,6 @@ export const CartPage: React.FC = () => {
                 <Lock className="w-3 h-3 text-emerald-600" />
                 <span>256-Bit Bank-Grade SSL Secure Checkout</span>
               </div>
-
-              {/* Supported Payment Channels */}
-              <PaymentTrustBadges showSslNotice={false} />
 
               {/* B2B Trust Notice */}
               <div className="pt-2 text-[11px] text-slate-500 space-y-1">

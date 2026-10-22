@@ -32,7 +32,7 @@ import {
 import { Badge } from '../components/common/Badge';
 
 export const AccountPage: React.FC = () => {
-  const { currentUser, isLoggedIn, logout, deleteAccount, updateUserProfile, addSavedAddress, orders, quotations, submitBusinessEnquiry, topUpWallet } = useApp();
+  const { currentUser, isLoggedIn, logout, deleteAccount, updateUserProfile, addSavedAddress, orders, quotations, submitBusinessEnquiry, topUpWallet, checkPincode } = useApp();
 
   const isAdminUser =
     currentUser?.role === 'admin' ||
@@ -165,7 +165,7 @@ export const AccountPage: React.FC = () => {
       currency: 'INR',
       name: 'Mahalaxmi Enterprises',
       description: `Purchase 🪙 \${amt} Mill Points for Wallet (1 Point = ₹1)`,
-      image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=160&auto=format&fit=crop&q=80',
+      image: `${window.location.origin}/logo.png`,
       prefill: {
         name: currentUser.name || 'Valued Buyer',
         email: currentUser.email || 'customer@mahalaxmi.in',
@@ -218,7 +218,7 @@ export const AccountPage: React.FC = () => {
     fullName: currentUser?.name || '',
     phone: currentUser?.phone || '',
     street: '',
-    city: 'Ahmedabad',
+    city: 'Surat',
     state: 'Gujarat',
     pincode: '395002',
     addressType: 'COMMERCIAL'

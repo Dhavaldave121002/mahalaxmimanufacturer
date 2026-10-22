@@ -24,11 +24,9 @@ import {
   Percent,
   Check,
   Tag,
-  Star,
   CreditCard,
   Box,
   TrendingUp,
-  Quote,
   PackageCheck,
   Package,
   Boxes
@@ -111,128 +109,6 @@ export const HomePage: React.FC = () => {
     notes: ''
   });
   const [enquirySubmitted, setEnquirySubmitted] = useState(false);
-
-  // Customer Reviews Carousel State
-  const [currentReviewIndex, setCurrentReviewIndex] = useState(0);
-  const [isReviewHovered, setIsReviewHovered] = useState(false);
-  const [isMobileScreen, setIsMobileScreen] = useState(false);
-  const [reviewTouchStart, setReviewTouchStart] = useState<number | null>(null);
-  const [reviewTouchEnd, setReviewTouchEnd] = useState<number | null>(null);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobileScreen(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const customerReviews = [
-    {
-      id: 1,
-      name: "Vikramaditya Oberoi",
-      role: "Procurement Head",
-      company: "Royal Grand Hotels, New Delhi & Udaipur",
-      tag: "Hospitality Bulk Buyer",
-      rating: 5,
-      verified: true,
-      text: "We procured 450 double bedsheets and 800 bath towels for our resort chain in Udaipur. Direct mill rates saved us ₹1,40,000 compared to local traders, and GST billing was seamless.",
-      savings: "Saved ₹1,40,000",
-      avatarColor: "bg-blue-600",
-      initials: "VO"
-    },
-    {
-      id: 2,
-      name: "Anand Patel",
-      role: "Owner",
-      company: "Patel Handlooms, Relief Road, Ahmedabad",
-      tag: "Verified Retail Stockist",
-      rating: 5,
-      verified: true,
-      text: "As a retail shop owner in Ahmedabad, Mahalaxmi Enterprises' display boxes and low MOQ of 10 units allow me to stock fresh designs weekly with 40% profit margins. Fast 48-hour delivery.",
-      savings: "40% Retail Margin",
-      avatarColor: "bg-emerald-600",
-      initials: "AP"
-    },
-    {
-      id: 3,
-      name: "Pooja Deshmukh",
-      role: "Direct Family Buyer",
-      company: "Worli, Mumbai",
-      tag: "Verified Home Customer",
-      rating: 5,
-      verified: true,
-      text: "Ordered 3 sets of 300 TC bedsheets for our family home. The fabric feel is unbelievable—so smooth and heavy. Far superior quality than what we usually find on generic apps.",
-      savings: "Pure Combed Cotton",
-      avatarColor: "bg-purple-600",
-      initials: "PD"
-    },
-    {
-      id: 4,
-      name: "Rajesh Agarwal",
-      role: "Managing Partner",
-      company: "TexGlobal Exports, Ahmedabad & Dubai",
-      tag: "Global Export Partner",
-      rating: 5,
-      verified: true,
-      text: "We export container-load institutional textiles to the Middle East. Mahalaxmi Enterprises' batch consistency in yarn count, tensile strength, and packing accuracy is world-class.",
-      savings: "Export FCL Grade",
-      avatarColor: "bg-amber-600",
-      initials: "RA"
-    },
-    {
-      id: 5,
-      name: "Sunita Sharma",
-      role: "Procurement In-charge",
-      company: "Blossom Healthcare & Hospitals, Pune",
-      tag: "Institutional Healthcare",
-      rating: 5,
-      verified: true,
-      text: "Our hospital linen has to withstand 70°C high-temperature sterilization and bleach washing every week. Their chlorine-safe combed cotton towels retain thickness even after 50+ washes.",
-      savings: "50+ Washes Durability",
-      avatarColor: "bg-teal-600",
-      initials: "SS"
-    }
-  ];
-
-  const maxReviewIndex = isMobileScreen ? customerReviews.length - 1 : Math.max(0, customerReviews.length - 3);
-
-  const handlePrevReview = () => {
-    setCurrentReviewIndex(prev => (prev <= 0 ? maxReviewIndex : prev - 1));
-  };
-
-  const handleNextReview = () => {
-    setCurrentReviewIndex(prev => (prev >= maxReviewIndex ? 0 : prev + 1));
-  };
-
-  // Auto slide reviews every 5 seconds (pauses when user hovers or interacts)
-  useEffect(() => {
-    if (isReviewHovered) return;
-    const interval = setInterval(() => {
-      setCurrentReviewIndex(prev => (prev >= maxReviewIndex ? 0 : prev + 1));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [isReviewHovered, maxReviewIndex]);
-
-  const handleReviewTouchStart = (e: React.TouchEvent) => {
-    setReviewTouchEnd(null);
-    setReviewTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const handleReviewTouchMove = (e: React.TouchEvent) => {
-    setReviewTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleReviewTouchEnd = () => {
-    if (!reviewTouchStart || !reviewTouchEnd) return;
-    const distance = reviewTouchStart - reviewTouchEnd;
-    if (distance > 50) {
-      handleNextReview();
-    } else if (distance < -50) {
-      handlePrevReview();
-    }
-  };
 
   const handleEnquirySubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1097,130 +973,14 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* ========================================================
-          7. CUSTOMER PROOF / REPUTATION CAROUSEL SLIDER
-          ======================================================== */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div 
-          className="bg-slate-100/80 rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-sm relative overflow-hidden"
-          onMouseEnter={() => setIsReviewHovered(true)}
-          onMouseLeave={() => setIsReviewHovered(false)}
-        >
-          {/* Header with Title and Arrow Controls */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-            <div className="text-center sm:text-left space-y-1">
-              <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full inline-flex items-center gap-1.5 shadow-sm">
-                ⭐ 4.9/5 RATED DIRECT SOURCING
-              </span>
-              <h3 className="text-xl sm:text-2xl font-black text-navy">
-                Trusted by 14,000+ Indian Businesses & Families
-              </h3>
-              <p className="text-xs text-slate-500">
-                Swipe or use navigation controls to explore verified buyer testimonials from hotels, retail shops & households
-              </p>
-            </div>
-
-            {/* Slider Navigation Buttons */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={handlePrevReview}
-                aria-label="Previous customer review"
-                className="w-10 h-10 rounded-xl bg-white hover:bg-navy hover:text-white text-navy border border-slate-200 flex items-center justify-center transition shadow-sm active:scale-95 cursor-pointer"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleNextReview}
-                aria-label="Next customer review"
-                className="w-10 h-10 rounded-xl bg-white hover:bg-navy hover:text-white text-navy border border-slate-200 flex items-center justify-center transition shadow-sm active:scale-95 cursor-pointer"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Slider Viewport Container */}
-          <div
-            className="overflow-hidden w-full select-none py-1"
-            onTouchStart={handleReviewTouchStart}
-            onTouchMove={handleReviewTouchMove}
-            onTouchEnd={handleReviewTouchEnd}
-          >
-            <div
-              className="flex transition-transform duration-500 ease-out"
-              style={{
-                transform: `translateX(-${currentReviewIndex * (isMobileScreen ? 100 : 33.3333)}%)`
-              }}
-            >
-              {customerReviews.map((rev) => (
-                <div
-                  key={rev.id}
-                  className="w-full md:w-1/3 shrink-0 px-2 sm:px-3 flex"
-                >
-                  <div className="bg-white p-6 sm:p-7 rounded-2xl border border-slate-200/90 shadow-card hover:shadow-premium transition-all duration-300 flex flex-col justify-between w-full relative group">
-                    <Quote className="absolute top-4 right-4 w-8 h-8 text-slate-100 group-hover:text-indigo-light transition-colors pointer-events-none" />
-
-                    <div className="space-y-4">
-                      {/* Rating & Verified Tag */}
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex text-amber-500">
-                          {[...Array(rev.rating)].map((_, i) => (
-                            <Star key={i} className="w-4 h-4 fill-current" />
-                          ))}
-                        </div>
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                          {rev.savings}
-                        </span>
-                      </div>
-
-                      {/* Review Text */}
-                      <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
-                        "{rev.text}"
-                      </p>
-                    </div>
-
-                    {/* Author Information */}
-                    <div className="pt-4 mt-4 border-t border-slate-100 flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl ${rev.avatarColor} text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm`}>
-                        {rev.initials}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-extrabold text-navy text-xs sm:text-sm truncate">
-                          {rev.name}
-                        </p>
-                        <p className="text-[11px] text-slate-500 truncate">
-                          {rev.role} • {rev.company}
-                        </p>
-                        <p className="text-[10px] font-semibold text-indigo mt-0.5">
-                          {rev.tag}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Dots Indicator */}
-          <div className="flex items-center justify-center gap-1.5 pt-5">
-            {Array.from({ length: maxReviewIndex + 1 }).map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setCurrentReviewIndex(idx)}
-                aria-label={`Go to review slide ${idx + 1}`}
-                className={`transition-all duration-300 rounded-full h-2 cursor-pointer ${
-                  currentReviewIndex === idx
-                    ? 'w-7 bg-indigo'
-                    : 'w-2 bg-slate-300 hover:bg-slate-400'
-                }`}
-              />
-            ))}
-          </div>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6" aria-labelledby="customer-reviews-heading">
+        <div className="bg-slate-100/80 rounded-3xl p-6 sm:p-10 border border-slate-200 text-center">
+          <h3 id="customer-reviews-heading" className="text-xl sm:text-2xl font-black text-navy">
+            Customer reviews
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">
+            Verified customer feedback will be published here after it has been collected and approved.
+          </p>
         </div>
       </section>
 

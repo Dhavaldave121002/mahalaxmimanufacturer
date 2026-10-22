@@ -12,14 +12,15 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
   currentProduct,
   bundleProducts
 }) => {
-  const { addToCart } = useApp();
+  const { addToCart, bundleOffer } = useApp();
   const [selectedItems, setSelectedItems] = useState<string[]>([
     currentProduct.id,
     ...bundleProducts.map(p => p.id)
   ]);
   const [addedAnimation, setAddedAnimation] = useState(false);
 
-  if (bundleProducts.length === 0) return null;
+  // If disabled by admin or no bundle products, do not render
+  if (bundleOffer?.enabled === false || bundleProducts.length === 0) return null;
 
   const toggleItem = (id: string) => {
     // Current product cannot be deselected
@@ -31,11 +32,14 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
     }
   };
 
+  const discountPercent = bundleOffer?.discountPercentage ?? 15;
+  const minItemsForDiscount = bundleOffer?.minItemsForDiscount ?? 2;
+
   const allAvailable = [currentProduct, ...bundleProducts];
   const activeProducts = allAvailable.filter(p => selectedItems.includes(p.id));
 
   const standardTotal = activeProducts.reduce((sum, p) => sum + p.retailPrice, 0);
-  const bundleDiscountMultiplier = activeProducts.length >= 2 ? 0.85 : 1.0; // 15% extra combo discount
+  const bundleDiscountMultiplier = activeProducts.length >= minItemsForDiscount ? (100 - discountPercent) / 100 : 1.0;
   const finalBundlePrice = Math.round(standardTotal * bundleDiscountMultiplier);
   const bundleSavings = standardTotal - finalBundlePrice;
 
@@ -56,17 +60,17 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
           </div>
           <div>
             <h3 className="font-black text-sm sm:text-base text-navy">
-              Frequently Bought Together • Mill Saver Bundle
+              {bundleOffer?.title || 'Frequently Bought Together • Mill Saver Bundle'}
             </h3>
             <p className="text-[11px] text-slate-500">
-              Customers frequently combine these complementary mill-grade essentials
+              {bundleOffer?.subtitle || 'Customers frequently combine these complementary mill-grade essentials'}
             </p>
           </div>
         </div>
 
         {bundleSavings > 0 && (
           <span className="hidden sm:inline-block text-xs font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full border border-emerald-200">
-            Extra 15% Bundle Discount Applied
+            {bundleOffer?.badgeText || `Extra ${discountPercent}% Bundle Discount Applied`}
           </span>
         )}
       </div>
@@ -135,7 +139,7 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
             </div>
             {bundleSavings > 0 && (
               <span className="text-[11px] font-bold text-emerald-700 block mt-1">
-                You save ₹{bundleSavings.toLocaleString('en-IN')} (15% off combo)
+                You save ₹{bundleSavings.toLocaleString('en-IN')} ({discountPercent}% off combo)
               </span>
             )}
           </div>

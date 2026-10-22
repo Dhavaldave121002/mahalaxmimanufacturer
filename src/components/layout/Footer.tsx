@@ -27,7 +27,7 @@ export const Footer: React.FC = () => {
   }
 
   return (
-    <footer className="bg-navy text-white pt-12 pb-24 md:pb-8 border-t border-navy-800 w-full max-w-full overflow-hidden">
+    <footer className="bg-navy text-white pt-12 pb-24 md:pb-12 border-t border-navy-800 w-full max-w-full overflow-hidden">
       {/* 1. Value Proposition Pillars */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 border-b border-navy-800/80">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -253,76 +253,10 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        {/* 2.1 B2B Verified Authority Registry & Backlink Citation Matrix */}
-        <div className="mt-10 pt-8 border-t border-navy-800/80 space-y-4">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold text-champagne tracking-wider uppercase">
-                Verified B2B Authority Registry & Trade Portals
-              </p>
-              <p className="text-[11px] text-slate-300 mt-0.5">
-                Official registration credentials across Indian and international trade networks:
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 text-[10px]">
-              <a
-                href="https://www.indiamart.com/mahalaxmi-enterprises-surat/"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="px-2.5 py-1 bg-navy-800 hover:bg-navy-700 text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
-                title="IndiaMART Verified Exporter & Star Supplier"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span>IndiaMART TrustSEAL</span>
-              </a>
-              <a
-                href="https://www.tradeindia.com/Seller-15949210-Mahalaxmi-Enterprises/"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="px-2.5 py-1 bg-navy-800 hover:bg-navy-700 text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
-                title="TradeIndia Certified Mill Manufacturer"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span>TradeIndia TrustStamp</span>
-              </a>
-              <a
-                href="https://www.exportersindia.com/mahalaxmi-enterprises-gujarat/"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="px-2.5 py-1 bg-navy-800 hover:bg-navy-700 text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
-                title="ExportersIndia Verified Manufacturer Profile"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                <span>ExportersIndia Verified</span>
-              </a>
-              <a
-                href="https://services.gst.gov.in/services/searchtp"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="px-2.5 py-1 bg-navy-800 hover:bg-navy-700 text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
-                title="Verify GSTIN 24AAECM8921P1ZA on Official GST Portal"
-              >
-                <span className="w-2 h-2 rounded-full bg-indigo"></span>
-                <span>GST Portal Official</span>
-              </a>
-              <a
-                href="https://udyamregistration.gov.in/"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="px-2.5 py-1 bg-navy-800 hover:bg-navy-700 text-slate-200 rounded-lg border border-slate-700 flex items-center gap-1.5 transition"
-                title="Ministry of Micro, Small and Medium Enterprises"
-              >
-                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                <span>Ministry of MSME</span>
-              </a>
-            </div>
-          </div>
-
-        </div>
       </div>
 
       {/* 3. Bottom Legal & Copyright Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 border-t border-navy-800 text-xs text-slate-300 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-6 border-t border-navy-800 text-xs text-slate-300 flex flex-col md:flex-row items-center justify-between gap-4">
         <p>&copy; {new Date().getFullYear()} Mahalaxmi Enterprises. All rights reserved. Direct Mill Rates & Wholesale Essentials.</p>
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <button onClick={() => setLegalModal('RETURN')} className="text-emerald-400 font-bold hover:text-emerald-300 transition text-left cursor-pointer flex items-center gap-1">

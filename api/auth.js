@@ -1,6 +1,13 @@
 import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
+import {
+  createAdminSession,
+  destroyAdminSession,
+  hashPassword,
+  requireAdminSession,
+  verifyPassword
+} from './_lib/admin-session.js';
 
 // Memory fallback cache for users
 let usersCache = null;
@@ -18,7 +25,7 @@ function loadFallbackUsers() {
   } catch (_) {}
 
   try {
-    const filePath = path.join(process.cwd(), 'public', 'users.json');
+    const filePath = path.join(process.cwd(), 'private-data', 'fixtures', 'users.json');
     if (fs.existsSync(filePath)) {
       usersCache = JSON.parse(fs.readFileSync(filePath, 'utf8'));
       return usersCache;
@@ -38,11 +45,6 @@ function saveFallbackUsers(users) {
     fs.writeFileSync(tmpPath, JSON.stringify(users, null, 2), 'utf8');
   } catch (_) {}
 
-  // Also save to public/users.json if filesystem is writable
-  try {
-    const filePath = path.join(process.cwd(), 'public', 'users.json');
-    fs.writeFileSync(filePath, JSON.stringify(users, null, 2), 'utf8');
-  } catch (_) {}
 }
 
 // Sanitize user: NEVER leak password_hash to client!
@@ -85,6 +87,14 @@ export default async function handler(req, res) {
 
   // 1. GET: Fetch registered user profiles (sanitized, zero password leaks)
   if (req.method === 'GET') {
+    if (req.query?.action === 'admin_session') {
+      const admin = await requireAdminSession(req, res);
+      if (!admin) return;
+      return res.status(200).json({ success: true, user: admin });
+    }
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
+
     if (!pool) {
       const fallback = loadFallbackUsers().map(sanitizeUser);
       return res.status(200).json({
@@ -120,6 +130,59 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { action = 'register', user, identifier, password, otp, newPassword } = req.body || {};
 
+    if (action === 'admin_logout') {
+      try {
+        await destroyAdminSession(pool, req, res);
+        return res.status(200).json({ success: true, message: 'Admin session closed.' });
+      } catch (error) {
+        console.error('Admin logout failed:', error);
+        return res.status(503).json({ success: false, error: 'Could not close admin session.' });
+      }
+    }
+
+    if (action === 'admin_login') {
+      const email = String(identifier || '').trim().toLowerCase();
+      if (!pool) {
+        return res.status(503).json({ success: false, message: 'Admin sign-in requires a configured database.' });
+      }
+      if (!email || !password) {
+        return res.status(400).json({ success: false, message: 'Email and password are required.' });
+      }
+      try {
+        const [rows] = await pool.query(
+          "SELECT id, name, email, role, password_hash FROM users WHERE email = ? AND role = 'admin' LIMIT 1",
+          [email]
+        );
+        const admin = rows[0];
+        if (!admin) {
+          return res.status(401).json({ success: false, message: 'Invalid administrator credentials.' });
+        }
+
+        const storedPassword = String(admin.password_hash || '');
+        const validPassword = storedPassword.startsWith('scrypt$')
+          ? await verifyPassword(password, storedPassword)
+          : storedPassword.length > 0 && storedPassword === password;
+        if (!validPassword) {
+          return res.status(401).json({ success: false, message: 'Invalid administrator credentials.' });
+        }
+
+        if (!storedPassword.startsWith('scrypt$')) {
+          const hashedPassword = await hashPassword(password);
+          await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [hashedPassword, admin.id]);
+        }
+
+        await createAdminSession(pool, admin.id, res);
+        return res.status(200).json({
+          success: true,
+          message: 'Administrator sign-in successful.',
+          user: { id: admin.id, name: admin.name, email: admin.email, role: admin.role }
+        });
+      } catch (error) {
+        console.error('Admin sign-in failed:', error);
+        return res.status(503).json({ success: false, message: 'Administrator sign-in is temporarily unavailable.' });
+      }
+    }
+
     // -------------------------------------------------------------
     // ACTION: REGISTER
     // -------------------------------------------------------------
@@ -132,7 +195,7 @@ export default async function handler(req, res) {
       const rawPassword = u.password || 'password123';
       const companyName = (u.companyName || u.company_name || '').trim();
       const gstNumber = (u.gstNumber || u.gst_number || '').trim().toUpperCase();
-      const role = u.role || (companyName || gstNumber ? 'retailer' : 'consumer');
+      const role = companyName || gstNumber ? 'retailer' : 'consumer';
       const businessType = u.businessType || u.business_type || (gstNumber ? 'Retailer' : 'Individual');
 
       if (!fullName) {

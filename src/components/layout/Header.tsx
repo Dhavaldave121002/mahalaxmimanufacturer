@@ -39,7 +39,6 @@ export const Header: React.FC = () => {
     currentUser,
     isLoggedIn,
     logout,
-    switchUserRole,
     cartTotalItemsCount,
     cartSubtotal,
     products,
@@ -209,7 +208,7 @@ export const Header: React.FC = () => {
       {/* 1. Top Offer Announcement & Persona Switcher Bar (Normal flow, at very top) */}
       <div className="bg-navy text-white text-xs py-1.5 px-4 sm:px-6 w-full border-b border-navy-800">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-left">
             <span className="bg-champagne/20 text-champagne px-2.5 py-0.5 rounded font-black text-[10px] tracking-wider uppercase border border-champagne/30 flex items-center gap-1">
               <Zap className="w-3 h-3 fill-current" />
               DIRECT MILL RATE
@@ -222,7 +221,7 @@ export const Header: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex items-center gap-3 text-[11px]">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px]">
             <a
               href="tel:+919429187611"
               className="text-slate-300 hover:text-champagne transition flex items-center gap-1 font-medium"
@@ -283,7 +282,7 @@ export const Header: React.FC = () => {
             <div className="flex items-center gap-1 sm:gap-3 shrink-0 min-w-0">
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="md:hidden p-1 text-slate-700 hover:text-navy hover:bg-slate-100 rounded-lg transition"
+                className="xl:hidden p-1 text-slate-700 hover:text-navy hover:bg-slate-100 rounded-lg transition"
                 aria-label="Open mobile menu"
               >
                 <Menu className="w-5 h-5" />
@@ -307,13 +306,13 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Desktop-only Mega Search Bar with Integrated Delivery Pincode */}
-            <div className="hidden md:block flex-1 max-w-4xl xl:max-w-5xl relative z-40 mx-2 lg:mx-4" ref={searchContainerRef}>
+            <div className="hidden xl:block flex-1 max-w-4xl xl:max-w-5xl relative z-40 mx-2 lg:mx-4" ref={searchContainerRef}>
               <form onSubmit={handleSearchSubmit} className="flex items-center rounded-2xl overflow-hidden shadow-subtle border border-slate-200/90 bg-slate-50/80 hover:bg-white focus-within:bg-white focus-within:border-indigo focus-within:ring-4 focus-within:ring-indigo/10 transition-all p-1">
                 {/* Integrated Delivery Location Trigger */}
                 <button
                   type="button"
                   onClick={() => setPinModalOpen(true)}
-                  aria-label={`Delivery location: ${deliveryInfo?.city || 'Ahmedabad'} ${deliveryPincode}. Click to change pincode`}
+                  aria-label={`Delivery location: ${deliveryInfo?.city || (deliveryPincode.startsWith('395') || deliveryPincode.startsWith('394') ? 'Surat' : 'Surat')} ${deliveryPincode}. Click to change pincode`}
                   className="flex items-center gap-1.5 pl-2.5 pr-2.5 sm:pl-3 sm:pr-3 py-1 hover:bg-slate-200/70 rounded-xl transition text-left shrink-0 border-r border-slate-200/90 group cursor-pointer"
                   title="Click to change delivery location"
                 >
@@ -321,7 +320,7 @@ export const Header: React.FC = () => {
                   <div className="flex flex-col leading-none">
                     <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Deliver to</span>
                     <span className="font-extrabold text-navy text-xs flex items-center gap-0.5 mt-0.5 whitespace-nowrap">
-                      {deliveryInfo?.city || 'Ahmedabad'} {deliveryPincode}
+                      {deliveryInfo?.city || (deliveryPincode.startsWith('395') || deliveryPincode.startsWith('394') ? 'Surat' : deliveryInfo?.city || 'Surat')} {deliveryPincode}
                       <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-navy transition-colors" />
                     </span>
                   </div>
@@ -462,7 +461,7 @@ export const Header: React.FC = () => {
               <button
                 onClick={() => setPinModalOpen(true)}
                 aria-label={`Delivery Pincode: ${deliveryInfo?.city || 'Ahmedabad'}`}
-                className="flex md:hidden items-center gap-1 px-1.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition shrink-0 cursor-pointer"
+                className="flex xl:hidden max-[390px]:hidden items-center gap-1 px-1.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition shrink-0 cursor-pointer"
                 title="Delivery Pincode"
               >
                 <MapPin className="w-3 h-3 text-indigo shrink-0" />
@@ -473,7 +472,7 @@ export const Header: React.FC = () => {
               <Link
                 to="/wholesale"
                 aria-label="Bulk Order Pad for wholesale buyers"
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-indigo-light text-indigo hover:bg-indigo hover:text-white rounded-xl text-xs font-bold transition shadow-sm"
+                className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 bg-indigo-light text-indigo hover:bg-indigo hover:text-white rounded-xl text-xs font-bold transition shadow-sm"
               >
                 <Building2 className="w-4 h-4" />
                 <span>Bulk Order Pad</span>
@@ -515,7 +514,7 @@ export const Header: React.FC = () => {
                 type="button"
                 onClick={() => setWishlistOpen(true)}
                 aria-label={`Wishlist with ${wishlist.length} saved items`}
-                className="relative p-2 sm:px-3 sm:py-2.5 rounded-xl hover:bg-slate-100 transition text-slate-700 hover:text-red-600 shrink-0 border border-slate-200 cursor-pointer"
+                className="relative max-[350px]:hidden p-2 sm:px-3 sm:py-2.5 rounded-xl hover:bg-slate-100 transition text-slate-700 hover:text-red-600 shrink-0 border border-slate-200 cursor-pointer"
                 title="View Saved Wishlist"
               >
                 <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${wishlist.length > 0 ? 'text-red-500 fill-red-500' : 'text-slate-600'}`} />
@@ -541,7 +540,7 @@ export const Header: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <div className="hidden sm:block text-left text-xs">
+                <div className="hidden xl:block text-left text-xs">
                   <p className="text-[10px] text-slate-300 font-semibold">Your Cart</p>
                   <p className="font-black text-white">₹{cartSubtotal.toLocaleString('en-IN')}</p>
                 </div>
@@ -550,7 +549,7 @@ export const Header: React.FC = () => {
           </div>
 
           {/* Row 2: Full-Width Search Bar for Mobile Screens (<md) */}
-          <div className="md:hidden mt-2 relative z-40 w-full" ref={mobileSearchContainerRef}>
+          <div className="xl:hidden mt-2 relative z-40 w-full" ref={mobileSearchContainerRef}>
             <form onSubmit={handleSearchSubmit} className="flex rounded-xl overflow-hidden shadow-sm border border-slate-300 focus-within:border-indigo focus-within:ring-2 focus-within:ring-indigo/20 transition bg-white w-full">
               <div className="relative flex-1 flex items-center min-w-0">
                 <Search className="w-4 h-4 text-slate-500 ml-2.5 shrink-0" />
@@ -742,9 +741,11 @@ export const Header: React.FC = () => {
                 <p className="font-bold text-navy">
                   {deliveryInfo.city}, {deliveryInfo.state} ({deliveryInfo.pincode})
                 </p>
-                <p className="text-emerald-700 mt-1 flex items-center gap-1 font-semibold">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Serviceable • Estimated Delivery: {deliveryInfo.estimatedDays} {deliveryInfo.estimatedDays === 1 ? 'day' : 'days'}
+                <p className={`${deliveryInfo.serviceable ? 'text-emerald-700' : 'text-amber-700'} mt-1 flex items-center gap-1 font-semibold`}>
+                  {deliveryInfo.serviceable && <CheckCircle2 className="w-4 h-4" />}
+                  {deliveryInfo.serviceable
+                    ? `Serviceable • Estimated Delivery: ${deliveryInfo.estimatedDays} ${deliveryInfo.estimatedDays === 1 ? 'day' : 'days'}`
+                    : 'Delivery serviceability is not confirmed yet.'}
                 </p>
               </div>
             )}
@@ -827,7 +828,7 @@ export const Header: React.FC = () => {
                 >
                   <div className="flex items-center gap-1.5 truncate">
                     <MapPin className="w-3.5 h-3.5 text-champagne shrink-0" />
-                    <span className="truncate">Deliver to: {deliveryPincode} ({deliveryInfo?.city || 'Ahmedabad'})</span>
+                    <span className="truncate">Deliver to: {deliveryPincode} ({deliveryInfo?.city || (deliveryPincode.startsWith('395') || deliveryPincode.startsWith('394') ? 'Surat' : 'Surat')})</span>
                   </div>
                   <span className="text-champagne font-bold shrink-0 ml-1">Change</span>
                 </button>

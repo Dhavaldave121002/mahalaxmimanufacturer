@@ -4,6 +4,7 @@ import { Product } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { ShoppingCart, Star, Check, Zap, ArrowUpRight, ShieldCheck, Flame, MessageCircle, Heart } from 'lucide-react';
 import { Badge } from './Badge';
+import { useRealRating } from '../../hooks/useRealRating';
 
 interface ProductCardProps {
   product: Product;
@@ -13,6 +14,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart, isInWishlist, toggleWishlist } = useApp();
   const [added, setAdded] = useState(false);
   const isSaved = isInWishlist(product.id);
+  const realRating = useRealRating(product.id, product.slug);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -109,13 +111,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </h3>
           </Link>
 
-          {/* Rating Pill (Amazon / Flipkart Style) */}
+          {/* Rating Pill — uses real reviews from API/DB, not hardcoded mock data */}
           <div className="flex items-center gap-2 mt-2">
-            <div className="flex items-center bg-emerald-700 text-white text-[11px] font-black px-2 py-0.5 rounded-md">
-              <span>{product.rating}</span>
-              <Star className="w-2.5 h-2.5 fill-current ml-0.5" />
-            </div>
-            <span className="text-xs text-slate-400 font-medium">({product.reviewCount} reviews)</span>
+            {realRating && realRating.count > 0 ? (
+              <>
+                <div className="flex items-center bg-emerald-700 text-white text-[11px] font-black px-2 py-0.5 rounded-md">
+                  <span>{realRating.rating}</span>
+                  <Star className="w-2.5 h-2.5 fill-current ml-0.5" />
+                </div>
+                <span className="text-xs text-slate-400 font-medium">
+                  ({realRating.count} {realRating.count === 1 ? 'review' : 'reviews'})
+                </span>
+              </>
+            ) : (
+              <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                Direct Mill Launch
+              </span>
+            )}
           </div>
         </div>
 

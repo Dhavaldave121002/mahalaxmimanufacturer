@@ -18,7 +18,8 @@ import {
   PaymentMethod,
   CollectionCategory,
   WalletTransaction,
-  ProductCustomization
+  ProductCustomization,
+  BundleOfferConfig
 } from '../types';
 import { INITIAL_PRODUCTS, CATEGORIES_CONFIG } from '../data/mockProducts';
 import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
@@ -34,10 +35,37 @@ interface PinCodeInfo {
 }
 
 const PINCODE_DATABASE: Record<string, { city: string; state: string; days: number }> = {
-  '395002': { city: 'Ahmedabad', state: 'Gujarat', days: 1 },
-  '395001': { city: 'Ahmedabad', state: 'Gujarat', days: 1 },
+  // Surat & South Gujarat Direct Dispatch Hub
+  '395001': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '395002': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '395003': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '395004': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '395005': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '395006': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '395007': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '395008': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '395009': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '395010': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '394210': { city: 'Surat', state: 'Gujarat', days: 1 },
+  '394221': { city: 'Surat', state: 'Gujarat', days: 1 },
+  // Ahmedabad & North Gujarat
   '380001': { city: 'Ahmedabad', state: 'Gujarat', days: 2 },
+  '380006': { city: 'Ahmedabad', state: 'Gujarat', days: 2 },
+  '380009': { city: 'Ahmedabad', state: 'Gujarat', days: 2 },
+  '380015': { city: 'Ahmedabad', state: 'Gujarat', days: 2 },
+  '380054': { city: 'Ahmedabad', state: 'Gujarat', days: 2 },
+  '382481': { city: 'Ahmedabad', state: 'Gujarat', days: 2 },
+  // Other Gujarat Cities
+  '390001': { city: 'Vadodara', state: 'Gujarat', days: 2 },
+  '360001': { city: 'Rajkot', state: 'Gujarat', days: 2 },
+  '361001': { city: 'Jamnagar', state: 'Gujarat', days: 2 },
+  '364001': { city: 'Bhavnagar', state: 'Gujarat', days: 2 },
+  '396001': { city: 'Valsad', state: 'Gujarat', days: 1 },
+  '396191': { city: 'Vapi', state: 'Gujarat', days: 1 },
+  '396445': { city: 'Navsari', state: 'Gujarat', days: 1 },
+  // Major Metros & National Hubs
   '400001': { city: 'Mumbai', state: 'Maharashtra', days: 2 },
+  '411001': { city: 'Pune', state: 'Maharashtra', days: 2 },
   '110001': { city: 'New Delhi', state: 'Delhi', days: 3 },
   '560001': { city: 'Bengaluru', state: 'Karnataka', days: 3 },
   '600001': { city: 'Chennai', state: 'Tamil Nadu', days: 4 },
@@ -45,7 +73,8 @@ const PINCODE_DATABASE: Record<string, { city: string; state: string; days: numb
   '500001': { city: 'Hyderabad', state: 'Telangana', days: 3 },
   '302001': { city: 'Jaipur', state: 'Rajasthan', days: 3 },
   '641601': { city: 'Tirupur', state: 'Tamil Nadu', days: 2 },
-  '411001': { city: 'Pune', state: 'Maharashtra', days: 2 }
+  '201301': { city: 'Noida', state: 'Uttar Pradesh', days: 3 },
+  '122001': { city: 'Gurugram', state: 'Haryana', days: 3 }
 };
 
 interface AppContextType {
@@ -103,7 +132,6 @@ interface AppContextType {
   deleteAccount: () => Promise<{ success: boolean; message: string }>;
   requestOtp: (identifier: string) => { success: boolean; message: string; otp?: string };
   resetPassword: (identifier: string, otp: string, newPassword: string) => { success: boolean; message: string };
-  switchUserRole: (role: 'consumer' | 'retailer' | 'wholesaler' | 'admin') => void;
   updateUserProfile: (profile: Partial<User>) => void;
   addSavedAddress: (address: Omit<Address, 'id'>) => void;
 
@@ -121,6 +149,7 @@ interface AppContextType {
     pointsRedeemed?: number;
     amountPaid?: number;
     timelineNote?: string;
+    customerEmail?: string;
   }) => Order;
   updateOrderStatus: (orderId: string, status: Order['status'], trackingNumber?: string, courierName?: string) => void;
   cancelOrder: (orderId: string, reason?: string) => Promise<{ success: boolean; message: string }>;
@@ -170,168 +199,21 @@ interface AppContextType {
   deleteAppNotification: (id: string) => void;
   toggleAppExclusiveProduct: (productId: string) => void;
   syncConfigToFlutter: () => { success: boolean; message: string; timestamp: string };
+
+  // Mill Saver Bundle Config (Admin & Database Controllable)
+  bundleOffer: BundleOfferConfig;
+  updateBundleOffer: (config: Partial<BundleOfferConfig>) => Promise<boolean>;
 }
 
-const DEMO_USER_PROFILES: Record<string, User> = {
-  consumer: {
-    id: 'usr-c01',
-    name: 'Rajesh Sharma',
-    email: 'rajesh.sharma@example.com',
-    phone: '+91 98201 12345',
-    password: 'password123',
-    role: 'consumer',
-    businessType: 'Individual',
-    walletBalance: 450,
-    walletTransactions: [
-      {
-        id: 'wt-c01-welcome',
-        userId: 'usr-c01',
-        userEmail: 'rajesh.sharma@example.com',
-        type: 'WALLET_TOPUP',
-        amount: 450,
-        description: 'Welcome Bonus: Mill Points Credited',
-        balanceAfter: 450,
-        timestamp: new Date().toISOString()
-      }
-    ],
-    addresses: [
-      {
-        id: 'addr-1',
-        fullName: 'Rajesh Sharma',
-        phone: '+91 98201 12345',
-        street: 'Flat 402, Lotus Greens, Ring Road',
-        landmark: 'Opposite City Mall',
-        city: 'Ahmedabad',
-        state: 'Gujarat',
-        pincode: '395002',
-        addressType: 'HOME',
-        isDefault: true
-      }
-    ]
-  },
-  retailer: {
-    id: 'usr-r02',
-    name: 'Anand Patel',
-    email: 'anand@pateltextiles.com',
-    phone: '+91 94261 54321',
-    password: 'password123',
-    role: 'retailer',
-    companyName: 'Patel Handloom & Textile Emporium',
-    gstNumber: '24AABCP1357K1ZT',
-    isGstVerified: true,
-    businessType: 'Retailer',
-    creditLimit: 250000,
-    availableCredit: 195000,
-    walletBalance: 2500,
-    walletTransactions: [
-      {
-        id: 'wt-r02-welcome',
-        userId: 'usr-r02',
-        userEmail: 'anand@pateltextiles.com',
-        type: 'WALLET_TOPUP',
-        amount: 2500,
-        description: 'Commercial Partner Welcome Grant',
-        balanceAfter: 2500,
-        timestamp: new Date().toISOString()
-      }
-    ],
-    addresses: [
-      {
-        id: 'addr-2',
-        fullName: 'Anand Patel',
-        companyName: 'Patel Handloom & Textile Emporium',
-        phone: '+91 94261 54321',
-        street: 'Shop 14-16, New Cloth Market, Relief Road',
-        landmark: 'Near Kalupur Gate',
-        city: 'Ahmedabad',
-        state: 'Gujarat',
-        pincode: '380001',
-        addressType: 'COMMERCIAL',
-        isDefault: true
-      }
-    ]
-  },
-  wholesaler: {
-    id: 'usr-w03',
-    name: 'Vikramaditya Oberoi',
-    email: 'procurement@royalgrandhospitality.com',
-    phone: '+91 98110 99887',
-    password: 'password123',
-    role: 'wholesaler',
-    companyName: 'Royal Grand Hotels & Resorts Ltd.',
-    gstNumber: '07AAACR4412M1Z9',
-    isGstVerified: true,
-    businessType: 'Hotel/Hospitality',
-    creditLimit: 1000000,
-    availableCredit: 820000,
-    walletBalance: 8500,
-    walletTransactions: [
-      {
-        id: 'wt-w03-welcome',
-        userId: 'usr-w03',
-        userEmail: 'procurement@royalgrandhospitality.com',
-        type: 'WALLET_TOPUP',
-        amount: 8500,
-        description: 'Institutional Rewards & Cashbacks',
-        balanceAfter: 8500,
-        timestamp: new Date().toISOString()
-      }
-    ],
-    addresses: [
-      {
-        id: 'addr-3',
-        fullName: 'Vikramaditya Oberoi',
-        companyName: 'Royal Grand Hotels (Central Supply Hub)',
-        phone: '+91 98110 99887',
-        street: 'Warehouse 4B, Aerocity Hospitality Zone',
-        landmark: 'Near Terminal 3 Cargo Gate',
-        city: 'New Delhi',
-        state: 'Delhi',
-        pincode: '110037',
-        addressType: 'WAREHOUSE',
-        isDefault: true
-      }
-    ]
-  },
-  admin: {
-    id: 'usr-admin',
-    name: 'Suresh Agarwal (Ops Director)',
-    email: 'admin@mahalaxmienterprises.com',
-    phone: '+91 98765 00001',
-    password: 'password123',
-    role: 'admin',
-    companyName: 'Mahalaxmi Enterprises Head Office',
-    gstNumber: '24AAECM8921P1ZA',
-    isGstVerified: true,
-    businessType: 'Institution',
-    walletBalance: 15000,
-    walletTransactions: [
-      {
-        id: 'wt-admin-init',
-        userId: 'usr-admin',
-        userEmail: 'admin@mahalaxmienterprises.com',
-        type: 'WALLET_TOPUP',
-        amount: 15000,
-        description: 'Admin Treasury Float Initialized',
-        balanceAfter: 15000,
-        timestamp: new Date().toISOString()
-      }
-    ],
-    addresses: [
-      {
-        id: 'addr-admin',
-        fullName: 'Admin Operations Desk',
-        companyName: 'Mahalaxmi Enterprises Unit 1',
-        phone: '+91 98765 00001',
-        street: 'Plot 72, GIDC Textile Estate, Ring Road',
-        city: 'Ahmedabad',
-        state: 'Gujarat',
-        pincode: '395002',
-        addressType: 'COMMERCIAL',
-        isDefault: true
-      }
-    ]
-  }
+const GUEST_USER_PROFILE: User = {
+  id: 'guest',
+  name: '',
+  email: '',
+  phone: '',
+  role: 'consumer',
+  addresses: [],
+  walletBalance: 0,
+  walletTransactions: []
 };
 
 function safeLoadFromStorage<T>(key: string, fallback: T): T {
@@ -433,19 +315,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const [registeredUsers, setRegisteredUsers] = useState<User[]>(() => {
-    return safeLoadArray<User>('mle_users', Object.values(DEMO_USER_PROFILES));
+    if (import.meta.env.PROD) return [];
+    return safeLoadArray<User>('mle_users', []);
   });
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    if (import.meta.env.PROD) return false;
     try {
       const saved = localStorage.getItem('mle_is_logged_in');
-      return saved !== null ? saved === 'true' : true;
+      // Default to FALSE: fresh/guest sessions must explicitly log in.
+      // Previously defaulted to true which caused demo wallet balance to show for guests.
+      return saved !== null ? saved === 'true' : false;
     } catch {
-      return true;
+      return false;
     }
   });
 
   const [currentUser, setCurrentUser] = useState<User>(() => {
+    if (import.meta.env.PROD) return GUEST_USER_PROFILE;
     try {
       const saved = localStorage.getItem('mle_current_user');
       if (saved && saved !== 'undefined' && saved !== 'null') {
@@ -458,7 +345,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('Failed to parse mle_current_user, resetting:', e);
       try { localStorage.removeItem('mle_current_user'); } catch {}
     }
-    return DEMO_USER_PROFILES.consumer;
+    return GUEST_USER_PROFILE;
   });
 
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -803,329 +690,80 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [deliveryPincode, setDeliveryPincode] = useState<string>('395002');
   const [deliveryInfo, setDeliveryInfo] = useState<PinCodeInfo | null>({
     pincode: '395002',
-    city: 'Ahmedabad',
+    city: 'Surat',
     state: 'Gujarat',
     serviceable: true,
     estimatedDays: 1,
     codAvailable: true
   });
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [recentSearches, setRecentSearches] = useState<string[]>([
-    '300 TC Bedsheet',
-    'Cotton bath towel bulk',
-    'Kitchen towel pack',
-    'Microfiber cloth'
-  ]);
+  // Mill Saver Bundle Config (Admin & Database Controllable)
+  const defaultBundleOffer: BundleOfferConfig = {
+    enabled: true,
+    title: 'Frequently Bought Together • Mill Saver Bundle',
+    subtitle: 'Customers frequently combine these complementary mill-grade essentials',
+    badgeText: 'Extra 15% Bundle Discount Applied',
+    discountPercentage: 15,
+    minItemsForDiscount: 2,
+    savingsNote: 'You save ₹{savings} ({discount}% off combo)',
+    bundleMaxProducts: 3
+  };
 
-  // Orders State with realistic initial orders
-  const [orders, setOrders] = useState<Order[]>(() => {
+  const [bundleOffer, setBundleOffer] = useState<BundleOfferConfig>(() => {
     try {
-      const saved = localStorage.getItem('mle_orders');
-      if (saved && saved !== 'undefined' && saved !== 'null') {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
+      const saved = localStorage.getItem('mle_bundle_offer');
+      if (saved) return JSON.parse(saved);
     } catch (e) {
-      console.warn('Failed to parse mle_orders, resetting:', e);
-      try { localStorage.removeItem('mle_orders'); } catch {}
+      console.warn('Failed to parse mle_bundle_offer:', e);
     }
-    return [
-      {
-        id: 'ord-verified-999',
-        orderNumber: 'MLE-VERIFIED-999',
-        createdAt: new Date().toISOString(),
-        customer: {
-          id: 'usr-flutter-dhaval',
-          name: 'Dhaval Dave',
-          email: 'dhavaldave121002@gmail.com',
-          phone: '+91 85111 72099',
-          companyName: 'Mahalaxmi Enterprises Commercial Hub',
-          gstNumber: '24AAACP1234M1Z5',
-          isB2B: true
-        },
-        items: [
-          {
-            productId: 'prod-bedsheet-01',
-            productName: 'Glance 300 TC 100% Combed Cotton Double Bedsheet',
-            sku: 'MLE-TEX-BS-3001',
-            hsnCode: '630221',
-            quantity: 50,
-            unitPrice: 890,
-            totalPrice: 44500,
-            variantDescription: 'Customized [Design & Logo • Logo: "MAHALAXMI LUXURY EXPORTS" • Size: Super King (108" x 108") • GSM: 300 TC Combed Satin • 📎 Logo: mahalaxmi_gold_crest.png • 📎 Design: damask_jacquard_pattern.pdf • Note: Golden metallic zari embroidery on border hems, reactive colorfast dye]',
-            image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
-            gstRate: 5,
-            customization: {
-              type: 'Design & Logo',
-              logoText: 'MAHALAXMI LUXURY EXPORTS',
-              logoColor: '#EAB308',
-              logoPosition: 'top-right',
-              logoStyle: 'crown',
-              selectedSize: 'Super King (108" x 108")',
-              customGsm: '300 TC Combed Satin',
-              logoFileName: 'mahalaxmi_gold_crest.png',
-              designFileName: 'damask_jacquard_pattern.pdf',
-              techPackFileName: 'mill_weaving_spec_sheet.pdf',
-              designNote: 'Golden metallic zari embroidery on border hems, reactive colorfast dye with shrink-proof finish'
-            }
-          }
-        ],
-        subtotal: 42380.95,
-        taxBreakdown: { cgst: 1059.52, sgst: 1059.52, igst: 0, totalTax: 2119.05 },
-        shippingCharge: 0,
-        discount: 0,
-        totalAmount: 44500,
-        paymentMethod: 'RAZORPAY',
-        paymentStatus: 'PAID',
-        status: 'PLACED',
-        source: 'WEB',
-        deviceInfo: 'Desktop Chrome 130 (Storefront Production Order)',
-        shippingAddress: {
-          id: 'addr-dhaval',
-          fullName: 'Dhaval Dave',
-          phone: '+91 85111 72099',
-          street: '102, Shivalik Plaza, Near C.G. Road',
-          city: 'Ahmedabad',
-          state: 'Gujarat',
-          pincode: '380009',
-          addressType: 'COMMERCIAL'
-        },
-        billingAddress: {
-          id: 'addr-dhaval',
-          fullName: 'Dhaval Dave',
-          phone: '+91 85111 72099',
-          street: '102, Shivalik Plaza, Near C.G. Road',
-          city: 'Ahmedabad',
-          state: 'Gujarat',
-          pincode: '380009',
-          addressType: 'COMMERCIAL'
-        },
-        timeline: [
-          { status: 'PLACED', timestamp: new Date().toISOString(), description: 'Order verified & payment confirmed via Razorpay. Production specs sent to Loom 4.' }
-        ]
-      },
-      {
-        id: 'ord-89412',
-        orderNumber: 'MLE-ORD-2026-89412',
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-        customer: {
-          id: 'usr-r02',
-          name: 'Anand Patel',
-          email: 'anand@pateltextiles.com',
-          phone: '+91 94261 54321',
-          companyName: 'Patel Handloom & Textile Emporium',
-          gstNumber: '24AABCP1357K1ZT',
-          isB2B: true
-        },
-        items: [
-          {
-            productId: 'prod-bedsheet-01',
-            productName: 'Glance 300 TC 100% Combed Cotton Double Bedsheet',
-            sku: 'MLE-TEX-BS-3001',
-            hsnCode: '630221',
-            quantity: 50,
-            unitPrice: 549,
-            totalPrice: 27450,
-            variantDescription: 'Super King / Royal Ivory Cream',
-            image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
-            gstRate: 5
-          },
-          {
-            productId: 'prod-cotton-towel-01',
-            productName: 'Mahalaxmi Enterprises Super-Plush 600 GSM Cotton Bath Towel',
-            sku: 'MLE-COT-TWL-600',
-            hsnCode: '630260',
-            quantity: 50,
-            unitPrice: 265,
-            totalPrice: 13250,
-            variantDescription: 'Large Bath Sheet / Optic Hotel White',
-            image: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=1000&auto=format&fit=crop',
-            gstRate: 5
-          }
-        ],
-        subtotal: 40700,
-        taxBreakdown: {
-          cgst: 1017.5,
-          sgst: 1017.5,
-          igst: 0,
-          totalTax: 2035
-        },
-        shippingCharge: 0,
-        discount: 1000,
-        couponCode: 'BULK500',
-        totalAmount: 41735,
-        paymentMethod: 'NET_BANKING',
-        paymentStatus: 'PAID',
-        status: 'IN_TRANSIT',
-        source: 'WEB',
-        deviceInfo: 'Desktop Chrome 130',
-        shippingAddress: DEMO_USER_PROFILES.retailer.addresses[0],
-        billingAddress: DEMO_USER_PROFILES.retailer.addresses[0],
-        trackingNumber: 'VRL-SUR-984421',
-        courierName: 'VRL Logistics (Freight Express)',
-        estimatedDelivery: new Date(Date.now() + 86400000).toISOString(),
-        timeline: [
-          { status: 'PLACED', timestamp: '2026-10-12T10:30:00Z', description: 'Order verified & wholesale payment confirmed via RTGS.' },
-          { status: 'MILL_PROCESSING', timestamp: '2026-10-12T14:15:00Z', description: 'Batch inspected at Ahmedabad Mill Dispatch Unit 2.' },
-          { status: 'PACKED', timestamp: '2026-10-13T09:00:00Z', description: 'Pallet shrink-wrapped and barcoded for freight.' },
-          { status: 'IN_TRANSIT', timestamp: '2026-10-13T18:00:00Z', description: 'Departed Ahmedabad Central Hub towards Regional Yard.', location: 'Ahmedabad Cargo Terminal' }
-        ]
-      },
-      {
-        id: 'ord-app-77102',
-        orderNumber: 'MLE-APP-2026-77102',
-        createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
-        customer: {
-          id: 'usr-flutter-dhaval',
-          name: 'Dhaval Dave',
-          email: 'dhavaldave121002@gmail.com',
-          phone: '+91 85111 72099',
-          companyName: 'Mahalaxmi Enterprises Client Hub',
-          isB2B: false
-        },
-        items: [
-          {
-            productId: 'prod-bedsheet-01',
-            productName: 'Glance 300 TC 100% Combed Cotton Double Bedsheet',
-            sku: 'MLE-TEX-BS-3001',
-            hsnCode: '630221',
-            quantity: 2,
-            unitPrice: 899,
-            totalPrice: 1798,
-            variantDescription: 'Customized [Design & Logo • Logo: "MAHALAXMI HERITAGE" • Size: King Set • 📎 Logo: app_custom_logo.png • 📎 Design: jacquard_artwork.pdf • Note: Embroidered logo on border]',
-            image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
-            gstRate: 5,
-            customization: {
-              type: 'Design & Logo',
-              logoText: 'MAHALAXMI HERITAGE',
-              logoColor: '#312E81',
-              logoPosition: 'center',
-              logoStyle: 'crown',
-              selectedSize: 'King Set (100" x 108")',
-              logoFileName: 'app_custom_logo.png',
-              designFileName: 'jacquard_artwork.pdf',
-              designNote: 'Client uploaded mobile logo for computerized embroidery on pillow hems'
-            }
-          },
-          {
-            productId: 'prod-cotton-towel-01',
-            productName: 'Mahalaxmi Enterprises Super-Plush 600 GSM Cotton Bath Towel',
-            sku: 'MLE-COT-TWL-600',
-            hsnCode: '630260',
-            quantity: 4,
-            unitPrice: 349,
-            totalPrice: 1396,
-            variantDescription: 'Optic Hotel White (Pack of 4)',
-            image: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=1000&auto=format&fit=crop',
-            gstRate: 5
-          }
-        ],
-        subtotal: 3194,
-        taxBreakdown: { cgst: 79.85, sgst: 79.85, igst: 0, totalTax: 159.7 },
-        shippingCharge: 0,
-        discount: 150,
-        couponCode: 'LAUNCH150',
-        totalAmount: 3203.7,
-        paymentMethod: 'UPI',
-        paymentStatus: 'PAID',
-        status: 'MILL_PROCESSING',
-        source: 'FLUTTER_APP',
-        deviceInfo: 'Android 14 (Mahalaxmi Enterprises Flutter App v1.0.3)',
-        shippingAddress: {
-          id: 'addr-dhaval',
-          fullName: 'Dhaval Dave',
-          phone: '+91 85111 72099',
-          street: '102, Shivalik Plaza, Near C.G. Road',
-          city: 'Ahmedabad',
-          state: 'Gujarat',
-          pincode: '380009',
-          addressType: 'HOME'
-        },
-        billingAddress: {
-          id: 'addr-dhaval',
-          fullName: 'Dhaval Dave',
-          phone: '+91 85111 72099',
-          street: '102, Shivalik Plaza, Near C.G. Road',
-          city: 'Ahmedabad',
-          state: 'Gujarat',
-          pincode: '380009',
-          addressType: 'HOME'
-        },
-        estimatedDelivery: new Date(Date.now() + 86400000 * 2).toISOString(),
-        timeline: [
-          { status: 'PLACED', timestamp: new Date(Date.now() - 3600000 * 3).toISOString(), description: 'Order placed from Mahalaxmi Enterprises Android App v1.0.3 via UPI GPay.' },
-          { status: 'MILL_PROCESSING', timestamp: new Date(Date.now() - 3600000 * 1).toISOString(), description: 'Allocation confirmed at Ahmedabad Central Dispatch Loom 4.' }
-        ]
-      },
-      {
-        id: 'ord-deliv-64192',
-        orderNumber: 'MLE-ORD-2026-64192',
-        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-        customer: {
-          id: 'usr-flutter-dhaval',
-          name: 'Dhaval Dave',
-          email: 'dhavaldave121002@gmail.com',
-          phone: '+91 85111 72099',
-          companyName: 'Mahalaxmi Enterprises Client Hub',
-          isB2B: false
-        },
-        items: [
-          {
-            productId: 'prod-bedsheet-01',
-            productName: 'Glance 300 TC 100% Combed Cotton Double Bedsheet',
-            sku: 'MLE-TEX-BS-3001',
-            hsnCode: '630221',
-            quantity: 1,
-            unitPrice: 899,
-            totalPrice: 899,
-            variantDescription: 'Royal Ivory Cream / Standard Set',
-            image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
-            gstRate: 5
-          }
-        ],
-        subtotal: 899,
-        taxBreakdown: { cgst: 22.48, sgst: 22.48, igst: 0, totalTax: 44.95 },
-        shippingCharge: 0,
-        discount: 0,
-        totalAmount: 943.95,
-        paymentMethod: 'UPI',
-        paymentStatus: 'PAID',
-        status: 'DELIVERED',
-        source: 'WEB',
-        deviceInfo: 'Desktop Chrome 130',
-        shippingAddress: {
-          id: 'addr-dhaval',
-          fullName: 'Dhaval Dave',
-          phone: '+91 85111 72099',
-          street: '102, Shivalik Plaza, Near C.G. Road',
-          city: 'Ahmedabad',
-          state: 'Gujarat',
-          pincode: '380009',
-          addressType: 'HOME'
-        },
-        billingAddress: {
-          id: 'addr-dhaval',
-          fullName: 'Dhaval Dave',
-          phone: '+91 85111 72099',
-          street: '102, Shivalik Plaza, Near C.G. Road',
-          city: 'Ahmedabad',
-          state: 'Gujarat',
-          pincode: '380009',
-          addressType: 'HOME'
-        },
-        trackingNumber: 'DEL-SUR-554109',
-        courierName: 'Delhivery Surface Express',
-        estimatedDelivery: new Date(Date.now() - 86400000).toISOString(),
-        timeline: [
-          { status: 'PLACED', timestamp: new Date(Date.now() - 86400000 * 3).toISOString(), description: 'Order placed & payment verified.' },
-          { status: 'MILL_PROCESSING', timestamp: new Date(Date.now() - 86400000 * 2).toISOString(), description: 'Batch packaged at Ahmedabad Mill.' },
-          { status: 'IN_TRANSIT', timestamp: new Date(Date.now() - 86400000 * 1.5).toISOString(), description: 'Arrived at Ahmedabad Delivery Hub.' },
-          { status: 'DELIVERED', timestamp: new Date(Date.now() - 86400000 * 1).toISOString(), description: 'Consignment successfully handed over to customer. 7-Day Return / Exchange Guarantee is now active.' }
-        ]
-      }
-    ];
+    return defaultBundleOffer;
   });
+
+  // Fetch live bundle config from server / database
+  useEffect(() => {
+    fetch('/api/app-config')
+      .then(res => res.json())
+      .then(resData => {
+        const liveBundle = resData?.data?.bundleOffer || resData?.bundleOffer;
+        if (liveBundle) {
+          setBundleOffer(prev => {
+            const merged = { ...prev, ...liveBundle };
+            try { localStorage.setItem('mle_bundle_offer', JSON.stringify(merged)); } catch {}
+            return merged;
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const updateBundleOffer = async (configUpdate: Partial<BundleOfferConfig>): Promise<boolean> => {
+    try {
+      const merged: BundleOfferConfig = { ...bundleOffer, ...configUpdate };
+      setBundleOffer(merged);
+      try { localStorage.setItem('mle_bundle_offer', JSON.stringify(merged)); } catch {}
+
+      const res = await fetch('/api/app-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_bundle_offer',
+          bundleOffer: merged
+        })
+      });
+      return res.ok;
+    } catch (err) {
+      console.error('Failed to update bundle offer:', err);
+      return false;
+    }
+  };
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  // Orders are loaded only from this browser's own saved data.
+  const [orders, setOrders] = useState<Order[]>(() =>
+    import.meta.env.PROD ? [] : safeLoadArray<Order>('mle_orders', [])
+  );
 
   // Mobile App Configuration State
   const [mobileAppConfig, setMobileAppConfig] = useState<MobileAppConfig>(() => {
@@ -1145,81 +783,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [mobileAppConfig]);
 
 
-  // Quotations State
-  const [quotations, setQuotations] = useState<Quotation[]>(() => {
-    try {
-      const saved = localStorage.getItem('mle_quotations');
-      if (saved && saved !== 'undefined' && saved !== 'null') {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.warn('Failed to parse mle_quotations, resetting:', e);
-      try { localStorage.removeItem('mle_quotations'); } catch {}
-    }
-    return [
-      {
-        id: 'qt-108',
-        quoteNumber: 'RFQ-MLE-2026-108',
-        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-        validUntil: new Date(Date.now() + 86400000 * 11).toISOString(),
-        buyer: {
-          name: 'Vikramaditya Oberoi',
-          companyName: 'Royal Grand Hotels & Resorts Ltd.',
-          gstNumber: '07AAACR4412M1Z9',
-          email: 'procurement@royalgrandhospitality.com',
-          phone: '+91 98110 99887',
-          businessType: 'Hotel/Hospitality'
-        },
-        items: [
-          {
-            productId: 'prod-cotton-towel-01',
-            productName: 'Mahalaxmi Enterprises Super-Plush 600 GSM Cotton Bath Towel',
-            sku: 'MLE-COT-TWL-600',
-            quantity: 500,
-            targetPrice: 210,
-            quotedUnitPrice: 215,
-            totalPrice: 107500
-          },
-          {
-            productId: 'prod-linen-03',
-            productName: 'Hospitality Grade Pure White Linen Duvet Covers',
-            sku: 'MLE-TEX-LIN-405',
-            quantity: 150,
-            targetPrice: 850,
-            quotedUnitPrice: 875,
-            totalPrice: 131250
-          }
-        ],
-        subtotal: 238750,
-        estimatedTax: 11937.5,
-        estimatedFreight: 2800,
-        grandTotal: 253487.5,
-        status: 'PREPARED',
-        notes: 'Price includes custom hotel embroidered label and doorstep pallet unloading in Aerocity, New Delhi.',
-        preparedBy: 'Suresh Agarwal (Senior Mill Merchandiser)'
-      }
-    ];
-  });
+  // Quotations are loaded only from this browser's own saved data.
+  const [quotations, setQuotations] = useState<Quotation[]>(() =>
+    import.meta.env.PROD ? [] : safeLoadArray<Quotation>('mle_quotations', [])
+  );
 
-  // Business Enquiries State
-  const [enquiries, setEnquiries] = useState<BusinessEnquiry[]>([
-    {
-      id: 'enq-01',
-      createdAt: new Date(Date.now() - 86400000).toISOString(),
-      fullName: 'Kishore Jha',
-      businessName: 'Jha Furnishing & Textiles',
-      phone: '+91 97112 33445',
-      email: 'kishore@jhafurnishings.in',
-      businessType: 'Retailer',
-      city: 'Patna',
-      state: 'Bihar',
-      expectedMonthlyVolume: '₹2,00,000 - ₹5,00,000',
-      interestedCategories: ['textile', 'cotton-products'],
-      notes: 'Looking to stock 300 TC bedsheets and cotton bath towels for 3 retail showrooms in Patna.',
-      status: 'NEW'
-    }
-  ]);
+  // Enquiries are loaded only from this browser's own saved data.
+  const [enquiries, setEnquiries] = useState<BusinessEnquiry[]>(() =>
+    import.meta.env.PROD ? [] : safeLoadArray<BusinessEnquiry>('mle_enquiries', [])
+  );
 
   // Persist storage safely
   useEffect(() => {
@@ -1233,6 +805,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     try {
       localStorage.setItem('mle_cart', JSON.stringify(cart));
+      if (cart.length === 0) {
+        localStorage.removeItem('mahalaxmi_cart_reserved_until');
+      }
     } catch (e) {
       console.warn('Failed to persist mle_cart:', e);
     }
@@ -1537,6 +1112,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => clearTimeout(timer);
   }, [cart, cartTotal, currentUser]);
 
+  // Auto-validate and re-calculate or remove applied coupon whenever cartSubtotal or cart changes
+  useEffect(() => {
+    if (!appliedCoupon) return;
+
+    if (cart.length === 0) {
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+      return;
+    }
+
+    const matched = coupons.find(c => c.code.toUpperCase() === appliedCoupon.toUpperCase());
+    if (!matched || !matched.isActive) {
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+      return;
+    }
+
+    // Check minimum order value threshold
+    if (matched.minOrderValue > 0 && cartSubtotal < matched.minOrderValue) {
+      // Automatically remove coupon because minimum order criteria is no longer met!
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+      return;
+    }
+
+    // Re-calculate percentage discount based on new subtotal
+    let disc = 0;
+    if (matched.discountType === 'FLAT') {
+      disc = Math.min(matched.discountValue, cartSubtotal);
+    } else {
+      disc = Math.round((cartSubtotal * matched.discountValue) / 100);
+      if (matched.maxDiscountAmount && matched.maxDiscountAmount > 0) {
+        disc = Math.min(disc, matched.maxDiscountAmount);
+      }
+    }
+    setCouponDiscount(disc);
+  }, [cartSubtotal, cart.length, appliedCoupon, coupons]);
+
   const applyCoupon = (code: string) => {
     const clean = code.trim().toUpperCase();
     if (!clean) return { success: false, message: 'Please enter a coupon code.' };
@@ -1596,17 +1209,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCouponDiscount(0);
   };
 
-  // User switcher
-  const switchUserRole = (role: 'consumer' | 'retailer' | 'wholesaler' | 'admin') => {
-    const matched = DEMO_USER_PROFILES[role];
-    setCurrentUser(matched);
-    setIsLoggedIn(true);
-  };
-
   // Active OTP memory state
   const [activeOtp, setActiveOtp] = useState<{ identifier: string; code: string; expiresAt: number } | null>(null);
 
   const requestOtp = (identifier: string): { success: boolean; message: string; otp?: string } => {
+    if (import.meta.env.PROD) {
+      return { success: false, message: 'Customer OTP sign-in is unavailable until server-side authentication is configured.' };
+    }
     const clean = identifier.trim().toLowerCase();
     if (!clean) {
       return { success: false, message: 'Please enter a valid mobile number or email address.' };
@@ -1631,6 +1240,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     password?: string,
     otp?: string
   ): { success: boolean; message: string; user?: User } => {
+    if (import.meta.env.PROD) {
+      return { success: false, message: 'Customer sign-in is unavailable until server-side authentication is configured.' };
+    }
     const clean = identifier.trim().toLowerCase();
     const cleanDigits = identifier.replace(/\D/g, '');
 
@@ -1666,7 +1278,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    if (password && found.password && found.password !== password && password !== 'password123') {
+    if (password && found.password && found.password !== password) {
       return {
         success: false,
         message: 'Incorrect password! Please try again or sign in with Email OTP.'
@@ -1692,6 +1304,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     companyName?: string;
     gstNumber?: string;
   }): { success: boolean; message: string; user?: User } => {
+    if (import.meta.env.PROD) {
+      return { success: false, message: 'Customer registration is unavailable until server-side authentication is configured.' };
+    }
     const cleanEmail = userData.email.trim().toLowerCase();
     const cleanPhoneDigits = userData.phone.replace(/\D/g, '');
 
@@ -1727,7 +1342,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       name: userData.name.trim(),
       email: cleanEmail,
       phone: userData.phone.trim().startsWith('+91') ? userData.phone.trim() : `+91 ${cleanPhoneDigits.slice(-10)}`,
-      password: userData.password || 'password123',
+      password: userData.password,
       role: assignedRole,
       businessType: userData.businessType || 'Individual',
       companyName: userData.companyName?.trim() || '',
@@ -1753,7 +1368,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           name: newUser.name,
           email: newUser.email,
           phone: newUser.phone,
-          password: userData.password || 'password123',
+          password: userData.password,
           role: newUser.role,
           businessType: newUser.businessType,
           companyName: newUser.companyName,
@@ -1833,7 +1448,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       // 4. Logout and reset session to default consumer
       setIsLoggedIn(false);
-      setCurrentUser(DEMO_USER_PROFILES.consumer);
+      setCurrentUser(GUEST_USER_PROFILE);
 
       return {
         success: true,
@@ -1844,7 +1459,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Clean up client side state
       setRegisteredUsers(prev => prev.filter(u => u.email.toLowerCase() !== email && u.id !== currentUser.id));
       setIsLoggedIn(false);
-      setCurrentUser(DEMO_USER_PROFILES.consumer);
+      setCurrentUser(GUEST_USER_PROFILE);
       return {
         success: true,
         message: 'Your account has been deleted locally.'
@@ -1956,6 +1571,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     pointsRedeemed?: number;
     amountPaid?: number;
     timelineNote?: string;
+    customerEmail?: string;
   }): Order => {
     const orderNum = `MLE-ORD-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
 
@@ -2003,11 +1619,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       orderNumber: orderNum,
       createdAt: new Date().toISOString(),
       customer: {
-        id: currentUser.id,
-        name: currentUser.name,
-        email: currentUser.email,
-        phone: currentUser.phone,
-        companyName: currentUser.companyName,
+        id: isLoggedIn ? currentUser.id : `guest-${Date.now()}`,
+        name: isLoggedIn ? currentUser.name : (orderData.shippingAddress.fullName || 'Valued Buyer'),
+        email: isLoggedIn ? currentUser.email : (orderData.customerEmail || 'guest@mahalaxmi.in'),
+        phone: isLoggedIn ? currentUser.phone : (orderData.shippingAddress.phone || ''),
+        companyName: orderData.shippingAddress.companyName || currentUser.companyName,
         gstNumber: currentUser.gstNumber,
         isB2B: currentUser.role !== 'consumer'
       },
@@ -2542,8 +2158,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const acceptAndConvertQuotation = (quoteId: string): Order | null => {
+    if (import.meta.env.PROD) return null;
     const quote = quotations.find(q => q.id === quoteId);
     if (!quote) return null;
+    const savedAddress = currentUser.addresses[0];
+    if (!savedAddress) return null;
 
     // Convert quote items to order items
     const orderItems = quote.items.map(it => {
@@ -2589,8 +2208,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       paymentMethod: 'CREDIT_30_DAYS',
       paymentStatus: 'CREDIT_APPROVED',
       status: 'PLACED',
-      shippingAddress: currentUser.addresses[0] || DEMO_USER_PROFILES.wholesaler.addresses[0],
-      billingAddress: currentUser.addresses[0] || DEMO_USER_PROFILES.wholesaler.addresses[0],
+      shippingAddress: savedAddress,
+      billingAddress: savedAddress,
       estimatedDelivery: new Date(Date.now() + 86400000 * 5).toISOString(),
       timeline: [
         {
@@ -2706,13 +2325,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Initial instant local estimate
     const found = PINCODE_DATABASE[cleanPin];
     const is6Digit = /^[1-9][0-9]{5}$/.test(cleanPin);
+
+    let detectedCity = found?.city;
+    let detectedState = found?.state;
+
+    if (!detectedCity && is6Digit) {
+      if (cleanPin.startsWith('395') || cleanPin.startsWith('394')) {
+        detectedCity = 'Surat';
+        detectedState = 'Gujarat';
+      } else if (cleanPin.startsWith('380') || cleanPin.startsWith('382')) {
+        detectedCity = 'Ahmedabad';
+        detectedState = 'Gujarat';
+      } else if (cleanPin.startsWith('390') || cleanPin.startsWith('391')) {
+        detectedCity = 'Vadodara';
+        detectedState = 'Gujarat';
+      } else if (cleanPin.startsWith('360')) {
+        detectedCity = 'Rajkot';
+        detectedState = 'Gujarat';
+      } else if (cleanPin.startsWith('400')) {
+        detectedCity = 'Mumbai';
+        detectedState = 'Maharashtra';
+      } else if (cleanPin.startsWith('110')) {
+        detectedCity = 'New Delhi';
+        detectedState = 'Delhi';
+      } else {
+        detectedCity = 'City not verified';
+        detectedState = 'India';
+      }
+    }
+
     const initialInfo: PinCodeInfo = {
       pincode: cleanPin,
-      city: found?.city || (is6Digit ? 'Commercial Delivery Hub' : 'Unknown'),
-      state: found?.state || (is6Digit ? 'India' : 'Unknown'),
-      serviceable: is6Digit,
-      estimatedDays: found?.days || (is6Digit ? 3 : 0),
-      codAvailable: is6Digit
+      city: detectedCity || (is6Digit ? 'City not verified' : 'Unknown'),
+      state: detectedState || (is6Digit ? 'India' : 'Unknown'),
+      serviceable: false,
+      estimatedDays: 0,
+      codAvailable: false
     };
     setDeliveryInfo(initialInfo);
 
@@ -2724,10 +2372,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (data && data.success && data.serviceable) {
             setDeliveryInfo({
               pincode: cleanPin,
-              city: data.city || initialInfo.city,
-              state: data.state || initialInfo.state,
+              city: cleanPin.startsWith('395') || cleanPin.startsWith('394') ? 'Surat' : (data.city || initialInfo.city),
+              state: cleanPin.startsWith('395') || cleanPin.startsWith('394') ? 'Gujarat' : (data.state || initialInfo.state),
               serviceable: true,
-              estimatedDays: data.state === 'GJ' ? 2 : 4,
+              estimatedDays: (data.state === 'GJ' || cleanPin.startsWith('395') || cleanPin.startsWith('394')) ? 1 : 3,
               codAvailable: !!data.codAvailable
             });
           } else if (data && data.serviceable === false) {
@@ -2970,7 +2618,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteAccount,
         requestOtp,
         resetPassword,
-        switchUserRole,
         updateUserProfile,
         addSavedAddress,
         topUpWallet,
@@ -3027,7 +2674,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         sendAppPushNotification,
         deleteAppNotification,
         toggleAppExclusiveProduct,
-        syncConfigToFlutter
+        syncConfigToFlutter,
+
+        // Mill Saver Bundle Config
+        bundleOffer,
+        updateBundleOffer
       }}
     >
       {children}

@@ -1,6 +1,7 @@
 import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
+import { requireAdminSession } from './_lib/admin-session.js';
 
 // Helper to read current public/app-config.json safely
 function readFallbackConfig() {
@@ -62,7 +63,15 @@ export default async function handler(req, res) {
         });
       }
 
-      const delhiveryToken = process.env.DELHIVERY_API_TOKEN || '4cf4301404f5c82646cb33e7092e08224c2fced7';
+      const delhiveryToken = process.env.DELHIVERY_API_TOKEN;
+      if (!delhiveryToken) {
+        return res.status(503).json({
+          success: false,
+          serviceable: null,
+          verificationAvailable: false,
+          error: 'Live delivery verification is not configured.'
+        });
+      }
       const dUrl = 'https://track.delhivery.com/c/api/pin-codes/json/?filter_codes=' + cleanPin;
 
       const dRes = await fetch(dUrl, {
@@ -82,7 +91,14 @@ export default async function handler(req, res) {
           const codAvailable = pc.cod === 'Y' || pc.cash === 'Y';
           const prepaidAvailable = pc.pre_paid === 'Y';
           const district = pc.district || pc.city || '';
-          const state = pc.state_code || '';
+          let state = pc.state_code || '';
+          let city = pc.city || district;
+
+          // Surat Postal Code Guarantee (395xxx / 394xxx are Surat, Gujarat)
+          if (cleanPin.startsWith('395') || cleanPin.startsWith('394')) {
+            city = 'Surat';
+            state = 'GJ';
+          }
 
           // Calculate estimated delivery: Surat to Gujarat = 1-2 days, Rest of India = 3-4 days
           const isGujarat = state === 'GJ' || district.toLowerCase().includes('surat') || district.toLowerCase().includes('ahmedabad');
@@ -92,31 +108,41 @@ export default async function handler(req, res) {
             success: true,
             serviceable: true,
             pincode: cleanPin,
-            city: pc.city || district,
-            state: state,
-            district: district,
+            city: city,
+            state: state === 'GJ' ? 'Gujarat' : state,
+            district: cleanPin.startsWith('395') || cleanPin.startsWith('394') ? 'Surat' : district,
             codAvailable: codAvailable,
             prepaidAvailable: prepaidAvailable,
             pickupAvailable: pc.pickup === 'Y',
             estimatedDays: estDays,
             courierPartner: 'Delhivery Surface Express',
             message: codAvailable
-              ? 'Delivery & Cash on Delivery (COD) available for ' + (pc.city || district) + ' (' + cleanPin + ').'
+              ? 'Delivery & Cash on Delivery (COD) available for ' + city + ' (' + cleanPin + ').'
               : 'Prepaid Delivery available. (Cash on Delivery not serviceable for this pincode).'
           });
         }
       }
 
-      // Fallback response if pin not serviceable in Delhivery
       return res.status(200).json({
         success: true,
         serviceable: false,
+        verificationAvailable: true,
         pincode: cleanPin,
-        message: 'Delivery is currently not serviceable to pincode ' + cleanPin + ' via Delhivery.'
+        codAvailable: false,
+        prepaidAvailable: false,
+        message: `Delivery serviceability could not be confirmed for pincode ${cleanPin}.`
       });
     } catch (dErr) {
       console.warn('Delhivery check error:', dErr.message);
-      return res.status(500).json({ success: false, error: dErr.message });
+      const urlObj = new URL(req.url, 'http://localhost:5173');
+      const cleanPin = (urlObj.searchParams.get('pincode') || urlObj.searchParams.get('check_pincode') || '').replace(/\D/g, '');
+      return res.status(502).json({
+        success: false,
+        serviceable: null,
+        verificationAvailable: false,
+        pincode: cleanPin,
+        error: 'Live delivery verification is temporarily unavailable.'
+      });
     }
   }
 
@@ -125,30 +151,13 @@ export default async function handler(req, res) {
   // ----------------------------------------------------
   if (req.url && req.url.includes('action=delhivery-waybill')) {
     try {
-      const delhiveryToken = process.env.DELHIVERY_API_TOKEN || '4cf4301404f5c82646cb33e7092e08224c2fced7';
-      const body = req.body || {};
-      const orderNumber = body.orderNumber || ('MLE-' + Date.now().toString().slice(-6));
-      
-      // We generate / reserve an official Delhivery AWB number
-      // Format: 12-digit numeric AWB used by Delhivery Surface/Express
-      const randomAwbSuffix = Math.floor(100000000 + Math.random() * 900000000);
-      const generatedAwb = '13' + randomAwbSuffix;
-
-      return res.status(200).json({
-        success: true,
-        waybill: generatedAwb,
-        awb: generatedAwb,
-        courier: 'Delhivery Surface Express',
-        orderNumber: orderNumber,
-        clientCms: process.env.DELHIVERY_D1_CLIENT_CMS || 'cms::client::f83ad155-1463-11f1-8d4f-02afaa37f6f9',
-        trackingUrl: 'https://www.delhivery.com/track/package/' + generatedAwb,
-        labelPrintUrl: 'https://track.delhivery.com/api/p/packing_slip?wbns=' + generatedAwb,
-        pickupWarehouse: 'Mahalaxmi Enterprises Surat Mill, Ring Road, Surat - 395002',
-        message: 'Delhivery waybill generated successfully.'
+      return res.status(503).json({
+        success: false,
+        error: 'Carrier shipment booking is not configured. No waybill was generated.'
       });
     } catch (awbErr) {
       console.warn('Delhivery waybill error:', awbErr.message);
-      return res.status(500).json({ success: false, error: awbErr.message });
+      return res.status(500).json({ success: false, error: 'Shipment booking failed.' });
     }
   }
 
@@ -159,10 +168,13 @@ export default async function handler(req, res) {
     try {
       const urlObj = new URL(req.url, 'http://localhost:5173');
       const waybill = urlObj.searchParams.get('waybill') || urlObj.searchParams.get('awb') || '';
-      const delhiveryToken = process.env.DELHIVERY_API_TOKEN || '4cf4301404f5c82646cb33e7092e08224c2fced7';
+      const delhiveryToken = process.env.DELHIVERY_API_TOKEN;
 
       if (!waybill) {
         return res.status(400).json({ success: false, error: 'Waybill number is required.' });
+      }
+      if (!delhiveryToken) {
+        return res.status(503).json({ success: false, error: 'Live shipment tracking is not configured.' });
       }
 
       const trackUrl = 'https://track.delhivery.com/api/v1/packages/json/?waybill=' + waybill;
@@ -182,22 +194,10 @@ export default async function handler(req, res) {
         });
       }
 
-      // Return standard response
-      return res.status(200).json({
-        success: true,
-        waybill: waybill,
-        status: 'IN_TRANSIT',
-        location: 'Surat Central Hub',
-        courier: 'Delhivery Express',
-        liveUrl: 'https://www.delhivery.com/track/package/' + waybill
-      });
+      return res.status(502).json({ success: false, error: 'The carrier could not verify this waybill.' });
     } catch (trackErr) {
-      return res.status(200).json({
-        success: true,
-        status: 'DISPATCHED',
-        courier: 'Delhivery',
-        liveUrl: 'https://www.delhivery.com/track/package/' + (req.query?.waybill || '')
-      });
+      console.warn('Delhivery tracking error:', trackErr.message);
+      return res.status(502).json({ success: false, error: 'Live shipment tracking is temporarily unavailable.' });
     }
   }
 
@@ -215,6 +215,8 @@ export default async function handler(req, res) {
   // POST Handler: Admin Broadcasts or Banner Sync
   // ----------------------------------------------------
   if (req.method === 'POST') {
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
     let body = req.body;
     if (typeof body === 'string') {
       try {
@@ -252,6 +254,10 @@ export default async function handler(req, res) {
         } catch (dbErr) {
           console.warn('MySQL notification insert warning:', dbErr.message);
         }
+      }
+
+      if (process.env.NODE_ENV === 'production' && !dbSaved) {
+        return res.status(503).json({ success: false, error: 'The notification could not be saved to the database.' });
       }
 
       // Also persist to public/app-config.json
@@ -333,6 +339,10 @@ export default async function handler(req, res) {
         }
       }
 
+      if (process.env.NODE_ENV === 'production' && !dbSaved) {
+        return res.status(503).json({ success: false, error: 'Banners could not be saved to the database.' });
+      }
+
       const currentConfig = readFallbackConfig() || {};
       currentConfig.banners = body.banners;
       currentConfig.lastSyncedAt = new Date().toISOString();
@@ -347,6 +357,9 @@ export default async function handler(req, res) {
 
     // 3. Full Config Sync
     if (action === 'sync_config' && body.config) {
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(503).json({ success: false, error: 'Full app configuration does not have durable database storage yet.' });
+      }
       const currentConfig = readFallbackConfig() || {};
       const merged = { ...currentConfig, ...body.config, lastSyncedAt: new Date().toISOString() };
       saveFallbackConfig(merged);
@@ -355,6 +368,26 @@ export default async function handler(req, res) {
         success: true,
         message: 'Mobile app configuration synced successfully.',
         data: merged
+      });
+    }
+
+    // 4. Update Bundle Offer Configuration (Frequently Bought Together)
+    if (action === 'update_bundle_offer' && body.bundleOffer) {
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(503).json({ success: false, error: 'Bundle configuration does not have durable database storage yet.' });
+      }
+      const currentConfig = readFallbackConfig() || {};
+      currentConfig.bundleOffer = {
+        ...currentConfig.bundleOffer,
+        ...body.bundleOffer
+      };
+      currentConfig.lastSyncedAt = new Date().toISOString();
+      saveFallbackConfig(currentConfig);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Mill Saver Bundle configuration updated successfully!',
+        data: currentConfig.bundleOffer
       });
     }
   }
@@ -460,7 +493,17 @@ export default async function handler(req, res) {
           banners: formattedBanners.length > 0 ? formattedBanners : (readFallbackConfig()?.banners || []),
           categories: formattedCategories.length > 0 ? formattedCategories : (readFallbackConfig()?.categories || []),
           notifications: formattedNotifications,
-          coupons: formattedCoupons.length > 0 ? formattedCoupons : fallbackCoupons
+          coupons: formattedCoupons.length > 0 ? formattedCoupons : fallbackCoupons,
+          bundleOffer: readFallbackConfig()?.bundleOffer || {
+            enabled: true,
+            title: "Frequently Bought Together • Mill Saver Bundle",
+            subtitle: "Customers frequently combine these complementary mill-grade essentials",
+            badgeText: "Extra 15% Bundle Discount Applied",
+            discountPercentage: 15,
+            minItemsForDiscount: 2,
+            savingsNote: "You save ₹{savings} ({discount}% off combo)",
+            bundleMaxProducts: 3
+          }
         }
       });
     } catch (e) {
@@ -474,7 +517,17 @@ export default async function handler(req, res) {
     appVersion: '1.0.3+4',
     banners: [],
     categories: [],
-    notifications: []
+    notifications: [],
+    bundleOffer: {
+      enabled: true,
+      title: "Frequently Bought Together • Mill Saver Bundle",
+      subtitle: "Customers frequently combine these complementary mill-grade essentials",
+      badgeText: "Extra 15% Bundle Discount Applied",
+      discountPercentage: 15,
+      minItemsForDiscount: 2,
+      savingsNote: "You save ₹{savings} ({discount}% off combo)",
+      bundleMaxProducts: 3
+    }
   };
 
   return res.status(200).json({

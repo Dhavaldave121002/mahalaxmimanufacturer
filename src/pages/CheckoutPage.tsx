@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Address, PaymentMethod } from '../types';
+import { BRAND_LOGO_BASE64 } from '../assets/logoBase64';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -14,10 +15,12 @@ import {
   ArrowRight,
   AlertCircle,
   Clock,
-  Lock
+  Lock,
+  Edit3,
+  Trash2,
+  Plus
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
-import { PaymentTrustBadges } from '../components/common/PaymentTrustBadges';
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,60 +33,123 @@ export const CheckoutPage: React.FC = () => {
     appliedCoupon,
     couponDiscount,
     currentUser,
+    isLoggedIn,
     updateUserProfile,
     addSavedAddress,
     createOrder,
     redeemWalletPoints,
-    deliveryInfo
+    deliveryInfo,
+    checkPincode
   } = useApp();
 
-  // Redirect if cart is empty
-  if (cart.length === 0) {
-    navigate('/cart');
-    return null;
-  }
+  useEffect(() => {
+    if (cart.length === 0) navigate('/cart');
+  }, [cart.length, navigate]);
 
   // Checkout Form States
   const [isB2B, setIsB2B] = useState<boolean>(currentUser.role !== 'consumer' || !!currentUser.gstNumber);
   const [companyName, setCompanyName] = useState(currentUser.companyName || '');
   const [gstNumber, setGstNumber] = useState(currentUser.gstNumber || '');
 
-  // Address selection
+  // Address Management:
+  // If user is logged in, their saved account addresses (currentUser.addresses) are used.
+  // If user is a Guest (!isLoggedIn), we retrieve and persist addresses from localStorage ('mle_guest_addresses').
+  const [guestAddresses, setGuestAddresses] = useState<Address[]>(() => {
+    try {
+      const stored = localStorage.getItem('mle_guest_addresses');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (err) {
+      console.warn('Failed to parse guest addresses:', err);
+    }
+    return [];
+  });
+
+  const effectiveAddresses: Address[] = isLoggedIn
+    ? (currentUser?.addresses || [])
+    : guestAddresses;
+
+  // Selected address index in effectiveAddresses
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
-  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+
+  // If there are no saved addresses (e.g. brand new guest), open form directly
+  const [showAddressForm, setShowAddressForm] = useState<boolean>(() => {
+    if (!isLoggedIn) {
+      try {
+        const stored = localStorage.getItem('mle_guest_addresses');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) return false;
+        }
+      } catch {}
+      return true; // Guest has no saved address -> open form
+    }
+    return (currentUser?.addresses || []).length === 0;
+  });
+
+  // Track if user clicked 'Edit' on a specific address
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+
+  // Address Form State
   const [newAddress, setNewAddress] = useState<Omit<Address, 'id'>>({
-    fullName: currentUser.name,
-    phone: currentUser.phone,
+    fullName: isLoggedIn ? currentUser.name : '',
+    phone: isLoggedIn ? currentUser.phone : '',
     street: '',
     landmark: '',
-    city: deliveryInfo?.city || 'Ahmedabad',
+    city: deliveryInfo?.city || 'Surat',
     state: deliveryInfo?.state || 'Gujarat',
     pincode: deliveryInfo?.pincode || '395002',
     addressType: isB2B ? 'COMMERCIAL' : 'HOME'
   });
 
   // Payment Method & Mill Points State
-  const userWalletBalance = currentUser.walletBalance || 0;
-  const [applyPoints, setApplyPoints] = useState<boolean>(userWalletBalance > 0);
+  // Only show/use wallet balance if user is actually logged in — guests get 0
+  const userWalletBalance = isLoggedIn ? (currentUser.walletBalance || 0) : 0;
+  const [applyPoints, setApplyPoints] = useState<boolean>(isLoggedIn && (currentUser.walletBalance || 0) > 0);
   const [secondaryPaymentMethod, setSecondaryPaymentMethod] = useState<'RAZORPAY' | 'COD'>('RAZORPAY');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Compute points and payable balance
-  const pointsRedeemed = applyPoints ? Math.min(userWalletBalance, cartTotal) : 0;
+  const pointsRedeemed = (isLoggedIn && applyPoints) ? Math.min(userWalletBalance, cartTotal) : 0;
   const remainingPayable = Math.max(0, cartTotal - pointsRedeemed);
   const isFullyCoveredByPoints = pointsRedeemed > 0 && remainingPayable === 0;
 
-  // Address to use
-  const activeAddress = currentUser.addresses[selectedAddressIndex] || {
-    id: 'temp-1',
-    fullName: currentUser.name,
-    phone: currentUser.phone,
-    street: 'Plot 402, Ring Road Textile Hub',
-    city: 'Ahmedabad',
-    state: 'Gujarat',
-    pincode: '395002',
-    addressType: 'COMMERCIAL' as const
+  // Save guest addresses to localStorage
+  const saveGuestAddresses = (list: Address[]) => {
+    setGuestAddresses(list);
+    try {
+      localStorage.setItem('mle_guest_addresses', JSON.stringify(list));
+    } catch (e) {
+      console.warn('Failed to save guest address to localStorage:', e);
+    }
   };
+
+  // Active address to dispatch shipment to
+  const activeAddress: Address = (showAddressForm && effectiveAddresses.length === 0)
+    ? {
+        id: 'current-form',
+        fullName: newAddress.fullName || '',
+        phone: newAddress.phone || '',
+        street: newAddress.street || '',
+        landmark: newAddress.landmark,
+        city: newAddress.city || 'Surat',
+        state: newAddress.state || 'Gujarat',
+        pincode: newAddress.pincode || '395002',
+        addressType: newAddress.addressType || (isB2B ? 'COMMERCIAL' : 'HOME'),
+        companyName: isB2B ? companyName : undefined
+      }
+    : (effectiveAddresses[selectedAddressIndex] || effectiveAddresses[0] || {
+        id: 'fallback-addr',
+        fullName: isLoggedIn ? currentUser.name : '',
+        phone: isLoggedIn ? currentUser.phone : '',
+        street: '',
+        city: deliveryInfo?.city || 'Surat',
+        state: deliveryInfo?.state || 'Gujarat',
+        pincode: deliveryInfo?.pincode || '395002',
+        addressType: isB2B ? 'COMMERCIAL' : 'HOME'
+      });
 
   const handlePincodeChange = (pin: string) => {
     const cleanPin = pin.replace(/\D/g, '').slice(0, 6);
@@ -92,10 +158,13 @@ export const CheckoutPage: React.FC = () => {
 
     if (cleanPin.startsWith('38') || cleanPin.startsWith('39') || cleanPin.startsWith('36')) {
       autoState = 'Gujarat';
-      if (cleanPin.startsWith('380')) autoCity = 'Ahmedabad';
-      else if (cleanPin.startsWith('395')) autoCity = 'Ahmedabad';
-      else if (cleanPin.startsWith('390')) autoCity = 'Vadodara';
+      if (cleanPin.startsWith('380') || cleanPin.startsWith('382')) autoCity = 'Ahmedabad';
+      else if (cleanPin.startsWith('395') || cleanPin.startsWith('394')) autoCity = 'Surat';
+      else if (cleanPin.startsWith('390') || cleanPin.startsWith('391')) autoCity = 'Vadodara';
       else if (cleanPin.startsWith('360')) autoCity = 'Rajkot';
+      else if (cleanPin.startsWith('361')) autoCity = 'Jamnagar';
+      else if (cleanPin.startsWith('364')) autoCity = 'Bhavnagar';
+      else if (cleanPin.startsWith('396')) autoCity = 'Valsad / Vapi';
     } else if (cleanPin.startsWith('40') || cleanPin.startsWith('41')) {
       autoState = 'Maharashtra';
       if (cleanPin.startsWith('400')) autoCity = 'Mumbai';
@@ -114,6 +183,14 @@ export const CheckoutPage: React.FC = () => {
       autoCity = 'Jaipur';
     }
 
+    if (cleanPin.length === 6) {
+      const verified = checkPincode(cleanPin);
+      if (verified && verified.city && verified.city !== 'Commercial Delivery Hub') {
+        autoCity = verified.city;
+        autoState = verified.state;
+      }
+    }
+
     setNewAddress(prev => ({
       ...prev,
       pincode: cleanPin,
@@ -122,22 +199,157 @@ export const CheckoutPage: React.FC = () => {
     }));
   };
 
-  const handleAddNewAddress = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newAddress.street || !newAddress.pincode) return;
-    addSavedAddress(newAddress);
-    setShowNewAddressForm(false);
-    setSelectedAddressIndex(0);
+  const handleStartEdit = (addr: Address) => {
+    setEditingAddressId(addr.id);
+    setNewAddress({
+      fullName: addr.fullName,
+      phone: addr.phone,
+      street: addr.street,
+      landmark: addr.landmark || '',
+      city: addr.city,
+      state: addr.state,
+      pincode: addr.pincode,
+      addressType: addr.addressType || (isB2B ? 'COMMERCIAL' : 'HOME'),
+      companyName: addr.companyName
+    });
+    setShowAddressForm(true);
+  };
+
+  const handleStartAddNew = () => {
+    setEditingAddressId(null);
+    setNewAddress({
+      fullName: isLoggedIn ? currentUser.name : '',
+      phone: isLoggedIn ? currentUser.phone : '',
+      street: '',
+      landmark: '',
+      city: deliveryInfo?.city || 'Ahmedabad',
+      state: deliveryInfo?.state || 'Gujarat',
+      pincode: deliveryInfo?.pincode || '395002',
+      addressType: isB2B ? 'COMMERCIAL' : 'HOME'
+    });
+    setShowAddressForm(true);
+  };
+
+  const handleCancelAddressForm = () => {
+    if (effectiveAddresses.length > 0) {
+      setShowAddressForm(false);
+      setEditingAddressId(null);
+    } else {
+      alert('Please enter and save your delivery destination to complete your order.');
+    }
+  };
+
+  const handleSaveAddressForm = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!newAddress.fullName.trim()) {
+      alert('Please enter receiver full name.');
+      return false;
+    }
+    const cleanPhone = newAddress.phone.replace(/\D/g, '');
+    if (!newAddress.phone.trim() || cleanPhone.length < 10) {
+      alert('Please enter a valid 10-digit mobile number.');
+      return false;
+    }
+    if (!newAddress.street.trim()) {
+      alert('Please enter complete street address / building / floor.');
+      return false;
+    }
+    if (!newAddress.pincode.trim() || newAddress.pincode.length < 6) {
+      alert('Please enter a valid 6-digit postal pincode.');
+      return false;
+    }
+
+    if (isLoggedIn) {
+      if (editingAddressId) {
+        const updated = (currentUser.addresses || []).map(a =>
+          a.id === editingAddressId ? { ...newAddress, id: editingAddressId } : a
+        );
+        updateUserProfile({ addresses: updated });
+        const idx = updated.findIndex(a => a.id === editingAddressId);
+        if (idx !== -1) setSelectedAddressIndex(idx);
+      } else {
+        addSavedAddress(newAddress);
+        setSelectedAddressIndex(0);
+      }
+    } else {
+      // Guest mode - saved in localStorage 'mle_guest_addresses'
+      if (editingAddressId) {
+        const updated = guestAddresses.map(a =>
+          a.id === editingAddressId ? { ...newAddress, id: editingAddressId } : a
+        );
+        saveGuestAddresses(updated);
+        const idx = updated.findIndex(a => a.id === editingAddressId);
+        if (idx !== -1) setSelectedAddressIndex(idx);
+      } else {
+        const fresh: Address = {
+          ...newAddress,
+          id: `guest-addr-${Date.now()}`
+        };
+        const updated = [fresh, ...guestAddresses];
+        saveGuestAddresses(updated);
+        setSelectedAddressIndex(0);
+      }
+    }
+
+    setShowAddressForm(false);
+    setEditingAddressId(null);
+    return true;
+  };
+
+  const handleDeleteAddress = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to remove this address?')) return;
+    if (isLoggedIn) {
+      const updated = (currentUser.addresses || []).filter(a => a.id !== id);
+      updateUserProfile({ addresses: updated });
+      setSelectedAddressIndex(0);
+      if (updated.length === 0) setShowAddressForm(true);
+    } else {
+      const updated = guestAddresses.filter(a => a.id !== id);
+      saveGuestAddresses(updated);
+      setSelectedAddressIndex(0);
+      if (updated.length === 0) setShowAddressForm(true);
+    }
   };
 
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+    if (import.meta.env.PROD) {
+      alert('Checkout is temporarily unavailable until server-side pricing, inventory, and payment verification are configured.');
+      return;
+    }
 
     if (!cart || cart.length === 0) {
       alert('Your cart is empty. Please add items to your cart before proceeding to checkout.');
       navigate('/');
       return;
+    }
+
+    // 1. If address form is open, validate and save it before proceeding
+    if (showAddressForm) {
+      const valid = handleSaveAddressForm();
+      if (!valid) return;
+    }
+
+    // 2. Validate activeAddress has complete details
+    if (!activeAddress.fullName?.trim() || !activeAddress.phone?.trim() || !activeAddress.street?.trim() || !activeAddress.pincode?.trim()) {
+      alert('Please provide complete recipient name, contact number, and delivery street address.');
+      setShowAddressForm(true);
+      return;
+    }
+
+    // 3. If Guest, ensure the used address is permanently remembered in localStorage
+    if (!isLoggedIn) {
+      const exists = guestAddresses.some(a =>
+        a.fullName.toLowerCase() === activeAddress.fullName.toLowerCase() &&
+        a.street.toLowerCase() === activeAddress.street.toLowerCase() &&
+        a.pincode === activeAddress.pincode
+      );
+      if (!exists) {
+        const toSave = [activeAddress, ...guestAddresses];
+        saveGuestAddresses(toSave);
+      }
     }
 
     // Save company and GST if entered
@@ -188,11 +400,11 @@ export const CheckoutPage: React.FC = () => {
         description: pointsRedeemed > 0
           ? `Consignment Payment - ₹${remainingPayable.toLocaleString('en-IN')} (🪙 ${pointsRedeemed.toLocaleString('en-IN')} Points Redeemed)`
           : `Consignment Payment - ${cart.length} items (Ahmedabad Direct Mill)`,
-        image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=160&auto=format&fit=crop&q=80',
+        image: BRAND_LOGO_BASE64,
         prefill: {
-          name: activeAddress.fullName || currentUser.name || 'Valued Buyer',
+          name: activeAddress.fullName || (isLoggedIn ? currentUser.name : 'Valued Buyer'),
           email: currentUser.email || 'customer@mahalaxmi.in',
-          contact: activeAddress.phone || currentUser.phone || '8511172099',
+          contact: activeAddress.phone || (isLoggedIn ? currentUser.phone : ''),
         },
         notes: {
           order_source: 'WEBSITE_CHECKOUT',
@@ -269,6 +481,8 @@ export const CheckoutPage: React.FC = () => {
       navigate(`/orders?success=${order.id}`);
     }, 800);
   };
+
+  if (cart.length === 0) return null;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 pb-20">
@@ -368,10 +582,6 @@ export const CheckoutPage: React.FC = () => {
                     placeholder="e.g. 24AABCP1357K1ZT"
                     className="w-full text-xs font-mono uppercase px-3 py-2 border border-slate-300 rounded-xl focus:border-indigo outline-none"
                   />
-                  <p className="text-[10px] text-emerald-700 mt-1 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Auto-validated for instant GSTR-2B Input Tax Credit
-                  </p>
                 </div>
               </div>
             )}
@@ -379,112 +589,300 @@ export const CheckoutPage: React.FC = () => {
 
           {/* Step 2: Shipping Destination Address */}
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-subtle space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-navy text-white text-xs font-bold flex items-center justify-center">
                   2
                 </span>
-                <h3 className="font-extrabold text-sm text-navy">Delivery & Consignment Address</h3>
+                <h3 className="font-extrabold text-sm text-navy">Delivery &amp; Consignment Address</h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowNewAddressForm(!showNewAddressForm)}
-                className="text-xs font-bold text-indigo hover:underline"
-              >
-                {showNewAddressForm ? 'Cancel' : '+ Add New Address'}
-              </button>
+              <div className="flex items-center gap-2">
+                {showAddressForm && effectiveAddresses.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={handleCancelAddressForm}
+                    className="text-xs font-bold text-slate-500 hover:text-navy transition"
+                  >
+                    Cancel
+                  </button>
+                ) : !showAddressForm ? (
+                  <button
+                    type="button"
+                    onClick={handleStartAddNew}
+                    className="text-xs font-bold text-indigo hover:text-indigo-dark transition flex items-center gap-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add New Address</span>
+                  </button>
+                ) : null}
+              </div>
             </div>
 
-            {/* Saved Addresses List */}
-            {!showNewAddressForm && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {currentUser.addresses.map((addr, idx) => (
-                  <div
-                    key={addr.id}
-                    onClick={() => setSelectedAddressIndex(idx)}
-                    className={`p-4 rounded-xl border cursor-pointer transition text-xs space-y-1 ${
-                      selectedAddressIndex === idx
-                        ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-bold text-navy">{addr.fullName}</span>
-                      <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-medium">
-                        {addr.addressType}
-                      </span>
-                    </div>
-                    {addr.companyName && <p className="text-slate-500 font-medium">{addr.companyName}</p>}
-                    <p className="text-slate-700">{addr.street}</p>
-                    <p className="text-slate-700">{addr.city}, {addr.state} - {addr.pincode}</p>
-                    <p className="text-slate-500">Contact: {addr.phone}</p>
+            {/* Helper banner for Guests vs Logged in */}
+            {!isLoggedIn ? (
+              effectiveAddresses.length > 0 ? (
+                <div className="flex items-center justify-between gap-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-800">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>
+                      <strong>Address Auto-Loaded:</strong> Stored on this device from your previous checkout. You can edit or add a new address anytime.
+                    </span>
                   </div>
-                ))}
+                  <span className="font-bold text-[10px] bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded-full border border-emerald-300 shrink-0">
+                    Auto-Fill Active
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 p-2.5 bg-indigo-50/70 rounded-xl border border-indigo-100 text-[11px] text-indigo-900">
+                  <UserIcon className="w-3.5 h-3.5 text-indigo shrink-0" />
+                  <span>
+                    <strong>Guest Checkout:</strong> Enter your delivery address below. It will be remembered on this device so you won't need to re-enter it next time!
+                  </span>
+                </div>
+              )
+            ) : null}
+
+            {/* Saved Addresses List (Shown when not in form mode and we have addresses) */}
+            {!showAddressForm && effectiveAddresses.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {effectiveAddresses.map((addr, idx) => {
+                  const isSelected = selectedAddressIndex === idx;
+                  return (
+                    <div
+                      key={addr.id || `addr-${idx}`}
+                      onClick={() => setSelectedAddressIndex(idx)}
+                      className={`p-4 rounded-xl border cursor-pointer transition text-xs flex flex-col justify-between gap-3 ${
+                        isSelected
+                          ? 'border-indigo bg-indigo-light/40 ring-2 ring-indigo shadow-sm'
+                          : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50/50'
+                      }`}
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
+                              isSelected ? 'border-indigo bg-indigo' : 'border-slate-300 bg-white'
+                            }`}>
+                              {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </span>
+                            <span className="font-extrabold text-navy text-xs">{addr.fullName}</span>
+                          </div>
+                          <span className="text-[10px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider shrink-0">
+                            {addr.addressType || 'HOME'}
+                          </span>
+                        </div>
+                        {addr.companyName && (
+                          <p className="text-[11px] font-semibold text-indigo pl-5">{addr.companyName}</p>
+                        )}
+                        <p className="text-slate-700 pl-5 leading-relaxed">{addr.street}</p>
+                        {addr.landmark && (
+                          <p className="text-[11px] text-slate-500 pl-5">Near: {addr.landmark}</p>
+                        )}
+                        <p className="text-slate-800 font-medium pl-5">
+                          {addr.city}, {addr.state} - <span className="font-mono font-bold">{addr.pincode}</span>
+                        </p>
+                        <p className="text-slate-600 pl-5 font-medium">
+                          📞 Mobile: <span className="font-bold text-navy">{addr.phone}</span>
+                        </p>
+                      </div>
+
+                      {/* Card Action Controls: Edit and Delete */}
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 pl-5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartEdit(addr);
+                          }}
+                          className="text-[11px] font-bold text-indigo hover:text-indigo-dark flex items-center gap-1 hover:underline"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>Edit Address</span>
+                        </button>
+
+                        {effectiveAddresses.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteAddress(addr.id, e)}
+                            className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 flex items-center gap-1 hover:underline"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Remove</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
-            {/* Add New Address Form Modal/inline */}
-            {showNewAddressForm && (
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3 text-xs">
-                <h4 className="font-bold text-navy">Enter New Delivery Destination</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Receiver Full Name"
-                    value={newAddress.fullName}
-                    onChange={e => setNewAddress({ ...newAddress, fullName: e.target.value })}
-                    className="p-2 border border-slate-300 rounded-lg outline-none"
-                  />
-                  <input
-                    type="tel"
-                    required
-                    placeholder="Phone Number"
-                    value={newAddress.phone}
-                    onChange={e => setNewAddress({ ...newAddress, phone: e.target.value })}
-                    className="p-2 border border-slate-300 rounded-lg outline-none"
-                  />
-                  <input
-                    type="text"
-                    required
-                    placeholder="Street Address, Building, Floor"
-                    value={newAddress.street}
-                    onChange={e => setNewAddress({ ...newAddress, street: e.target.value })}
-                    className="sm:col-span-2 p-2 border border-slate-300 rounded-lg outline-none"
-                  />
-                  <input
-                    type="text"
-                    maxLength={6}
-                    required
-                    placeholder="6-digit PIN (Auto-fills city)"
-                    value={newAddress.pincode}
-                    onChange={e => handlePincodeChange(e.target.value)}
-                    className="p-2 border border-slate-300 rounded-lg outline-none font-mono font-bold text-navy"
-                  />
-                  <input
-                    type="text"
-                    required
-                    placeholder="City / District"
-                    value={newAddress.city}
-                    onChange={e => setNewAddress({ ...newAddress, city: e.target.value })}
-                    className="p-2 border border-slate-300 rounded-lg outline-none"
-                  />
-                  <input
-                    type="text"
-                    required
-                    placeholder="State"
-                    value={newAddress.state}
-                    onChange={e => setNewAddress({ ...newAddress, state: e.target.value })}
-                    className="p-2 border border-slate-300 rounded-lg outline-none"
-                  />
+            {/* Address Input & Edit Form */}
+            {showAddressForm && (
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-4 text-xs">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-extrabold text-navy text-xs sm:text-sm">
+                      {editingAddressId ? '✏️ Edit Consignment Address' : '📍 Enter Delivery Destination'}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      Required for GST invoice generation and express mill door delivery.
+                    </p>
+                  </div>
+                  {effectiveAddresses.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleCancelAddressForm}
+                      className="text-xs text-slate-500 hover:text-slate-800 font-bold"
+                    >
+                      Back to Saved
+                    </button>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAddNewAddress}
-                  className="px-4 py-2 bg-indigo text-white font-bold rounded-lg text-xs hover:bg-indigo-dark transition"
-                >
-                  Save and Use Address
-                </button>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Receiver / Contact Person Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Ramesh Patel"
+                      value={newAddress.fullName}
+                      onChange={e => setNewAddress({ ...newAddress, fullName: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:border-indigo focus:ring-1 focus:ring-indigo"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Mobile Number (For Courier OTP &amp; Delivery) *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      maxLength={15}
+                      placeholder="e.g. 9876543210"
+                      value={newAddress.phone}
+                      onChange={e => setNewAddress({ ...newAddress, phone: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:border-indigo focus:ring-1 focus:ring-indigo font-mono"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Complete Street Address, Building, Floor, Shop/Flat No. *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Plot 204, GIDC Industrial Estate, Ring Road"
+                      value={newAddress.street}
+                      onChange={e => setNewAddress({ ...newAddress, street: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:border-indigo focus:ring-1 focus:ring-indigo"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Landmark (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Near Textile Market Gate 2"
+                      value={newAddress.landmark || ''}
+                      onChange={e => setNewAddress({ ...newAddress, landmark: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:border-indigo focus:ring-1 focus:ring-indigo"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      6-Digit PIN Code (Auto-fills City &amp; State) *
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      required
+                      placeholder="e.g. 395002"
+                      value={newAddress.pincode}
+                      onChange={e => handlePincodeChange(e.target.value)}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl outline-none font-mono font-bold text-navy focus:border-indigo focus:ring-1 focus:ring-indigo"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      City / District *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="City"
+                      value={newAddress.city}
+                      onChange={e => setNewAddress({ ...newAddress, city: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:border-indigo focus:ring-1 focus:ring-indigo"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      State *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="State"
+                      value={newAddress.state}
+                      onChange={e => setNewAddress({ ...newAddress, state: e.target.value })}
+                      className="w-full p-2.5 bg-white border border-slate-300 rounded-xl outline-none focus:border-indigo focus:ring-1 focus:ring-indigo"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                      Address Type
+                    </label>
+                    <div className="flex gap-2">
+                      {(['HOME', 'COMMERCIAL', 'WAREHOUSE'] as const).map(type => (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => setNewAddress({ ...newAddress, addressType: type })}
+                          className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition ${
+                            newAddress.addressType === type
+                              ? 'border-indigo bg-indigo text-white'
+                              : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
+                          }`}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSaveAddressForm}
+                    className="px-5 py-2.5 bg-indigo text-white font-bold rounded-xl text-xs hover:bg-indigo-dark transition shadow-sm flex items-center gap-1.5"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>{editingAddressId ? 'Update & Use Address' : 'Save & Use This Address'}</span>
+                  </button>
+
+                  {effectiveAddresses.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleCancelAddressForm}
+                      className="px-4 py-2.5 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl text-xs hover:bg-slate-100 transition"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -519,16 +917,22 @@ export const CheckoutPage: React.FC = () => {
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs font-extrabold text-navy">Mahalaxmi Enterprises Points Wallet</p>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        userWalletBalance > 0
-                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                          : 'bg-slate-200 text-slate-600 border-slate-300'
-                      }`}>
-                        Available: 🪙 {userWalletBalance.toLocaleString('en-IN')} Points (₹{userWalletBalance.toLocaleString('en-IN')})
-                      </span>
+                      {isLoggedIn ? (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          userWalletBalance > 0
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-slate-200 text-slate-600 border-slate-300'
+                        }`}>
+                          Available: 🪙 {userWalletBalance.toLocaleString('en-IN')} Points (₹{userWalletBalance.toLocaleString('en-IN')})
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-300">
+                          🔒 Login Required
+                        </span>
+                      )}
                     </div>
 
-                    {userWalletBalance > 0 ? (
+                    {isLoggedIn && userWalletBalance > 0 ? (
                       <div className="mt-2 space-y-1">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
                           <input
@@ -561,15 +965,20 @@ export const CheckoutPage: React.FC = () => {
                           </p>
                         )}
                       </div>
-                    ) : (
+                    ) : isLoggedIn ? (
                       <p className="text-[10px] text-slate-500 mt-1">
                         You have 0 Mill Points. Points are automatically credited from refunds and promotional rewards.
+                      </p>
+                    ) : (
+                      // Guest user — show login nudge, never show demo wallet balance
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        <Link to="/account" className="font-bold text-indigo hover:underline">Login or create an account</Link> to earn &amp; redeem Mill Points on every order. Your balance loads automatically after sign-in.
                       </p>
                     )}
                   </div>
                 </div>
 
-                {userWalletBalance > 0 && (
+                {isLoggedIn && userWalletBalance > 0 && (
                   <button
                     type="button"
                     onClick={() => setApplyPoints(!applyPoints)}
@@ -834,7 +1243,6 @@ export const CheckoutPage: React.FC = () => {
             </a>
 
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2 text-center">
-              <PaymentTrustBadges showSslNotice={false} />
               <div className="flex items-center justify-center gap-3 text-[10px] font-bold text-slate-500 pt-1">
                 <span>🔒 256-Bit SSL Encrypted</span>
                 <span>•</span>

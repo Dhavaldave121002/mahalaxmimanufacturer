@@ -1,8 +1,9 @@
 import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
+import { requireAdminSession } from './_lib/admin-session.js';
 
-// Global fallback cache with persistent public/orders.json backing
+// Local-development fallback only; customer order data must not be a public asset.
 if (!globalThis._mle_orders_cache) {
   globalThis._mle_orders_cache = [];
 }
@@ -12,7 +13,7 @@ function readFallbackOrders() {
     return globalThis._mle_orders_cache;
   }
   try {
-    const fPath = path.join(process.cwd(), 'public', 'orders.json');
+    const fPath = path.join(process.cwd(), 'private-data', 'fixtures', 'orders.json');
     if (fs.existsSync(fPath)) {
       const parsed = JSON.parse(fs.readFileSync(fPath, 'utf8'));
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -29,9 +30,9 @@ function readFallbackOrders() {
 function saveFallbackOrders(orders) {
   globalThis._mle_orders_cache = orders;
   try {
-    const pubDir = path.join(process.cwd(), 'public');
-    if (!fs.existsSync(pubDir)) fs.mkdirSync(pubDir, { recursive: true });
-    const fPath = path.join(pubDir, 'orders.json');
+    const dataDir = path.join(process.cwd(), 'private-data', 'fixtures');
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+    const fPath = path.join(dataDir, 'orders.json');
     fs.writeFileSync(fPath, JSON.stringify(orders, null, 2), 'utf8');
   } catch (e) {
     console.warn('saveFallbackOrders warning:', e.message);
@@ -56,6 +57,8 @@ export default async function handler(req, res) {
 
   // 1. GET: Fetch all live orders with attached items
   if (req.method === 'GET') {
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
     const fallbackOrders = readFallbackOrders();
     if (!pool) {
       return res.status(200).json({
@@ -247,6 +250,13 @@ export default async function handler(req, res) {
       } catch (cartErr) {
         return res.status(500).json({ success: false, error: cartErr.message });
       }
+    }
+
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(503).json({
+        success: false,
+        error: 'Order placement is unavailable until server-side pricing, inventory, and payment verification are configured.'
+      });
     }
 
     const orderId = o.id || `ord-${Date.now()}`;
@@ -982,4 +992,3 @@ async function sendOrderNotificationEmails(data) {
     console.warn('Order notification emails dispatch failed:', err);
   }
 }
-

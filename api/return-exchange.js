@@ -17,6 +17,12 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method Not Allowed' });
   }
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(503).json({
+      success: false,
+      error: 'Return and exchange requests are unavailable until customer ownership checks are configured.'
+    });
+  }
 
   let body = req.body;
   if (typeof body === 'string') {

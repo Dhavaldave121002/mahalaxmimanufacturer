@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Product, Order, OrderStatus, Quotation, CategoryId } from '../types';
@@ -42,7 +42,8 @@ import {
   Eye,
   Copy,
   Sparkles,
-  Paperclip
+  Paperclip,
+  MapPin
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { MobileAppManager } from '../components/admin/MobileAppManager';
@@ -62,37 +63,61 @@ export const AdminDashboardPage: React.FC = () => {
     quotations,
     updateQuotationByStaff,
     enquiries,
-    currentUser,
-    switchUserRole,
     coupons,
     categories
   } = useApp();
 
-  // Admin Security Gate State
-  const [passcode, setPasscode] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [authError, setAuthError] = useState(false);
-  const [isUnlocked, setIsUnlocked] = useState(() => {
-    return currentUser.role === 'admin' || sessionStorage.getItem('mle_admin_auth') === 'true';
-  });
+  const [authMessage, setAuthMessage] = useState('');
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    fetch('/api/auth?action=admin_session')
+      .then(async response => {
+        const data = await response.json();
+        setIsUnlocked(response.ok && data.success === true);
+      })
+      .catch(() => setIsUnlocked(false))
+      .finally(() => setIsCheckingSession(false));
+  }, []);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanPin = passcode.trim().toLowerCase();
-    // Allow owner passcodes
-    if (['121002', 'admin', 'admin2026', 'mle2026', 'mahalaxmi'].includes(cleanPin)) {
-      switchUserRole('admin');
-      sessionStorage.setItem('mle_admin_auth', 'true');
+    setAuthError(false);
+    setAuthMessage('');
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'admin_login', identifier: adminEmail, password: adminPassword })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        setAuthMessage(data.message || 'Administrator sign-in failed.');
+        setAuthError(true);
+        return;
+      }
+      setAdminPassword('');
       setIsUnlocked(true);
-      setAuthError(false);
-    } else {
+    } catch {
+      setAuthMessage('Administrator sign-in is unavailable. Check the database connection and try again.');
       setAuthError(true);
     }
   };
 
-  const handleExitAdmin = () => {
-    sessionStorage.removeItem('mle_admin_auth');
-    switchUserRole('retailer');
-    setIsUnlocked(false);
+  const handleExitAdmin = async () => {
+    try {
+      await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'admin_logout' })
+      });
+    } finally {
+      setIsUnlocked(false);
+    }
   };
 
   // Active Admin View: 'overview' | 'categories' | 'products' | 'orders' | 'quotations' | 'enquiries' | 'reviews' | 'import-export' | 'mobile-app' | 'coupons' | 'subscribers'
@@ -201,6 +226,7 @@ export const AdminDashboardPage: React.FC = () => {
           orderId: order.id,
           orderNumber: order.orderNumber,
           customer: order.customer,
+          shippingAddress: order.shippingAddress,
           amount: order.totalAmount,
           paymentMethod: order.paymentMethod
         })
@@ -398,6 +424,14 @@ export const AdminDashboardPage: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-4 py-16 bg-slate-50">
+        <p className="text-sm text-slate-500">Verifying secure admin session...</p>
+      </div>
+    );
+  }
+
   // Render Staff Auth Gate if locked
   if (!isUnlocked) {
     return (
@@ -416,25 +450,46 @@ export const AdminDashboardPage: React.FC = () => {
           <form onSubmit={handleAdminLogin} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-navy block">
-                Staff Security PIN / Passcode:
+                Administrator email:
               </label>
               <div className="relative">
                 <input
-                  type="password"
-                  value={passcode}
-                  onChange={e => { setPasscode(e.target.value); setAuthError(false); }}
-                  placeholder="Enter staff PIN (e.g. 121002)..."
+                  type="email"
+                  autoComplete="username"
+                  value={adminEmail}
+                  onChange={e => { setAdminEmail(e.target.value); setAuthError(false); }}
+                  placeholder="admin@yourcompany.com"
                   className={`w-full text-sm pl-10 pr-4 py-3 border rounded-xl outline-none transition ${
                     authError ? 'border-red-500 bg-red-50/40' : 'border-slate-300 focus:border-indigo'
                   }`}
                   autoFocus
+                />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-navy block" htmlFor="admin-password">
+                Password:
+              </label>
+              <div className="relative">
+                <input
+                  id="admin-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={adminPassword}
+                  onChange={e => { setAdminPassword(e.target.value); setAuthError(false); }}
+                  placeholder="Enter your administrator password"
+                  className={`w-full text-sm pl-10 pr-4 py-3 border rounded-xl outline-none transition ${
+                    authError ? 'border-red-500 bg-red-50/40' : 'border-slate-300 focus:border-indigo'
+                  }`}
                 />
                 <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
               {authError && (
                 <p className="text-xs text-red-600 font-semibold flex items-center gap-1 mt-1">
                   <AlertTriangle className="w-3.5 h-3.5" />
-                  Invalid passcode. Please enter authorized staff PIN.
+                  {authMessage}
                 </p>
               )}
             </div>
@@ -444,7 +499,7 @@ export const AdminDashboardPage: React.FC = () => {
               className="w-full py-3 bg-navy hover:bg-navy-800 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2"
             >
               <ShieldCheck className="w-4 h-4 text-champagne" />
-              <span>Verify & Unlock Operations Desk</span>
+              <span>Sign In Securely</span>
             </button>
           </form>
 
@@ -1138,6 +1193,24 @@ export const AdminDashboardPage: React.FC = () => {
                         <p className="text-[10px] text-slate-500 truncate mt-0.5">
                           {ord.customer.phone} {ord.customer.gstNumber ? `• GST: ${ord.customer.gstNumber}` : ''}
                         </p>
+
+                        {/* Exact Delivery Shipping Address */}
+                        {ord.shippingAddress && ord.shippingAddress.street && (
+                          <div className="mt-1 p-1.5 bg-slate-50 rounded-lg border border-slate-200 text-[10px] text-slate-700 leading-tight">
+                            <div className="flex items-center gap-1 font-bold text-navy">
+                              <MapPin className="w-3 h-3 text-indigo shrink-0" />
+                              <span>Shipped To: {ord.shippingAddress.fullName || ord.customer.name}</span>
+                            </div>
+                            <p className="text-slate-600 truncate mt-0.5" title={`${ord.shippingAddress.street}, ${ord.shippingAddress.city}, ${ord.shippingAddress.state} - ${ord.shippingAddress.pincode}`}>
+                              {ord.shippingAddress.street}, {ord.shippingAddress.city}, {ord.shippingAddress.state} - <span className="font-mono font-bold text-navy">{ord.shippingAddress.pincode}</span>
+                            </p>
+                            {ord.shippingAddress.phone && (
+                              <p className="text-slate-500 text-[9.5px] mt-0.5">
+                                Recipient Phone: <span className="font-bold text-slate-700">{ord.shippingAddress.phone}</span>
+                              </p>
+                            )}
+                          </div>
+                        )}
 
                         {/* Order Item & Customization Branding Preview */}
                         {ord.items && ord.items.length > 0 ? (

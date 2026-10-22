@@ -220,5 +220,15 @@
       "usedCount": 15,
       "createdAt": "2026-10-08T00:00:00.000Z"
     }
-  ]
+  ],
+  "bundleOffer": {
+    "enabled": true,
+    "title": "Frequently Bought Together • Mill Saver Bundle",
+    "subtitle": "Customers frequently combine these complementary mill-grade essentials",
+    "badgeText": "Extra 15% Bundle Discount Applied",
+    "discountPercentage": 15,
+    "minItemsForDiscount": 2,
+    "savingsNote": "You save ₹{savings} ({discount}% off combo)",
+    "bundleMaxProducts": 3
+  }
 }

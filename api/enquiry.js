@@ -1,13 +1,14 @@
 import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
+import { requireAdminSession } from './_lib/admin-session.js';
 
 let enquiriesCache = null;
 
 function loadFallbackEnquiries() {
   if (enquiriesCache && enquiriesCache.length > 0) return enquiriesCache;
   try {
-    const filePath = path.join(process.cwd(), 'public', 'enquiries.json');
+    const filePath = path.join(process.cwd(), 'private-data', 'fixtures', 'enquiries.json');
     if (fs.existsSync(filePath)) {
       enquiriesCache = JSON.parse(fs.readFileSync(filePath, 'utf8'));
       return enquiriesCache;
@@ -21,7 +22,7 @@ function loadFallbackEnquiries() {
 function saveFallbackEnquiries(enquiries) {
   enquiriesCache = enquiries;
   try {
-    const filePath = path.join(process.cwd(), 'public', 'enquiries.json');
+    const filePath = path.join(process.cwd(), 'private-data', 'fixtures', 'enquiries.json');
     fs.writeFileSync(filePath, JSON.stringify(enquiries, null, 2), 'utf8');
   } catch (err) {
     console.warn('Fallback enquiries write warning:', err.message);
@@ -46,6 +47,8 @@ export default async function handler(req, res) {
 
   // 1. GET: Return all business enquiries for Admin Dashboard
   if (req.method === 'GET') {
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
     if (pool) {
       try {
         await pool.query(`
@@ -89,6 +92,9 @@ export default async function handler(req, res) {
         });
       } catch (dbErr) {
         console.warn('MySQL enquiries fetch warning:', dbErr.message);
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({ success: false, error: 'Enquiries are unavailable because database access failed.' });
+        }
       }
     }
 
@@ -103,19 +109,25 @@ export default async function handler(req, res) {
 
   // 2. POST: Submit a new requirement / enquiry
   if (req.method === 'POST') {
+    if (process.env.NODE_ENV === 'production' && !pool) {
+      return res.status(503).json({ success: false, error: 'Enquiry submission requires a configured database.' });
+    }
     let body = req.body;
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch { body = {}; }
     }
     body = body || {};
 
-    const fullName = (body.fullName || body.name || 'Valued Buyer').trim();
-    const email = (body.email || 'dhavaldave121002@gmail.com').trim().toLowerCase();
-    const phone = (body.phone || body.mobile || '+91 85111 72099').trim();
-    const businessName = (body.businessName || body.companyName || body.company || `${fullName} Textiles`).trim();
-    const businessType = body.businessType || body.type || 'Retailer';
-    const expectedMonthlyVolume = body.expectedMonthlyVolume || body.volume || '100 - 500 pcs';
-    const notes = body.notes || body.requirement || body.message || 'Custom bulk manufacturing inquiry submitted via portal.';
+    const fullName = String(body.fullName || body.name || '').trim();
+    const email = String(body.email || '').trim().toLowerCase();
+    const phone = String(body.phone || body.mobile || '').trim();
+    if (!fullName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || phone.replace(/\D/g, '').length < 7) {
+      return res.status(400).json({ success: false, error: 'A valid name, email address, and phone number are required.' });
+    }
+    const businessName = String(body.businessName || body.companyName || body.company || '').trim();
+    const businessType = String(body.businessType || body.type || '').trim();
+    const expectedMonthlyVolume = String(body.expectedMonthlyVolume || body.volume || '').trim();
+    const notes = String(body.notes || body.requirement || body.message || '').trim();
     const source = body.source === 'FLUTTER_APP' ? 'FLUTTER_APP' : 'WEB';
     const enquiryCode = `ENQ-${Date.now().toString().slice(-6)}`;
 
@@ -162,6 +174,9 @@ export default async function handler(req, res) {
         );
       } catch (dbErr) {
         console.warn('MySQL insert enquiry error:', dbErr.message);
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({ success: false, error: 'The enquiry could not be saved. Please try again later.' });
+        }
       }
     }
 
