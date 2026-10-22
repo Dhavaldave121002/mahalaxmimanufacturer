@@ -275,7 +275,7 @@ export const ProductDetailPage: React.FC = () => {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<'specs' | 'tiers' | 'care' | 'reviews'>('specs');
+  const [activeTab, setActiveTab] = useState<'specs' | 'care' | 'reviews'>('specs');
   const [showReturnModal, setShowReturnModal] = useState(false);
 
   const activeWholesaleTier = useMemo(() => {
@@ -1447,7 +1447,7 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* High-Conversion Trust Signals Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs pt-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center text-xs pt-1">
               <button
                 type="button"
                 onClick={() => setShowReturnModal(true)}
@@ -1467,11 +1467,6 @@ export const ProductDetailPage: React.FC = () => {
                 <Zap className="w-4 h-4 text-amber-500 mb-1" />
                 <span className="font-bold text-navy text-[11px]">COD Available</span>
                 <span className="text-[10px] text-slate-500">Pay on Inspection</span>
-              </div>
-              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col items-center justify-center">
-                <Building2 className="w-4 h-4 text-indigo mb-1" />
-                <span className="font-bold text-navy text-[11px]">GST E-Invoice</span>
-                <span className="text-[10px] text-slate-500">100% ITC Credit</span>
               </div>
             </div>
           </div>
@@ -1562,16 +1557,6 @@ export const ProductDetailPage: React.FC = () => {
             Technical Specifications
           </button>
           <button
-            onClick={() => setActiveTab('tiers')}
-            className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap ${
-              activeTab === 'tiers'
-                ? 'border-indigo text-indigo'
-                : 'border-transparent text-slate-500 hover:text-navy'
-            }`}
-          >
-            Commercial B2B Terms & ITC
-          </button>
-          <button
             onClick={() => setActiveTab('care')}
             className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap ${
               activeTab === 'care'
@@ -1622,25 +1607,7 @@ export const ProductDetailPage: React.FC = () => {
           </div>
         )}
 
-        {/* Tab 2: Commercial Wholesale Terms */}
-        {activeTab === 'tiers' && (
-          <div className="space-y-4 text-xs text-slate-700">
-            <h4 className="font-bold text-sm text-navy">Wholesale Procurement Policy & B2B Terms</h4>
-            <ul className="space-y-2.5 list-disc list-inside text-slate-600">
-              {(product.b2bPolicy && product.b2bPolicy.length > 0 ? product.b2bPolicy : [
-                'All bulk consignments are billed with formal GST Tax Invoices from Ahmedabad jurisdiction (State Code 24).',
-                'GST numbers entered during checkout automatically receive electronic GSTR-1 filings for instantaneous GSTR-2B input credit.',
-                'Consignments above ₹50,000 include government-verified E-Way bills.',
-                'Earn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.',
-                'Commercial sample cost credited back 100% on subsequent wholesale consignment booking.'
-              ]).map((term, idx) => (
-                <li key={idx} className="leading-relaxed">{term}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Tab 3: Care Instructions */}
+        {/* Care Instructions */}
         {activeTab === 'care' && (
           <div className="space-y-3 text-xs text-slate-700">
             <h4 className="font-bold text-sm text-navy">Industrial & Domestic Washing Instructions</h4>
