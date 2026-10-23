@@ -168,20 +168,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
 
     setLoading(true);
     const generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
-    setExpectedLoginOtp(generatedCode);
-    setLoginOtp(''); // STRICT: MUST BE EMPTY, NO AUTO-FILL!
-    setOtpSent(true);
 
     const matchedUser = registeredUsers.find(u => u.email.toLowerCase() === id.toLowerCase() || u.phone === id);
     const customerDisplayName = matchedUser?.name || (id.includes('@') ? id.split('@')[0].replace(/[._]/g, ' ') : 'Valued Customer');
 
     try {
-      await sendOtpEmail(id, generatedCode, customerDisplayName);
+      const result = await sendOtpEmail(id, generatedCode, customerDisplayName);
       setLoading(false);
-      setSuccessMsg(`✅ Verification code sent to ${id}! Please check your email inbox.`);
-    } catch {
+      if (!result.delivered) {
+        setErrorMsg(result.message);
+        return;
+      }
+      setExpectedLoginOtp(generatedCode);
+      setLoginOtp('');
+      setOtpSent(true);
+      setSuccessMsg(result.message);
+    } catch (error) {
+      console.error('Login OTP delivery failed:', error);
       setLoading(false);
-      setSuccessMsg(`✅ Verification code sent to ${id}! Please check your email inbox.`);
+      setErrorMsg('Unable to send the verification code. Please try again later.');
     }
   };
 
@@ -233,18 +238,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
     if (!registerOtpSent) {
       setLoading(true);
       const generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
-      setExpectedRegisterOtp(generatedCode);
-      setRegisterOtp(''); // STRICT: EMPTY BOX
 
       try {
-        await sendOtpEmail(cleanEmail, generatedCode, registerForm.name.trim());
+        const result = await sendOtpEmail(cleanEmail, generatedCode, registerForm.name.trim());
         setLoading(false);
+        if (!result.delivered) {
+          setErrorMsg(result.message);
+          return;
+        }
+        setExpectedRegisterOtp(generatedCode);
+        setRegisterOtp('');
         setRegisterOtpSent(true);
-        setSuccessMsg(`✅ 4-Digit verification code sent to ${cleanEmail}! Please check your email inbox.`);
-      } catch {
+        setSuccessMsg(result.message);
+      } catch (error) {
+        console.error('Registration OTP delivery failed:', error);
         setLoading(false);
-        setRegisterOtpSent(true);
-        setSuccessMsg(`✅ 4-Digit verification code sent to ${cleanEmail}! Please check your email inbox.`);
+        setErrorMsg('Unable to send the verification code. Please try again later.');
       }
       return;
     }
@@ -307,20 +316,25 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
 
     setLoading(true);
     const genCode = Math.floor(1000 + Math.random() * 9000).toString();
-    setExpectedForgotOtp(genCode);
-    setForgotOtp('');
-    setForgotOtpSent(true);
 
     const matchedUser = registeredUsers.find(u => u.email.toLowerCase() === id.toLowerCase() || u.phone === id);
     const customerDisplayName = matchedUser?.name || (id.includes('@') ? id.split('@')[0].replace(/[._]/g, ' ') : 'Valued Customer');
 
     try {
-      await sendOtpEmail(id, genCode, customerDisplayName);
+      const result = await sendOtpEmail(id, genCode, customerDisplayName);
       setLoading(false);
-      setSuccessMsg(`✅ 4-Digit password reset code sent to ${id}! Please check your email inbox.`);
-    } catch {
+      if (!result.delivered) {
+        setErrorMsg(result.message);
+        return;
+      }
+      setExpectedForgotOtp(genCode);
+      setForgotOtp('');
+      setForgotOtpSent(true);
+      setSuccessMsg(result.message);
+    } catch (error) {
+      console.error('Password reset OTP delivery failed:', error);
       setLoading(false);
-      setSuccessMsg(`✅ 4-Digit password reset code sent to ${id}! Please check your email inbox.`);
+      setErrorMsg('Unable to send the verification code. Please try again later.');
     }
   };
 
@@ -829,11 +843,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                         disabled={loading}
                         onClick={async () => {
                           const genOtp = Math.floor(1000 + Math.random() * 9000).toString();
-                          setExpectedRegisterOtp(genOtp);
                           setLoading(true);
-                          await sendOtpEmail(registerForm.email.trim().toLowerCase(), genOtp, registerForm.name.trim());
-                          setLoading(false);
-                          setSuccessMsg(`New OTP sent to ${registerForm.email}`);
+                          try {
+                            const result = await sendOtpEmail(registerForm.email.trim().toLowerCase(), genOtp, registerForm.name.trim());
+                            setLoading(false);
+                            if (!result.delivered) {
+                              setErrorMsg(result.message);
+                              return;
+                            }
+                            setExpectedRegisterOtp(genOtp);
+                            setSuccessMsg(result.message);
+                          } catch (error) {
+                            console.error('Registration OTP resend failed:', error);
+                            setLoading(false);
+                            setErrorMsg('Unable to send the verification code. Please try again later.');
+                          }
                         }}
                         className="text-indigo font-bold hover:underline cursor-pointer"
                       >

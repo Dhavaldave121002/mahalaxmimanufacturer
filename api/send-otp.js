@@ -18,8 +18,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, otp } = req.body || {};
-    let customerName = (req.body?.name || '').trim();
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const email = typeof body.email === 'string' ? body.email.trim() : '';
+    const otp = typeof body.otp === 'string' || typeof body.otp === 'number'
+      ? String(body.otp)
+      : '';
+    let customerName = typeof body.name === 'string' ? body.name.trim() : '';
     if (!customerName || customerName.toLowerCase() === 'valued customer' || customerName.toLowerCase() === 'customer') {
       if (email && email.includes('@')) {
         const raw = email.split('@')[0].replace(/[0-9._-]+/g, ' ').trim();
@@ -30,12 +34,12 @@ export default async function handler(req, res) {
     }
     if (!customerName) customerName = 'Valued Partner';
 
-    if (!email || !email.includes('@')) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ success: false, message: 'Valid email address is required' });
     }
 
-    if (!otp) {
-      return res.status(400).json({ success: false, message: 'OTP is required' });
+    if (!/^\d{4,6}$/.test(otp)) {
+      return res.status(400).json({ success: false, message: 'A valid verification code is required' });
     }
 
     // ==========================================
@@ -88,8 +92,9 @@ export default async function handler(req, res) {
 
         if (emailJsRes.ok) {
           emailDelivered = true;
-          console.log(`[EmailJS] OTP ${otp} dispatched successfully to ${email}`);
+          console.log('[EmailJS] OTP delivery accepted by provider.');
         } else {
+          console.warn(`[EmailJS] OTP delivery failed with HTTP ${emailJsRes.status}.`);
           // If primary template fails, auto-fallback to template_rxzob8r
           if (EMAILJS_TEMPLATE_ID !== 'template_rxzob8r') {
             payload.template_id = 'template_rxzob8r';
@@ -103,7 +108,9 @@ export default async function handler(req, res) {
             });
             if (retryRes.ok) {
               emailDelivered = true;
-              console.log(`[EmailJS] OTP ${otp} dispatched via fallback template_rxzob8r to ${email}`);
+              console.log('[EmailJS] OTP delivery accepted by fallback template.');
+            } else {
+              console.warn(`[EmailJS] Fallback OTP delivery failed with HTTP ${retryRes.status}.`);
             }
           }
         }
