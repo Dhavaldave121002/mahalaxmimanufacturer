@@ -15,6 +15,9 @@ export const CategoryPage: React.FC = () => {
 
   const allCats = categories && categories.length > 0 ? categories : CATEGORIES_CONFIG;
   const categoryConfig = allCats.find(c => c.id === categoryId);
+  const categoryHeroImage = categoryId === 'home-kitchen'
+    ? products.find(product => product.category === categoryId && product.subcategory === 'Aprons')?.images[0] || null
+    : null;
 
   if (!categoryConfig) {
     return (
@@ -72,15 +75,12 @@ export const CategoryPage: React.FC = () => {
               <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
                 Browse source-listed products in {categoryConfig.name}. Confirm product specifications, current availability and prices before ordering.
               </p>
-              <p className="pt-2 text-xs text-amber-200">
-                Confirm product specifications, availability and current pricing before ordering.
-              </p>
             </div>
 
             <div className="md:col-span-4">
               <div className="aspect-[16/10] rounded-2xl overflow-hidden border border-slate-700 shadow-premium">
                 <img
-                  src={categoryConfig.image}
+                  src={categoryHeroImage || categoryConfig.image}
                   alt={categoryConfig.name}
                   className="w-full h-full object-cover"
                 />
@@ -92,15 +92,26 @@ export const CategoryPage: React.FC = () => {
 
       {/* Subcategory Filter Tabs & Sorting */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4 md:flex md:items-center md:justify-between md:gap-6 md:rounded-none md:border-0 md:border-b md:bg-transparent md:px-0 md:pb-4 md:shadow-none">
           {/* Subcategory Pills */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="min-w-0">
+            <div className="mb-2 flex items-center justify-between gap-2 md:mb-3">
+              <span className="text-xs font-bold text-navy sm:text-sm">Shop by type</span>
+              <span className="text-[10px] font-medium text-slate-500 sm:text-xs">
+                {categoryProducts.length} {categoryProducts.length === 1 ? 'product' : 'products'}
+              </span>
+            </div>
+            <div
+              aria-label="Filter by subcategory"
+              className="flex snap-x snap-mandatory items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible md:pb-0"
+            >
             <button
               onClick={() => setSelectedSubcategory('')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+              aria-pressed={selectedSubcategory === ''}
+              className={`shrink-0 snap-start whitespace-nowrap rounded-full px-3 py-2 text-[11px] font-bold transition sm:text-xs ${
                 selectedSubcategory === ''
-                  ? 'bg-navy text-white shadow-subtle'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-navy text-white shadow-sm'
+                  : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
               }`}
             >
               All {categoryConfig.name} ({products.filter(p => p.category === categoryId).length})
@@ -112,25 +123,29 @@ export const CategoryPage: React.FC = () => {
                 <button
                   key={i}
                   onClick={() => setSelectedSubcategory(selectedSubcategory === sub ? '' : sub)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                  aria-pressed={selectedSubcategory === sub}
+                  className={`shrink-0 snap-start whitespace-nowrap rounded-full px-3 py-2 text-[11px] font-bold transition sm:text-xs ${
                     selectedSubcategory === sub
-                      ? 'bg-indigo text-white shadow-subtle'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      ? 'bg-indigo text-white shadow-sm'
+                      : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  {sub} {count > 0 && <span className="opacity-75">({count})</span>}
+                  {sub} <span className={selectedSubcategory === sub ? 'opacity-80' : 'text-slate-400'}>({count})</span>
                 </button>
               );
             })}
+            </div>
           </div>
 
           {/* Sort Dropdown */}
-          <div className="flex items-center gap-2 self-end md:self-auto">
-            <span className="text-xs text-slate-500 font-medium">Sort:</span>
+          <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3 md:mt-0 md:shrink-0 md:border-0 md:pt-0">
+            <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-500" />
+            <label htmlFor="category-sort" className="shrink-0 text-xs font-medium text-slate-500">Sort:</label>
             <select
+              id="category-sort"
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
-              className="text-xs font-semibold bg-white border border-slate-300 rounded-xl px-3 py-1.5 focus:border-indigo outline-none text-navy"
+              className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-navy outline-none focus:border-indigo md:flex-none"
             >
               <option value="relevance">Featured & Relevance</option>
               <option value="price-low">Price: Low to High</option>

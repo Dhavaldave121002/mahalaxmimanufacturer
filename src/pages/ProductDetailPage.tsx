@@ -715,10 +715,10 @@ export const ProductDetailPage: React.FC = () => {
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
                 <div className="text-navy font-bold text-xs">
-                  Ahmedabad Direct Manufacturing & Inspection Guarantee
+                  Ahmedabad Mill Quality Check
                 </div>
                 <p className="text-slate-600 leading-relaxed text-[11px]">
-                  Every batch undergoes 4-point fabric inspection for tensile strength, colorfastness, and dimensional stability before palletization.
+                  Strength, color and size checked before dispatch.
                 </p>
               </div>
             </div>
@@ -1802,28 +1802,31 @@ export const ProductDetailPage: React.FC = () => {
           {/* Delivery PIN Code Checker with Live Delhivery Integration */}
           {!inquiryOnly && (
           <div className="p-4 bg-gradient-to-br from-indigo-50/50 to-white rounded-2xl border border-indigo/20 shadow-sm space-y-2.5 text-xs">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-bold text-navy">
-                <MapPin className="w-4 h-4 text-indigo" />
+            <div className="flex min-w-0 items-start justify-between gap-2 sm:items-center">
+              <div className="flex min-w-0 items-start gap-2 font-bold leading-tight text-navy sm:items-center">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-indigo sm:mt-0" />
                 <span>Check Delivery & COD to Your Pincode</span>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+              <span className="shrink-0 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-700 sm:text-[10px]">
                 Powered by Delhivery
               </span>
             </div>
 
-            <form onSubmit={handlePincodeCheck} className="flex gap-2">
+            <form onSubmit={handlePincodeCheck} className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-2">
               <input
                 type="text"
                 maxLength={6}
                 value={pinInput}
                 onChange={e => setPinInput(e.target.value.replace(/\D/g, ''))}
                 placeholder="Enter 6-digit Pincode (e.g. 395002)"
-                className="px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-mono w-56 focus:border-indigo focus:ring-1 focus:ring-indigo outline-none bg-white shadow-sm"
+                aria-label="6-digit delivery pincode"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                className="w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono shadow-sm outline-none focus:border-indigo focus:ring-1 focus:ring-indigo sm:px-3.5"
               />
               <button
                 type="submit"
-                className="px-5 py-2 bg-navy text-white text-xs font-bold rounded-xl hover:bg-navy-800 transition shadow-sm cursor-pointer"
+                className="whitespace-nowrap rounded-xl bg-navy px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-navy-800 cursor-pointer sm:px-5"
               >
                 Verify Pincode
               </button>

@@ -197,12 +197,12 @@ export const Header: React.FC = () => {
 
           <div className="flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] md:w-auto md:text-[11px]">
             <a
-              href="tel:+919429187611"
+              href="tel:+919033598639"
               className="text-slate-300 hover:text-champagne transition flex items-center gap-1 font-medium"
             >
               <PhoneCall className="h-3.5 w-3.5 text-champagne" />
-              <span className="sm:hidden">Call: +91 94291 87611</span>
-              <span className="hidden sm:inline">Mill Desk: +91 94291 87611</span>
+              <span className="sm:hidden">Call: +91 90335 98639</span>
+              <span className="hidden sm:inline">Mill Desk: +91 90335 98639</span>
             </a>
             <span className="text-slate-700 hidden md:inline">•</span>
             <Link
@@ -270,7 +270,7 @@ export const Header: React.FC = () => {
                   className="w-8 h-8 sm:w-11 sm:h-11 rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform border border-slate-200 shrink-0"
                 />
                 <div className="flex flex-col min-w-0">
-                  <span className="font-black text-xs sm:text-base lg:text-lg tracking-tight text-navy leading-none whitespace-nowrap">
+                  <span className="font-black text-[9px] min-[390px]:text-[10px] sm:text-base lg:text-lg tracking-tight text-navy leading-none whitespace-nowrap">
                     MAHALAXMI ENTERPRISES
                   </span>
                   <span className="text-[7px] sm:text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mt-0.5 hidden xs:block">
@@ -413,7 +413,7 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Quick Action Buttons */}
-            <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3 sm:shrink-0">
               {/* Mobile PIN Code Quick Badge */}
               <button
                 onClick={() => setPinModalOpen(true)}
@@ -455,7 +455,7 @@ export const Header: React.FC = () => {
                 <Link
                   to="/login"
                   aria-label="Sign In or Register account"
-                  className="flex items-center gap-1 p-1.5 sm:px-3 sm:py-2 hover:bg-slate-100 rounded-xl transition text-slate-700 hover:text-navy border border-slate-200 shrink-0"
+                  className="flex items-center gap-1 p-1 sm:px-3 sm:py-2 hover:bg-slate-100 rounded-xl transition text-slate-700 hover:text-navy border border-slate-200 shrink-0"
                   title="Sign In / Register"
                 >
                   <UserIcon className="w-4 h-4 text-indigo shrink-0" />
@@ -471,10 +471,11 @@ export const Header: React.FC = () => {
                 type="button"
                 onClick={() => setWishlistOpen(true)}
                 aria-label={`Wishlist with ${wishlist.length} saved items`}
-                className="relative max-[350px]:hidden p-2 sm:px-3 sm:py-2.5 rounded-xl hover:bg-slate-100 transition text-slate-700 hover:text-red-600 shrink-0 border border-slate-200 cursor-pointer"
+                className="relative inline-flex shrink-0 cursor-pointer items-center gap-0.5 rounded-xl border border-red-200 bg-red-50 px-1 py-1.5 text-red-600 transition hover:bg-red-100 sm:gap-1.5 sm:border-slate-200 sm:bg-transparent sm:px-3 sm:py-2.5 sm:text-slate-700 sm:hover:bg-slate-100 sm:hover:text-red-600"
                 title="View Saved Wishlist"
               >
-                <Heart className={`w-4 h-4 sm:w-5 sm:h-5 ${wishlist.length > 0 ? 'text-red-500 fill-red-500' : 'text-slate-600'}`} />
+                <Heart className={`h-4 w-4 shrink-0 sm:h-5 sm:w-5 ${wishlist.length > 0 ? 'fill-red-500 text-red-500' : 'text-red-500 sm:text-slate-600'}`} />
+                <span className="hidden text-[8px] font-bold min-[360px]:inline sm:hidden">Wishlist</span>
                 {wishlist.length > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white">
                     {wishlist.length}
@@ -486,7 +487,7 @@ export const Header: React.FC = () => {
               <Link
                 to="/cart"
                 aria-label={`Shopping Cart with ${cartTotalItemsCount} items, total ₹${cartSubtotal}`}
-                className="flex items-center gap-1.5 bg-navy hover:bg-navy-800 text-white p-1.5 sm:px-4 sm:py-2.5 rounded-xl transition shadow-premium group shrink-0"
+                className="flex items-center gap-1 bg-navy hover:bg-navy-800 text-white p-1 sm:px-4 sm:py-2.5 rounded-xl transition shadow-premium group shrink-0"
                 title="View Cart"
               >
                 <div className="relative">
@@ -648,22 +649,22 @@ export const Header: React.FC = () => {
 
       {/* 3. Flipkart / Meesho Style Visual Category Circles Rail (Scrolls away under Bar 2, hidden on cart/checkout/admin) */}
       {!['/cart', '/checkout'].includes(location.pathname) && !location.pathname.startsWith('/admin') && (
-        <nav className="bg-white border-b border-slate-200 overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x py-2 sm:py-2.5">
-          <div className="flex items-center gap-4 sm:gap-8 px-4 w-max min-w-full justify-start sm:justify-center">
+        <nav className="bg-white border-b border-slate-200 overflow-x-hidden sm:overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x py-2 sm:py-2.5">
+          <div className="grid grid-cols-4 items-start gap-x-1 px-2 sm:flex sm:items-center sm:gap-8 sm:px-4 sm:w-max sm:min-w-full sm:justify-center">
             {categoryBubbles.map((cat, i) => (
               <Link
                 key={i}
                 to={cat.path}
-                className="group flex flex-col items-center text-center gap-1.5 transition"
+                className="group flex min-w-0 flex-col items-center gap-1 text-center transition sm:gap-1.5"
               >
-                <div className="relative w-12 h-12 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-slate-200 to-indigo/40 group-hover:from-indigo group-hover:to-champagne transition">
+                <div className="relative h-10 w-10 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-slate-200 to-indigo/40 group-hover:from-indigo group-hover:to-champagne transition sm:h-12 sm:w-12">
                   <img
                     src={cat.img}
                     alt={cat.name}
                     className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
                   />
                 </div>
-                <span className="text-[11px] font-bold text-slate-700 group-hover:text-indigo transition whitespace-nowrap">
+                <span className="line-clamp-2 px-0.5 text-[9px] font-bold leading-tight text-slate-700 group-hover:text-indigo transition sm:whitespace-nowrap sm:px-0 sm:text-[11px]">
                   {cat.name}
                 </span>
               </Link>

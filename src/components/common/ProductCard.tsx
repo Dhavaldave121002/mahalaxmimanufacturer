@@ -115,7 +115,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
           {/* Product Title */}
           <Link to={`/product/${product.slug}`} className="block group-hover:text-indigo transition">
-            <h3 className="line-clamp-2 min-h-[2.25rem] text-[13px] font-bold leading-snug text-navy sm:min-h-0 sm:text-sm">
+            <h3 className="line-clamp-3 min-h-[3.15rem] text-[13px] font-bold leading-[1.05rem] text-navy sm:line-clamp-2 sm:min-h-0 sm:text-sm sm:leading-snug">
               {product.name}
             </h3>
           </Link>

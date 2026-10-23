@@ -306,11 +306,14 @@ export default async function handler(req, res) {
           for (const b of body.banners) {
             await pool.query(
               `INSERT INTO app_banners 
-               (id, category, title, subtitle, tag, cta, image, gradient_from, gradient_via, gradient_to, accent_color, icon_name, badge_icon, is_active, display_order)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               (id, category, title, subtitle, tag, badge, tagline, cta, cta_link, image, mobile_image, visibility, show_text_overlay, gradient_from, gradient_via, gradient_to, accent_color, icon_name, badge_icon, is_active, display_order)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                ON DUPLICATE KEY UPDATE 
                  category=VALUES(category), title=VALUES(title), subtitle=VALUES(subtitle),
-                 tag=VALUES(tag), cta=VALUES(cta), image=VALUES(image),
+                 tag=VALUES(tag), badge=VALUES(badge), tagline=VALUES(tagline),
+                 cta=VALUES(cta), cta_link=VALUES(cta_link), image=VALUES(image),
+                 mobile_image=VALUES(mobile_image), visibility=VALUES(visibility),
+                 show_text_overlay=VALUES(show_text_overlay),
                  gradient_from=VALUES(gradient_from), gradient_via=VALUES(gradient_via), gradient_to=VALUES(gradient_to),
                  accent_color=VALUES(accent_color), icon_name=VALUES(icon_name), badge_icon=VALUES(badge_icon),
                  is_active=VALUES(is_active), display_order=VALUES(display_order)`,
@@ -320,8 +323,14 @@ export default async function handler(req, res) {
                 b.title || '',
                 b.subtitle || '',
                 b.tag || '',
+                b.badge || '',
+                b.tagline || '',
                 b.cta || '',
+                b.ctaLink || '/catalog',
                 b.image || '',
+                b.mobileImage || '',
+                b.visibility || 'ALL',
+                b.showTextOverlay !== false ? 1 : 0,
                 b.gradientFrom || '#0F172A',
                 b.gradientVia || null,
                 b.gradientTo || '#334155',
@@ -397,6 +406,42 @@ export default async function handler(req, res) {
   // ----------------------------------------------------
   if (pool) {
     try {
+      const requestUrl = new URL(req.url || '/', 'http://localhost');
+      if (requestUrl.searchParams.get('platform') === 'website') {
+        const [websiteBanners] = await pool.query(
+          "SELECT * FROM app_banners WHERE is_active = 1 AND visibility = 'WEB_ONLY' ORDER BY display_order ASC"
+        );
+        return res.status(200).json({
+          success: true,
+          source: 'MYSQL_DATABASE',
+          data: {
+            banners: websiteBanners.map(b => ({
+              id: b.id,
+              category: b.category,
+              title: b.title,
+              subtitle: b.subtitle,
+              tag: b.tag,
+              badge: b.badge || '',
+              tagline: b.tagline || '',
+              cta: b.cta,
+              ctaLink: b.cta_link || '/catalog',
+              image: b.image,
+              mobileImage: b.mobile_image || b.image,
+              visibility: b.visibility,
+              showTextOverlay: Boolean(b.show_text_overlay),
+              gradientFrom: b.gradient_from,
+              gradientVia: b.gradient_via,
+              gradientTo: b.gradient_to,
+              accentColor: b.accent_color,
+              iconName: b.icon_name,
+              badgeIcon: b.badge_icon,
+              isActive: Boolean(b.is_active),
+              displayOrder: b.display_order
+            }))
+          }
+        });
+      }
+
       const [banners] = await pool.query('SELECT * FROM app_banners WHERE is_active = 1 ORDER BY display_order ASC');
       const [categories] = await pool.query('SELECT * FROM categories ORDER BY display_order ASC');
       const [settingsRows] = await pool.query('SELECT * FROM app_settings LIMIT 1');
@@ -410,8 +455,14 @@ export default async function handler(req, res) {
         title: b.title,
         subtitle: b.subtitle,
         tag: b.tag,
+        badge: b.badge || '',
+        tagline: b.tagline || '',
         cta: b.cta,
+        ctaLink: b.cta_link || '/catalog',
         image: b.image,
+        mobileImage: b.mobile_image || '',
+        visibility: b.visibility || 'ALL',
+        showTextOverlay: b.show_text_overlay == null ? true : Boolean(b.show_text_overlay),
         gradientFrom: b.gradient_from,
         gradientVia: b.gradient_via,
         gradientTo: b.gradient_to,
@@ -496,7 +547,9 @@ export default async function handler(req, res) {
           catalogDownloadUrl: settings.catalog_download_url,
           gstNotice: settings.gst_notice,
           lastSyncedAt: new Date().toISOString(),
-          banners: formattedBanners.length > 0 ? formattedBanners : (readFallbackConfig()?.banners || []),
+          banners: formattedBanners.length > 0
+            ? formattedBanners.filter(b => b.visibility !== 'WEB_ONLY')
+            : (readFallbackConfig()?.banners || []).filter(b => b.visibility !== 'WEB_ONLY'),
           categories: formattedCategories.length > 0 ? formattedCategories : (readFallbackConfig()?.categories || []),
           notifications: formattedNotifications,
           coupons: couponsLoadedFromDatabase ? formattedCoupons : fallbackCoupons,

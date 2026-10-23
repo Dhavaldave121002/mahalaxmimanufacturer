@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { ProductCard } from '../components/common/ProductCard';
 import { Badge } from '../components/common/Badge';
+import type { AppBanner } from '../types';
 import {
   ArrowRight,
   ShieldCheck,
@@ -44,7 +45,27 @@ export const HomePage: React.FC = () => {
   });
 
   // Hero Carousel State: Dynamic from Admin & CMS (Filtered for Website)
-  const activeBanners = (mobileAppConfig?.banners || []).filter(
+  const [websiteBanners, setWebsiteBanners] = useState<AppBanner[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/app-config?platform=website')
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok || !data?.success || !Array.isArray(data?.data?.banners)) {
+          throw new Error(data?.error || `Website banners could not be loaded (HTTP ${res.status}).`);
+        }
+        if (!cancelled) setWebsiteBanners(data.data.banners);
+      })
+      .catch(error => {
+        console.warn('Website banner database sync failed; using configured banners:', error);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const activeBanners = (websiteBanners?.length ? websiteBanners : mobileAppConfig?.banners || []).filter(
     b => b.isActive && (b.visibility === 'WEB_ONLY' || b.visibility === 'ALL' || !b.visibility)
   );
 
@@ -185,143 +206,81 @@ export const HomePage: React.FC = () => {
       <section className="relative w-full overflow-hidden text-white bg-navy-950">
         {(() => {
           const currentHero = heroSlides[currentSlide] || heroSlides[0];
-          const hasOverlay = currentHero.showTextOverlay !== false && Boolean(
-            currentHero.title || currentHero.subtitle || currentHero.badge
-          );
 
           return (
-            <div className="relative w-full overflow-hidden shadow-premium bg-navy-950 min-h-[380px] sm:min-h-[460px] lg:min-h-[500px] flex items-center">
-              {/* When no text overlay is needed, the entire banner image is an interactive direct link */}
-              {!hasOverlay && (
-                <Link
-                  to={currentHero.ctaLink}
-                  className="absolute inset-0 z-10 cursor-pointer"
-                  title={currentHero.title || 'Special Promotion'}
-                />
-              )}
-
-              {/* Background Image - Spanning 100% full width edge-to-edge */}
-              <div className="absolute inset-0 w-full h-full">
-                <picture className="w-full h-full block">
-                  {currentHero.mobileImage && (
-                    <source media="(max-width: 640px)" srcSet={normalizeImageUrl(currentHero.mobileImage)} />
-                  )}
-                  <img
-                    src={normalizeImageUrl(currentHero.image)}
-                    alt={currentHero.title || 'Mahalaxmi Enterprises Promotion'}
-                    fetchPriority="high"
-                    decoding="async"
-                    className="w-full h-full object-cover opacity-100 transition-opacity duration-700"
-                  />
-                </picture>
-                {/* Subtle soft vignette on the left edge only, keeping the entire image crisp & visible */}
-                {hasOverlay && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-slate-950/30 via-transparent to-transparent pointer-events-none"></div>
+            <div className="relative mx-auto aspect-[6/5] h-auto min-h-0 w-full overflow-hidden bg-slate-900 shadow-premium sm:mx-5 sm:aspect-[16/5] sm:max-w-[1600px] sm:rounded-3xl lg:mx-auto">
+              <picture className="absolute inset-0 block h-full w-full">
+                {currentHero.mobileImage && (
+                  <source media="(max-width: 640px)" srcSet={normalizeImageUrl(currentHero.mobileImage)} />
                 )}
-              </div>
+                <img
+                  src={normalizeImageUrl(currentHero.image)}
+                  alt={`${currentHero.title || 'Mahalaxmi Enterprises'} banner`}
+                  fetchPriority="high"
+                  decoding="async"
+                  className="h-full w-full object-cover object-center"
+                />
+              </picture>
 
-              {/* Content Container with sleek compact frosted dark card ensuring 100% text legibility */}
-              {hasOverlay && (
-                <div className="relative z-10 max-w-7xl mx-auto w-full px-4 sm:pl-20 sm:pr-14 lg:pl-24 lg:pr-16 py-8 sm:py-12">
-                  <div className="max-w-md sm:max-w-lg p-5 sm:p-7 rounded-3xl bg-slate-950/80 sm:bg-slate-950/75 backdrop-blur-md border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.4)] space-y-3">
-                    {currentHero.badge && (
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 border border-champagne/40 text-champagne text-[11px] font-black tracking-wide uppercase shadow-sm">
-                        <Zap className="w-3 h-3 fill-current text-champagne" />
-                        <span>{currentHero.badge}</span>
-                      </div>
-                    )}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/75 via-slate-950/20 to-transparent sm:h-40"
+              />
 
-                    {currentHero.title && (
-                      <h1 className="text-2xl sm:text-3xl lg:text-3xl font-black text-white leading-tight tracking-tight">
-                        {currentHero.title}
-                      </h1>
-                    )}
-
-                    {currentHero.subtitle && (
-                      <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-normal">
-                        {currentHero.subtitle}
-                      </p>
-                    )}
-
-                    {currentHero.tagline && (
-                      <div className="pt-0.5 flex items-baseline gap-2">
-                        <span className="text-[11px] text-slate-300 uppercase tracking-wider font-semibold">
-                          Pricing:
-                        </span>
-                        <span className="text-base sm:text-lg font-black text-champagne">
-                          {currentHero.tagline}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div className="pt-1.5 flex flex-wrap gap-2.5">
-                      {currentHero.ctaText && (
-                        <Link
-                          to={currentHero.ctaLink}
-                          className="px-5 py-2.5 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-bold text-xs sm:text-sm transition shadow-premium flex items-center gap-2 group"
-                        >
-                          <span>{currentHero.ctaText}</span>
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </Link>
-                      )}
-
-                      <Link
-                        to="/wholesale"
-                        className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/25 rounded-xl font-bold text-xs sm:text-sm transition flex items-center gap-2 shadow-sm"
-                      >
-                        <Building2 className="w-4 h-4 text-champagne" />
-                        <span>Request Mill RFQ</span>
-                      </Link>
-                    </div>
-                  </div>
+              <div className="absolute inset-x-0 bottom-0 z-10 px-3 pb-16 sm:px-8 sm:pb-20 lg:px-12">
+                <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+                  {currentHero.ctaText && (
+                    <Link
+                      to={currentHero.ctaLink}
+                      className="group inline-flex min-h-10 items-center gap-2 rounded-full border border-white/30 bg-indigo-600 px-4 py-2 text-[11px] font-bold text-white shadow-lg shadow-black/20 transition hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:min-h-12 sm:px-6 sm:text-sm"
+                    >
+                      <span>{currentHero.ctaText}</span>
+                      <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  )}
+                  <Link
+                    to="/wholesale"
+                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/60 bg-slate-950/25 px-4 py-2 text-[11px] font-bold text-white shadow-lg shadow-black/15 backdrop-blur-sm transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:min-h-12 sm:px-6 sm:text-sm"
+                  >
+                    <Building2 className="h-4 w-4 shrink-0 text-champagne" />
+                    <span>Request Mill RFQ</span>
+                  </Link>
                 </div>
-              )}
-
-              {/* Carousel Navigation Arrows */}
-              <button
-                onClick={e => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length);
-                }}
-                aria-label="Previous hero banner slide"
-                className="hidden sm:flex absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20 shadow-lg cursor-pointer"
-                title="Previous slide"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-
-              <button
-                onClick={e => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setCurrentSlide(prev => (prev + 1) % heroSlides.length);
-                }}
-                aria-label="Next hero banner slide"
-                className="hidden sm:flex absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-navy/80 hover:bg-navy text-white items-center justify-center border border-white/20 transition z-20 shadow-lg cursor-pointer"
-                title="Next slide"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-
-              {/* Dots Indicator */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 z-20">
-                {heroSlides.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={e => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setCurrentSlide(idx);
-                    }}
-                    aria-label={`Go to slide ${idx + 1}`}
-                    className={`h-2 rounded-full transition-all cursor-pointer ${
-                      currentSlide === idx ? 'w-8 bg-champagne' : 'w-2 bg-white/40'
-                    }`}
-                  />
-                ))}
               </div>
+
+              {heroSlides.length > 1 && (
+                <>
+                  <div className="absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-full border border-white/20 bg-slate-950/30 px-2.5 py-2 backdrop-blur-sm sm:bottom-7 sm:left-1/2 sm:right-auto sm:top-auto sm:-translate-x-1/2 sm:gap-2 sm:px-3">
+                    {heroSlides.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentSlide(idx)}
+                        aria-label={`Go to slide ${idx + 1}`}
+                        aria-current={currentSlide === idx ? 'true' : undefined}
+                        className={`h-2 rounded-full transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+                          currentSlide === idx ? 'w-6 bg-white sm:w-8' : 'w-2 bg-white/55 hover:bg-white/80'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)}
+                    aria-label="Previous hero banner slide"
+                    className="absolute left-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-slate-950/35 text-white shadow-lg backdrop-blur-sm transition hover:bg-slate-950/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:flex"
+                    title="Previous slide"
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentSlide(prev => (prev + 1) % heroSlides.length)}
+                    aria-label="Next hero banner slide"
+                    className="absolute right-3 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-slate-950/35 text-white shadow-lg backdrop-blur-sm transition hover:bg-slate-950/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:flex"
+                    title="Next slide"
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </button>
+                </>
+              )}
             </div>
           );
         })()}
@@ -330,7 +289,7 @@ export const HomePage: React.FC = () => {
       {/* ========================================================
           COMMERCIAL PERKS & ASSURANCE STRIP (Full-Width Edge-to-Edge)
           ======================================================== */}
-      <section className="w-full bg-white border-b border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] -mt-12 relative z-10">
+      <section className="w-full bg-white border-b border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] !-mt-12 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-4 py-3 sm:py-4 gap-2.5 sm:gap-6 lg:gap-0 lg:divide-x lg:divide-slate-200">
             {/* Box 1: 5% Bank Discount */}
@@ -479,37 +438,51 @@ export const HomePage: React.FC = () => {
             <Link
               key={cat.id}
               to={`/category/${cat.id}`}
-              className="group relative bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-subtle hover:shadow-premium transition-all duration-300 flex flex-col justify-between"
+              aria-label={`Open ${cat.name} category`}
+              className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-subtle transition-all duration-300 hover:shadow-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 sm:rounded-3xl"
             >
-              <div className="aspect-[16/10] overflow-hidden bg-slate-100 relative">
+              <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 sm:aspect-[16/10]">
                 <img
                   src={cat.image}
                   alt={cat.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-navy/85 via-transparent to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-navy/95 via-navy/25 to-transparent"></div>
                 <div className="absolute bottom-3 left-3 right-3 text-white">
-                  <h3 className="font-extrabold text-lg text-white group-hover:text-champagne transition">
+                  <h3 className="font-extrabold text-base leading-tight text-white drop-shadow-sm transition group-hover:text-champagne sm:text-lg">
                     {cat.name}
                   </h3>
-                  <p className="text-[11px] text-slate-300 line-clamp-1">{cat.tagline}</p>
+                  <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-white/90 sm:text-[11px]">
+                    {cat.tagline}
+                  </p>
                 </div>
               </div>
 
-              <div className="p-4 flex-1 flex flex-col justify-between bg-white">
-                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+              <div className="flex flex-1 flex-col justify-between bg-white p-3 sm:p-4">
+                <p className="hidden text-xs leading-relaxed text-slate-600 line-clamp-2 sm:block">
                   {cat.description}
                 </p>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-1">
+                <div className="mt-2 flex flex-wrap gap-1 border-t border-slate-100 pt-2 sm:mt-4 sm:pt-3">
                   {cat.subcategories.map((sub, i) => (
                     <span
                       key={i}
-                      className="px-2.5 py-0.5 bg-slate-100 text-slate-700 rounded-lg text-[10px] font-semibold group-hover:bg-indigo-light group-hover:text-indigo transition"
+                      className={`rounded-lg bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-700 transition group-hover:bg-indigo-light group-hover:text-indigo sm:px-2.5 sm:text-[10px] ${
+                        i >= 2 ? 'hidden sm:inline-flex' : ''
+                      }`}
                     >
                       {sub}
                     </span>
                   ))}
+                  {cat.subcategories.length > 2 && (
+                    <span className="rounded-lg bg-indigo-light px-2 py-0.5 text-[9px] font-bold text-indigo sm:hidden">
+                      +{cat.subcategories.length - 2}
+                    </span>
+                  )}
+                  <span className="ml-auto inline-flex items-center gap-1 self-center whitespace-nowrap text-[10px] font-bold text-indigo sm:text-xs">
+                    Browse
+                    <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5 sm:h-3.5 sm:w-3.5" />
+                  </span>
                 </div>
               </div>
             </Link>
@@ -768,8 +741,8 @@ export const HomePage: React.FC = () => {
           6. WHOLESALE DEALS & INTERACTIVE LIVE SAVINGS CALCULATOR
           ======================================================== */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="bg-gradient-to-br from-navy to-navy-900 rounded-3xl p-6 sm:p-10 text-white shadow-premium relative overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div className="bg-gradient-to-br from-navy to-navy-900 rounded-3xl p-4 sm:p-10 text-white shadow-premium relative overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
             <div className="lg:col-span-6 space-y-4">
               <Badge variant="champagne" size="sm" className="font-bold">
                 VOLUME DISCOUNTS ENGINE
@@ -796,16 +769,16 @@ export const HomePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-4 flex gap-3">
+              <div className="pt-4 grid grid-cols-1 gap-2 sm:flex sm:gap-3">
                 <Link
                   to="/wholesale"
-                  className="px-5 py-2.5 bg-indigo hover:bg-indigo-dark text-white rounded-xl text-xs font-bold transition shadow-sm"
+                  className="flex min-h-11 items-center justify-center rounded-xl bg-indigo px-4 py-2.5 text-center text-xs font-bold text-white shadow-sm transition hover:bg-indigo-dark sm:px-5"
                 >
                   Open Bulk Order Pad
                 </Link>
                 <Link
                   to="/wholesale"
-                  className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold transition"
+                  className="flex min-h-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-center text-xs font-bold text-white transition hover:bg-white/20 sm:px-5"
                 >
                   Request Custom RFQ
                 </Link>
@@ -813,35 +786,37 @@ export const HomePage: React.FC = () => {
             </div>
 
             <div className="lg:col-span-6">
-              <div className="bg-white text-navy rounded-2xl p-6 shadow-card border border-slate-200">
+              <div className="min-w-0 bg-white text-navy rounded-2xl p-4 sm:p-6 shadow-card border border-slate-200">
                 {/* Mode Selector: Wholesale Savings vs Reseller Profit */}
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                <div className="flex flex-col gap-2 border-b border-slate-100 pb-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 w-full bg-slate-100 p-1 rounded-xl text-[10px] font-bold sm:w-auto sm:text-xs">
                     <button
                       type="button"
                       onClick={() => setCalculatorMode('savings')}
-                      className={`px-3 py-1.5 rounded-lg transition ${
+                      className={`min-w-0 flex-1 px-2 py-2 rounded-lg transition sm:flex-none sm:px-3 sm:py-1.5 ${
                         calculatorMode === 'savings'
                           ? 'bg-navy text-white shadow-sm'
                           : 'text-slate-600 hover:text-navy'
                       }`}
                     >
-                      Bulk Buyer Savings
+                      <span className="sm:hidden">Bulk Savings</span>
+                      <span className="hidden sm:inline">Bulk Buyer Savings</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setCalculatorMode('reseller')}
-                      className={`px-3 py-1.5 rounded-lg transition flex items-center gap-1 ${
+                      className={`min-w-0 flex-1 px-2 py-2 rounded-lg transition flex items-center justify-center gap-1 sm:flex-none sm:px-3 sm:py-1.5 ${
                         calculatorMode === 'reseller'
                           ? 'bg-emerald-600 text-white shadow-sm'
                           : 'text-slate-600 hover:text-navy'
                       }`}
                     >
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      <span>Reseller / Store Profit</span>
+                      <TrendingUp className="hidden h-3.5 w-3.5 shrink-0 sm:block" />
+                      <span className="sm:hidden">Reseller Profit</span>
+                      <span className="hidden sm:inline">Reseller / Store Profit</span>
                     </button>
                   </div>
-                  <span className="text-[11px] bg-indigo-light text-indigo px-2 py-0.5 rounded font-bold">
+                  <span className="self-start text-[10px] bg-indigo-light text-indigo px-2 py-0.5 rounded font-bold sm:self-auto sm:text-[11px]">
                     Live Rates
                   </span>
                 </div>
@@ -854,39 +829,42 @@ export const HomePage: React.FC = () => {
                         setCalcItem('bedsheet');
                         setResellerSellingPrice(999);
                       }}
-                      className={`p-2 rounded-xl text-xs font-semibold border transition text-center ${
+                      className={`min-w-0 p-2 rounded-xl text-[10px] leading-tight font-semibold border transition text-center sm:text-xs ${
                         calcItem === 'bedsheet'
                           ? 'border-indigo bg-indigo-light text-indigo font-bold'
                           : 'border-slate-200 hover:border-slate-300 text-slate-700'
                       }`}
                     >
-                      300 TC Bedsheet
+                      <span className="sm:hidden">Bedsheet<br />300 TC</span>
+                      <span className="hidden sm:inline">300 TC Bedsheet</span>
                     </button>
                     <button
                       onClick={() => {
                         setCalcItem('towel');
                         setResellerSellingPrice(499);
                       }}
-                      className={`p-2 rounded-xl text-xs font-semibold border transition text-center ${
+                      className={`min-w-0 p-2 rounded-xl text-[10px] leading-tight font-semibold border transition text-center sm:text-xs ${
                         calcItem === 'towel'
                           ? 'border-indigo bg-indigo-light text-indigo font-bold'
                           : 'border-slate-200 hover:border-slate-300 text-slate-700'
                       }`}
                     >
-                      600 GSM Towel
+                      <span className="sm:hidden">Towel<br />600 GSM</span>
+                      <span className="hidden sm:inline">600 GSM Towel</span>
                     </button>
                     <button
                       onClick={() => {
                         setCalcItem('microfiber');
                         setResellerSellingPrice(699);
                       }}
-                      className={`p-2 rounded-xl text-xs font-semibold border transition text-center ${
+                      className={`min-w-0 p-2 rounded-xl text-[10px] leading-tight font-semibold border transition text-center sm:text-xs ${
                         calcItem === 'microfiber'
                           ? 'border-indigo bg-indigo-light text-indigo font-bold'
                           : 'border-slate-200 hover:border-slate-300 text-slate-700'
                       }`}
                     >
-                      Microfiber (24-Pk)
+                      <span className="sm:hidden">Microfiber<br />24 pcs</span>
+                      <span className="hidden sm:inline">Microfiber (24-Pk)</span>
                     </button>
                   </div>
                 </div>
@@ -908,10 +886,10 @@ export const HomePage: React.FC = () => {
                     onChange={e => setCalcQuantity(Number(e.target.value))}
                     className="w-full accent-indigo cursor-pointer"
                   />
-                  <div className="flex justify-between text-[10px] text-slate-500">
-                    <span>10 Units (Retailer)</span>
-                    <span>100 Units (Hotelier)</span>
-                    <span>500 Units (Distributor)</span>
+                  <div className="flex justify-between gap-2 text-[9px] text-slate-500 sm:text-[10px]">
+                    <span>10 Units · Retailer</span>
+                    <span className="hidden sm:inline">100 Units · Hotelier</span>
+                    <span>500 Units · Distributor</span>
                   </div>
                 </div>
 
@@ -1001,7 +979,7 @@ export const HomePage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-5 space-y-4">
               <span className="badge-mill text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                DIRECT MILL SALES DESK
+                MAHALAXMI ENTERPRISES · DIRECT MILL SALES
               </span>
               <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight">
                 Submit a Bulk Order Enquiry or Commercial RFQ
@@ -1011,8 +989,8 @@ export const HomePage: React.FC = () => {
               </p>
 
               <div className="pt-2 text-xs text-slate-300 space-y-2">
-                <p>• Mill Sales Hotline: <span className="text-champagne font-bold">+91 98765 43210</span></p>
-                <p>• Official Procurement Desk: <span className="text-champagne font-bold">rfq@mahalaxmienterprises.com</span></p>
+                <p>• Mahalaxmi Enterprises Sales: <a href="tel:+919033598639" className="text-champagne font-bold hover:underline">+91 90335 98639</a></p>
+                <p className="break-words">• Official Email: <a href="mailto:mahalaxmienterprise881@gmail.com" className="text-champagne font-bold hover:underline">mahalaxmienterprise881@gmail.com</a></p>
                 <p>• Address: Narol Textile Cluster, Ahmedabad, Gujarat 382405</p>
               </div>
             </div>
@@ -1138,10 +1116,11 @@ export const HomePage: React.FC = () => {
                   <button
                     type="submit"
                     aria-label="Send Commercial RFQ to Mill Sales Desk"
-                    className="w-full py-3.5 bg-indigo hover:bg-indigo-dark text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm"
+                    className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-indigo px-4 py-3 text-center text-xs font-bold leading-snug text-white shadow-sm transition hover:bg-indigo-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 sm:py-3.5"
                   >
-                    <Send className="w-4 h-4" />
-                    <span>Send Commercial RFQ to Mill Sales Desk</span>
+                    <Send className="h-4 w-4 shrink-0" />
+                    <span className="sm:hidden">Send Commercial RFQ</span>
+                    <span className="hidden sm:inline">Send Commercial RFQ to Mill Sales Desk</span>
                   </button>
                 </form>
               )}

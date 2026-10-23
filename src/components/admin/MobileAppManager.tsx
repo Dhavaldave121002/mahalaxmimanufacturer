@@ -1625,9 +1625,9 @@ export const MobileAppManager: React.FC = () => {
               {/* Show Text Overlay Toggle */}
               <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
                 <div>
-                  <span className="font-bold text-slate-800 block text-xs">📝 Show Text & Buttons Overlay</span>
+                  <span className="font-bold text-slate-800 block text-xs">📝 Show app text overlay</span>
                   <span className="text-[10px] text-slate-500">
-                    Turn OFF if your banner image already has graphic design/text printed on it!
+                    Website banners always use your image artwork plus CTA buttons; this setting doesn't add website text.
                   </span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -1644,18 +1644,21 @@ export const MobileAppManager: React.FC = () => {
               {bannerForm.showTextOverlay === false && (
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] font-medium flex items-center gap-2">
                   <span>📷</span>
-                  <span><strong>Pure Graphic Mode:</strong> No titles, subtitles or dark gradients will cover your banner image. Your image will be displayed in 100% full clarity!</span>
+                  <span><strong>Image-first mode:</strong> The title and subtitle are hidden. The bottom fade stays subtle so the buttons remain readable.</span>
                 </div>
               )}
 
-              {/* Text Fields (Optional) */}
+              {/* Banner headline fields */}
               <div className={`space-y-3 transition-opacity ${bannerForm.showTextOverlay === false ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                <p className="text-[10px] font-medium text-slate-500">
+                  Add promotional text directly to your banner artwork. The website won't place this title or subtitle over the image.
+                </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="font-bold text-slate-700">Slide Title (Optional)</label>
+                    <label className="font-bold text-slate-700">Banner Title (app/config)</label>
                     <input
                       type="text"
-                      placeholder="e.g. Pure Cotton Collection (or leave blank)"
+                      placeholder="e.g. Soft Cotton Towels for Every Home"
                       value={bannerForm.title}
                       onChange={e => setBannerForm({ ...bannerForm, title: e.target.value })}
                       className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
@@ -1697,10 +1700,10 @@ export const MobileAppManager: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700">Subtitle / Tagline (Optional)</label>
+                  <label className="font-bold text-slate-700">Subtitle / Tagline (app/config)</label>
                   <input
                     type="text"
-                    placeholder="e.g. Ultra-Soft Bath Towels & Canvas Bags"
+                    placeholder="e.g. Everyday comfort, direct from the mill"
                     value={bannerForm.subtitle}
                     onChange={e => setBannerForm({ ...bannerForm, subtitle: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1"
@@ -1805,14 +1808,14 @@ export const MobileAppManager: React.FC = () => {
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1 font-mono text-[11px]"
                 />
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  📐 Recommended Desktop Size: 1920 x 600 px (Wide landscape)
+                  📐 Recommended Desktop Size: 1920 x 600 px. Include your text in the artwork, then paste its hosted image URL here.
                 </p>
               </div>
 
               <div>
                 <label className="font-bold text-slate-700 flex items-center justify-between">
                   <span>📱 Mobile Screen & App Banner Image URL (Optional)</span>
-                  <span className="text-[10px] text-indigo font-mono">800 × 600 px (4:3)</span>
+                  <span className="text-[10px] text-indigo font-mono">1080 × 900 px (6:5)</span>
                 </label>
                 <input
                   type="text"
@@ -1822,7 +1825,7 @@ export const MobileAppManager: React.FC = () => {
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl mt-1 font-mono text-[11px]"
                 />
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  📐 Recommended Mobile Size: 800 x 600 px or 1080 x 720 px. If left blank, it automatically adapts your desktop image!
+                  📐 Recommended Website Mobile Size: 1080 x 900 px. Use an image with its own text; if blank, the desktop image is reused.
                 </p>
               </div>
 
