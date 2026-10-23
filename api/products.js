@@ -3,6 +3,13 @@ import fs from 'fs';
 import path from 'path';
 import { requireAdminSession, requirePersistentDatabase } from './_lib/admin-session.js';
 
+const CATEGORY_NAMES = {
+  'home-kitchen': 'Home and Kitchen',
+  household: 'Household',
+  textile: 'Textile',
+  'cotton-products': 'Cotton Products'
+};
+
 function readFallbackProducts() {
   try {
     const filePath = path.join(process.cwd(), 'public', 'products.json');
@@ -135,6 +142,8 @@ async function ensureProductsTable(pool) {
         images JSON,
         tags JSON,
         specifications JSON,
+        care_instructions JSON,
+        b2b_policy JSON,
         wholesale_tiers JSON,
         variants JSON,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -148,6 +157,12 @@ async function ensureProductsTable(pool) {
        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products'`
     );
     const columnNames = new Set(columns.map(column => column.COLUMN_NAME));
+    if (!columnNames.has('care_instructions')) {
+      await pool.query('ALTER TABLE products ADD COLUMN care_instructions JSON NULL');
+    }
+    if (!columnNames.has('b2b_policy')) {
+      await pool.query('ALTER TABLE products ADD COLUMN b2b_policy JSON NULL');
+    }
     if (columnNames.has('category') && !columnNames.has('category_id')) {
       await pool.query('ALTER TABLE products CHANGE COLUMN category category_id VARCHAR(64) NOT NULL');
     }
@@ -215,7 +230,14 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true, count: visibleRows.length, reviews: visibleRows });
       } catch (e) {
         console.warn('MySQL reviews fetch warning:', e.message);
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({ success: false, error: 'Product reviews are unavailable.' });
+        }
       }
+    }
+
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(503).json({ success: false, error: 'Product reviews are unavailable.' });
     }
 
     const fallback = loadFallbackReviews();
@@ -242,39 +264,57 @@ export default async function handler(req, res) {
       try {
         await ensureProductsTable(pool);
         const [rows] = await pool.query('SELECT * FROM products ORDER BY created_at DESC');
-        if (Array.isArray(rows) && rows.length > 0) {
-          const formatted = rows.map(r => ({
-            id: r.id,
-            name: r.name,
-            slug: r.slug,
-            sku: r.sku,
-            category: r.category_id,
-            categoryName: r.category_name,
-            subcategory: r.subcategory,
-            mrp: Number(r.mrp),
-            retailPrice: Number(r.retail_price),
-            stock: Number(r.stock),
-            moq: Number(r.moq || 1),
-            rating: Number(r.rating || 4.8),
-            reviewCount: Number(r.review_count || 0),
-            isBestSeller: Boolean(r.is_bestseller),
-            isDirectMillDeal: Boolean(r.is_direct_mill_deal),
-            isTrending: Boolean(r.is_trending),
-            hsnCode: r.hsn_code || '630221',
-            gstRate: Number(r.gst_rate || 5),
-            shortDescription: r.short_description || '',
-            description: r.description || '',
-            images: typeof r.images === 'string' ? JSON.parse(r.images) : (r.images || []),
-            tags: typeof r.tags === 'string' ? JSON.parse(r.tags) : (r.tags || []),
-            specifications: typeof r.specifications === 'string' ? JSON.parse(r.specifications) : (r.specifications || {}),
-            wholesaleTiers: typeof r.wholesale_tiers === 'string' ? JSON.parse(r.wholesale_tiers) : (r.wholesale_tiers || []),
-            variants: typeof r.variants === 'string' ? JSON.parse(r.variants) : (r.variants || [])
-          }));
+        if (Array.isArray(rows)) {
+          const formatted = rows.map(r => {
+            const specifications = typeof r.specifications === 'string'
+              ? JSON.parse(r.specifications)
+              : (r.specifications || {});
+            return {
+              id: r.id,
+              name: r.name,
+              slug: r.slug,
+              sku: r.sku,
+              category: r.category_id,
+              categoryName: CATEGORY_NAMES[r.category_id] || r.category_name,
+              subcategory: r.subcategory,
+              mrp: Number(r.mrp),
+              retailPrice: Number(r.retail_price),
+              stock: Number(r.stock),
+              moq: Number(r.moq || 1),
+              rating: Number(r.rating ?? 0),
+              reviewCount: Number(r.review_count || 0),
+              isBestSeller: Boolean(r.is_bestseller),
+              isDirectMillDeal: Boolean(r.is_direct_mill_deal),
+              isTrending: Boolean(r.is_trending),
+              hsnCode: r.hsn_code || '',
+              gstRate: Number(r.gst_rate ?? 0),
+              shortDescription: r.short_description || '',
+              description: r.description || '',
+              images: typeof r.images === 'string' ? JSON.parse(r.images) : (r.images || []),
+              tags: typeof r.tags === 'string' ? JSON.parse(r.tags) : (r.tags || []),
+              specifications,
+              careInstructions: typeof r.care_instructions === 'string'
+                ? JSON.parse(r.care_instructions)
+                : (r.care_instructions || []),
+              b2bPolicy: typeof r.b2b_policy === 'string'
+                ? JSON.parse(r.b2b_policy)
+                : (r.b2b_policy || []),
+              wholesaleTiers: typeof r.wholesale_tiers === 'string' ? JSON.parse(r.wholesale_tiers) : (r.wholesale_tiers || []),
+              variants: typeof r.variants === 'string' ? JSON.parse(r.variants) : (r.variants || [])
+            };
+          });
           return res.status(200).json({ success: true, source: 'MYSQL_DATABASE', count: formatted.length, data: formatted });
         }
       } catch (err) {
-        console.warn('MySQL products query warning, falling back to local file:', err.message);
+        console.warn('MySQL products query failed:', err.message);
+        if (process.env.NODE_ENV === 'production') {
+          return res.status(503).json({ success: false, error: 'Product database is unavailable.' });
+        }
       }
+    }
+
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(503).json({ success: false, error: 'Product database is unavailable.' });
     }
 
     const fallback = readFallbackProducts();
@@ -282,7 +322,10 @@ export default async function handler(req, res) {
       success: true,
       source: 'VERIFIED_STORAGE',
       count: fallback.length,
-      data: fallback
+      data: fallback.map(product => ({
+        ...product,
+        categoryName: CATEGORY_NAMES[product.category] || product.categoryName
+      }))
     });
   }
 
@@ -301,6 +344,7 @@ export default async function handler(req, res) {
     // POST ACTION: ADD REVIEW
     // ----------------------------------------------------
     if (p.action === 'add_review' || p.action === 'ADD_REVIEW') {
+      if (!requirePersistentDatabase(pool, res)) return;
       const reviewId = p.id || ('rev-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
       const productId = (p.productId || p.product_id || '').trim();
       const productTitle = (p.productTitle || p.product_title || 'Direct Mill Product').trim();
@@ -326,10 +370,12 @@ export default async function handler(req, res) {
           );
         } catch (dbErr) {
           console.warn('MySQL review insert warning:', dbErr.message);
+          if (process.env.NODE_ENV === 'production') {
+            return res.status(503).json({ success: false, error: 'Review submission is unavailable.' });
+          }
         }
       }
 
-      const revList = loadFallbackReviews();
       const newRev = {
         id: reviewId,
         product_id: productId,
@@ -344,8 +390,11 @@ export default async function handler(req, res) {
         source,
         created_at: new Date().toISOString()
       };
-      revList.unshift(newRev);
-      saveFallbackReviews(revList);
+      if (process.env.NODE_ENV !== 'production') {
+        const revList = loadFallbackReviews();
+        revList.unshift(newRev);
+        saveFallbackReviews(revList);
+      }
 
       return res.status(201).json({
         success: true,
@@ -360,15 +409,23 @@ export default async function handler(req, res) {
     if (p.action === 'delete_review') {
       const admin = await requireAdminSession(req, res);
       if (!admin) return;
+      if (!requirePersistentDatabase(pool, res)) return;
       const targetId = p.id || p.reviewId;
       if (pool && targetId) {
         try {
           await pool.query('DELETE FROM product_reviews WHERE id = ?', [targetId]);
-        } catch (_) {}
+        } catch (err) {
+          console.warn('MySQL review delete failed:', err.message);
+          if (process.env.NODE_ENV === 'production') {
+            return res.status(503).json({ success: false, error: 'Review deletion is unavailable.' });
+          }
+        }
       }
-      const revList = loadFallbackReviews();
-      const filtered = revList.filter(r => r.id !== targetId);
-      saveFallbackReviews(filtered);
+      if (process.env.NODE_ENV !== 'production') {
+        const revList = loadFallbackReviews();
+        const filtered = revList.filter(r => r.id !== targetId);
+        saveFallbackReviews(filtered);
+      }
       return res.status(200).json({ success: true, message: 'Review removed successfully.' });
     }
 
@@ -383,19 +440,29 @@ export default async function handler(req, res) {
     const id = p.id || `prod-${Date.now()}`;
     const slug = p.slug || p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const category = p.category || 'textile';
-    const categoryName = p.categoryName || 'Textile';
+    if (!Object.hasOwn(CATEGORY_NAMES, category)) {
+      return res.status(400).json({ success: false, error: 'Choose one of the four supported product categories.' });
+    }
+    const categoryName = CATEGORY_NAMES[category];
     const subcategory = p.subcategory || 'General';
     const mrp = Number(p.mrp) || 999;
     const retailPrice = Number(p.retailPrice) || 499;
-    const stock = Number(p.stock) || 100;
-    const moq = Number(p.moq) || 1;
+    const stock = Number.isFinite(Number(p.stock)) ? Number(p.stock) : 100;
+    const rating = p.rating ?? 4.8;
+    const moq = p.moq === undefined ? 1 : Number(p.moq);
+    if (!Number.isSafeInteger(moq) || moq < 1) {
+      return res.status(400).json({ success: false, error: 'Minimum order quantity must be a whole number of at least 1.' });
+    }
     const hsnCode = p.hsnCode || '630221';
     const gstRate = Number(p.gstRate) || 5;
     const shortDescription = p.shortDescription || '';
     const description = p.description || '';
+    const isBestSeller = Boolean(p.isBestSeller);
     const images = p.images || [];
     const tags = p.tags || [category];
     const specifications = p.specifications || {};
+    const careInstructions = Array.isArray(p.careInstructions) ? p.careInstructions : [];
+    const b2bPolicy = Array.isArray(p.b2bPolicy) ? p.b2bPolicy : [];
     const wholesaleTiers = p.wholesaleTiers || [];
     const variants = p.variants || [];
 
@@ -407,21 +474,24 @@ export default async function handler(req, res) {
           `INSERT INTO products (
             id, name, slug, sku, category_id, category_name, subcategory,
             mrp, retail_price, stock, moq, rating, review_count,
-            hsn_code, gst_rate, short_description, description,
-            images, tags, specifications, wholesale_tiers, variants
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            is_bestseller, hsn_code, gst_rate, short_description, description,
+            images, tags, specifications, care_instructions, b2b_policy, wholesale_tiers, variants
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON DUPLICATE KEY UPDATE
             name=VALUES(name), slug=VALUES(slug), category_id=VALUES(category_id), category_name=VALUES(category_name),
             subcategory=VALUES(subcategory), mrp=VALUES(mrp), retail_price=VALUES(retail_price),
-            stock=VALUES(stock), moq=VALUES(moq), hsn_code=VALUES(hsn_code), gst_rate=VALUES(gst_rate),
+            stock=VALUES(stock), moq=VALUES(moq), is_bestseller=VALUES(is_bestseller),
+            hsn_code=VALUES(hsn_code), gst_rate=VALUES(gst_rate),
             short_description=VALUES(short_description), description=VALUES(description),
             images=VALUES(images), tags=VALUES(tags), specifications=VALUES(specifications),
+            care_instructions=VALUES(care_instructions), b2b_policy=VALUES(b2b_policy),
             wholesale_tiers=VALUES(wholesale_tiers), variants=VALUES(variants)`,
           [
             id, p.name, slug, p.sku, category, categoryName, subcategory,
-            mrp, retailPrice, stock, moq, p.rating || 4.8, p.reviewCount || 0,
+            mrp, retailPrice, stock, moq, rating, p.reviewCount ?? 0, isBestSeller,
             hsnCode, gstRate, shortDescription, description,
             JSON.stringify(images), JSON.stringify(tags), JSON.stringify(specifications),
+            JSON.stringify(careInstructions), JSON.stringify(b2bPolicy),
             JSON.stringify(wholesaleTiers), JSON.stringify(variants)
           ]
         );
@@ -450,6 +520,7 @@ export default async function handler(req, res) {
       retailPrice,
       stock,
       moq,
+      isBestSeller,
       hsnCode,
       gstRate,
       shortDescription,
@@ -457,6 +528,8 @@ export default async function handler(req, res) {
       images,
       tags,
       specifications,
+      careInstructions,
+      b2bPolicy,
       wholesaleTiers,
       variants
     };

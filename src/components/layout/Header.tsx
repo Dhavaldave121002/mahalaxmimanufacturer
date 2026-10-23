@@ -24,7 +24,6 @@ import {
   Tag,
   FileSpreadsheet,
   Download,
-  Calculator,
   Truck,
   ChevronRight,
   Heart
@@ -155,79 +154,53 @@ export const Header: React.FC = () => {
   // Circular Category Rail (Amazon / Flipkart / Meesho signature)
   const categoryBubbles = [
     {
-      name: 'Double Bedsheets',
-      path: '/category/textile',
-      img: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=200&auto=format&fit=crop'
-    },
-    {
-      name: 'Cotton Towels',
-      path: '/category/cotton-products',
-      img: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=200&auto=format&fit=crop'
-    },
-    {
-      name: 'Curtains & Drapes',
-      path: '/category/textile',
-      img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=200&auto=format&fit=crop'
-    },
-    {
-      name: 'Kitchen Towels',
+      name: 'Home and Kitchen',
       path: '/category/home-kitchen',
       img: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=200&auto=format&fit=crop'
     },
     {
-      name: 'Microfiber Wipes',
+      name: 'Household',
       path: '/category/household',
       img: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?q=80&w=200&auto=format&fit=crop'
     },
     {
-      name: 'Canvas Tote Bags',
-      path: '/category/cotton-products',
-      img: 'https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=200&auto=format&fit=crop'
-    },
-    {
-      name: 'Hotel White Linen',
+      name: 'Textile',
       path: '/category/textile',
-      img: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=200&auto=format&fit=crop'
+      img: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=200&auto=format&fit=crop'
     },
     {
-      name: 'Bulk Mill Bales',
-      path: '/wholesale',
-      img: 'https://images.unsplash.com/photo-1604014237800-1c9102c219da?q=80&w=200&auto=format&fit=crop',
-      isHot: true
-    },
-    {
-      name: 'Sample Kits & Bundles',
-      path: '/catalog?q=sample',
-      img: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?q=80&w=200&auto=format&fit=crop',
-      isHot: true
+      name: 'Cotton Products',
+      path: '/category/cotton-products',
+      img: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=200&auto=format&fit=crop'
     }
   ];
 
   return (
     <>
       {/* 1. Top Offer Announcement & Persona Switcher Bar (Normal flow, at very top) */}
-      <div className="bg-navy text-white text-xs py-1.5 px-4 sm:px-6 w-full border-b border-navy-800">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
-        <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-left">
-            <span className="bg-champagne/20 text-champagne px-2.5 py-0.5 rounded font-black text-[10px] tracking-wider uppercase border border-champagne/30 flex items-center gap-1">
+      <div className="w-full border-b border-navy-800 bg-navy px-2 py-1.5 text-xs text-white sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-1.5 md:flex-row md:justify-between md:gap-2">
+          <div className="flex w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center md:w-auto md:justify-start">
+            <span className="flex shrink-0 items-center gap-1 rounded border border-champagne/30 bg-champagne/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-champagne">
               <Zap className="w-3 h-3 fill-current" />
               DIRECT MILL RATE
             </span>
-            <span className="text-slate-200 text-[11px] hidden sm:inline">
+            <span className="hidden text-[11px] text-slate-200 sm:inline">
               🚚 Free Delivery above ₹1,499 • ⚡ Instant Mill Discount Vouchers • 🏢 100% GST ITC Invoicing
             </span>
-            <span className="text-slate-200 text-[11px] sm:hidden">
-              🚚 Free Delivery above ₹1,499 • ⚡ Mill Direct
+            <span className="text-[11px] font-medium text-slate-100 sm:hidden">
+              🚚 Free Delivery ₹1,499+
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px]">
+          <div className="flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] md:w-auto md:text-[11px]">
             <a
               href="tel:+919429187611"
               className="text-slate-300 hover:text-champagne transition flex items-center gap-1 font-medium"
             >
-              <PhoneCall className="w-3 h-3 text-champagne" />
-              <span>Mill Desk: +91 94291 87611</span>
+              <PhoneCall className="h-3.5 w-3.5 text-champagne" />
+              <span className="sm:hidden">Call: +91 94291 87611</span>
+              <span className="hidden sm:inline">Mill Desk: +91 94291 87611</span>
             </a>
             <span className="text-slate-700 hidden md:inline">•</span>
             <Link
@@ -550,9 +523,38 @@ export const Header: React.FC = () => {
 
           {/* Row 2: Full-Width Search Bar for Mobile Screens (<md) */}
           <div className="xl:hidden mt-2 relative z-40 w-full" ref={mobileSearchContainerRef}>
-            <form onSubmit={handleSearchSubmit} className="flex rounded-xl overflow-hidden shadow-sm border border-slate-300 focus-within:border-indigo focus-within:ring-2 focus-within:ring-indigo/20 transition bg-white w-full">
+            <form onSubmit={handleSearchSubmit} className="flex min-w-0 items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition focus-within:border-indigo focus-within:ring-2 focus-within:ring-indigo/20 sm:rounded-2xl">
+              <button
+                type="button"
+                onClick={() => setPinModalOpen(true)}
+                aria-label={`Change delivery location. Current location ${deliveryInfo?.city || 'Surat'} ${deliveryPincode}`}
+                className="flex max-w-[92px] shrink-0 flex-col items-start justify-center border-r border-slate-200 px-1.5 py-1.5 text-left hover:bg-slate-50 min-[480px]:max-w-[150px] min-[480px]:px-2.5"
+              >
+                <span className="text-[7px] font-bold uppercase leading-none tracking-wide text-slate-500 sm:text-[8px]">Deliver to</span>
+                <span className="mt-0.5 flex max-w-full items-center gap-0.5 truncate text-[9px] font-extrabold leading-tight text-navy sm:text-[10px]">
+                  <MapPin className="h-2.5 w-2.5 shrink-0 text-indigo" />
+                  <span className="truncate">{deliveryInfo?.city || 'Surat'}<span className="hidden min-[480px]:inline"> {deliveryPincode}</span></span>
+                  <ChevronDown className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+                </span>
+              </button>
+
+              <div className="shrink-0 border-r border-slate-200 px-1 sm:px-2">
+                <select
+                  value={searchCategory}
+                  onChange={e => setSearchCategory(e.target.value)}
+                  aria-label="Select shopping department"
+                  className="max-w-[48px] bg-transparent py-2 text-[8px] font-bold text-slate-700 outline-none sm:max-w-[72px] sm:text-[10px]"
+                >
+                  <option value="all">All</option>
+                  <option value="textile">Textile</option>
+                  <option value="cotton-products">Cotton</option>
+                  <option value="home-kitchen">Home</option>
+                  <option value="household">Other</option>
+                </select>
+              </div>
+
               <div className="relative flex-1 flex items-center min-w-0">
-                <Search className="w-4 h-4 text-slate-500 ml-2.5 shrink-0" />
+                <Search className="ml-1.5 h-3.5 w-3.5 shrink-0 text-slate-400 sm:ml-2.5 sm:h-4 sm:w-4" />
                 <input
                   id="mobile-search-input"
                   name="search-mobile"
@@ -564,8 +566,8 @@ export const Header: React.FC = () => {
                     setSearchOpen(true);
                   }}
                   onFocus={() => setSearchOpen(true)}
-                  placeholder="Search bedsheets, towels, curtains, totes..."
-                  className="w-full text-navy text-xs pl-2 pr-1.5 py-2 outline-none placeholder:text-slate-500 min-w-0"
+                  placeholder="Search products..."
+                  className="w-full min-w-0 bg-transparent py-2 pl-1.5 pr-1 text-[10px] text-navy outline-none placeholder:text-slate-400 sm:pl-2 sm:text-xs"
                 />
                 {searchInput && (
                   <button
@@ -586,7 +588,7 @@ export const Header: React.FC = () => {
               <button
                 type="submit"
                 aria-label="Submit search"
-                className="px-3 sm:px-4 bg-indigo hover:bg-indigo-dark text-white text-xs font-bold transition flex items-center justify-center shrink-0"
+                className="flex shrink-0 items-center justify-center bg-indigo px-2.5 py-2 text-[9px] font-bold text-white transition hover:bg-indigo-dark sm:px-4 sm:text-xs"
               >
                 <span>Search</span>
               </button>
@@ -676,9 +678,6 @@ export const Header: React.FC = () => {
                     alt={cat.name}
                     className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
                   />
-                  {cat.isHot && (
-                    <span className="absolute top-0 right-0 w-3 h-3 bg-error rounded-full border-2 border-white"></span>
-                  )}
                 </div>
                 <span className="text-[11px] font-bold text-slate-700 group-hover:text-indigo transition whitespace-nowrap">
                   {cat.name}
@@ -865,18 +864,6 @@ export const Header: React.FC = () => {
                       <span>Request Custom RFQ</span>
                     </div>
                     <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                  </Link>
-
-                  <Link
-                    to="/wholesale"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white transition text-navy font-bold"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Calculator className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>GSTIN & ITC Calculator</span>
-                    </div>
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-bold">Tax Savings</span>
                   </Link>
 
                   <Link

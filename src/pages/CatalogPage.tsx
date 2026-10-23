@@ -39,7 +39,9 @@ export const CatalogPage: React.FC = () => {
       return Array.from(new Set(products.map(p => p.subcategory)));
     }
     const cat = CATEGORIES_CONFIG.find(c => c.id === selectedCategory);
-    return cat ? cat.subcategories : [];
+    return cat
+      ? Array.from(new Set(products.filter(product => product.category === selectedCategory).map(product => product.subcategory)))
+      : [];
   }, [selectedCategory, products]);
 
   // Filter & Sort Logic
@@ -68,7 +70,7 @@ export const CatalogPage: React.FC = () => {
         }
 
         // Filter Param (e.g. bestseller)
-        if (filterParam === 'bestseller' && !product.isBestSeller) {
+        if ((filterParam === 'bestseller' || filterParam === 'featured') && !product.isBestSeller) {
           return false;
         }
 
@@ -159,7 +161,7 @@ export const CatalogPage: React.FC = () => {
             Direct Mill Catalog & Commercial Supplies
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Showing {filteredProducts.length} certified products with multi-tier wholesale rates.
+            Showing {filteredProducts.length} products. Confirm specifications, availability and current pricing before ordering.
           </p>
         </div>
 
@@ -377,7 +379,7 @@ export const CatalogPage: React.FC = () => {
 
           {/* Products Grid */}
           {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
               {filteredProducts.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}

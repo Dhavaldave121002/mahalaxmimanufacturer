@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "admin:create": "node scripts/create-admin.js",
+    "db:sync-core-collections": "node scripts/sync-core-collections.cjs"
   },
   "dependencies": {
     "autoprefixer": "^10.6.1",

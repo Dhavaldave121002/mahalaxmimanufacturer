@@ -7,12 +7,15 @@ interface SEOProductHeadProps {
   state?: string;
 }
 
-export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product, city = 'Surat', state = 'Gujarat' }) => {
+export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product }) => {
   useEffect(() => {
     if (!product) return;
 
-    const baseTitle = `${product.name} - Direct Mill Wholesale ₹${product.retailPrice} | Ahmedabad Textile Manufacturer India`;
-    const metaDesc = `Buy ${product.name} direct from Surat textile mill at wholesale price ₹${product.retailPrice} (MRP ₹${product.mrp}). 100% genuine cotton, GST invoice, pan-India fast dispatch to ${city}, ${state}, Mumbai, Delhi, Ahmedabad, Bengaluru & all 28 states.`;
+    const inquiryOnly = product.stock <= 0;
+    const baseTitle = `${product.name} | Mahalaxmi Manufacturer`;
+    const metaDesc = inquiryOnly
+      ? `${product.shortDescription || product.description || product.name} Source-listed details may need confirmation. Contact us to verify current availability and price.`
+      : `${product.shortDescription || product.description || product.name} Contact Mahalaxmi Manufacturer for product and order details.`;
 
     // 1. Update Document Title
     document.title = baseTitle;
@@ -41,14 +44,8 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product, city = 
 
     // 2. Standard Meta Tags
     setMeta('name', 'description', metaDesc);
-    const keywords = `${product.name}, ${product.categoryName} wholesale, direct mill rates ahmedabad, buy ${product.name} bulk, ${product.name} supplier ${city}, ${product.name} manufacturer ${state}, textile manufacturer ahmedabad, cotton linen exporter india`;
+    const keywords = `${product.name}, ${product.categoryName}, ${product.subcategory}, Mahalaxmi Manufacturer`;
     setMeta('name', 'keywords', keywords);
-
-    // 3. GEO Target Meta Tags for National & Local Top Search Rankings
-    setMeta('name', 'geo.region', 'IN-GJ');
-    setMeta('name', 'geo.placename', `${city}, ${state}, India`);
-    setMeta('name', 'geo.position', '21.1702;72.8311');
-    setMeta('name', 'ICBM', '21.1702, 72.8311');
 
     // 4. OpenGraph Tags for Social & WhatsApp Previews
     const canonicalUrl = `https://mahalaxmimanufacturer.com/product/${product.slug || product.id}`;
@@ -85,17 +82,17 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product, city = 
           "image": product.images || [],
           "description": product.shortDescription || product.description || metaDesc,
           "sku": product.sku,
-          "mpn": product.sku,
+          ...(product.sku.startsWith('SRC-') ? {} : { "mpn": product.sku }),
           "brand": {
             "@type": "Brand",
             "name": "Mahalaxmi Enterprises"
           },
           "manufacturer": {
             "@type": "Organization",
-            "name": "Mahalaxmi Enterprises Ahmedabad Textile Mills",
+            "name": "Mahalaxmi Manufacturer",
             "url": "https://mahalaxmimanufacturer.com"
           },
-          "offers": {
+          ...(!inquiryOnly ? { "offers": {
             "@type": "AggregateOffer",
             "lowPrice": lowestTierPrice,
             "highPrice": product.mrp,
@@ -109,14 +106,14 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product, city = 
               "name": "Mahalaxmi Enterprises",
               "url": "https://mahalaxmimanufacturer.com"
             }
-          },
-          "aggregateRating": {
+          } } : {}),
+          ...(product.rating > 0 && product.reviewCount > 0 ? { "aggregateRating": {
             "@type": "AggregateRating",
-            "ratingValue": product.rating || 4.85,
-            "reviewCount": product.reviewCount || 42,
+            "ratingValue": product.rating,
+            "reviewCount": product.reviewCount,
             "bestRating": "5",
             "worstRating": "1"
-          }
+          } } : {})
         },
         {
           "@type": "BreadcrumbList",
@@ -157,7 +154,7 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product, city = 
       // Reset title to default on unmount
       document.title = 'Mahalaxmi Enterprises | Direct Mill Rates & Wholesale Essentials';
     };
-  }, [product, city, state]);
+  }, [product]);
 
   return null;
 };

@@ -614,37 +614,37 @@ export const CATEGORIES_CONFIG = [
   {
     id: 'textile',
     name: 'Textile',
-    tagline: 'Mill Direct Fabrics, Bedsheets & Curtains',
+    tagline: 'Bags, Covers & Household Textile Products',
     icon: 'Layers',
     image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800&auto=format&fit=crop',
     subcategories: ['Double Bedsheets', 'Curtains', 'Premium Linen', 'Fabrics', 'Sample Bundles'],
-    description: 'Direct mill woven bedsheets, blackout curtains, hotel linen and raw fabrics manufactured in Ahmedabad & Tirupur.'
+    description: 'Browse source-listed tote bags, saree covers, carry bags and related products. Product details and availability may need confirmation.'
   },
   {
     id: 'cotton-products',
     name: 'Cotton Products',
-    tagline: 'Bath Towels, Heavy Canvas Bags & Direct Mill Goods',
+    tagline: 'Cotton Products & Household Essentials',
     icon: 'Feather',
     image: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=800&auto=format&fit=crop',
     subcategories: ['Cotton Bath Towels', 'Canvas Bags', 'Cotton Essentials', 'Direct Mill Goods'],
-    description: 'Pure ring-spun cotton bath towels, heavy GSM tote bags, muslin essentials and direct industrial cotton bales.'
+    description: 'Browse cotton household products and source-listed product details. Confirm specifications, current availability and pricing before ordering.'
   },
   {
     id: 'home-kitchen',
     name: 'Home and Kitchen',
-    tagline: 'Commercial Kitchen Towels, Chef Aprons & Table Linen',
+    tagline: 'Kitchen Covers, Aprons & Food Preparation Products',
     icon: 'UtensilsCrossed',
     image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=800&auto=format&fit=crop',
     subcategories: ['Kitchen Towels', 'Aprons', 'Table Linen'],
-    description: 'High-absorbency herringbone kitchen wipers, stain-resistant banquet table linen, and durable chef aprons.'
+    description: 'Browse source-listed kitchen covers, aprons and food-preparation products. Confirm specifications, availability and current prices before ordering.'
   },
   {
     id: 'household',
     name: 'Household',
-    tagline: 'Microfiber Cleaning, Dusters & Storage Essentials',
+    tagline: 'Storage Bags & Household Products',
     icon: 'Sparkles',
     image: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?q=80&w=800&auto=format&fit=crop',
     subcategories: ['Cleaning Cloths', 'Microfiber Dusters', 'Storage and Laundry'],
-    description: 'Hospitality-approved 350 GSM microfiber cloths, telescopic duster poles, and heavy linen laundry organizers.'
+    description: 'Browse source-listed storage bags and household products. Confirm specifications, availability and current prices before ordering.'
   }
 ];

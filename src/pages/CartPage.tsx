@@ -22,11 +22,13 @@ import {
   Palette
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
+import { ProductCard } from '../components/common/ProductCard';
 
 export const CartPage: React.FC = () => {
   const navigate = useNavigate();
   const {
     cart,
+    products,
     removeFromCart,
     updateCartQuantity,
     clearCart,
@@ -46,6 +48,32 @@ export const CartPage: React.FC = () => {
 
   const [couponInput, setCouponInput] = useState('');
   const [couponMsg, setCouponMsg] = useState<{ text: string; success: boolean } | null>(null);
+  const recentlyViewedProducts = React.useMemo(() => {
+    try {
+      const stored = localStorage.getItem('mle_recently_viewed_products');
+      const recentIds: string[] = stored ? JSON.parse(stored) : [];
+      return recentIds
+        .map(id => products.find(product => product.id === id))
+        .filter((product): product is NonNullable<typeof product> => Boolean(product));
+    } catch (error) {
+      console.warn('Recently viewed products could not be loaded:', error);
+      return [];
+    }
+  }, [products]);
+
+  const renderRecentlyViewed = () => recentlyViewedProducts.length > 0 && (
+    <section className="mx-auto w-full max-w-7xl space-y-4 text-left">
+      <div>
+        <h2 className="text-xl font-black text-navy sm:text-2xl">Recently Viewed</h2>
+        <p className="mt-1 text-xs text-slate-500">Products you looked at recently.</p>
+      </div>
+      <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+        {recentlyViewedProducts.map(product => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </section>
+  );
 
   // Persistent Reservation Timer: Survives page refreshes using real-time timestamp
   const getInitialReservedTime = () => {
@@ -169,30 +197,33 @@ export const CartPage: React.FC = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center space-y-6">
-        <div className="w-20 h-20 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
-          <ShoppingBag className="w-10 h-10" />
+      <div className="space-y-12 px-4 py-12 sm:py-16">
+        <div className="mx-auto max-w-4xl space-y-6 text-center">
+          <div className="w-20 h-20 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
+            <ShoppingBag className="w-10 h-10" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black text-navy">Your Shopping Cart is Empty</h2>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Discover direct mill rates across combed cotton bedsheets, 600 GSM towels, and commercial essentials.
+            </p>
+          </div>
+          <div className="pt-2 flex justify-center gap-4">
+            <Link
+              to="/catalog"
+              className="px-6 py-3 bg-indigo text-white rounded-xl text-xs font-bold hover:bg-indigo-dark transition shadow-sm"
+            >
+              Explore Product Catalog
+            </Link>
+            <Link
+              to="/wholesale"
+              className="px-6 py-3 bg-white text-navy border border-slate-300 rounded-xl text-xs font-bold hover:bg-slate-50 transition"
+            >
+              Open Wholesale Order Pad
+            </Link>
+          </div>
         </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-black text-navy">Your Shopping Cart is Empty</h2>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Discover direct mill rates across combed cotton bedsheets, 600 GSM towels, and commercial essentials.
-          </p>
-        </div>
-        <div className="pt-2 flex justify-center gap-4">
-          <Link
-            to="/catalog"
-            className="px-6 py-3 bg-indigo text-white rounded-xl text-xs font-bold hover:bg-indigo-dark transition shadow-sm"
-          >
-            Explore Product Catalog
-          </Link>
-          <Link
-            to="/wholesale"
-            className="px-6 py-3 bg-white text-navy border border-slate-300 rounded-xl text-xs font-bold hover:bg-slate-50 transition"
-          >
-            Open Wholesale Order Pad
-          </Link>
-        </div>
+        {renderRecentlyViewed()}
       </div>
     );
   }
@@ -294,26 +325,28 @@ export const CartPage: React.FC = () => {
           {cart.map(item => (
             <div
               key={item.id}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-subtle flex flex-col sm:flex-row gap-4 sm:items-center justify-between"
+              className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-subtle flex flex-col md:flex-row gap-4 md:items-center justify-between"
             >
               {/* Image & Product info */}
-              <div className="flex items-center gap-4 flex-1 min-w-0">
+              <div className="flex min-w-0 flex-1 items-center gap-4">
                 <img
                   src={item.product.images[0]}
                   alt={item.product.name}
-                  className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-xl border border-slate-100 shrink-0"
+                  className="h-20 w-20 shrink-0 rounded-xl border border-slate-100 object-cover sm:h-24 sm:w-24"
                 />
                 <div className="space-y-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-indigo bg-indigo-light px-2 py-0.5 rounded">
+                  <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                    <span className="max-w-full truncate rounded bg-indigo-light px-2 py-0.5 text-[10px] font-bold text-indigo">
                       {item.product.subcategory}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400">SKU: {item.product.sku}</span>
+                    <span className="max-w-full truncate whitespace-nowrap font-mono text-[10px] text-slate-400">
+                      SKU: {item.product.sku}
+                    </span>
                   </div>
 
                   <Link
                     to={`/product/${item.product.slug}`}
-                    className="font-bold text-sm text-navy hover:text-indigo transition line-clamp-1 block"
+                    className="block line-clamp-2 text-sm font-bold text-navy transition hover:text-indigo"
                   >
                     {item.product.name}
                   </Link>
@@ -387,7 +420,7 @@ export const CartPage: React.FC = () => {
               </div>
 
               {/* Quantity Counter & Subtotal */}
-              <div className="flex items-center justify-between sm:justify-end gap-6 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+              <div className="flex items-center justify-between gap-6 border-t border-slate-100 pt-3 md:justify-end md:border-t-0 md:pt-0">
                 <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden bg-white">
                   <button
                     onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
@@ -397,7 +430,7 @@ export const CartPage: React.FC = () => {
                   </button>
                   <input
                     type="number"
-                    min="1"
+                    min={item.selectedVariant?.id.startsWith('sample-') ? 1 : Math.max(1, item.product.moq || 1)}
                     value={item.quantity}
                     onChange={e => updateCartQuantity(item.id, Number(e.target.value))}
                     className="w-12 text-center text-xs font-bold text-navy focus:outline-none py-1"
@@ -694,6 +727,7 @@ export const CartPage: React.FC = () => {
           </div>
         </div>
       </div>
+      {renderRecentlyViewed()}
     </div>
   );
 };

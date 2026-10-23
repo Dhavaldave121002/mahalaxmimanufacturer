@@ -59,6 +59,34 @@ CREATE TABLE IF NOT EXISTS `products` (
   CONSTRAINT `fk_product_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 2A. SOURCE CATALOGUE COLLECTIONS (PRODUCTS REMAIN GROUPED UNDER THE FOUR PARENT CATEGORIES)
+CREATE TABLE IF NOT EXISTS `collections` (
+  `id` VARCHAR(64) NOT NULL PRIMARY KEY,
+  `name` VARCHAR(100) NOT NULL,
+  `slug` VARCHAR(100) NOT NULL UNIQUE,
+  `parent_category_id` VARCHAR(50) NOT NULL,
+  `description` TEXT,
+  `image` VARCHAR(255),
+  `display_order` INT NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX `idx_collections_parent` (`parent_category_id`),
+  CONSTRAINT `fk_collection_parent_category` FOREIGN KEY (`parent_category_id`)
+    REFERENCES `categories` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2B. NORMALIZED PRODUCT-TO-COLLECTION MEMBERSHIP
+CREATE TABLE IF NOT EXISTS `product_collections` (
+  `product_id` VARCHAR(50) NOT NULL,
+  `collection_id` VARCHAR(64) NOT NULL,
+  PRIMARY KEY (`product_id`, `collection_id`),
+  INDEX `idx_product_collections_collection` (`collection_id`),
+  CONSTRAINT `fk_product_collection_product` FOREIGN KEY (`product_id`)
+    REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_product_collection_collection` FOREIGN KEY (`collection_id`)
+    REFERENCES `collections` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 3. APP CAROUSEL BANNERS TABLE (Drives Flutter App Home Slider)
 CREATE TABLE IF NOT EXISTS `app_banners` (
   `id` VARCHAR(50) NOT NULL PRIMARY KEY,

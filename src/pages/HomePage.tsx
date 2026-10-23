@@ -32,9 +32,16 @@ import {
   Boxes
 } from 'lucide-react';
 
+const HOME_PRIMARY_CATEGORY_IDS = ['home-kitchen', 'household', 'textile', 'cotton-products'];
+
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { products, submitBusinessEnquiry, addToCart, categories, mobileAppConfig } = useApp();
+  const availableCategories = categories.length > 0 ? categories : CATEGORIES_CONFIG;
+  const homePrimaryCategories = HOME_PRIMARY_CATEGORY_IDS.flatMap(id => {
+    const category = availableCategories.find(item => item.id === id);
+    return category ? [category] : [];
+  });
 
   // Hero Carousel State: Dynamic from Admin & CMS (Filtered for Website)
   const activeBanners = (mobileAppConfig?.banners || []).filter(
@@ -325,48 +332,48 @@ export const HomePage: React.FC = () => {
           ======================================================== */}
       <section className="w-full bg-white border-b border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] -mt-12 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 py-3 sm:py-4 gap-3 sm:gap-6 lg:gap-0 lg:divide-x lg:divide-slate-200">
+          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-4 py-3 sm:py-4 gap-2.5 sm:gap-6 lg:gap-0 lg:divide-x lg:divide-slate-200">
             {/* Box 1: 5% Bank Discount */}
-            <div className="flex items-center gap-3.5 lg:px-6 py-2">
-              <div className="w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 shadow-sm">
+            <div className="flex min-w-0 items-start gap-2.5 rounded-xl bg-slate-50/70 p-2.5 sm:items-center lg:rounded-none lg:bg-transparent lg:px-6 lg:py-2">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 text-indigo-600 shadow-sm sm:mt-0 sm:h-11 sm:w-11">
                 <CreditCard className="w-5 h-5 text-indigo-600" />
               </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-navy truncate">5% Instant Bank Discount</p>
-                <p className="text-[11px] sm:text-xs text-slate-500 truncate">RuPay & Commercial Cards (MILLB2B)</p>
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-[11px] font-bold leading-snug text-navy sm:text-sm">5% Instant Bank Discount</p>
+                <p className="mt-0.5 break-words text-[10px] leading-snug text-slate-500 sm:text-xs">RuPay & Commercial Cards (MILLB2B)</p>
               </div>
             </div>
 
             {/* Box 2: Pan-India Delivery */}
-            <div className="flex items-center gap-3.5 lg:px-6 py-2">
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 shadow-sm">
+            <div className="flex min-w-0 items-start gap-2.5 rounded-xl bg-slate-50/70 p-2.5 sm:items-center lg:rounded-none lg:bg-transparent lg:px-6 lg:py-2">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-600 shadow-sm sm:mt-0 sm:h-11 sm:w-11">
                 <Truck className="w-5 h-5 text-emerald-600" />
               </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-navy truncate">Fast Pan-India Delivery</p>
-                <p className="text-[11px] sm:text-xs text-slate-500 truncate">19,000+ PIN Codes Covered</p>
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-[11px] font-bold leading-snug text-navy sm:text-sm">Fast Pan-India Delivery</p>
+                <p className="mt-0.5 break-words text-[10px] leading-snug text-slate-500 sm:text-xs">19,000+ PIN Codes Covered</p>
               </div>
             </div>
 
             {/* Box 3: 100% GSTR-2B ITC */}
-            <div className="flex items-center gap-3.5 lg:px-6 py-2">
-              <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0 shadow-sm">
+            <div className="flex min-w-0 items-start gap-2.5 rounded-xl bg-slate-50/70 p-2.5 sm:items-center lg:rounded-none lg:bg-transparent lg:px-6 lg:py-2">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-100 bg-amber-50 text-amber-600 shadow-sm sm:mt-0 sm:h-11 sm:w-11">
                 <ShieldCheck className="w-5 h-5 text-amber-600" />
               </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-navy truncate">100% GSTR-2B ITC Claim</p>
-                <p className="text-[11px] sm:text-xs text-slate-500 truncate">Verified GST Invoice with HSN</p>
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-[11px] font-bold leading-snug text-navy sm:text-sm">100% GSTR-2B ITC Claim</p>
+                <p className="mt-0.5 break-words text-[10px] leading-snug text-slate-500 sm:text-xs">Verified GST Invoice with HSN</p>
               </div>
             </div>
 
             {/* Box 4: Zero Commission */}
-            <div className="flex items-center gap-3.5 lg:px-6 py-2">
-              <div className="w-11 h-11 rounded-xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0 shadow-sm">
+            <div className="flex min-w-0 items-start gap-2.5 rounded-xl bg-slate-50/70 p-2.5 sm:items-center lg:rounded-none lg:bg-transparent lg:px-6 lg:py-2">
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-purple-100 bg-purple-50 text-purple-600 shadow-sm sm:mt-0 sm:h-11 sm:w-11">
                 <Zap className="w-5 h-5 text-purple-600" />
               </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-bold text-navy truncate">Zero Commission Rates</p>
-                <p className="text-[11px] sm:text-xs text-slate-500 truncate">Pure factory rates without 25% app fee</p>
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-[11px] font-bold leading-snug text-navy sm:text-sm">Zero Commission Rates</p>
+                <p className="mt-0.5 break-words text-[10px] leading-snug text-slate-500 sm:text-xs">Pure factory rates without 25% app fee</p>
               </div>
             </div>
           </div>
@@ -467,8 +474,8 @@ export const HomePage: React.FC = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {(categories && categories.length > 0 ? categories : CATEGORIES_CONFIG).map(cat => (
+        <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+          {homePrimaryCategories.map(cat => (
             <Link
               key={cat.id}
               to={`/category/${cat.id}`}
@@ -546,9 +553,9 @@ export const HomePage: React.FC = () => {
             </div>
 
             {/* 3 Sample Offering Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-3">
               {/* Card 1: Complete Commercial Sample Bundle */}
-              <div className="bg-white/5 hover:bg-white/10 border-2 border-champagne/40 rounded-2xl p-5 flex flex-col justify-between transition-all group relative overflow-hidden backdrop-blur-sm">
+              <div className="bg-white/5 hover:bg-white/10 border-2 border-champagne/50 rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-all group relative overflow-hidden backdrop-blur-sm">
                 <div className="absolute top-3 right-3 bg-champagne text-navy text-[10px] font-black uppercase px-2 py-0.5 rounded shadow">
                   Most Popular
                 </div>
@@ -556,10 +563,10 @@ export const HomePage: React.FC = () => {
                   <div className="w-12 h-12 rounded-xl bg-champagne/20 text-champagne flex items-center justify-center mb-4">
                     <Boxes className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-champagne transition">
+                  <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-champagne transition">
                     Complete Commercial Sample Bundle
                   </h3>
-                  <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-200 mt-1.5 leading-relaxed">
                     All-in-one testing box: 12 fabric swatches, 4 towel cuts, canvas tote sample, GSM specs & ₹300 coupon.
                   </p>
 
@@ -569,7 +576,7 @@ export const HomePage: React.FC = () => {
                     <span className="text-[11px] font-bold text-emerald-400 ml-auto">70% OFF</span>
                   </div>
 
-                  <ul className="mt-3 space-y-1.5 text-[11px] text-slate-300">
+                  <ul className="mt-3 space-y-1.5 text-[11px] sm:text-xs text-slate-200">
                     <li className="flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       12 Bedsheet & Terry Towel Swatches
@@ -603,15 +610,15 @@ export const HomePage: React.FC = () => {
               </div>
 
               {/* Card 2: Fabric Swatch Box */}
-              <div className="bg-white/5 hover:bg-white/10 border border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all group backdrop-blur-sm">
+              <div className="bg-white/5 hover:bg-white/10 border border-white/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-all group backdrop-blur-sm">
                 <div>
                   <div className="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-300 flex items-center justify-center mb-4">
                     <PackageCheck className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-champagne transition">
+                  <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-champagne transition">
                     Fabric Swatch Kit (12 Pieces)
                   </h3>
-                  <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-200 mt-1.5 leading-relaxed">
                     Physical touch & feel kit: 300-600 TC bedsheet fabrics and 400-650 GSM cotton terry swatches.
                   </p>
 
@@ -621,7 +628,7 @@ export const HomePage: React.FC = () => {
                     <span className="text-[11px] font-bold text-emerald-400 ml-auto">60% OFF</span>
                   </div>
 
-                  <ul className="mt-3 space-y-1.5 text-[11px] text-slate-300">
+                  <ul className="mt-3 space-y-1.5 text-[11px] sm:text-xs text-slate-200">
                     <li className="flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       Yarn Count & GSM Specification Tagged
@@ -655,15 +662,15 @@ export const HomePage: React.FC = () => {
               </div>
 
               {/* Card 3: 1-Piece Individual Product Sample */}
-              <div className="bg-white/5 hover:bg-white/10 border border-white/20 rounded-2xl p-5 flex flex-col justify-between transition-all group backdrop-blur-sm">
+              <div className="bg-white/5 hover:bg-white/10 border border-white/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-all group backdrop-blur-sm">
                 <div>
                   <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center mb-4">
                     <Tag className="w-6 h-6" />
                   </div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-champagne transition">
+                  <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-champagne transition">
                     1-Pc Product Unit Sample
                   </h3>
-                  <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-200 mt-1.5 leading-relaxed">
                     Need a finished bedsheet, bath towel, or microfiber roll? Order just 1 piece without wholesale MOQ!
                   </p>
 
@@ -672,7 +679,7 @@ export const HomePage: React.FC = () => {
                     <span className="text-[11px] font-bold text-emerald-400 ml-auto">MOQ Bypassed</span>
                   </div>
 
-                  <ul className="mt-3 space-y-1.5 text-[11px] text-slate-300">
+                  <ul className="mt-3 space-y-1.5 text-[11px] sm:text-xs text-slate-200">
                     <li className="flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       Available on every product page
@@ -726,34 +733,36 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ========================================================
-          5. BEST SELLERS: High Demand Commercial Lines
+          5. ADMIN-SELECTED HOMEPAGE PRODUCTS
           ======================================================== */}
+      {bestSellers.length > 0 && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-1.5 text-amber-600 font-bold text-xs uppercase tracking-wider mb-1">
               <Sparkles className="w-4 h-4" />
-              <span>Verified Customer Favorites</span>
+              <span>Selected by Our Team</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-navy tracking-tight">
-              Best Selling Lines & Repeat Re-Orders
+              Featured Products
             </h2>
           </div>
           <Link
-            to="/catalog?filter=bestseller"
+            to="/catalog?filter=featured"
             className="text-xs font-bold text-indigo hover:text-indigo-dark flex items-center gap-1"
           >
-            <span>View All Best Sellers</span>
+            <span>View All Featured Products</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
           {bestSellers.map(product => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
       </section>
+      )}
 
       {/* ========================================================
           6. WHOLESALE DEALS & INTERACTIVE LIVE SAVINGS CALCULATOR

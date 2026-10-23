@@ -30,64 +30,53 @@ export const Footer: React.FC = () => {
     <footer className="bg-navy text-white pt-12 pb-24 md:pb-12 border-t border-navy-800 w-full max-w-full overflow-hidden">
       {/* 1. Value Proposition Pillars */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 border-b border-navy-800/80">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-navy-800/40 border border-navy-700/50">
-            <div className="p-2.5 bg-indigo/20 text-champagne rounded-lg">
-              <Factory className="w-5 h-5" />
+        <div aria-label="Store benefits" className="grid grid-cols-1 gap-3 min-[768px]:grid-cols-3 lg:gap-6">
+          <div className="flex items-start gap-3 rounded-xl border border-white/20 bg-navy-800/60 p-3 lg:p-4">
+            <div className="shrink-0 rounded-lg bg-indigo/20 p-2.5 text-champagne">
+              <Factory className="h-5 w-5" />
             </div>
-            <div>
-              <h4 className="font-bold text-sm text-white">Direct Mill Rates</h4>
-              <p className="text-xs text-slate-300 mt-1">
+            <div className="min-w-0">
+              <h4 className="text-sm font-bold text-white">Direct Mill Rates</h4>
+              <p className="mt-1 text-xs leading-relaxed text-slate-200">
                 Zero intermediary markup. Genuine factory prices directly from Ahmedabad & Tirupur looms.
               </p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-navy-800/40 border border-emerald-500/30">
-            <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-lg">
-              <RotateCcw className="w-5 h-5" />
+          <div className="flex items-start gap-3 rounded-xl border border-emerald-400/40 bg-navy-800/60 p-3 lg:p-4">
+            <div className="shrink-0 rounded-lg bg-emerald-500/20 p-2.5 text-emerald-300">
+              <RotateCcw className="h-5 w-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h4 className="font-bold text-sm text-white">7-Day Return & 100% Refund</h4>
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-bold border border-emerald-500/40">Guaranteed</span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h4 className="text-sm font-bold leading-snug text-white">7-Day Return & 100% Refund</h4>
+                <span className="rounded border border-emerald-500/40 bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-bold text-emerald-200">Guaranteed</span>
               </div>
-              <p className="text-xs text-slate-300 mt-1">
+              <p className="mt-1 text-xs leading-relaxed text-slate-200">
                 Doorstep reverse pickup in 24-48 hrs. 100% refund to UPI/Bank or instant size/defect exchange.
               </p>
               <button
                 type="button"
                 onClick={() => setLegalModal('RETURN')}
-                className="mt-1.5 text-[11px] text-emerald-400 hover:text-emerald-300 font-bold underline flex items-center gap-1 cursor-pointer"
+                className="mt-1.5 flex items-center gap-1 text-[11px] font-bold text-emerald-300 underline hover:text-emerald-200"
               >
                 Read Full Refund Policy →
               </button>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-navy-800/40 border border-navy-700/50">
-            <div className="p-2.5 bg-indigo/20 text-champagne rounded-lg">
-              <Truck className="w-5 h-5" />
+          <div className="flex items-start gap-3 rounded-xl border border-white/20 bg-navy-800/60 p-3 lg:p-4">
+            <div className="shrink-0 rounded-lg bg-indigo/20 p-2.5 text-champagne">
+              <Truck className="h-5 w-5" />
             </div>
-            <div>
-              <h4 className="font-bold text-sm text-white">Pan-India Freight Logistics</h4>
-              <p className="text-xs text-slate-300 mt-1">
+            <div className="min-w-0">
+              <h4 className="text-sm font-bold text-white">Pan-India Freight Logistics</h4>
+              <p className="mt-1 text-xs leading-relaxed text-slate-200">
                 Reliable pallet and parcel dispatches to 19,000+ PIN codes with live GPS tracking.
               </p>
             </div>
           </div>
 
-          <div className="flex items-start gap-3 p-4 rounded-xl bg-navy-800/40 border border-navy-700/50">
-            <div className="p-2.5 bg-indigo/20 text-champagne rounded-lg">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-bold text-sm text-white">100% GST & Lab Tested</h4>
-              <p className="text-xs text-slate-300 mt-1">
-                OEKO-TEX tested combed cotton. Valid B2B tax invoices with full Input Tax Credit (ITC).
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 

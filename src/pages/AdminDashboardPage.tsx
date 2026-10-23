@@ -131,6 +131,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [productForm, setProductForm] = useState<{
     name: string;
     sku: string;
+    isBestSeller: boolean;
     category: CategoryId;
     categoryName: string;
     subcategory: string;
@@ -138,6 +139,7 @@ export const AdminDashboardPage: React.FC = () => {
     retailPrice: number;
     tier1Price: number;
     tier2Price: number;
+    tier3Price: number;
     stock: number;
     moq: number;
     hsnCode: string;
@@ -155,6 +157,7 @@ export const AdminDashboardPage: React.FC = () => {
   }>({
     name: '',
     sku: '',
+    isBestSeller: false,
     category: 'textile',
     categoryName: 'Textile',
     subcategory: 'Double Bedsheets',
@@ -162,6 +165,7 @@ export const AdminDashboardPage: React.FC = () => {
     retailPrice: 799,
     tier1Price: 599,
     tier2Price: 499,
+    tier3Price: 449,
     stock: 200,
     moq: 1,
     hsnCode: '630221',
@@ -262,10 +266,12 @@ export const AdminDashboardPage: React.FC = () => {
   const handleEditProduct = (p: Product) => {
     const t1 = p.wholesaleTiers?.find(t => t.minQty === 10)?.pricePerUnit ?? p.wholesaleTiers?.[1]?.pricePerUnit ?? Math.round(p.retailPrice * 0.75);
     const t2 = p.wholesaleTiers?.find(t => t.minQty === 50)?.pricePerUnit ?? p.wholesaleTiers?.[2]?.pricePerUnit ?? Math.round(p.retailPrice * 0.65);
+    const t3 = p.wholesaleTiers?.find(t => t.minQty === 200)?.pricePerUnit ?? p.wholesaleTiers?.[3]?.pricePerUnit ?? Math.round(p.retailPrice * 0.55);
     setEditingProductId(p.id);
     setProductForm({
       name: p.name,
       sku: p.sku,
+      isBestSeller: Boolean(p.isBestSeller),
       category: p.category,
       categoryName: p.categoryName,
       subcategory: p.subcategory,
@@ -273,8 +279,9 @@ export const AdminDashboardPage: React.FC = () => {
       retailPrice: p.retailPrice,
       tier1Price: t1,
       tier2Price: t2,
+      tier3Price: t3,
       stock: p.stock,
-      moq: p.moq,
+      moq: Number.isSafeInteger(p.moq) && p.moq > 0 ? p.moq : 1,
       hsnCode: p.hsnCode,
       gstRate: p.gstRate,
       shortDescription: p.shortDescription,
@@ -297,12 +304,18 @@ export const AdminDashboardPage: React.FC = () => {
 
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!Number.isSafeInteger(productForm.moq) || productForm.moq < 1) {
+      window.alert('Minimum order quantity must be a whole number of at least 1.');
+      return;
+    }
     const savings1 = Math.max(0, Math.round(((productForm.retailPrice - productForm.tier1Price) / (productForm.retailPrice || 1)) * 100));
     const savings2 = Math.max(0, Math.round(((productForm.retailPrice - productForm.tier2Price) / (productForm.retailPrice || 1)) * 100));
+    const savings3 = Math.max(0, Math.round(((productForm.retailPrice - productForm.tier3Price) / (productForm.retailPrice || 1)) * 100));
     const computedTiers = [
       { minQty: 1, maxQty: 9, pricePerUnit: productForm.retailPrice, savingsPercent: 0, label: 'Standard Rate' },
       { minQty: 10, maxQty: 49, pricePerUnit: productForm.tier1Price, savingsPercent: savings1, label: 'Wholesale Tier 1' },
-      { minQty: 50, pricePerUnit: productForm.tier2Price, savingsPercent: savings2, label: 'Direct Mill Contract' }
+      { minQty: 50, maxQty: 199, pricePerUnit: productForm.tier2Price, savingsPercent: savings2, label: 'Wholesale Tier 2' },
+      { minQty: 200, pricePerUnit: productForm.tier3Price, savingsPercent: savings3, label: 'Direct Mill Contract' }
     ];
 
     const currentProd = editingProductId ? products.find(p => p.id === editingProductId) : null;
@@ -314,6 +327,10 @@ export const AdminDashboardPage: React.FC = () => {
       'Certification': productForm.certification.trim() || 'OEKO-TEX Standard 100',
       'Dimensions': productForm.dimensions.trim() || 'Double (90" x 108")'
     };
+    if (currentProd?.specifications?.['Source Price Status'] === 'Admin-set temporary price') {
+      computedSpecs['Source Price Status'] = 'Admin-set price';
+      computedSpecs['Admin Price Note'] = 'Pricing updated from Admin dashboard.';
+    }
 
     const computedCare = productForm.careInstructions
       .split('\n')
@@ -329,6 +346,7 @@ export const AdminDashboardPage: React.FC = () => {
       updateProduct(editingProductId, {
         name: productForm.name,
         sku: productForm.sku,
+        isBestSeller: productForm.isBestSeller,
         category: productForm.category,
         categoryName: productForm.categoryName,
         subcategory: productForm.subcategory,
@@ -351,6 +369,7 @@ export const AdminDashboardPage: React.FC = () => {
         name: productForm.name,
         slug: productForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         sku: productForm.sku || `MLE-${Math.floor(1000 + Math.random() * 9000)}`,
+        isBestSeller: productForm.isBestSeller,
         category: productForm.category,
         categoryName: productForm.categoryName,
         subcategory: productForm.subcategory,
@@ -551,6 +570,7 @@ export const AdminDashboardPage: React.FC = () => {
               setProductForm({
                 name: '',
                 sku: `MLE-NEW-${Math.floor(1000 + Math.random() * 9000)}`,
+                isBestSeller: false,
                 category: 'textile',
                 categoryName: 'Textile',
                 subcategory: 'Double Bedsheets',
@@ -558,6 +578,7 @@ export const AdminDashboardPage: React.FC = () => {
                 retailPrice: 849,
                 tier1Price: 649,
                 tier2Price: 549,
+                tier3Price: 449,
                 stock: 300,
                 moq: 1,
                 hsnCode: '630221',
@@ -931,6 +952,7 @@ export const AdminDashboardPage: React.FC = () => {
                   <th className="py-3 px-3 text-right font-bold whitespace-nowrap">Retail Rate</th>
                   <th className="py-3 px-3 text-center font-bold whitespace-nowrap">Wholesale Tiers</th>
                   <th className="py-3 px-3 text-center font-bold whitespace-nowrap">Stock Level</th>
+                  <th className="py-3 px-3 text-center font-bold whitespace-nowrap">Homepage Feature</th>
                   <th className="py-3 px-3 text-center font-bold whitespace-nowrap">Adjust Stock</th>
                   <th className="py-3 px-4 text-right font-bold whitespace-nowrap">Actions</th>
                 </tr>
@@ -956,6 +978,9 @@ export const AdminDashboardPage: React.FC = () => {
                             <span className="text-[11px] text-indigo font-semibold block truncate mt-0.5">
                               {prod.categoryName} &bull; {prod.subcategory}
                             </span>
+                            {prod.isBestSeller && (
+                              <span className="text-[10px] text-amber-700 font-bold block mt-0.5">Homepage featured</span>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -979,6 +1004,19 @@ export const AdminDashboardPage: React.FC = () => {
                         <span className={`font-bold px-2 py-0.5 rounded ${prod.stock < 100 ? 'bg-amber-50 text-amber-700' : 'text-slate-800'}`}>
                           {prod.stock} units
                         </span>
+                      </td>
+
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                        <label className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-600">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(prod.isBestSeller)}
+                            onChange={e => updateProduct(prod.id, { isBestSeller: e.target.checked })}
+                            aria-label={`Show ${prod.name} in homepage featured products`}
+                            className="accent-amber-600"
+                          />
+                          Feature
+                        </label>
                       </td>
 
                       {/* Instant Stock Adjustment */}
@@ -1477,7 +1515,7 @@ export const AdminDashboardPage: React.FC = () => {
           {editingOrderId && (
             <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 text-xs">
               <h4 className="font-bold text-navy">Update Order Consignment #{editingOrderId}</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 block mb-1">New Fulfillment / Return Status</label>
                   <select
@@ -1790,14 +1828,17 @@ export const AdminDashboardPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 block mb-1">Wholesale MOQ</label>
+                  <label className="text-[10px] font-bold text-slate-500 block mb-1">Minimum Order Quantity (MOQ)</label>
                   <input
                     type="number"
                     required
+                    min={1}
+                    step={1}
                     value={productForm.moq}
                     onChange={e => setProductForm({ ...productForm, moq: Number(e.target.value) })}
                     className="w-full p-2 border border-slate-300 rounded-lg outline-none"
                   />
+                  <p className="mt-1 text-[10px] text-slate-500">Set separately for this product, e.g. 1, 2, 9, or 100 units.</p>
                 </div>
               </div>
 
@@ -1830,7 +1871,7 @@ export const AdminDashboardPage: React.FC = () => {
                     </span>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Tier 2: 50+ Pcs Rate (₹)</label>
+                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Tier 2: 50-199 Pcs Rate (₹)</label>
                     <input
                       type="number"
                       required
@@ -1840,6 +1881,19 @@ export const AdminDashboardPage: React.FC = () => {
                     />
                     <span className="text-[9.5px] text-emerald-600 font-semibold block mt-0.5">
                       {productForm.retailPrice > productForm.tier2Price ? `${Math.round(((productForm.retailPrice - productForm.tier2Price) / (productForm.retailPrice || 1)) * 100)}% Direct Mill Discount` : 'No discount'}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-600 block mb-1">Tier 3: 200+ Pcs Rate (₹)</label>
+                    <input
+                      type="number"
+                      required
+                      value={productForm.tier3Price}
+                      onChange={e => setProductForm({ ...productForm, tier3Price: Number(e.target.value) })}
+                      className="w-full p-2 border border-slate-300 rounded-lg outline-none font-bold text-emerald-700 bg-white"
+                    />
+                    <span className="text-[9.5px] text-emerald-600 font-semibold block mt-0.5">
+                      {productForm.retailPrice > productForm.tier3Price ? `${Math.round(((productForm.retailPrice - productForm.tier3Price) / (productForm.retailPrice || 1)) * 100)}% Highest Volume Discount` : 'No discount'}
                     </span>
                   </div>
                 </div>
@@ -1878,6 +1932,23 @@ export const AdminDashboardPage: React.FC = () => {
                   className="w-full p-2 border border-slate-300 rounded-lg outline-none"
                 />
               </div>
+
+              {!editingProductId && (
+              <label className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={productForm.isBestSeller}
+                  onChange={e => setProductForm({ ...productForm, isBestSeller: e.target.checked })}
+                  className="mt-0.5 accent-amber-600"
+                />
+                <span>
+                  <span className="block text-xs font-bold text-slate-800">Show in homepage featured products</span>
+                  <span className="block text-[10px] text-slate-600 mt-0.5">
+                    Display placement only; this does not verify sales, customer popularity, stock or pricing.
+                  </span>
+                </span>
+              </label>
+              )}
 
               {/* LIVE PRODUCT DETAIL TABS INPUT SECTION (Syncs 1:1 with Storefront & Mobile App) */}
               <div className="p-4 bg-gradient-to-br from-slate-50 to-indigo/5 rounded-2xl border border-indigo/20 space-y-4">

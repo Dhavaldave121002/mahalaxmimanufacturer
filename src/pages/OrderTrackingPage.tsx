@@ -28,13 +28,15 @@ export const OrderTrackingPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const successOrderId = searchParams.get('success');
 
-  const { orders, addToCart, products, currentUser, cancelOrder, requestReturnOrExchange } = useApp();
+  const { orders, addToCart, products, currentUser, isLoggedIn, cancelOrder, requestReturnOrExchange } = useApp();
   const isAdmin = currentUser?.role === 'admin';
 
   // 1. Filter orders strictly for the current logged-in user (unless admin)
   const accountOrders = isAdmin
     ? orders
-    : orders.filter(o => {
+    : !isLoggedIn
+      ? orders.filter(o => o.customer?.id.startsWith('guest-'))
+      : orders.filter(o => {
         const emailMatch =
           currentUser?.email &&
           o.customer?.email &&
@@ -405,7 +407,9 @@ export const OrderTrackingPage: React.FC = () => {
             <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
               {searchQuery.trim()
                 ? `We could not locate an order matching "${searchQuery}". Please verify the Order Reference (e.g. MLE-ORD-2026-...) or AWB docket number.`
-                : `Logged in as ${currentUser?.name || currentUser?.email || 'Guest'}. When you place an order, live order progress, courier tracking, and official GST tax invoices will appear here.`}
+                : isLoggedIn
+                  ? `Logged in as ${currentUser?.name || currentUser?.email}. When you place an order, live order progress, courier tracking, and official GST tax invoices will appear here.`
+                  : 'Guest orders placed on this browser will appear here without a login. Use your Order ID or AWB to track an order from another device.'}
             </p>
           </div>
 

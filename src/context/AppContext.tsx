@@ -22,6 +22,7 @@ import {
   BundleOfferConfig
 } from '../types';
 import { INITIAL_PRODUCTS, CATEGORIES_CONFIG } from '../data/mockProducts';
+import { normalizeProductCategory } from '../utils/productCategories';
 import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
 import { INITIAL_COUPONS } from '../data/initialCoupons';
 
@@ -243,7 +244,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(() => {
-    return safeLoadArray<Product>('mle_products', INITIAL_PRODUCTS);
+    if (import.meta.env.PROD) return [];
+    return safeLoadArray<Product>('mle_products', INITIAL_PRODUCTS).map(normalizeProductCategory);
   });
 
   const [categories, setCategories] = useState<CollectionCategory[]>(() => {
@@ -532,26 +534,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncProductsFromBackend = useCallback(async () => {
     try {
       const res = await fetch('/api/products');
-      if (!res.ok) return;
-      const json = await res.json();
-      if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-        setProducts(prev => {
-          const map = new Map<string, Product>();
-          for (const p of json.data) {
-            const key = (p.id || p.sku || '').trim().toLowerCase();
-            if (key) map.set(key, p);
-          }
-          for (const p of prev) {
-            const key = (p.id || p.sku || '').trim().toLowerCase();
-            if (key && !map.has(key)) {
-              map.set(key, p);
-            }
-          }
-          return Array.from(map.values());
-        });
+      if (!res.ok) {
+        console.error(`Product API request failed (${res.status}).`);
+        return;
       }
-    } catch {
-      // quiet offline fallback
+      const json = await res.json();
+      if (json?.success && Array.isArray(json.data)) {
+        setProducts((json.data as Product[]).map(normalizeProductCategory));
+      } else {
+        console.error('Product API returned an invalid response.');
+      }
+    } catch (error) {
+      console.error('Failed to load products from the API:', error);
     }
   }, []);
 
@@ -561,6 +555,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Synchronize users live from MySQL / Central API
   const syncUsersFromBackend = useCallback(async () => {
+    if (!isLoggedIn || currentUser.role !== 'admin') return;
     try {
       const res = await fetch('/api/auth');
       if (!res.ok) return;
@@ -584,13 +579,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {
       // quiet offline fallback
     }
-  }, []);
+  }, [currentUser.role, isLoggedIn, setRegisteredUsers]);
 
   useEffect(() => {
+    if (!isLoggedIn || currentUser.role !== 'admin') return;
     syncUsersFromBackend();
     const interval = setInterval(syncUsersFromBackend, 12000);
     return () => clearInterval(interval);
-  }, [syncUsersFromBackend]);
+  }, [currentUser.role, isLoggedIn, syncUsersFromBackend]);
 
   const addCoupon = (coupon: Omit<CouponOffer, 'id' | 'usedCount' | 'createdAt'>) => {
     const newCoupon: CouponOffer = {
@@ -762,7 +758,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Orders are loaded only from this browser's own saved data.
   const [orders, setOrders] = useState<Order[]>(() =>
-    import.meta.env.PROD ? [] : safeLoadArray<Order>('mle_orders', [])
+    import.meta.env.PROD
+      ? safeLoadArray<Order>('mle_guest_orders', [])
+      : [...safeLoadArray<Order>('mle_guest_orders', []), ...safeLoadArray<Order>('mle_orders', [])]
   );
 
   // Mobile App Configuration State
@@ -816,6 +814,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     try {
       localStorage.setItem('mle_orders', JSON.stringify(orders));
+      const guestOrders = orders.filter(order => order.customer?.id.startsWith('guest-'));
+      localStorage.setItem('mle_guest_orders', JSON.stringify(guestOrders));
     } catch (e) {
       console.warn('Failed to persist mle_orders:', e);
     }
@@ -823,6 +823,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Synchronize orders live from MySQL / Central API
   const syncOrdersFromBackend = useCallback(async () => {
+    if (!isLoggedIn || currentUser.role !== 'admin') return;
     try {
       const res = await fetch('/api/orders');
       if (!res.ok) return;
@@ -882,10 +883,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       // Quiet fail if offline
     }
-  }, []);
+  }, [currentUser.role, isLoggedIn, setOrders]);
 
   // Fetch live enquiries from MySQL / API
   const syncEnquiriesFromBackend = useCallback(async () => {
+    if (!isLoggedIn || currentUser.role !== 'admin') return;
     try {
       const res = await fetch('/api/enquiry');
       if (!res.ok) return;
@@ -905,10 +907,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
       }
     } catch (_) {}
-  }, []);
+  }, [currentUser.role, isLoggedIn]);
 
   // Auto-sync on startup and live poll every 8 seconds
   useEffect(() => {
+    if (!isLoggedIn || currentUser.role !== 'admin') return;
     syncOrdersFromBackend();
     syncEnquiriesFromBackend();
     const interval = setInterval(() => {
@@ -916,7 +919,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       syncEnquiriesFromBackend();
     }, 8000);
     return () => clearInterval(interval);
-  }, [syncOrdersFromBackend, syncEnquiriesFromBackend]);
+  }, [currentUser.role, isLoggedIn, syncOrdersFromBackend, syncEnquiriesFromBackend]);
 
   useEffect(() => {
     try {
@@ -970,6 +973,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     variant?: ProductVariant,
     customization?: ProductCustomization
   ) => {
+    const minimumQuantity = variant?.id.startsWith('sample-') ? 1 : Math.max(1, product.moq || 1);
+    const requestedQuantity = Number.isFinite(quantity) ? Math.floor(quantity) : minimumQuantity;
+    const normalizedQuantity = Math.max(minimumQuantity, requestedQuantity);
+
     setCart(prev => {
       // Find existing item matching product ID, variant ID, and customization type/text
       const existingIndex = prev.findIndex(item => {
@@ -985,7 +992,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (existingIndex > -1) {
         const currentItem = prev[existingIndex];
-        const newTotalQty = currentItem.quantity + quantity;
+        const newTotalQty = currentItem.quantity + normalizedQuantity;
         const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(product, newTotalQty);
 
         const updated = [...prev];
@@ -1004,10 +1011,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           id: `${product.id}-${variant?.id || 'std'}-${customization?.type ? 'custom-' : ''}${Date.now()}`,
           productId: product.id,
           product,
-          quantity,
+          quantity: normalizedQuantity,
           selectedVariant: variant,
           unitPrice,
-          totalPrice: unitPrice * quantity,
+          totalPrice: unitPrice * normalizedQuantity,
           appliedTier,
           customization
         };
@@ -1028,12 +1035,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCart(prev =>
       prev.map(item => {
         if (item.id === itemId) {
-          const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(item.product, newQty);
+          const minimumQuantity = item.selectedVariant?.id.startsWith('sample-')
+            ? 1
+            : Math.max(1, item.product.moq || 1);
+          const normalizedQuantity = Math.max(minimumQuantity, Math.floor(newQty));
+          const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(item.product, normalizedQuantity);
           return {
             ...item,
-            quantity: newQty,
+            quantity: normalizedQuantity,
             unitPrice,
-            totalPrice: unitPrice * newQty,
+            totalPrice: unitPrice * normalizedQuantity,
             appliedTier
           };
         }
@@ -1663,6 +1674,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
 
     setOrders(prev => [newOrder, ...prev]);
+    if (!isLoggedIn) {
+      try {
+        const savedGuestOrders = safeLoadArray<Order>('mle_guest_orders', []);
+        localStorage.setItem(
+          'mle_guest_orders',
+          JSON.stringify([newOrder, ...savedGuestOrders.filter(order => order.id !== newOrder.id)])
+        );
+      } catch (error) {
+        console.warn('Failed to save guest order history on this device:', error);
+      }
+    }
     clearCart();
 
     // Persist to central MySQL database
@@ -2262,10 +2284,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Product CRUD
   const addProduct = (productData: Omit<Product, 'id'>) => {
-    const newProduct: Product = {
+    const newProduct = normalizeProductCategory({
       ...productData,
       id: `prod-${Date.now()}`
-    };
+    });
     setProducts(prev => [newProduct, ...prev]);
 
     // Dispatch to MySQL database & Central API
@@ -2277,24 +2299,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateProduct = (id: string, updatedFields: Partial<Product>) => {
-    let targetProduct: Product | null = null;
+    const existingProduct = products.find(product => product.id === id);
+    if (!existingProduct) return;
+    const targetProduct = normalizeProductCategory({ ...existingProduct, ...updatedFields });
     setProducts(prev =>
-      prev.map(p => {
-        if (p.id === id) {
-          targetProduct = { ...p, ...updatedFields };
-          return targetProduct;
-        }
-        return p;
-      })
+      prev.map(product => product.id === id ? targetProduct : product)
     );
 
-    if (targetProduct) {
-      fetch('/api/products', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(targetProduct)
-      }).catch(() => {});
-    }
+    fetch('/api/products', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(targetProduct)
+    }).then(response => {
+      if (!response.ok) throw new Error(`Product update failed (${response.status}).`);
+    }).catch(error => console.error('Product update could not be saved:', error));
   };
 
   const deleteProduct = (id: string) => {

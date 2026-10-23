@@ -21,6 +21,7 @@ import {
   Plus
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
+import { BuyNowPaymentIcons } from '../components/common/BuyNowPaymentIcons';
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
@@ -1042,6 +1043,10 @@ export const CheckoutPage: React.FC = () => {
                       <p className="text-[10px] text-slate-500 mt-0.5">
                         Credit/Debit Cards, Google Pay, PhonePe, Paytm, NetBanking & Corporate Credit Lines
                       </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <BuyNowPaymentIcons />
+                        <span className="text-[10px] font-semibold text-slate-500">Secure payment via Razorpay</span>
+                      </div>
                     </div>
                   </div>
                   <input
@@ -1199,10 +1204,10 @@ export const CheckoutPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting || checkoutUnavailable}
-              className={`w-full py-4 rounded-xl font-bold text-xs transition shadow-premium flex items-center justify-center gap-2 ${
+              className={`flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-xs font-extrabold transition shadow-premium ${
                 isSubmitting || checkoutUnavailable
-                  ? 'bg-slate-400 cursor-not-allowed text-white'
-                  : 'bg-indigo hover:bg-indigo-dark text-white'
+                  ? 'cursor-not-allowed bg-slate-400 text-white'
+                  : 'bg-indigo text-white hover:bg-indigo-dark'
               }`}
             >
               {checkoutUnavailable ? (
@@ -1222,10 +1227,11 @@ export const CheckoutPage: React.FC = () => {
                 </>
               ) : secondaryPaymentMethod === 'RAZORPAY' ? (
                 <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                  </span>
+                  <span className="truncate">
                     Pay ₹{remainingPayable.toLocaleString('en-IN')} via Razorpay
-                    {pointsRedeemed > 0 ? ` (🪙 ${pointsRedeemed.toLocaleString('en-IN')} Pts Cut)` : ''}
                   </span>
                 </>
               ) : (

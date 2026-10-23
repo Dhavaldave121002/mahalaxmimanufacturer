@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Product, ProductVariant } from '../../types';
 import { ShoppingCart, Zap, Check } from 'lucide-react';
+import { orderProductImagesByResolution } from '../../utils/productImages';
+import { BuyNowPaymentIcons } from './BuyNowPaymentIcons';
 
 interface StickyPurchaseBarProps {
   product: Product;
@@ -65,28 +67,28 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
   const total = currentUnitPrice * quantity;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl py-2.5 px-3 sm:py-3 sm:px-8 transition-transform duration-300 animate-in slide-in-from-bottom w-full max-w-full">
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-1.5 sm:gap-4 w-full min-w-0">
+    <div className="fixed inset-x-0 bottom-0 z-50 box-border w-full max-w-full border-t border-slate-200 bg-white/95 px-2.5 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-2xl backdrop-blur-md transition-transform duration-300 animate-in slide-in-from-bottom sm:px-8 sm:py-3">
+      <div className="mx-auto flex w-full min-w-0 flex-col gap-2 sm:max-w-7xl sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         {/* Product Info Thumbnail & Title */}
-        <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 flex-1">
+        <div className="flex min-w-0 w-full flex-1 items-center gap-2 sm:gap-3.5">
           <img
-            src={product.images[0]}
+            src={orderProductImagesByResolution(product.images)[0]}
             alt={product.name}
-            className="w-11 h-11 object-cover rounded-xl border border-slate-200 shrink-0"
+            className="h-9 w-9 shrink-0 rounded-lg border border-slate-200 object-cover sm:h-11 sm:w-11 sm:rounded-xl"
           />
-          <div className="min-w-0 flex-1 pr-2">
+          <div className="min-w-0 flex-1 sm:pr-2">
             <h4
-              className="font-extrabold text-xs sm:text-sm text-navy leading-tight break-words line-clamp-2 md:line-clamp-none"
+              className="line-clamp-1 break-all text-[11px] font-extrabold leading-tight text-navy sm:text-sm md:break-normal"
               title={product.name}
             >
               {product.name}
             </h4>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
-              <span className="text-[10px] sm:text-[11px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded shrink-0">
+            <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+              <span className="shrink-0 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 sm:text-[11px]">
                 Qty {quantity}
               </span>
               {selectedVariant && (
-                <span className="text-slate-500 text-[11px] truncate">
+                <span className="truncate text-[10px] text-slate-500 sm:text-[11px]">
                   • {selectedVariant.name}
                 </span>
               )}
@@ -95,15 +97,15 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
         </div>
 
         {/* Action Buttons & Single Total Price */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <div className="text-right shrink-0">
-            <span className="text-[10px] text-slate-400 block leading-tight">Total Payable:</span>
-            <div className="flex items-baseline gap-1 justify-end">
-              <span className="font-black text-sm sm:text-base text-navy">
+        <div className="grid w-full min-w-0 grid-cols-[minmax(104px,auto)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5 sm:flex sm:w-auto sm:shrink-0 sm:gap-3">
+          <div className="min-w-0 text-left sm:shrink-0 sm:text-right">
+            <span className="block text-[9px] leading-tight text-slate-400 sm:text-[10px]">Total Payable:</span>
+            <div className="flex min-w-0 flex-wrap items-baseline justify-start gap-x-1 sm:justify-end">
+              <span className="whitespace-nowrap text-xs font-black text-navy sm:text-base">
                 ₹{total.toLocaleString('en-IN')}
               </span>
               {product.mrp > currentUnitPrice && (
-                <span className="text-[10px] text-slate-400 line-through hidden sm:inline">
+                <span className="hidden whitespace-nowrap text-[10px] text-slate-400 line-through sm:inline">
                   ₹{(product.mrp * quantity).toLocaleString('en-IN')}
                 </span>
               )}
@@ -112,7 +114,7 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
 
           <button
             onClick={onAddToCart}
-            className={`py-2 px-2.5 sm:py-2.5 sm:px-5 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 shadow-sm shrink-0 ${
+            className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg px-1.5 text-[10px] font-bold leading-tight shadow-sm transition sm:min-h-11 sm:shrink-0 sm:gap-1.5 sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-xs ${
               addedAnimation
                 ? 'bg-emerald-600 text-white'
                 : 'bg-navy hover:bg-navy-800 text-white'
@@ -120,24 +122,24 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
           >
             {addedAnimation ? (
               <>
-                <Check className="w-3.5 h-3.5" />
-                <span>Added</span>
+                <Check className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">Added</span>
               </>
             ) : (
               <>
-                <ShoppingCart className="w-3.5 h-3.5 text-champagne shrink-0" />
-                <span>Add to Cart</span>
+                <ShoppingCart className="h-3.5 w-3.5 shrink-0 text-champagne" />
+                <span className="truncate">Add to Cart</span>
               </>
             )}
           </button>
 
           <button
             onClick={onBuyNow}
-            className="py-2 px-3 sm:py-2.5 sm:px-6 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-black text-xs transition shadow-premium flex items-center justify-center gap-1 shrink-0 whitespace-nowrap"
+            className="flex min-h-10 min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg bg-indigo px-1.5 text-[10px] font-black leading-tight text-white shadow-premium transition hover:bg-indigo-dark sm:min-h-11 sm:shrink-0 sm:gap-1.5 sm:rounded-xl sm:px-6 sm:py-2.5 sm:text-xs"
           >
-            <Zap className="w-3.5 h-3.5 shrink-0" />
-            <span className="sm:hidden">Buy Now</span>
-            <span className="hidden sm:inline">Buy Now • Fast Checkout</span>
+            <Zap className="h-3.5 w-3.5 shrink-0 max-[359px]:hidden" />
+            <span>Buy Now</span>
+            <BuyNowPaymentIcons />
           </button>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { ProductCard } from '../components/common/ProductCard';
 import { CategoryId } from '../types';
-import { Layers, ArrowLeft, CheckCircle2, SlidersHorizontal } from 'lucide-react';
+import { Layers, ArrowLeft, SlidersHorizontal } from 'lucide-react';
 
 export const CategoryPage: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
@@ -42,6 +42,9 @@ export const CategoryPage: React.FC = () => {
       if (sortBy === 'rating') return b.rating - a.rating;
       return 0;
     });
+  const availableSubcategories = Array.from(new Set(
+    products.filter(product => product.category === categoryId).map(product => product.subcategory)
+  ));
 
   return (
     <div className="space-y-10 pb-16">
@@ -61,28 +64,17 @@ export const CategoryPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
             <div className="md:col-span-8 space-y-3">
               <span className="badge-mill text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                DIRECT MILL DIVISION
+                PRODUCT CATEGORY
               </span>
               <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
                 {categoryConfig.name}
               </h1>
               <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
-                {categoryConfig.description}
+                Browse source-listed products in {categoryConfig.name}. Confirm product specifications, current availability and prices before ordering.
               </p>
-              <div className="flex flex-wrap gap-4 pt-2 text-xs text-slate-300">
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  Wholesale Tiers on 10+ Units
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  100% Cotton & High-Durability Specs
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  GST Input Tax Credit
-                </span>
-              </div>
+              <p className="pt-2 text-xs text-amber-200">
+                Confirm product specifications, availability and current pricing before ordering.
+              </p>
             </div>
 
             <div className="md:col-span-4">
@@ -114,7 +106,7 @@ export const CategoryPage: React.FC = () => {
               All {categoryConfig.name} ({products.filter(p => p.category === categoryId).length})
             </button>
 
-            {categoryConfig.subcategories.map((sub, i) => {
+            {availableSubcategories.map((sub, i) => {
               const count = products.filter(p => p.category === categoryId && p.subcategory === sub).length;
               return (
                 <button
@@ -152,7 +144,7 @@ export const CategoryPage: React.FC = () => {
         {/* Product Grid */}
         <div className="mt-8">
           {categoryProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
               {categoryProducts.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}

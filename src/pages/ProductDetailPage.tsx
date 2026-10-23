@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { ProductVariant, ProductCustomization } from '../types';
+import { INITIAL_PRODUCTS } from '../data/mockProducts';
 import { Badge } from '../components/common/Badge';
 import { ProductCard } from '../components/common/ProductCard';
 import {
@@ -44,6 +45,51 @@ import {
 import { StickyPurchaseBar } from '../components/common/StickyPurchaseBar';
 import { FrequentlyBoughtTogether } from '../components/common/FrequentlyBoughtTogether';
 import { SEOProductHead } from '../components/common/SEOProductHead';
+import { orderProductImagesByResolution } from '../utils/productImages';
+import { BuyNowPaymentIcons } from '../components/common/BuyNowPaymentIcons';
+
+const TAB_CONTENT_COLLAPSED_HEIGHT = 200;
+
+const ExpandableTabContent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [canExpand, setCanExpand] = useState(false);
+
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const updateExpandableState = () => {
+      setCanExpand(content.scrollHeight > TAB_CONTENT_COLLAPSED_HEIGHT);
+    };
+
+    updateExpandableState();
+    const observer = new ResizeObserver(updateExpandableState);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [children]);
+
+  return (
+    <div className="space-y-2">
+      <div className="relative" style={!isExpanded && canExpand ? { maxHeight: TAB_CONTENT_COLLAPSED_HEIGHT, overflow: 'hidden' } : undefined}>
+        <div ref={contentRef}>{children}</div>
+        {canExpand && !isExpanded && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white to-transparent" />
+        )}
+      </div>
+      {canExpand && (
+        <button
+          type="button"
+          onClick={() => setIsExpanded(expanded => !expanded)}
+          aria-expanded={isExpanded}
+          className="text-xs font-bold text-indigo hover:text-indigo-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo rounded"
+        >
+          {isExpanded ? 'Read less' : 'Read more'}
+        </button>
+      )}
+    </div>
+  );
+};
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -60,6 +106,23 @@ export const ProductDetailPage: React.FC = () => {
   } = useApp();
 
   const product = products.find(p => p.slug === slug);
+  const productImages = useMemo(
+    () => orderProductImagesByResolution(product?.images ?? []),
+    [product?.images]
+  );
+  const viewedProductId = product?.id;
+
+  useEffect(() => {
+    if (!viewedProductId) return;
+    try {
+      const stored = localStorage.getItem('mle_recently_viewed_products');
+      const recentIds: string[] = stored ? JSON.parse(stored) : [];
+      const nextIds = [viewedProductId, ...recentIds.filter(id => id !== viewedProductId)].slice(0, 8);
+      localStorage.setItem('mle_recently_viewed_products', JSON.stringify(nextIds));
+    } catch (error) {
+      console.warn('Recently viewed products could not be saved:', error);
+    }
+  }, [viewedProductId]);
 
   // States
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -67,12 +130,12 @@ export const ProductDetailPage: React.FC = () => {
 
   // Auto-slide / fade product image every 3.5 seconds (pauses on hover)
   useEffect(() => {
-    if (!product?.images || product.images.length <= 1 || isHoveredGallery) return;
+    if (productImages.length <= 1 || isHoveredGallery) return;
     const timer = setInterval(() => {
-      setSelectedImageIndex(prev => (prev + 1) % product.images.length);
+      setSelectedImageIndex(prev => (prev + 1) % productImages.length);
     }, 3500);
     return () => clearInterval(timer);
-  }, [product?.images, isHoveredGallery]);
+  }, [productImages, isHoveredGallery]);
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     product?.variants?.[0]
@@ -302,6 +365,11 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
+  const priceNeedsConfirmation = product.specifications?.['Source Price Status'] === 'Approximate - verify before sale';
+  const availabilityNeedsConfirmation = product.stock <= 0 ||
+    product.specifications?.['Source Availability'] === 'Needs confirmation';
+  const inquiryOnly = availabilityNeedsConfirmation;
+
   // Dynamic Wholesale Tier Calculation for current selected quantity
   const currentUnitPrice = activeWholesaleTier
     ? activeWholesaleTier.pricePerUnit
@@ -371,24 +439,34 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const handleOrderSampleBundle = () => {
-    const bundle = products.find(p => p.id === 'prod-sample-bundle-all') || products.find(p => p.id === 'prod-swatch-box-01');
-    if (bundle) {
-      addToCart(bundle, 1, undefined, {
-        type: 'Commercial Sample Bundle',
-        designNote: 'Mahalaxmi Complete Commercial Sample Bundle (₹299 • 12 Swatches + 4 Minis)'
-      });
+    const bundle = products.find(p => p.id === 'prod-sample-bundle-all')
+      || INITIAL_PRODUCTS.find(p => p.id === 'prod-sample-bundle-all')
+      || products.find(p => p.id === 'prod-swatch-box-01')
+      || INITIAL_PRODUCTS.find(p => p.id === 'prod-swatch-box-01');
+    if (!bundle) {
+      alert('Sample bundle is currently unavailable. Please contact the mill desk.');
+      return;
     }
+    addToCart(bundle, 1, undefined, {
+      type: 'Commercial Sample Bundle',
+      designNote: 'Mahalaxmi Complete Commercial Sample Bundle (₹299 • 12 Swatches + 4 Minis)'
+    });
     navigate('/cart');
   };
 
   const handleOrderSwatchKit = () => {
-    const swatch = products.find(p => p.id === 'prod-swatch-box-01') || products.find(p => p.id === 'prod-sample-bundle-all');
-    if (swatch) {
-      addToCart(swatch, 1, undefined, {
-        type: 'Pure Cotton Swatch Kit',
-        designNote: 'Mahalaxmi Fabric Swatch Kit (₹199 • 12 Pure Cotton Cuts)'
-      });
+    const swatch = products.find(p => p.id === 'prod-swatch-box-01')
+      || INITIAL_PRODUCTS.find(p => p.id === 'prod-swatch-box-01')
+      || products.find(p => p.id === 'prod-sample-bundle-all')
+      || INITIAL_PRODUCTS.find(p => p.id === 'prod-sample-bundle-all');
+    if (!swatch) {
+      alert('Swatch kit is currently unavailable. Please contact the mill desk.');
+      return;
     }
+    addToCart(swatch, 1, undefined, {
+      type: 'Pure Cotton Swatch Kit',
+      designNote: 'Mahalaxmi Fabric Swatch Kit (₹199 • 12 Pure Cotton Cuts)'
+    });
     navigate('/cart');
   };
 
@@ -401,6 +479,9 @@ export const ProductDetailPage: React.FC = () => {
   const relatedProducts = products
     .filter(p => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
+  const bundleProducts = relatedProducts.filter(p =>
+    p.stock > 0 && p.specifications?.['Source Price Status'] !== 'Approximate - verify before sale'
+  ).slice(0, 2);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-12 pb-20">
@@ -408,15 +489,25 @@ export const ProductDetailPage: React.FC = () => {
       <SEOProductHead product={product} city={deliveryInfo?.city || 'Surat'} state={deliveryInfo?.state || 'Gujarat'} />
 
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-xs text-slate-500">
-        <Link to="/" className="hover:text-indigo">Home</Link>
-        <span>/</span>
-        <Link to={`/category/${product.category}`} className="hover:text-indigo">{product.categoryName}</Link>
-        <span>/</span>
-        <span className="text-slate-400">{product.subcategory}</span>
-        <span>/</span>
-        <span className="font-semibold text-navy truncate max-w-xs">{product.name}</span>
-      </div>
+      <nav aria-label="Breadcrumb" className="flex w-full min-w-0 items-center gap-1.5 overflow-hidden whitespace-nowrap text-[10px] text-slate-500 sm:gap-2 sm:text-xs">
+        <Link to="/" className="shrink-0 hover:text-indigo">Home</Link>
+        <span aria-hidden="true" className="shrink-0">/</span>
+        <Link to={`/category/${product.category}`} className="max-w-[30%] shrink truncate hover:text-indigo sm:max-w-[12rem]">
+          {product.categoryName}
+        </Link>
+        {product.subcategory && product.subcategory !== product.categoryName && (
+          <>
+            <span aria-hidden="true" className="shrink-0">/</span>
+            <span className="max-w-[24%] shrink truncate text-slate-400 sm:max-w-[12rem]">
+              {product.subcategory}
+            </span>
+          </>
+        )}
+        <span aria-hidden="true" className="shrink-0">/</span>
+        <span aria-current="page" title={product.name} className="min-w-0 flex-1 truncate font-semibold text-navy">
+          {product.name}
+        </span>
+      </nav>
 
       {/* Main Product Layout: Gallery (Left) + Details & Tiers (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
@@ -427,10 +518,10 @@ export const ProductDetailPage: React.FC = () => {
             <div 
               onMouseEnter={() => setIsHoveredGallery(true)}
               onMouseLeave={() => setIsHoveredGallery(false)}
-              className="relative w-full aspect-[4/3] sm:h-[420px] lg:h-[440px] xl:h-[480px] rounded-3xl overflow-hidden bg-slate-900 border border-slate-200 shadow-subtle group select-none"
+              className="relative mx-auto w-full max-w-[600px] aspect-square rounded-3xl overflow-hidden bg-slate-50 border border-slate-200 shadow-subtle group select-none"
             >
               {/* Layered Cross-fade Slide Images */}
-              {product.images.map((img, idx) => (
+              {productImages.map((img, idx) => (
                 <div
                   key={idx}
                   className={`absolute inset-0 w-full h-full transition-all duration-700 ease-in-out transform ${
@@ -444,21 +535,21 @@ export const ProductDetailPage: React.FC = () => {
                     alt={`${product.name} photo ${idx + 1}`}
                     onError={e => {
                       const target = e.target as HTMLImageElement;
-                      if (target.src !== product.images[0]) target.src = product.images[0];
+                      if (target.src !== productImages[0]) target.src = productImages[0];
                     }}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-contain"
                   />
                 </div>
               ))}
 
               {/* Prev / Next Slide Arrow Controls (visible on hover or mobile) */}
-              {product.images.length > 1 && (
+              {productImages.length > 1 && (
                 <>
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedImageIndex(prev => (prev - 1 + product.images.length) % product.images.length);
+                      setSelectedImageIndex(prev => (prev - 1 + productImages.length) % productImages.length);
                     }}
                     aria-label="Previous image"
                     className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/85 hover:bg-white text-navy shadow-md flex items-center justify-center opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm active:scale-95"
@@ -470,7 +561,7 @@ export const ProductDetailPage: React.FC = () => {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedImageIndex(prev => (prev + 1) % product.images.length);
+                      setSelectedImageIndex(prev => (prev + 1) % productImages.length);
                     }}
                     aria-label="Next image"
                     className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/85 hover:bg-white text-navy shadow-md flex items-center justify-center opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm active:scale-95"
@@ -480,7 +571,7 @@ export const ProductDetailPage: React.FC = () => {
 
                   {/* Dot Progress Indicators */}
                   <div className="absolute bottom-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full">
-                    {product.images.map((_, idx) => (
+                    {productImages.map((_, idx) => (
                       <button
                         key={idx}
                         onClick={(e) => {
@@ -507,7 +598,7 @@ export const ProductDetailPage: React.FC = () => {
                 )}
                 {product.isBestSeller && (
                   <Badge variant="champagne" size="sm" className="font-bold text-xs py-0.5 px-2.5">
-                    BEST SELLER
+                    FEATURED
                   </Badge>
                 )}
               </div>
@@ -518,9 +609,9 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* Thumbnails Row */}
-            {product.images.length > 1 && (
+            {productImages.length > 1 && (
               <div className="flex items-center gap-2.5 overflow-x-auto pb-1 hide-scrollbar">
-                {product.images.map((img, idx) => (
+                {productImages.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImageIndex(idx)}
@@ -536,9 +627,9 @@ export const ProductDetailPage: React.FC = () => {
                       alt={`${product.name} thumbnail ${idx + 1}`}
                       onError={e => {
                         const target = e.target as HTMLImageElement;
-                        if (target.src !== product.images[0]) target.src = product.images[0];
+                        if (target.src !== productImages[0]) target.src = productImages[0];
                       }}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain bg-slate-50"
                     />
                   </button>
                 ))}
@@ -593,10 +684,17 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               )}
               <span className="text-slate-300">•</span>
-              <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                In Stock ({product.stock} units available at mill)
-              </span>
+              {availabilityNeedsConfirmation ? (
+                <span className="text-amber-700 font-semibold flex items-center gap-1">
+                  <Info className="w-3.5 h-3.5" />
+                  Availability unconfirmed
+                </span>
+              ) : (
+                <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  In Stock ({product.stock} units)
+                </span>
+              )}
             </div>
           </div>
 
@@ -604,29 +702,46 @@ export const ProductDetailPage: React.FC = () => {
           <div className="bg-slate-50 rounded-2xl p-3.5 sm:p-5 border border-slate-200 space-y-3 overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2.5">
               <div>
-                <span className="text-xs text-slate-500 block mb-0.5">Effective Rate for {quantity} Units:</span>
+                <span className="text-xs text-slate-500 block mb-0.5">
+                  {priceNeedsConfirmation ? 'Approximate source-listed price — confirm before ordering:' : `Effective Rate for ${quantity} Units:`}
+                </span>
+                {product.specifications?.['Source Price Status'] === 'Admin-set temporary price' && (
+                  <span className="inline-flex mb-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">
+                    Temporary catalogue pricing
+                  </span>
+                )}
                 <div className="flex items-baseline gap-2 sm:gap-3 flex-wrap">
                   <span className="text-2xl sm:text-3xl font-black text-navy">
-                    ₹{currentUnitPrice.toLocaleString('en-IN')}
+                    {priceNeedsConfirmation ? 'Approx. ' : ''}₹{currentUnitPrice.toLocaleString('en-IN')}
                   </span>
-                  <span className="text-xs sm:text-sm text-slate-400 line-through">
-                    MRP ₹{product.mrp.toLocaleString('en-IN')}
-                  </span>
-                  <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">
-                    {Math.round(((product.mrp - currentUnitPrice) / product.mrp) * 100)}% Off MRP
-                  </span>
+                  {!priceNeedsConfirmation && (
+                    <>
+                      <span className="text-xs sm:text-sm text-slate-400 line-through">
+                        MRP ₹{product.mrp.toLocaleString('en-IN')}
+                      </span>
+                      {product.mrp > 0 && currentUnitPrice < product.mrp && (
+                        <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">
+                          {Math.round(((product.mrp - currentUnitPrice) / product.mrp) * 100)}% Off MRP
+                        </span>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div className="text-left sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/80">
-                <span className="text-[11px] text-slate-500 block">Total Batch Value:</span>
-                <span className="text-lg sm:text-xl font-bold text-indigo">
-                  ₹{currentLineTotal.toLocaleString('en-IN')}
-                </span>
-              </div>
+              {priceNeedsConfirmation
+                ? <p className="text-xs text-amber-800">Final price and order total are not confirmed.</p>
+                : (
+                  <div className="text-left sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/80">
+                    <span className="text-[11px] text-slate-500 block">Total Batch Value:</span>
+                    <span className="text-lg sm:text-xl font-bold text-indigo">
+                      ₹{currentLineTotal.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                )}
             </div>
 
-            {wholesaleSavings > 0 && (
+            {!priceNeedsConfirmation && wholesaleSavings > 0 && (
               <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center justify-between">
                 <span className="font-semibold">Wholesale Volume Savings:</span>
                 <span className="font-bold">You save ₹{wholesaleSavings.toLocaleString('en-IN')} vs retail</span>
@@ -635,7 +750,7 @@ export const ProductDetailPage: React.FC = () => {
           </div>
 
           {/* Wholesale Quantity Pricing Tiers Grid */}
-          {product.wholesaleTiers && product.wholesaleTiers.length > 0 && (
+          {!priceNeedsConfirmation && product.wholesaleTiers && product.wholesaleTiers.length > 0 && (
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-navy flex items-center gap-1.5">
@@ -703,6 +818,50 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
+          {priceNeedsConfirmation && (!product.wholesaleTiers || product.wholesaleTiers.length === 0) && (
+            <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-amber-50/70 p-4 sm:p-5 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                <div>
+                  <label className="text-sm font-extrabold text-navy flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-indigo" />
+                    Wholesale Quantity Pricing
+                  </label>
+                  <p className="mt-1 text-[11px] leading-relaxed text-slate-600">
+                    Confirmed bulk rates depend on your order quantity. Request a quote for current pricing.
+                  </p>
+                </div>
+                <span className="self-start rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-800">
+                  Rates need confirmation
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="rounded-xl border border-indigo-200 bg-white p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Minimum order</span>
+                  <p className="mt-1 text-sm font-black text-navy">{product.moq} pcs MOQ</p>
+                  <span className="text-[10px] text-slate-500">Price confirmed on enquiry</span>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white/80 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Bulk quantity</span>
+                  <p className="mt-1 text-sm font-black text-navy">Request a rate</p>
+                  <span className="text-[10px] text-slate-500">Share your required quantity</span>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white/80 p-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Large orders</span>
+                  <p className="mt-1 text-sm font-black text-navy">Custom quote</p>
+                  <span className="text-[10px] text-slate-500">Ask about available volume pricing</span>
+                </div>
+              </div>
+
+              <Link
+                to={`/wholesale?sku=${encodeURIComponent(product.sku)}&product=${encodeURIComponent(product.name)}&quantity=${quantity}`}
+                className="inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-navy px-4 py-2.5 text-xs font-bold text-white transition hover:bg-navy-800 sm:w-auto"
+              >
+                Request confirmed bulk pricing
+              </Link>
+            </div>
+          )}
+
           {/* Variant Picker (Color / Size) */}
           {product.variants && product.variants.length > 0 && (
             <div className="space-y-2 pt-2 border-t border-slate-100">
@@ -736,59 +895,59 @@ export const ProductDetailPage: React.FC = () => {
           {/* Commercial Sample & Purchase Buttons Section */}
           <div className="space-y-4 pt-2 border-t border-slate-100">
             {/* Commercial Sample & Sample Bundle Procurement Suite */}
-            <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-amber-50/90 border border-amber-200/90 rounded-2xl space-y-3 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                <span className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
+              <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-amber-50/90 border border-amber-200/90 rounded-2xl space-y-3 shadow-sm">
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-1.5">
+                <span className="min-w-0 text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
                   <PackageCheck className="w-4 h-4 text-amber-600 shrink-0" />
                   B2B Quality Testing & Sample Evaluation
                 </span>
-                <span className="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-full self-start sm:self-auto">
+                <span className="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-full self-start xl:self-auto">
                   100% Rebate Guaranteed
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 leading-relaxed">
                 Test fabric hand-feel, GSM weave weight, and wash durability before booking wholesale consignments. Sample costs are credited back 100% on your next bulk order:
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
                 <button
                   type="button"
                   onClick={handleOrderSamplePiece}
-                  className="w-full p-2.5 bg-white hover:bg-amber-100/70 border border-amber-300 text-navy rounded-xl font-bold text-xs transition flex items-center gap-2.5 shadow-sm text-left group"
+                  className="w-full min-w-0 p-2.5 bg-white hover:bg-amber-100/70 border border-amber-300 text-navy rounded-xl font-bold text-xs transition flex items-start gap-2.5 shadow-sm text-left group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 shrink-0 group-hover:bg-amber-200 transition">
+                  <div className="mt-0.5 w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 shrink-0 group-hover:bg-amber-200 transition">
                     <Package className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-bold text-navy text-xs truncate">Order 1-Pc Sample</div>
-                    <div className="text-[10px] text-slate-500 font-normal">₹{product.retailPrice} • MOQ Bypassed</div>
+                  <div className="min-w-0 break-words">
+                    <div className="font-bold text-navy text-xs leading-tight">Order 1-Pc Sample</div>
+                    <div className="text-[10px] text-slate-500 font-normal leading-snug">₹{product.retailPrice} • MOQ Bypassed</div>
                   </div>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleOrderSampleBundle}
-                  className="w-full p-2.5 bg-white hover:bg-indigo-50/80 border border-indigo-300 text-navy rounded-xl font-bold text-xs transition flex items-center gap-2.5 shadow-sm text-left group"
+                  className="w-full min-w-0 p-2.5 bg-white hover:bg-indigo-50/80 border border-indigo-300 text-navy rounded-xl font-bold text-xs transition flex items-start gap-2.5 shadow-sm text-left group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo shrink-0 group-hover:bg-indigo-100 transition">
+                  <div className="mt-0.5 w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo shrink-0 group-hover:bg-indigo-100 transition">
                     <Boxes className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-bold text-navy text-xs truncate">Order Sample Bundle</div>
-                    <div className="text-[10px] text-slate-500 font-normal">₹299 • 12 Swatches + 4 Minis</div>
+                  <div className="min-w-0 break-words">
+                    <div className="font-bold text-navy text-xs leading-tight">Order Sample Bundle</div>
+                    <div className="text-[10px] text-slate-500 font-normal leading-snug">₹299 • 12 Swatches + 4 Minis</div>
                   </div>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleOrderSwatchKit}
-                  className="w-full p-2.5 bg-white hover:bg-blue-50/80 border border-blue-300 text-navy rounded-xl font-bold text-xs transition flex items-center gap-2.5 shadow-sm text-left group"
+                  className="w-full min-w-0 p-2.5 bg-white hover:bg-blue-50/80 border border-blue-300 text-navy rounded-xl font-bold text-xs transition flex items-start gap-2.5 shadow-sm text-left group"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-700 shrink-0 group-hover:bg-blue-100 transition">
+                  <div className="mt-0.5 w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-700 shrink-0 group-hover:bg-blue-100 transition">
                     <Layers className="w-4 h-4" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-bold text-navy text-xs truncate">Pure Cotton Swatch Kit</div>
-                    <div className="text-[10px] text-slate-500 font-normal">₹199 • 12 Cotton Cuts</div>
+                  <div className="min-w-0 break-words">
+                    <div className="font-bold text-navy text-xs leading-tight">Pure Cotton Swatch Kit</div>
+                    <div className="text-[10px] text-slate-500 font-normal leading-snug">₹199 • 12 Cotton Cuts</div>
                   </div>
                 </button>
               </div>
@@ -840,7 +999,7 @@ export const ProductDetailPage: React.FC = () => {
                 <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
                   1. Select Customization Type
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 xl:grid-cols-5 gap-2">
                   {[
                     { type: 'Design & Logo', label: 'Design & Logo', icon: Palette, badge: 'Popular' },
                     { type: 'Only Logo', label: 'Only Logo Print', icon: Star, badge: 'Branding' },
@@ -1337,14 +1496,14 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* Purchase Action Row: Quantity + Add to Cart + Buy Now */}
-            <div id="main-product-actions" className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div id="main-product-actions" className="space-y-2 sm:space-y-3">
               {/* Quantity Selector */}
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs font-bold text-slate-700 sm:hidden">Quantity:</span>
-                <div className="flex items-center border border-slate-300 rounded-xl overflow-hidden bg-white shadow-sm h-12">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-[11px] font-bold text-slate-700 sm:text-xs">Qty:</span>
+                <div className="flex h-10 items-center overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm sm:h-12 sm:rounded-xl">
                   <button
                     onClick={() => setQuantity(prev => Math.max(product.moq || 1, prev - 1))}
-                    className="px-3.5 h-full text-slate-600 hover:bg-slate-100 font-bold text-base transition flex items-center justify-center"
+                    className="flex h-full items-center justify-center px-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 sm:px-3.5 sm:text-base"
                     aria-label="Decrease quantity"
                   >
                     -
@@ -1354,12 +1513,12 @@ export const ProductDetailPage: React.FC = () => {
                     min={product.moq || 1}
                     value={quantity}
                     onChange={e => setQuantity(Math.max(product.moq || 1, Number(e.target.value)))}
-                    className="w-14 text-center text-xs font-black text-navy focus:outline-none h-full"
+                    className="h-full w-10 text-center text-[11px] font-black text-navy focus:outline-none sm:w-14 sm:text-xs"
                     aria-label="Quantity"
                   />
                   <button
                     onClick={() => setQuantity(prev => prev + 1)}
-                    className="px-3.5 h-full text-slate-600 hover:bg-slate-100 font-bold text-base transition flex items-center justify-center"
+                    className="flex h-full items-center justify-center px-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 sm:px-3.5 sm:text-base"
                     aria-label="Increase quantity"
                   >
                     +
@@ -1367,73 +1526,78 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
 
                 {product.moq > 1 && (
-                  <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded">
-                    MOQ: {product.moq}
+                  <span className="whitespace-nowrap rounded border border-amber-200 bg-amber-50 px-1.5 py-1 text-[9px] font-semibold text-amber-700 sm:px-2 sm:text-[11px]">
+                    MOQ {product.moq}
                   </span>
                 )}
               </div>
 
-              {/* Add to Cart Button */}
-              <button
-                onClick={handleAddToCart}
-                className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm min-h-12 ${
-                  addedAnimation
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-navy hover:bg-navy-800 text-white'
-                }`}
-              >
-                {addedAnimation ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    <span>Added {quantity} Units to Cart</span>
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="w-4 h-4 text-champagne shrink-0" />
-                    <span>Add to Cart (₹{currentLineTotal.toLocaleString('en-IN')})</span>
-                  </>
-                )}
-              </button>
+              <div className="flex min-w-0 items-center gap-2">
+                  <button
+                    onClick={handleAddToCart}
+                    className={`flex min-h-10 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg px-2 text-[10px] font-bold leading-tight shadow-sm transition sm:min-h-12 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-xs ${
+                      addedAnimation
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-navy hover:bg-navy-800 text-white'
+                    }`}
+                  >
+                    {addedAnimation ? (
+                      <>
+                        <Check className="h-4 w-4 shrink-0" />
+                        <span className="truncate">Added</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="h-4 w-4 shrink-0 text-champagne" />
+                        <span className="truncate sm:hidden">Add to Cart</span>
+                        <span className="hidden truncate sm:inline">Add to Cart (₹{currentLineTotal.toLocaleString('en-IN')})</span>
+                      </>
+                    )}
+                  </button>
 
-              {/* Buy Now Button */}
-              <button
-                onClick={handleBuyNow}
-                className="flex-1 py-3 px-4 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-bold text-xs transition shadow-premium flex items-center justify-center gap-2 min-h-12"
-              >
-                <Zap className="w-4 h-4 shrink-0" />
-                <span>Buy Now • Fast Checkout</span>
-              </button>
+                  <button
+                    onClick={handleBuyNow}
+                    className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-lg bg-indigo px-2 text-[10px] font-bold leading-tight text-white shadow-premium transition hover:bg-indigo-dark sm:min-h-12 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-xs"
+                  >
+                    <Zap className="h-4 w-4 shrink-0" />
+                    <span className="truncate">Buy Now</span>
+                    <BuyNowPaymentIcons />
+                  </button>
+              </div>
             </div>
 
             {/* Wishlist & WhatsApp Quick Action Row */}
-            <div className="flex flex-col sm:flex-row items-center gap-2">
+            <div className="grid grid-cols-2 items-center gap-2">
               <button
                 type="button"
                 onClick={() => toggleWishlist(product.id)}
-                className={`w-full sm:w-auto py-3 px-4 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 border shadow-sm cursor-pointer shrink-0 ${
+                className={`flex min-h-10 w-full min-w-0 cursor-pointer items-center justify-center gap-1 rounded-lg border px-2 text-[10px] font-bold shadow-sm transition sm:min-h-11 sm:w-auto sm:shrink-0 sm:gap-2 sm:rounded-xl sm:px-4 sm:py-3 sm:text-xs ${
                   isInWishlist(product.id)
                     ? 'bg-red-50 text-red-600 border-red-200'
                     : 'bg-white text-slate-700 hover:bg-slate-50 border-slate-200'
                 }`}
                 title={isInWishlist(product.id) ? 'Remove from Wishlist' : 'Save in Wishlist'}
               >
-                <Heart className={`w-4 h-4 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-slate-500'}`} />
-                <span>{isInWishlist(product.id) ? 'Saved in Wishlist' : 'Add to Wishlist'}</span>
+                <Heart className={`h-4 w-4 shrink-0 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-slate-500'}`} />
+                <span className="truncate">{isInWishlist(product.id) ? 'Saved' : 'Wishlist'}</span>
               </button>
 
               <a
                 href={`https://wa.me/918511172099?text=${encodeURIComponent(
-                  `Namaste Mahalaxmi Enterprises, I am interested in ${product.name} (SKU: ${product.sku}). Qty: ${quantity} pcs. Price: ₹${currentLineTotal}. Please provide mill dispatch availability for ${deliveryInfo?.city || 'my city'}.`
+                  `Namaste Mahalaxmi Enterprises, I want to order ${product.name} (SKU: ${product.sku}). Qty: ${quantity} pcs at the listed rate ₹${currentUnitPrice}/pc. Please confirm stock and dispatch availability for ${deliveryInfo?.city || 'my city'}.`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm text-center"
+                className="flex min-h-10 w-full min-w-0 items-center justify-center gap-1 rounded-lg bg-emerald-600 px-2 text-[10px] font-bold text-white shadow-sm transition hover:bg-emerald-700 sm:min-h-11 sm:flex-1 sm:gap-2 sm:rounded-xl sm:px-4 sm:py-3 sm:text-xs"
               >
-                <MessageSquare className="w-4 h-4" />
-                <span>Order via WhatsApp (Mill Desk)</span>
+                <MessageSquare className="h-4 w-4 shrink-0" />
+                <span className="truncate sm:hidden">WhatsApp</span>
+                <span className="hidden truncate sm:inline">Order via WhatsApp (Mill Desk)</span>
               </a>
             </div>
 
+            {!inquiryOnly && (
+              <>
             {/* Geo & Mill Direct Guarantee Banner */}
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600 font-medium">
               <span className="flex items-center gap-1.5 text-navy font-bold">
@@ -1469,9 +1633,12 @@ export const ProductDetailPage: React.FC = () => {
                 <span className="text-[10px] text-slate-500">Pay on Inspection</span>
               </div>
             </div>
+              </>
+            )}
           </div>
 
           {/* Delivery PIN Code Checker with Live Delhivery Integration */}
+          {!inquiryOnly && (
           <div className="p-4 bg-gradient-to-br from-indigo-50/50 to-white rounded-2xl border border-indigo/20 shadow-sm space-y-2.5 text-xs">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-bold text-navy">
@@ -1532,23 +1699,24 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
 
       {/* Frequently Bought Together Bundle Cross-Sell */}
-      {relatedProducts.length > 0 && (
+      {!inquiryOnly && bundleProducts.length > 0 && (
         <FrequentlyBoughtTogether
           currentProduct={product}
-          bundleProducts={relatedProducts.slice(0, 2)}
+          bundleProducts={bundleProducts}
         />
       )}
 
-      {/* Product Information Tabs: Specs, Care Instructions, Wholesale Terms, Reviews */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-subtle space-y-6">
-        <div className="flex border-b border-slate-200 overflow-x-auto gap-8">
+      {/* Product information tabs are populated from this listing and its reviews. */}
+      <div className="min-w-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-3 shadow-subtle space-y-5 sm:space-y-6 sm:p-8">
+        <div className="grid min-w-0 grid-cols-3 gap-1 border-b border-slate-200 sm:flex sm:gap-8">
           <button
             onClick={() => setActiveTab('specs')}
-            className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap ${
+            className={`min-w-0 px-1 pb-3 text-center text-xs leading-tight font-bold border-b-2 transition sm:px-0 sm:text-sm sm:whitespace-nowrap ${
               activeTab === 'specs'
                 ? 'border-indigo text-indigo'
                 : 'border-transparent text-slate-500 hover:text-navy'
@@ -1558,78 +1726,99 @@ export const ProductDetailPage: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab('care')}
-            className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap ${
+            className={`min-w-0 px-1 pb-3 text-center text-xs leading-tight font-bold border-b-2 transition sm:px-0 sm:text-sm sm:whitespace-nowrap ${
               activeTab === 'care'
                 ? 'border-indigo text-indigo'
                 : 'border-transparent text-slate-500 hover:text-navy'
             }`}
           >
-            Care & Commercial Laundering
+            Care Instructions
           </button>
           <button
             onClick={() => setActiveTab('reviews')}
-            className={`pb-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap ${
+            className={`min-w-0 px-1 pb-3 text-center text-xs leading-tight font-bold border-b-2 transition sm:px-0 sm:text-sm sm:whitespace-nowrap ${
               activeTab === 'reviews'
                 ? 'border-indigo text-indigo'
                 : 'border-transparent text-slate-500 hover:text-navy'
             }`}
           >
-            Verified Client Reviews ({actualReviewCount})
+            Customer Reviews ({actualReviewCount})
           </button>
         </div>
 
         {/* Tab 1: Technical Specifications Table */}
         {activeTab === 'specs' && (
-          <div className="space-y-4">
-            <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">
-              {product.description}
-            </p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left border border-slate-200 rounded-xl overflow-hidden">
-                <tbody className="divide-y divide-slate-100">
-                  <tr className="bg-slate-50">
-                    <td className="py-2.5 px-4 font-bold text-slate-700 w-1/3">HSN Code</td>
-                    <td className="py-2.5 px-4 font-mono font-semibold text-navy">{product.hsnCode}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 px-4 font-bold text-slate-700">Applicable GST Levy</td>
-                    <td className="py-2.5 px-4 font-semibold text-navy">{product.gstRate}% (Eligible for Full Input Tax Credit)</td>
-                  </tr>
-                  {Object.entries(product.specifications).map(([key, val], i) => (
-                    <tr key={i} className={i % 2 === 0 ? 'bg-slate-50/60' : ''}>
-                      <td className="py-2.5 px-4 font-bold text-slate-700">{key}</td>
-                      <td className="py-2.5 px-4 text-slate-800">{String(val)}</td>
+          <ExpandableTabContent>
+            <div className="space-y-4">
+              {product.description ? (
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Source product description — confirm details before ordering
+                  </p>
+                  <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">{product.description}</p>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  A product description has not been provided for this listing.
+                </p>
+              )}
+              <div className="w-full min-w-0 overflow-hidden rounded-xl border border-slate-200">
+                <table className="w-full min-w-0 table-fixed border-collapse text-left text-[10px] sm:text-xs">
+                  <colgroup>
+                    <col className="w-[38%] sm:w-1/3" />
+                    <col className="w-[62%] sm:w-2/3" />
+                  </colgroup>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="bg-slate-50">
+                      <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">HSN Code</td>
+                      <td className="break-words px-2 py-2.5 align-top font-mono font-semibold text-navy sm:px-4">{product.hsnCode || 'Not provided'}</td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                    <tr>
+                      <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">GST Rate</td>
+                      <td className="break-words px-2 py-2.5 align-top font-semibold text-navy sm:px-4">
+                        {product.gstRate > 0 ? `${product.gstRate}%` : 'Not provided — verify before ordering'}
+                      </td>
+                    </tr>
+                    {Object.entries(product.specifications).map(([key, val], i) => (
+                      <tr key={i} className={i % 2 === 0 ? 'bg-slate-50/60' : ''}>
+                        <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">{key}</td>
+                        <td className="break-all px-2 py-2.5 align-top leading-relaxed text-slate-800 sm:px-4">{String(val)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          </ExpandableTabContent>
         )}
 
         {/* Care Instructions */}
         {activeTab === 'care' && (
-          <div className="space-y-3 text-xs text-slate-700">
-            <h4 className="font-bold text-sm text-navy">Industrial & Domestic Washing Instructions</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {(product.careInstructions || [
-                'Wash before first use in cold water',
-                'Machine wash gentle cycle with mild liquid detergent',
-                'Do not use harsh chlorine bleach',
-                'Tumble dry low heat or line dry in shade'
-              ]).map((inst, i) => (
-                <div key={i} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-indigo shrink-0" />
-                  <span>{inst}</span>
+          <ExpandableTabContent>
+            <div className="space-y-3 text-xs text-slate-700">
+              <h4 className="font-bold text-sm text-navy">Product Care</h4>
+              {product.careInstructions?.length ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {product.careInstructions.map((instruction, index) => (
+                    <div key={index} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-indigo shrink-0" />
+                      <span>{instruction}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <p className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900">
+                  Care instructions were not provided for this product. Please confirm the correct care method with us.
+                </p>
+              )}
             </div>
-          </div>
+          </ExpandableTabContent>
         )}
 
         {/* Tab 4: Reviews */}
         {activeTab === 'reviews' && (
-          <div className="space-y-4">
+          <ExpandableTabContent>
+            <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-gradient-to-br from-slate-50 to-white rounded-2xl border border-slate-200 shadow-sm">
               <div className="flex items-center gap-4">
                 <div className="text-center pr-6 border-r border-slate-200">
@@ -1902,7 +2091,8 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               );
             })()}
-          </div>
+            </div>
+          </ExpandableTabContent>
         )}
       </div>
 
@@ -1938,14 +2128,16 @@ export const ProductDetailPage: React.FC = () => {
 
       {/* Related Products Recommendation Row */}
       {relatedProducts.length > 0 && (
-        <div className="space-y-6 pt-6">
-          <div className="flex items-center justify-between">
-            <h3 className="font-extrabold text-xl text-navy">Related Products in {product.categoryName}</h3>
-            <Link to={`/category/${product.category}`} className="text-xs font-bold text-indigo hover:underline">
+        <div className="space-y-3 pt-4 sm:space-y-6 sm:pt-6">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="min-w-0 truncate text-base font-extrabold text-navy sm:text-xl">
+              Related Products in {product.categoryName}
+            </h3>
+            <Link to={`/category/${product.category}`} className="shrink-0 text-[10px] font-bold text-indigo hover:underline sm:text-xs">
               View All &rarr;
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
             {relatedProducts.map(p => (
               <ProductCard key={p.id} product={p} />
             ))}

@@ -8,6 +8,9 @@ function localApiPlugin(): Plugin {
     name: 'local-api-handler',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
+        const requestUrl = new URL(req.url || '/', 'http://localhost');
+        (req as any).query = Object.fromEntries(requestUrl.searchParams.entries());
+
         // Polyfill express/Vercel helper methods on Node ServerResponse
         const expressRes = res as any;
         if (!expressRes.status) {

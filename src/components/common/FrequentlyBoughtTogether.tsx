@@ -13,10 +13,13 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
   bundleProducts
 }) => {
   const { addToCart, bundleOffer } = useApp();
-  const [selectedItems, setSelectedItems] = useState<string[]>([
-    currentProduct.id,
-    ...bundleProducts.map(p => p.id)
-  ]);
+  const bundleProductIds = bundleProducts.map(p => p.id).join('|');
+  const selectionKey = `${currentProduct.id}|${bundleProductIds}`;
+  const allAvailable = [currentProduct, ...bundleProducts];
+  const [selection, setSelection] = useState<{ key: string; ids: string[] }>({ key: '', ids: [] });
+  const selectedItems = selection.key === selectionKey
+    ? selection.ids
+    : allAvailable.map(p => p.id);
   const [addedAnimation, setAddedAnimation] = useState(false);
 
   // If disabled by admin or no bundle products, do not render
@@ -26,22 +29,13 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
     // Current product cannot be deselected
     if (id === currentProduct.id) return;
     if (selectedItems.includes(id)) {
-      setSelectedItems(prev => prev.filter(item => item !== id));
+      setSelection({ key: selectionKey, ids: selectedItems.filter(item => item !== id) });
     } else {
-      setSelectedItems(prev => [...prev, id]);
+      setSelection({ key: selectionKey, ids: [...selectedItems, id] });
     }
   };
 
-  const discountPercent = bundleOffer?.discountPercentage ?? 15;
-  const minItemsForDiscount = bundleOffer?.minItemsForDiscount ?? 2;
-
-  const allAvailable = [currentProduct, ...bundleProducts];
   const activeProducts = allAvailable.filter(p => selectedItems.includes(p.id));
-
-  const standardTotal = activeProducts.reduce((sum, p) => sum + p.retailPrice, 0);
-  const bundleDiscountMultiplier = activeProducts.length >= minItemsForDiscount ? (100 - discountPercent) / 100 : 1.0;
-  const finalBundlePrice = Math.round(standardTotal * bundleDiscountMultiplier);
-  const bundleSavings = standardTotal - finalBundlePrice;
 
   const handleAddBundle = () => {
     activeProducts.forEach(p => {
@@ -68,11 +62,6 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
           </div>
         </div>
 
-        {bundleSavings > 0 && (
-          <span className="hidden sm:inline-block text-xs font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-1 rounded-full border border-emerald-200">
-            {bundleOffer?.badgeText || `Extra ${discountPercent}% Bundle Discount Applied`}
-          </span>
-        )}
       </div>
 
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -112,7 +101,7 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
                     </div>
                     <p className="font-bold text-navy text-[11px] line-clamp-1">{prod.name}</p>
                     <p className="font-extrabold text-navy text-xs">
-                      ₹{prod.retailPrice.toLocaleString('en-IN')}
+                      ₹{prod.retailPrice.toLocaleString('en-IN')} each
                     </p>
                   </div>
                 </div>
@@ -125,23 +114,11 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
         <div className="w-full md:w-auto p-4 bg-white rounded-2xl border border-slate-200 shadow-sm shrink-0 flex flex-col justify-between gap-3 min-w-[240px]">
           <div>
             <span className="text-[11px] text-slate-500 block">
-              Bundle Price ({activeProducts.length} items):
+              {activeProducts.length} selected items
             </span>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="text-2xl font-black text-navy">
-                ₹{finalBundlePrice.toLocaleString('en-IN')}
-              </span>
-              {bundleSavings > 0 && (
-                <span className="text-xs text-slate-400 line-through">
-                  ₹{standardTotal.toLocaleString('en-IN')}
-                </span>
-              )}
-            </div>
-            {bundleSavings > 0 && (
-              <span className="text-[11px] font-bold text-emerald-700 block mt-1">
-                You save ₹{bundleSavings.toLocaleString('en-IN')} ({discountPercent}% off combo)
-              </span>
-            )}
+            <p className="text-xs text-slate-500 mt-1">
+              Cart prices use each item&apos;s quantity tier. No bundle discount is applied.
+            </p>
           </div>
 
           <button
