@@ -1014,7 +1014,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (
       availableStock <= 0 ||
-      currentProduct.specifications?.['Source Availability'] === 'Needs confirmation' ||
       alreadyInCart + normalizedQuantity > availableStock
     ) {
       return false;
@@ -1088,7 +1087,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             newQty > item.quantity &&
             (
               availableStock <= 0 ||
-              currentProduct.specifications?.['Source Availability'] === 'Needs confirmation' ||
               otherCartQuantity + newQty > availableStock
             )
           ) {
@@ -1644,7 +1642,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const product = products.find(item => item.id === productId);
       return !product ||
         product.stock <= 0 ||
-        product.specifications?.['Source Availability'] === 'Needs confirmation' ||
         quantity > product.stock;
     });
     if (unavailableItem) {

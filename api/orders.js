@@ -458,13 +458,7 @@ export default async function handler(req, res) {
           });
         }
 
-        const specifications = typeof product.specifications === 'string'
-          ? JSON.parse(product.specifications)
-          : product.specifications;
-        if (
-          Number(product.stock) < quantity ||
-          specifications?.['Source Availability'] === 'Needs confirmation'
-        ) {
+        if (Number(product.stock) < quantity) {
           await connection.rollback();
           return res.status(409).json({
             success: false,

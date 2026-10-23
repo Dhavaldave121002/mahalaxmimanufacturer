@@ -20,7 +20,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const outOfStock = product.stock <= 0;
   const availabilityNeedsConfirmation = product.specifications?.['Source Availability'] === 'Needs confirmation';
   const insufficientStockForMoq = product.stock > 0 && product.stock < Math.max(1, product.moq || 1);
-  const purchaseUnavailable = outOfStock || availabilityNeedsConfirmation || insufficientStockForMoq;
+  const purchaseUnavailable = outOfStock || insufficientStockForMoq;
   const preferredImage = orderProductImagesByResolution(product.images)[0];
 
   const handleQuickAdd = (e: React.MouseEvent) => {
@@ -136,11 +136,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               <span className="max-w-full truncate rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
                 {outOfStock
                   ? 'Out of stock'
-                  : availabilityNeedsConfirmation
-                    ? 'Availability to confirm'
-                    : insufficientStockForMoq
-                      ? 'Insufficient stock for MOQ'
-                      : 'Direct Mill Launch'}
+                  : insufficientStockForMoq
+                    ? 'Insufficient stock for MOQ'
+                    : 'Direct Mill Launch'}
               </span>
             )}
           </div>
@@ -178,12 +176,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
           <div className="mt-2 grid grid-cols-2 gap-x-1 gap-y-1 text-[9px] font-medium text-slate-600 sm:mt-2 sm:flex sm:items-center sm:justify-between sm:gap-1 sm:whitespace-nowrap sm:text-[10px]">
             <span>{`MOQ ${product.moq}`}</span>
-            <span className="truncate">
+            <span className={`truncate font-semibold ${
+              outOfStock
+                ? 'text-red-700'
+                : insufficientStockForMoq || availabilityNeedsConfirmation
+                  ? 'text-amber-700'
+                  : 'text-emerald-700'
+            }`}>
               {outOfStock
                 ? 'Out of stock'
                 : availabilityNeedsConfirmation
-                  ? 'Stock to confirm'
-                  : `${product.stock} in stock`}
+                  ? 'In stock • confirmation pending'
+                  : insufficientStockForMoq
+                    ? 'Insufficient stock for MOQ'
+                    : 'In stock'}
             </span>
             <span className="col-span-2 sm:hidden">{approximatePrice ? 'Approx. price' : 'Price shown'}</span>
             <span className="hidden text-slate-300 sm:inline" aria-hidden="true">•</span>
@@ -206,7 +212,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             >
               {purchaseUnavailable ? (
                 <span className="truncate">
-                  {outOfStock ? 'Out of Stock' : availabilityNeedsConfirmation ? 'Check Availability' : 'Insufficient Stock'}
+                  {outOfStock ? 'Unavailable' : 'Insufficient Stock'}
                 </span>
               ) : added ? (
                 <>

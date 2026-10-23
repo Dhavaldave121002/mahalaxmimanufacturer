@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+    'X-CSRF-Token, X-Requested-With, X-Client-App, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
   if (req.method === 'OPTIONS') {
@@ -112,15 +112,19 @@ export default async function handler(req, res) {
       }
     }
 
-    // Return success with OTP so verification is 100% seamless
+    if (!emailDelivered) {
+      return res.status(503).json({
+        success: false,
+        delivered: false,
+        message: 'Unable to send verification code. Please try again later.'
+      });
+    }
+
     return res.status(200).json({
       success: true,
-      delivered: emailDelivered,
-      otp: otp,
+      delivered: true,
       provider: 'emailjs',
-      message: emailDelivered 
-        ? `Verification code sent to ${email} via EmailJS`
-        : `Verification code: ${otp}`
+      message: `Verification code sent to ${email} via EmailJS`
     });
 
   } catch (error) {

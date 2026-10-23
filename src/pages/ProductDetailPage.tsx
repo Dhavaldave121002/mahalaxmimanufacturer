@@ -50,6 +50,15 @@ import { orderProductImagesByResolution } from '../utils/productImages';
 import { BuyNowPaymentIcons } from '../components/common/BuyNowPaymentIcons';
 
 const TAB_CONTENT_COLLAPSED_HEIGHT = 200;
+const isInternalProductSpecification = (key: string) =>
+  key.startsWith('Source ') || key === 'Admin Price Note';
+
+const hasProductSpecificationValue = (value: unknown) => {
+  if (value === null || value === undefined) return false;
+  const text = String(value).trim();
+  if (!text) return false;
+  return !/^(?:not\s+(?:provided|available|specified|listed|known)|n\/?a|none|unknown|tbd|[-—])\.?$/i.test(text);
+};
 
 const ExpandableTabContent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const contentRef = React.useRef<HTMLDivElement>(null);
@@ -388,14 +397,14 @@ export const ProductDetailPage: React.FC = () => {
   const availabilityNeedsConfirmation = !outOfStock &&
     product.specifications?.['Source Availability'] === 'Needs confirmation';
   const insufficientStockForMoq = product.stock > 0 && product.stock < Math.max(1, product.moq || 1);
-  const inquiryOnly = outOfStock || availabilityNeedsConfirmation || insufficientStockForMoq;
+  const inquiryOnly = outOfStock || insufficientStockForMoq;
   const stockStatus = outOfStock
     ? 'Out of stock'
     : availabilityNeedsConfirmation
-      ? 'Availability to confirm'
+      ? 'In stock • supplier confirmation pending'
       : insufficientStockForMoq
         ? 'Insufficient stock for MOQ'
-        : `In stock (${product.stock} units)`;
+        : 'In stock';
 
   // Dynamic Wholesale Tier Calculation for current selected quantity
   const currentUnitPrice = activeWholesaleTier
@@ -757,7 +766,7 @@ export const ProductDetailPage: React.FC = () => {
               ) : availabilityNeedsConfirmation ? (
                 <span className="flex items-center gap-1 font-semibold text-amber-700">
                   <Info className="h-3.5 w-3.5" />
-                  Availability to confirm
+                  {stockStatus}
                 </span>
               ) : insufficientStockForMoq ? (
                 <span className="flex items-center gap-1 font-semibold text-amber-700">
@@ -1677,7 +1686,7 @@ export const ProductDetailPage: React.FC = () => {
                     }`}
                   >
                     {inquiryOnly ? (
-                      <span className="truncate">{outOfStock ? 'Out of Stock' : 'Check Availability'}</span>
+                      <span className="truncate">{outOfStock ? 'Unavailable' : 'MOQ not met'}</span>
                     ) : addedAnimation ? (
                       <>
                         <Check className="h-4 w-4 shrink-0" />
@@ -1702,7 +1711,7 @@ export const ProductDetailPage: React.FC = () => {
                     }`}
                   >
                     {inquiryOnly ? (
-                      <span>{outOfStock ? 'Out of Stock' : 'Check Availability'}</span>
+                      <span>{outOfStock ? 'Unavailable' : 'MOQ not met'}</span>
                     ) : (
                       <>
                         <Zap className="h-4 w-4 shrink-0" />
@@ -1932,7 +1941,11 @@ export const ProductDetailPage: React.FC = () => {
                         {product.gstRate > 0 ? `${product.gstRate}%` : 'Not provided — verify before ordering'}
                       </td>
                     </tr>
-                    {Object.entries(product.specifications).map(([key, val], i) => (
+                    {Object.entries(product.specifications)
+                      .filter(([key, value]) =>
+                        !isInternalProductSpecification(key) && hasProductSpecificationValue(value)
+                      )
+                      .map(([key, val], i) => (
                       <tr key={i} className={i % 2 === 0 ? 'bg-slate-50/60' : ''}>
                         <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">{key}</td>
                         <td className="break-all px-2 py-2.5 align-top leading-relaxed text-slate-800 sm:px-4">{String(val)}</td>
@@ -1951,14 +1964,19 @@ export const ProductDetailPage: React.FC = () => {
             <div className="space-y-3 text-xs text-slate-700">
               <h4 className="font-bold text-sm text-navy">Product Care</h4>
               {product.careInstructions?.length ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {product.careInstructions.map((instruction, index) => (
-                    <div key={index} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-indigo shrink-0" />
-                      <span>{instruction}</span>
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <p className="text-[11px] leading-relaxed text-slate-500">
+                    General material-based guidance. Follow the product label if it gives different care instructions.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {product.careInstructions.map((instruction, index) => (
+                      <div key={index} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-indigo shrink-0" />
+                        <span>{instruction}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <p className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900">
                   Care instructions were not provided for this product. Please confirm the correct care method with us.

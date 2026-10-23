@@ -401,9 +401,11 @@ export const AdminDashboardPage: React.FC = () => {
       'Certification': productForm.certification.trim() || 'OEKO-TEX Standard 100',
       'Dimensions': productForm.dimensions.trim() || 'Double (90" x 108")'
     };
+    for (const key of ['Source Listing ID', 'Source Product Page', 'Source Category Page', 'Admin Price Note']) {
+      delete computedSpecs[key];
+    }
     if (currentProd?.specifications?.['Source Price Status'] === 'Admin-set temporary price') {
       computedSpecs['Source Price Status'] = 'Admin-set price';
-      computedSpecs['Admin Price Note'] = 'Pricing updated from Admin dashboard.';
     }
 
     const computedCare = productForm.careInstructions

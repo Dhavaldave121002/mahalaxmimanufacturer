@@ -130,8 +130,6 @@ export const CartPage: React.FC = () => {
 
     if (currentProduct.stock <= 0) {
       issues.push({ productId: item.productId, name: item.product.name, reason: 'Out of stock' });
-    } else if (currentProduct.specifications?.['Source Availability'] === 'Needs confirmation') {
-      issues.push({ productId: item.productId, name: item.product.name, reason: 'Availability needs confirmation' });
     } else if (quantity > currentProduct.stock) {
       issues.push({ productId: item.productId, name: item.product.name, reason: `Only ${currentProduct.stock} left in stock` });
     }
