@@ -228,7 +228,7 @@ async function sendReturnEmails(data) {
           </div>
           <p style="font-size: 12px; color: #64748B;">
             Please keep the items in original packaging with tags intact for the courier executive.
-            For any urgent assistance, call us at <a href="tel:+918511172099">+91 85111 72099</a>.
+            For any urgent assistance, call us at <a href="tel:+919033598639">+91 90335 98639</a>.
           </p>
         </div>
       </div>

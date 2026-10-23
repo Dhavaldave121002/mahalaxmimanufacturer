@@ -48,6 +48,7 @@ export const CartPage: React.FC = () => {
 
   const [couponInput, setCouponInput] = useState('');
   const [couponMsg, setCouponMsg] = useState<{ text: string; success: boolean } | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const recentlyViewedProducts = React.useMemo(() => {
     try {
       const stored = localStorage.getItem('mle_recently_viewed_products');
@@ -120,6 +121,22 @@ export const CartPage: React.FC = () => {
       (c.code || '').trim().toUpperCase() !== 'LAUNCH150' &&
       c.targetPlatform !== 'APP_ONLY'
   );
+  const cartStockIssues = cart.reduce<{ productId: string; name: string; reason: string }[]>((issues, item) => {
+    if (issues.some(issue => issue.productId === item.productId)) return issues;
+    const currentProduct = products.find(product => product.id === item.productId) ?? item.product;
+    const quantity = cart
+      .filter(cartItem => cartItem.productId === item.productId)
+      .reduce((total, cartItem) => total + cartItem.quantity, 0);
+
+    if (currentProduct.stock <= 0) {
+      issues.push({ productId: item.productId, name: item.product.name, reason: 'Out of stock' });
+    } else if (currentProduct.specifications?.['Source Availability'] === 'Needs confirmation') {
+      issues.push({ productId: item.productId, name: item.product.name, reason: 'Availability needs confirmation' });
+    } else if (quantity > currentProduct.stock) {
+      issues.push({ productId: item.productId, name: item.product.name, reason: `Only ${currentProduct.stock} left in stock` });
+    }
+    return issues;
+  }, []);
 
   // Abandoned cart email recovery state (Empty by default so user enters their own email)
   const [emailCartInput, setEmailCartInput] = useState('');
@@ -184,14 +201,17 @@ export const CartPage: React.FC = () => {
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
-  const handleApplyCoupon = (e?: React.FormEvent, code?: string) => {
+  const handleApplyCoupon = async (e?: React.FormEvent, code?: string) => {
     if (e) e.preventDefault();
     const targetCode = code || couponInput;
     if (!targetCode.trim()) return;
-    const res = applyCoupon(targetCode);
-    setCouponMsg({ text: res.message, success: res.success });
-    if (res.success) {
-      setCouponInput('');
+    setIsApplyingCoupon(true);
+    try {
+      const res = await applyCoupon(targetCode);
+      setCouponMsg({ text: res.message, success: res.success });
+      if (res.success) setCouponInput('');
+    } finally {
+      setIsApplyingCoupon(false);
     }
   };
 
@@ -512,9 +532,10 @@ export const CartPage: React.FC = () => {
                 />
                 <button
                   type="submit"
+                  disabled={isApplyingCoupon}
                   className="px-4 py-2 bg-navy text-white text-xs font-bold rounded-xl hover:bg-navy-800 transition"
                 >
-                  Apply
+                  {isApplyingCoupon ? 'Checking…' : 'Apply'}
                 </button>
               </form>
             )}
@@ -577,6 +598,7 @@ export const CartPage: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => handleApplyCoupon(undefined, coupon.code)}
+                              disabled={isApplyingCoupon}
                               className="px-2.5 py-1 bg-indigo hover:bg-indigo-dark text-white text-[10.5px] font-bold rounded-lg transition shadow-xs shrink-0 cursor-pointer"
                             >
                               1-Click Apply
@@ -623,7 +645,6 @@ export const CartPage: React.FC = () => {
               <div className="flex justify-between">
                 <span className="flex items-center gap-1">
                   <span>Goods & Services Tax (GST):</span>
-                  <span className="text-[10px] text-slate-400 font-mono">(ITC Claimable)</span>
                 </span>
                 <span className="font-semibold text-navy">₹{Math.round(cartTax.totalTax).toLocaleString('en-IN')}</span>
               </div>
@@ -645,12 +666,27 @@ export const CartPage: React.FC = () => {
             </div>
 
             {/* Checkout Button */}
+            {cartStockIssues.length > 0 && (
+              <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+                <p className="font-bold">Update unavailable items before checkout:</p>
+                <ul className="mt-1 list-disc pl-4">
+                  {cartStockIssues.map(issue => (
+                    <li key={issue.productId}>{issue.name}: {issue.reason}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <button
               onClick={() => navigate('/checkout')}
-              className="w-full py-4 bg-indigo hover:bg-indigo-dark text-white rounded-xl font-black text-sm transition shadow-premium flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
+              disabled={cartStockIssues.length > 0}
+              className={`flex w-full items-center justify-center gap-2 rounded-xl py-4 text-sm font-black shadow-premium transition ${
+                cartStockIssues.length > 0
+                  ? 'cursor-not-allowed bg-slate-300 text-slate-600'
+                  : 'bg-indigo text-white hover:scale-[1.01] hover:bg-indigo-dark active:scale-[0.99]'
+              }`}
             >
-              <span>Proceed to Fast Checkout</span>
-              <ArrowRight className="w-4 h-4" />
+              <span>{cartStockIssues.length > 0 ? 'Resolve Stock Issues' : 'Proceed to Fast Checkout'}</span>
+              {cartStockIssues.length === 0 && <ArrowRight className="w-4 h-4" />}
             </button>
 
             {/* 1-Click WhatsApp Quick Order */}
@@ -716,7 +752,7 @@ export const CartPage: React.FC = () => {
               <div className="pt-2 text-[11px] text-slate-500 space-y-1">
                 <p className="flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>GSTIN Tax Invoice generated automatically for 100% ITC claim.</span>
+                  <span>GST tax invoice generated using your eligible business details.</span>
                 </p>
                 <p className="flex items-center gap-1.5">
                   <RotateCcw className="w-3.5 h-3.5 text-indigo shrink-0" />

@@ -111,6 +111,28 @@ function localApiPlugin(): Plugin {
           return;
         }
 
+        if (req.url?.startsWith('/api/restock-alerts')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          await ensureBodyParsed();
+          try {
+            // @ts-ignore
+            const mod = await import('./api/restock-alerts.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            expressRes.status(500).json({ success: false, error: e.message });
+          }
+          return;
+        }
+
         // 4. App Config & Notifications API
         if (req.url?.startsWith('/api/app-config') || req.url?.includes('action=pincode')) {
           res.setHeader('Content-Type', 'application/json');

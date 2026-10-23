@@ -86,15 +86,16 @@ interface AppContextType {
   updateCategory: (id: string, updates: Partial<CollectionCategory>) => void;
   deleteCategory: (id: string) => void;
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number, variant?: ProductVariant, customization?: ProductCustomization) => void;
+  addToCart: (product: Product, quantity?: number, variant?: ProductVariant, customization?: ProductCustomization) => boolean;
   removeFromCart: (itemId: string) => void;
   updateCartQuantity: (itemId: string, newQty: number) => void;
   clearCart: () => void;
   appliedCoupon: string | null;
   couponDiscount: number;
-  applyCoupon: (code: string) => { success: boolean; message: string; discount?: number };
+  applyCoupon: (code: string) => Promise<{ success: boolean; message: string; discount?: number }>;
   removeCoupon: () => void;
   coupons: CouponOffer[];
+  refreshCoupons: () => Promise<void>;
   addCoupon: (coupon: Omit<CouponOffer, 'id' | 'usedCount' | 'createdAt'>) => void;
   updateCoupon: (id: string, updates: Partial<CouponOffer>) => void;
   deleteCoupon: (id: string) => void;
@@ -143,6 +144,7 @@ interface AppContextType {
 
   // Orders
   orders: Order[];
+  ordersSyncError: string | null;
   createOrder: (orderData: {
     paymentMethod: PaymentMethod;
     shippingAddress: Address;
@@ -151,7 +153,7 @@ interface AppContextType {
     amountPaid?: number;
     timelineNote?: string;
     customerEmail?: string;
-  }) => Order;
+  }) => Promise<Order>;
   updateOrderStatus: (orderId: string, status: Order['status'], trackingNumber?: string, courierName?: string) => void;
   cancelOrder: (orderId: string, reason?: string) => Promise<{ success: boolean; message: string }>;
   requestReturnOrExchange: (orderId: string, type: 'RETURN' | 'EXCHANGE', reason: string, comment?: string) => Promise<{ success: boolean; message: string }>;
@@ -238,6 +240,20 @@ function safeLoadFromStorage<T>(key: string, fallback: T): T {
 function safeLoadArray<T>(key: string, fallback: T[]): T[] {
   const data = safeLoadFromStorage<T[]>(key, fallback);
   return Array.isArray(data) && data.length > 0 ? data : fallback;
+}
+
+function uniqueOrders(orders: Order[]): Order[] {
+  const unique = new Map<string, Order>();
+  const unkeyed: Order[] = [];
+  for (const order of orders) {
+    const key = (order.orderNumber || order.id || '').trim().toLowerCase();
+    if (!key) {
+      unkeyed.push(order);
+      continue;
+    }
+    if (!unique.has(key)) unique.set(key, order);
+  }
+  return [...unique.values(), ...unkeyed];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -491,38 +507,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncCouponsFromBackend = useCallback(async () => {
     try {
       const res = await fetch('/api/coupons');
-      if (!res.ok) return;
-      const json = await res.json();
-      if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-        setCoupons(prev => {
-          const map = new Map<string, CouponOffer>();
-          for (const raw of json.data) {
-            const c = { ...raw };
-            const key = (c.code || c.id || '').trim().toUpperCase();
-            if (key === 'LAUNCH150' || c.suggestionMode === 'SECRET_MANUAL_ONLY') {
-              c.isFeatured = false;
-              c.suggestionMode = 'SECRET_MANUAL_ONLY';
-            }
-            if (key) map.set(key, c);
-          }
-          for (const raw of prev) {
-            const c = { ...raw };
-            const key = (c.code || c.id || '').trim().toUpperCase();
-            if (key === 'LAUNCH150' || c.suggestionMode === 'SECRET_MANUAL_ONLY') {
-              c.isFeatured = false;
-              c.suggestionMode = 'SECRET_MANUAL_ONLY';
-            }
-            if (key && !map.has(key)) {
-              map.set(key, c);
-            }
-          }
-          return Array.from(map.values());
-        });
+      if (!res.ok) {
+        console.error(`Coupon API request failed (${res.status}).`);
+        return;
       }
-    } catch {
-      // quiet offline fallback
+      const json = await res.json();
+      if (json?.success && Array.isArray(json.data)) {
+        setCoupons(json.data.map((coupon: CouponOffer) => ({
+          ...coupon,
+          isFeatured: coupon.code.toUpperCase() === 'LAUNCH150' ? false : coupon.isFeatured,
+          suggestionMode: coupon.code.toUpperCase() === 'LAUNCH150'
+            ? 'SECRET_MANUAL_ONLY'
+            : coupon.suggestionMode
+        })));
+      } else {
+        console.error('Coupon API returned an invalid response.');
+      }
+    } catch (error) {
+      console.error('Failed to load coupons from the API:', error);
     }
   }, []);
+
+  const refreshCoupons = syncCouponsFromBackend;
 
   useEffect(() => {
     syncCouponsFromBackend();
@@ -756,12 +762,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
-  // Orders are loaded only from this browser's own saved data.
+  // Keep local order history available until backend synchronization completes.
   const [orders, setOrders] = useState<Order[]>(() =>
-    import.meta.env.PROD
-      ? safeLoadArray<Order>('mle_guest_orders', [])
-      : [...safeLoadArray<Order>('mle_guest_orders', []), ...safeLoadArray<Order>('mle_orders', [])]
+    uniqueOrders(
+      import.meta.env.PROD
+        ? safeLoadArray<Order>('mle_guest_orders', [])
+        : [
+            ...safeLoadArray<Order>('mle_guest_orders', []),
+            ...safeLoadArray<Order>('mle_orders', [])
+          ]
+    )
   );
+  const [ordersSyncError, setOrdersSyncError] = useState<string | null>(null);
 
   // Mobile App Configuration State
   const [mobileAppConfig, setMobileAppConfig] = useState<MobileAppConfig>(() => {
@@ -814,7 +826,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     try {
       localStorage.setItem('mle_orders', JSON.stringify(orders));
-      const guestOrders = orders.filter(order => order.customer?.id.startsWith('guest-'));
+      const guestOrders = orders.filter(
+        order =>
+          typeof order.customer?.id === 'string' &&
+          order.customer.id.startsWith('guest-')
+      );
       localStorage.setItem('mle_guest_orders', JSON.stringify(guestOrders));
     } catch (e) {
       console.warn('Failed to persist mle_orders:', e);
@@ -823,28 +839,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Synchronize orders live from MySQL / Central API
   const syncOrdersFromBackend = useCallback(async () => {
-    if (!isLoggedIn || currentUser.role !== 'admin') return;
     try {
       const res = await fetch('/api/orders');
-      if (!res.ok) return;
-      const json = await res.json();
-      if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        const message = typeof json?.error === 'string'
+          ? json.error
+          : `Order sync failed (HTTP ${res.status}).`;
+        setOrdersSyncError(message);
+        console.error('Order sync failed:', message);
+        return;
+      }
+      if (json?.success && Array.isArray(json.data)) {
+        setOrdersSyncError(null);
         setOrders(prev => {
-          const map = new Map<string, Order>();
-          // 1. Load existing local orders
+          const localOrders = new Map<string, Order>();
           for (const ord of prev) {
             const key = (ord.orderNumber || ord.id || '').trim().toLowerCase();
-            if (key) map.set(key, ord);
+            if (key && !localOrders.has(key)) localOrders.set(key, ord);
           }
 
-          // 2. Merge backend live orders without losing local artwork files
+          const liveOrders = new Map<string, Order>();
           for (const ord of json.data) {
             const key = (ord.orderNumber || ord.id || '').trim().toLowerCase();
             if (!key) continue;
-            const existing = map.get(key);
-            if (!existing) {
-              map.set(key, ord);
-            } else {
+            const existing = localOrders.get(key);
+            if (existing) {
               const mergedItems = (ord.items && ord.items.length > 0)
                 ? ord.items.map((it: any, idx: number) => {
                     const localItem = existing.items?.[idx] || existing.items?.find(li => li.productId === it.productId);
@@ -865,25 +885,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                   })
                 : (existing.items || []);
 
-              map.set(key, {
+              liveOrders.set(key, {
                 ...ord,
                 items: mergedItems
               });
+            } else {
+              liveOrders.set(key, ord);
             }
           }
 
-          const merged = Array.from(map.values()).sort((a, b) => {
+          const merged = Array.from(liveOrders.values()).sort((a, b) => {
             const timeA = new Date(a.createdAt || 0).getTime();
             const timeB = new Date(b.createdAt || 0).getTime();
             return timeB - timeA;
           });
           return merged;
         });
+      } else {
+        const message = typeof json?.error === 'string'
+          ? json.error
+          : 'Order sync returned an invalid response.';
+        setOrdersSyncError(message);
+        console.error('Order sync failed:', message);
       }
     } catch (err) {
-      // Quiet fail if offline
+      const message = err instanceof Error ? err.message : 'Order sync is unavailable.';
+      setOrdersSyncError(`Could not load orders: ${message}`);
+      console.error('Order sync failed:', err);
     }
-  }, [currentUser.role, isLoggedIn, setOrders]);
+  }, []);
 
   // Fetch live enquiries from MySQL / API
   const syncEnquiriesFromBackend = useCallback(async () => {
@@ -972,10 +1002,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     quantity: number = 1,
     variant?: ProductVariant,
     customization?: ProductCustomization
-  ) => {
+  ): boolean => {
     const minimumQuantity = variant?.id.startsWith('sample-') ? 1 : Math.max(1, product.moq || 1);
     const requestedQuantity = Number.isFinite(quantity) ? Math.floor(quantity) : minimumQuantity;
     const normalizedQuantity = Math.max(minimumQuantity, requestedQuantity);
+    const currentProduct = products.find(item => item.id === product.id) ?? product;
+    const availableStock = currentProduct.stock;
+    const alreadyInCart = cart
+      .filter(item => item.productId === product.id)
+      .reduce((total, item) => total + item.quantity, 0);
+
+    if (
+      availableStock <= 0 ||
+      currentProduct.specifications?.['Source Availability'] === 'Needs confirmation' ||
+      alreadyInCart + normalizedQuantity > availableStock
+    ) {
+      return false;
+    }
 
     setCart(prev => {
       // Find existing item matching product ID, variant ID, and customization type/text
@@ -1021,6 +1064,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return [...prev, newItem];
       }
     });
+    return true;
   };
 
   const removeFromCart = (itemId: string) => {
@@ -1035,6 +1079,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCart(prev =>
       prev.map(item => {
         if (item.id === itemId) {
+          const currentProduct = products.find(product => product.id === item.productId) ?? item.product;
+          const availableStock = currentProduct.stock;
+          const otherCartQuantity = prev
+            .filter(cartItem => cartItem.productId === item.productId && cartItem.id !== item.id)
+            .reduce((total, cartItem) => total + cartItem.quantity, 0);
+          if (
+            newQty > item.quantity &&
+            (
+              availableStock <= 0 ||
+              currentProduct.specifications?.['Source Availability'] === 'Needs confirmation' ||
+              otherCartQuantity + newQty > availableStock
+            )
+          ) {
+            return item;
+          }
           const minimumQuantity = item.selectedVariant?.id.startsWith('sample-')
             ? 1
             : Math.max(1, item.product.moq || 1);
@@ -1161,58 +1220,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCouponDiscount(disc);
   }, [cartSubtotal, cart.length, appliedCoupon, coupons]);
 
-  const applyCoupon = (code: string) => {
+  const applyCoupon = async (code: string) => {
     const clean = code.trim().toUpperCase();
     if (!clean) return { success: false, message: 'Please enter a coupon code.' };
 
-    const matched = coupons.find(c => c.code.toUpperCase() === clean);
-    if (!matched) {
-      return { success: false, message: `Invalid coupon code "${code}". Please check spelling.` };
-    }
-
-    if (!matched.isActive) {
-      return { success: false, message: `Coupon code "${matched.code}" is currently inactive or expired.` };
-    }
-
-    if (matched.validUntil && new Date(matched.validUntil).getTime() < Date.now()) {
-      return {
-        success: false,
-        message: `Coupon code "${matched.code}" expired on ${new Date(matched.validUntil).toLocaleDateString('en-IN')}.`
-      };
-    }
-
     const isB2B = currentUser.role !== 'consumer' || !!currentUser.gstNumber;
-    if (matched.applicableFor === 'B2B' && !isB2B) {
-      return {
-        success: false,
-        message: `Coupon "${matched.code}" is reserved exclusively for registered B2B wholesale buyers.`
-      };
-    }
-
-    if (matched.minOrderValue > 0 && cartSubtotal < matched.minOrderValue) {
-      return {
-        success: false,
-        message: `Coupon "${matched.code}" requires a minimum order value of ₹${matched.minOrderValue.toLocaleString('en-IN')}. (Current: ₹${cartSubtotal.toLocaleString('en-IN')})`
-      };
-    }
-
-    let disc = 0;
-    if (matched.discountType === 'FLAT') {
-      disc = Math.min(matched.discountValue, cartSubtotal);
-    } else {
-      disc = Math.round((cartSubtotal * matched.discountValue) / 100);
-      if (matched.maxDiscountAmount && matched.maxDiscountAmount > 0) {
-        disc = Math.min(disc, matched.maxDiscountAmount);
+    try {
+      const response = await fetch('/api/coupons?action=validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: clean,
+          subtotal: cartSubtotal,
+          platform: 'WEB',
+          customerType: isB2B ? 'B2B' : 'B2C'
+        })
+      });
+      const result = await response.json();
+      if (!response.ok || result?.success !== true || result?.valid !== true) {
+        return {
+          success: false,
+          message: result?.message || result?.error || `Coupon validation failed (HTTP ${response.status}).`
+        };
       }
-    }
 
-    setAppliedCoupon(matched.code);
-    setCouponDiscount(disc);
-    return {
-      success: true,
-      message: `🎉 Offer Applied! ${matched.title} (-₹${disc.toLocaleString('en-IN')})`,
-      discount: disc
-    };
+      const discount = Number(result.data?.discount);
+      const validatedCode = String(result.data?.code || clean);
+      if (!Number.isFinite(discount) || discount < 0) {
+        console.error('Coupon API returned an invalid discount amount.');
+        return { success: false, message: 'Coupon validation returned invalid discount data.' };
+      }
+
+      setAppliedCoupon(validatedCode);
+      setCouponDiscount(discount);
+      return {
+        success: true,
+        message: result.message || `Offer applied. Saved ₹${discount.toLocaleString('en-IN')}.`,
+        discount
+      };
+    } catch (error) {
+      console.error('Coupon validation request failed:', error);
+      return {
+        success: false,
+        message: 'Coupon validation is unavailable. Please try again before placing your order.'
+      };
+    }
   };
 
   const removeCoupon = () => {
@@ -1575,7 +1627,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Create Order
-  const createOrder = (orderData: {
+  const createOrder = async (orderData: {
     paymentMethod: PaymentMethod;
     shippingAddress: Address;
     billingAddress: Address;
@@ -1583,7 +1635,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     amountPaid?: number;
     timelineNote?: string;
     customerEmail?: string;
-  }): Order => {
+  }): Promise<Order> => {
+    const quantitiesByProduct = cart.reduce<Record<string, number>>((totals, item) => {
+      totals[item.productId] = (totals[item.productId] || 0) + item.quantity;
+      return totals;
+    }, {});
+    const unavailableItem = Object.entries(quantitiesByProduct).find(([productId, quantity]) => {
+      const product = products.find(item => item.id === productId);
+      return !product ||
+        product.stock <= 0 ||
+        product.specifications?.['Source Availability'] === 'Needs confirmation' ||
+        quantity > product.stock;
+    });
+    if (unavailableItem) {
+      const unavailableProduct = products.find(item => item.id === unavailableItem[0]);
+      throw new Error(
+        unavailableProduct
+          ? `${unavailableProduct.name} is out of stock or has insufficient stock. Update your cart before ordering.`
+          : 'A product in your cart is no longer available. Update your cart before ordering.'
+      );
+    }
+
     const orderNum = `MLE-ORD-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
 
     const orderItems = cart.map(item => {
@@ -1662,7 +1734,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ]
     };
 
-    // Deduct stock
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newOrder)
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || result?.success !== true) {
+      throw new Error(
+        typeof result?.error === 'string'
+          ? result.error
+          : `The order was not saved (HTTP ${response.status}). Please retry.`
+      );
+    }
+
+    // Apply local state only after the server confirms persistence.
     setProducts(prevProducts =>
       prevProducts.map(p => {
         const inCart = cart.find(c => c.productId === p.id);
@@ -1673,7 +1759,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
     );
 
-    setOrders(prev => [newOrder, ...prev]);
+    setOrders(prev => uniqueOrders([newOrder, ...prev]));
     if (!isLoggedIn) {
       try {
         const savedGuestOrders = safeLoadArray<Order>('mle_guest_orders', []);
@@ -1686,21 +1772,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
     clearCart();
-
-    // Persist to central MySQL database
-    fetch('/api/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newOrder)
-    })
-      .then(res => res.json())
-      .then(data => {
-        console.log('Web Order synced to central MySQL database:', data);
-      })
-      .catch(err => {
-        console.warn('Order API sync error:', err);
-      });
-
     return newOrder;
   };
 
@@ -2242,7 +2313,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ]
     };
 
-    setOrders(prev => [newOrder, ...prev]);
+    setOrders(prev => uniqueOrders([newOrder, ...prev]));
 
     // Mark quote as converted
     setQuotations(prev =>
@@ -2608,6 +2679,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         applyCoupon,
         removeCoupon,
         coupons,
+        refreshCoupons,
         addCoupon,
         updateCoupon,
         deleteCoupon,
@@ -2643,6 +2715,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         redeemWalletPoints,
 
         orders,
+        ordersSyncError,
         createOrder,
         updateOrderStatus,
         cancelOrder,

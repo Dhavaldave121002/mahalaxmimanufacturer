@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Product, Order, OrderStatus, Quotation, CategoryId } from '../types';
@@ -51,6 +51,20 @@ import { CouponOfferManager } from '../components/admin/CouponOfferManager';
 import { CategoryManager } from '../components/admin/CategoryManager';
 import { SubscriberManager } from '../components/admin/SubscriberManager';
 
+type AdminProductReview = {
+  id: string;
+  product_id: string;
+  product_title: string;
+  customer_name: string;
+  customer_email: string;
+  rating: number;
+  comment: string;
+  image_url?: string | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  source?: string;
+  created_at: string;
+};
+
 export const AdminDashboardPage: React.FC = () => {
   const {
     products,
@@ -59,12 +73,15 @@ export const AdminDashboardPage: React.FC = () => {
     deleteProduct,
     adjustProductStock,
     orders,
+    ordersSyncError,
     updateOrderStatus,
     quotations,
     updateQuotationByStaff,
     enquiries,
     coupons,
-    categories
+    categories,
+    refreshOrders,
+    refreshCoupons
   } = useApp();
 
   const [adminEmail, setAdminEmail] = useState('');
@@ -83,6 +100,14 @@ export const AdminDashboardPage: React.FC = () => {
       .catch(() => setIsUnlocked(false))
       .finally(() => setIsCheckingSession(false));
   }, []);
+
+  useEffect(() => {
+    if (!isUnlocked) return;
+    void refreshOrders();
+    void refreshCoupons();
+    const interval = window.setInterval(() => void refreshOrders(), 8000);
+    return () => window.clearInterval(interval);
+  }, [isUnlocked, refreshOrders, refreshCoupons]);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,7 +204,7 @@ export const AdminDashboardPage: React.FC = () => {
     certification: 'OEKO-TEX Standard 100',
     dimensions: 'Double (90" x 108")',
     careInstructions: 'Wash before first use in cold water\nMachine wash gentle cycle with mild liquid detergent\nDo not use harsh chlorine bleach\nTumble dry low heat or line dry in shade',
-    b2bPolicy: 'All bulk consignments are billed with formal GST Tax Invoices from Ahmedabad jurisdiction (State Code 24).\nGST numbers entered during checkout automatically receive electronic GSTR-1 filings for instantaneous GSTR-2B input credit.\nConsignments above ₹50,000 include government-verified E-Way bills.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
+    b2bPolicy: 'All bulk consignments include GST tax invoice details based on the information provided at checkout.\nConsignments above ₹50,000 may require an E-Way bill as applicable under current regulations.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
   });
 
   // Quotation Editor Modal state
@@ -206,18 +231,67 @@ export const AdminDashboardPage: React.FC = () => {
   const [generatingAwbOrderId, setGeneratingAwbOrderId] = useState<string | null>(null);
 
   // Live Customer Reviews State for Admin
-  const [adminReviews, setAdminReviews] = useState<any[]>([]);
+  const [adminReviews, setAdminReviews] = useState<AdminProductReview[]>([]);
+  const [reviewsError, setReviewsError] = useState<string | null>(null);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [moderatingReviewId, setModeratingReviewId] = useState<string | null>(null);
+  const pendingReviewCount = adminReviews.filter(review => review.status === 'PENDING').length;
 
-  React.useEffect(() => {
-    fetch('/api/products?action=reviews')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && Array.isArray(data.reviews)) {
-          setAdminReviews(data.reviews);
-        }
-      })
-      .catch(() => {});
+  const loadAdminReviews = useCallback(async () => {
+    setIsLoadingReviews(true);
+    try {
+      const response = await fetch('/api/products?action=reviews&all=true');
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.success !== true || !Array.isArray(data.reviews)) {
+        throw new Error(
+          typeof data?.error === 'string'
+            ? data.error
+            : `Reviews could not be loaded (HTTP ${response.status}).`
+        );
+      }
+      setAdminReviews(data.reviews);
+      setReviewsError(null);
+    } catch (error) {
+      setReviewsError(error instanceof Error ? error.message : 'Reviews could not be loaded.');
+    } finally {
+      setIsLoadingReviews(false);
+    }
   }, []);
+
+  useEffect(() => {
+    if (!isUnlocked) return;
+    void loadAdminReviews();
+    const interval = window.setInterval(() => void loadAdminReviews(), 10000);
+    return () => window.clearInterval(interval);
+  }, [isUnlocked, loadAdminReviews]);
+
+  const handleReviewModeration = async (
+    reviewId: string,
+    status: 'APPROVED' | 'REJECTED'
+  ) => {
+    setModeratingReviewId(reviewId);
+    setReviewsError(null);
+    try {
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'moderate_review', id: reviewId, status })
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || data?.success !== true) {
+        throw new Error(
+          typeof data?.error === 'string'
+            ? data.error
+            : `Review update failed (HTTP ${response.status}).`
+        );
+      }
+      await loadAdminReviews();
+    } catch (error) {
+      setReviewsError(error instanceof Error ? error.message : 'Review status could not be updated.');
+    } finally {
+      setModeratingReviewId(null);
+    }
+  };
 
   // Delhivery 1-Click Instant Waybill Generation
   const handleGenerateDelhiveryAwb = async (order: Order) => {
@@ -297,7 +371,7 @@ export const AdminDashboardPage: React.FC = () => {
         : 'Wash before first use in cold water\nMachine wash gentle cycle with mild liquid detergent\nDo not use harsh chlorine bleach\nTumble dry low heat or line dry in shade',
       b2bPolicy: (p.b2bPolicy && p.b2bPolicy.length > 0)
         ? p.b2bPolicy.join('\n')
-        : 'All bulk consignments are billed with formal GST Tax Invoices from Ahmedabad jurisdiction (State Code 24).\nGST numbers entered during checkout automatically receive electronic GSTR-1 filings for instantaneous GSTR-2B input credit.\nConsignments above ₹50,000 include government-verified E-Way bills.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
+        : 'All bulk consignments include GST tax invoice details based on the information provided at checkout.\nConsignments above ₹50,000 may require an E-Way bill as applicable under current regulations.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
     });
     setProductModalOpen(true);
   };
@@ -592,7 +666,7 @@ export const AdminDashboardPage: React.FC = () => {
                 certification: 'OEKO-TEX Standard 100',
                 dimensions: 'Double (90" x 108")',
                 careInstructions: 'Wash before first use in cold water\nMachine wash gentle cycle with mild liquid detergent\nDo not use harsh chlorine bleach\nTumble dry low heat or line dry in shade',
-                b2bPolicy: 'All bulk consignments are billed with formal GST Tax Invoices from Ahmedabad jurisdiction (State Code 24).\nGST numbers entered during checkout automatically receive electronic GSTR-1 filings for instantaneous GSTR-2B input credit.\nConsignments above ₹50,000 include government-verified E-Way bills.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
+                b2bPolicy: 'All bulk consignments include GST tax invoice details based on the information provided at checkout.\nConsignments above ₹50,000 may require an E-Way bill as applicable under current regulations.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
               });
               setProductModalOpen(true);
             }}
@@ -721,7 +795,9 @@ export const AdminDashboardPage: React.FC = () => {
           }`}
         >
           <Star className="w-4 h-4 text-amber-500" />
-          <span>Customer Reviews ({adminReviews.length})</span>
+          <span>
+            Customer Reviews ({adminReviews.length}){pendingReviewCount > 0 && ` • ${pendingReviewCount} pending`}
+          </span>
         </button>
 
         <button
@@ -1069,6 +1145,18 @@ export const AdminDashboardPage: React.FC = () => {
       {/* 3. ORDERS TAB: Manage status, Invoices, Shipments & Returns/Refunds */}
       {activeTab === 'orders' && (
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-subtle space-y-6">
+          {ordersSyncError && (
+            <div role="alert" className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+              <p><strong>Orders could not be loaded:</strong> {ordersSyncError}</p>
+              <button
+                type="button"
+                onClick={() => void refreshOrders()}
+                className="shrink-0 rounded-lg bg-red-700 px-3 py-2 font-bold text-white hover:bg-red-800"
+              >
+                Retry
+              </button>
+            </div>
+          )}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
               <h3 className="font-extrabold text-base text-navy">Order Fulfillment & Returns Control</h3>
@@ -1180,9 +1268,9 @@ export const AdminDashboardPage: React.FC = () => {
                 {orders
                   .filter(o => {
                     const matchesSearch =
-                      o.orderNumber.toLowerCase().includes(orderSearch.toLowerCase()) ||
-                      o.customer.name.toLowerCase().includes(orderSearch.toLowerCase()) ||
-                      (o.customer.companyName && o.customer.companyName.toLowerCase().includes(orderSearch.toLowerCase()));
+                      String(o.orderNumber || '').toLowerCase().includes(orderSearch.toLowerCase()) ||
+                      String(o.customer?.name || '').toLowerCase().includes(orderSearch.toLowerCase()) ||
+                      String(o.customer?.companyName || '').toLowerCase().includes(orderSearch.toLowerCase());
                     if (!matchesSearch) return false;
 
                     if (orderFilter === 'ACTIVE') {
@@ -1641,6 +1729,103 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
       )}
 
+      {activeTab === 'reviews' && (
+        <section className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-subtle sm:p-8" aria-labelledby="admin-reviews-heading">
+          <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 id="admin-reviews-heading" className="text-base font-extrabold text-navy">Customer Review Moderation</h3>
+              <p className="mt-0.5 text-xs text-slate-500">New reviews remain private until approved. Approved reviews appear on the product page.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadAdminReviews()}
+              disabled={isLoadingReviews}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isLoadingReviews ? 'animate-spin' : ''}`} />
+              Refresh reviews
+            </button>
+          </div>
+
+          {reviewsError && (
+            <div role="alert" className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 sm:flex-row sm:items-center sm:justify-between">
+              <p><strong>Reviews could not be loaded:</strong> {reviewsError}</p>
+              <button
+                type="button"
+                onClick={() => void loadAdminReviews()}
+                className="shrink-0 rounded-lg bg-red-700 px-3 py-2 font-bold text-white hover:bg-red-800"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {isLoadingReviews && adminReviews.length === 0 ? (
+            <p className="py-8 text-center text-sm text-slate-500">Loading reviews from the database…</p>
+          ) : adminReviews.length === 0 ? (
+            <p className="py-8 text-center text-sm text-slate-500">No customer reviews have been submitted yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {adminReviews.map(review => (
+                <article key={review.id} className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-1">
+                      <h4 className="font-bold text-navy">{review.product_title}</h4>
+                      <p className="text-xs text-slate-600">
+                        {review.customer_name} • {review.customer_email || 'No email provided'} • {review.source || 'WEB'}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {new Date(review.created_at).toLocaleString('en-IN')} •{' '}
+                        <span className="font-bold text-amber-600">{Number(review.rating).toFixed(1)} / 5</span>
+                      </p>
+                    </div>
+                    <span className={`w-fit rounded-full px-2.5 py-1 text-[10px] font-black ${
+                      review.status === 'APPROVED'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : review.status === 'REJECTED'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {review.status}
+                    </span>
+                  </div>
+                  <p className="whitespace-pre-wrap rounded-xl border border-slate-200 bg-white p-3 text-sm leading-relaxed text-slate-700">
+                    {review.comment}
+                  </p>
+                  {review.image_url && (
+                    <a href={review.image_url} target="_blank" rel="noopener noreferrer" className="inline-block">
+                      <img src={review.image_url} alt={`Photo attached to review for ${review.product_title}`} className="h-24 w-24 rounded-lg border border-slate-200 object-cover" />
+                    </a>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {review.status !== 'APPROVED' && (
+                      <button
+                        type="button"
+                        onClick={() => void handleReviewModeration(review.id, 'APPROVED')}
+                        disabled={moderatingReviewId === review.id}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Approve
+                      </button>
+                    )}
+                    {review.status !== 'REJECTED' && (
+                      <button
+                        type="button"
+                        onClick={() => void handleReviewModeration(review.id, 'REJECTED')}
+                        disabled={moderatingReviewId === review.id}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        <XCircle className="h-3.5 w-3.5" /> Reject
+                      </button>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       {/* 5. ENQUIRIES TAB */}
       {activeTab === 'enquiries' && (
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-subtle space-y-6">
@@ -2035,14 +2220,14 @@ export const AdminDashboardPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Tab 3: Commercial B2B Terms & ITC Policy */}
+                {/* Tab 3: Commercial B2B Terms & GST Policy */}
                 <div className="space-y-1.5 pt-2 border-t border-slate-200">
                   <label className="text-[10.5px] font-bold text-slate-700 block uppercase tracking-wide">
-                    3. Commercial B2B Terms & ITC Policy (1 bullet per line)
+                    3. Commercial B2B Terms & GST Policy (1 bullet per line)
                   </label>
                   <textarea
                     rows={3}
-                    placeholder="Enter B2B terms and GST ITC guidelines, one per line..."
+                    placeholder="Enter B2B terms and GST invoice details, one per line..."
                     value={productForm.b2bPolicy}
                     onChange={e => setProductForm({ ...productForm, b2bPolicy: e.target.value })}
                     className="w-full p-2 bg-white border border-slate-300 rounded-lg outline-none text-xs font-mono leading-relaxed"

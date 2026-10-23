@@ -72,7 +72,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                   <p>Plot No. 42-45, Ring Road Textile Park Phase II</p>
                   <p>Ahmedabad, Gujarat - 382405, India</p>
                   <p><span className="font-semibold text-slate-800">GSTIN:</span> 24AAECM8921P1ZA | <span className="font-semibold text-slate-800">PAN:</span> AAECM8921P</p>
-                  <p><span className="font-semibold text-slate-800">State Code:</span> 24 (Gujarat) | <span className="font-semibold text-slate-800">Email:</span> billing@mahalaxmienterprises.com</p>
+                  <p><span className="font-semibold text-slate-800">State Code:</span> 24 (Gujarat) | <span className="font-semibold text-slate-800">Email:</span> mahalaxmienterprise881@gmail.com</p>
                 </div>
               </div>
 

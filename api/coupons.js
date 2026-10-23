@@ -2,9 +2,10 @@ import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
 import { requireAdminSession } from './_lib/admin-session.js';
+import { validateCouponRecord } from './_lib/coupon-validation.js';
 
 // Helper to read fallback coupons from public/coupons.json
-function readFallbackCoupons() {
+export function readFallbackCoupons() {
   try {
     const filePath = path.join(process.cwd(), 'public', 'coupons.json');
     if (fs.existsSync(filePath)) {
@@ -113,7 +114,7 @@ function saveFallbackCoupons(couponsList) {
 
 let tableEnsured = false;
 // Ensure MySQL table exists with proper indexes
-async function ensureCouponsTable(pool) {
+export async function ensureCouponsTable(pool) {
   if (!pool || tableEnsured) return;
   try {
     await pool.query(`
@@ -160,6 +161,35 @@ async function ensureCouponsTable(pool) {
   }
 }
 
+function mapCouponRow(row) {
+  return {
+    id: row.id,
+    code: row.code,
+    title: row.title,
+    description: row.description || '',
+    discountType: row.discount_type,
+    discountValue: Number(row.discount_value),
+    minOrderValue: Number(row.min_order_value || 0),
+    maxDiscountAmount: row.max_discount_amount == null ? undefined : Number(row.max_discount_amount),
+    validUntil: row.valid_until ? new Date(row.valid_until).toISOString() : undefined,
+    isActive: Boolean(row.is_active),
+    isFeatured: Boolean(row.is_featured) && row.code !== 'LAUNCH150' && row.suggestion_mode !== 'SECRET_MANUAL_ONLY',
+    suggestionMode: row.suggestion_mode || (row.code === 'LAUNCH150' || !row.is_featured ? 'SECRET_MANUAL_ONLY' : 'PUBLIC_1CLICK'),
+    targetPlatform: row.target_platform || 'ALL',
+    applicableFor: row.applicable_for || 'ALL',
+    usageLimit: row.usage_limit == null ? undefined : Number(row.usage_limit),
+    usedCount: Number(row.used_count || 0),
+    createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString()
+  };
+}
+
+function couponIsAvailable(coupon) {
+  if (!coupon.is_active || (Number(coupon.usage_limit || 0) > 0 && Number(coupon.used_count || 0) >= Number(coupon.usage_limit))) {
+    return false;
+  }
+  return !coupon.valid_until || new Date(coupon.valid_until).getTime() >= Date.now();
+}
+
 export default async function handler(req, res) {
   // CORS configuration for Flutter Mobile App, Web Storefront, and Vercel
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -181,44 +211,40 @@ export default async function handler(req, res) {
   // GET: Fetch all active or all coupons
   // ----------------------------------------------------
   if (req.method === 'GET') {
+    const hasAdminCookie = (req.headers?.cookie || '').split(';')
+      .some(part => part.trim().startsWith('mle_admin_session='));
+    let isAdmin = false;
+    if (hasAdminCookie) {
+      const admin = await requireAdminSession(req, res);
+      if (!admin) return;
+      isAdmin = true;
+    }
+
     if (pool) {
       try {
         await ensureCouponsTable(pool);
         const [rows] = await pool.query('SELECT * FROM coupons ORDER BY created_at DESC');
 
-        if (Array.isArray(rows) && rows.length > 0) {
-          const formatted = rows
-            .filter(r => r.is_active && r.suggestion_mode !== 'SECRET_MANUAL_ONLY' && r.code !== 'LAUNCH150')
-            .map(r => ({
-            id: r.id,
-            code: r.code,
-            title: r.title,
-            description: r.description || '',
-            discountType: r.discount_type,
-            discountValue: Number(r.discount_value),
-            minOrderValue: Number(r.min_order_value || 0),
-            maxDiscountAmount: r.max_discount_amount ? Number(r.max_discount_amount) : undefined,
-            validUntil: r.valid_until ? new Date(r.valid_until).toISOString() : undefined,
-            isActive: Boolean(r.is_active),
-            isFeatured: Boolean(r.is_featured) && r.code !== 'LAUNCH150' && r.suggestion_mode !== 'SECRET_MANUAL_ONLY',
-            suggestionMode: r.suggestion_mode || (r.code === 'LAUNCH150' || !r.is_featured ? 'SECRET_MANUAL_ONLY' : 'PUBLIC_1CLICK'),
-            targetPlatform: r.target_platform || 'ALL',
-            applicableFor: r.applicable_for || 'ALL',
-            usageLimit: r.usage_limit ? Number(r.usage_limit) : undefined,
-            usedCount: Number(r.used_count || 0),
-            createdAt: r.created_at ? new Date(r.created_at).toISOString() : new Date().toISOString()
-            }));
-
-          return res.status(200).json({
-            success: true,
-            source: 'MYSQL_DATABASE',
-            count: formatted.length,
-            data: formatted
-          });
-        }
+        const formatted = (Array.isArray(rows) ? rows : [])
+          .filter(r => isAdmin || (couponIsAvailable(r) && r.suggestion_mode !== 'SECRET_MANUAL_ONLY' && r.code !== 'LAUNCH150'))
+          .map(mapCouponRow);
+        return res.status(200).json({
+          success: true,
+          source: 'MYSQL_DATABASE',
+          count: formatted.length,
+          data: formatted
+        });
       } catch (err) {
+        if (isAdmin) {
+          console.error('Admin coupon query failed:', err.message);
+          return res.status(503).json({ success: false, error: 'Coupon data could not be loaded from the database.' });
+        }
         console.warn('MySQL coupons query failed, falling back to local file:', err.message);
       }
+    }
+
+    if (isAdmin) {
+      return res.status(503).json({ success: false, error: 'Admin coupon management requires a configured database.' });
     }
 
     const fallback = readFallbackCoupons().filter(
@@ -236,14 +262,74 @@ export default async function handler(req, res) {
   // POST / PUT: Create or Update Coupon
   // ----------------------------------------------------
   if (req.method === 'POST' || req.method === 'PUT') {
-    const admin = await requireAdminSession(req, res);
-    if (!admin) return;
     let body = req.body;
     if (typeof body === 'string') {
       try { body = JSON.parse(body); } catch { body = {}; }
     }
     body = body || {};
 
+    if ((req.query?.action || body.action) === 'validate') {
+      const code = String(body.code || '').trim().toUpperCase();
+      const subtotal = Number(body.subtotal);
+      const platform = String(body.platform || '').trim().toUpperCase();
+      const customerType = String(body.customerType || 'B2C').trim().toUpperCase();
+      if (!code || !Number.isFinite(subtotal) || subtotal < 0 || !['WEB', 'APP'].includes(platform) || !['B2B', 'B2C'].includes(customerType)) {
+        return res.status(400).json({ success: false, valid: false, error: 'Coupon code, subtotal, platform, or customer type is invalid.' });
+      }
+
+      let coupon;
+      if (pool) {
+        try {
+          await ensureCouponsTable(pool);
+          const [rows] = await pool.query('SELECT * FROM coupons WHERE UPPER(code) = ? LIMIT 1', [code]);
+          coupon = rows[0];
+        } catch (err) {
+          console.error('Coupon validation database query failed:', err.message);
+          return res.status(503).json({ success: false, valid: false, error: 'Coupon validation is temporarily unavailable. Please try again.' });
+        }
+      } else {
+        coupon = readFallbackCoupons().find(item => String(item.code || '').trim().toUpperCase() === code);
+        if (coupon) {
+          coupon = {
+            ...coupon,
+            discount_type: coupon.discountType,
+            discount_value: coupon.discountValue,
+            min_order_value: coupon.minOrderValue,
+            max_discount_amount: coupon.maxDiscountAmount,
+            valid_until: coupon.validUntil,
+            is_active: coupon.isActive,
+            is_featured: coupon.isFeatured,
+            applicable_for: coupon.applicableFor,
+            usage_limit: coupon.usageLimit,
+            used_count: coupon.usedCount,
+            suggestion_mode: coupon.suggestionMode,
+            target_platform: coupon.targetPlatform
+          };
+        }
+      }
+
+      const validation = validateCouponRecord(coupon, { subtotal, platform, customerType });
+      if (!validation.valid) {
+        return res.status(200).json({
+          success: false,
+          valid: false,
+          message: `${validation.message.replace('This coupon', `Coupon code "${code}"`)}`
+        });
+      }
+      return res.status(200).json({
+        success: true,
+        valid: true,
+        message: `Offer applied. Saved ₹${validation.discount.toLocaleString('en-IN')}.`,
+        data: {
+          code,
+          title: coupon.title || code,
+          discount: validation.discount
+        }
+      });
+    }
+
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
     const rawCode = (body.code || '').trim().toUpperCase().replace(/\s+/g, '');
     if (!rawCode) {
       return res.status(400).json({ success: false, error: 'Coupon code is required.' });

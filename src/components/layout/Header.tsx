@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '../common/Badge';
 import { WishlistDrawer } from '../common/WishlistDrawer';
+import { matchesProductSearch } from '../../utils/searchProducts';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -80,6 +81,12 @@ export const Header: React.FC = () => {
     setRoleMenuOpen(false);
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setSearchInput(params.get('q') || '');
+    setSearchCategory(params.get('category') || 'all');
+  }, [location.pathname, location.search]);
 
   // Lock body scroll when mobile menu or pin modal is open
   useEffect(() => {
@@ -133,16 +140,11 @@ export const Header: React.FC = () => {
 
   const filteredSuggestions = searchInput.trim()
     ? products
-        .filter(p => {
-          if (searchCategory !== 'all' && p.category !== searchCategory) return false;
-          return (
-            p.name.toLowerCase().includes(searchInput.toLowerCase()) ||
-            p.categoryName.toLowerCase().includes(searchInput.toLowerCase()) ||
-            p.subcategory.toLowerCase().includes(searchInput.toLowerCase()) ||
-            p.tags.some(t => t.toLowerCase().includes(searchInput.toLowerCase()))
-          );
-        })
-        .slice(0, 5)
+      .filter(p => {
+        if (searchCategory !== 'all' && p.category !== searchCategory) return false;
+        return matchesProductSearch(p, searchInput);
+      })
+      .slice(0, 5)
     : [];
 
   const handlePincodeSubmit = (e: React.FormEvent) => {
@@ -186,7 +188,7 @@ export const Header: React.FC = () => {
               DIRECT MILL RATE
             </span>
             <span className="hidden text-[11px] text-slate-200 sm:inline">
-              🚚 Free Delivery above ₹1,499 • ⚡ Instant Mill Discount Vouchers • 🏢 100% GST ITC Invoicing
+              🚚 Free Delivery above ₹1,499 • ⚡ Instant Mill Discount Vouchers • 🏢 GST Invoices Available
             </span>
             <span className="text-[11px] font-medium text-slate-100 sm:hidden">
               🚚 Free Delivery ₹1,499+
@@ -278,27 +280,9 @@ export const Header: React.FC = () => {
               </Link>
             </div>
 
-            {/* Desktop-only Mega Search Bar with Integrated Delivery Pincode */}
+            {/* Desktop search */}
             <div className="hidden xl:block flex-1 max-w-4xl xl:max-w-5xl relative z-40 mx-2 lg:mx-4" ref={searchContainerRef}>
               <form onSubmit={handleSearchSubmit} className="flex items-center rounded-2xl overflow-hidden shadow-subtle border border-slate-200/90 bg-slate-50/80 hover:bg-white focus-within:bg-white focus-within:border-indigo focus-within:ring-4 focus-within:ring-indigo/10 transition-all p-1">
-                {/* Integrated Delivery Location Trigger */}
-                <button
-                  type="button"
-                  onClick={() => setPinModalOpen(true)}
-                  aria-label={`Delivery location: ${deliveryInfo?.city || (deliveryPincode.startsWith('395') || deliveryPincode.startsWith('394') ? 'Surat' : 'Surat')} ${deliveryPincode}. Click to change pincode`}
-                  className="flex items-center gap-1.5 pl-2.5 pr-2.5 sm:pl-3 sm:pr-3 py-1 hover:bg-slate-200/70 rounded-xl transition text-left shrink-0 border-r border-slate-200/90 group cursor-pointer"
-                  title="Click to change delivery location"
-                >
-                  <MapPin className="w-3.5 h-3.5 text-indigo shrink-0 group-hover:scale-110 transition-transform" />
-                  <div className="flex flex-col leading-none">
-                    <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Deliver to</span>
-                    <span className="font-extrabold text-navy text-xs flex items-center gap-0.5 mt-0.5 whitespace-nowrap">
-                      {deliveryInfo?.city || (deliveryPincode.startsWith('395') || deliveryPincode.startsWith('394') ? 'Surat' : deliveryInfo?.city || 'Surat')} {deliveryPincode}
-                      <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-navy transition-colors" />
-                    </span>
-                  </div>
-                </button>
-
                 {/* Compact Category Dropdown */}
                 <div className="hidden xl:flex items-center pl-2.5 pr-2 border-r border-slate-200/90 text-xs font-bold text-slate-600 shrink-0">
                   <select
@@ -330,7 +314,7 @@ export const Header: React.FC = () => {
                       setSearchOpen(true);
                     }}
                     onFocus={() => setSearchOpen(true)}
-                    placeholder="Search 300 TC bedsheets, 600 GSM towels, canvas tote bags..."
+                    placeholder="Search products, SKU or HSN..."
                     className="w-full text-navy text-xs sm:text-sm px-2 py-1.5 outline-none bg-transparent placeholder:text-slate-400"
                   />
                   {searchInput && (
@@ -434,7 +418,7 @@ export const Header: React.FC = () => {
               <button
                 onClick={() => setPinModalOpen(true)}
                 aria-label={`Delivery Pincode: ${deliveryInfo?.city || 'Ahmedabad'}`}
-                className="flex xl:hidden max-[390px]:hidden items-center gap-1 px-1.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition shrink-0 cursor-pointer"
+                className="flex max-[390px]:hidden items-center gap-1 px-1.5 py-1 text-[10px] sm:text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition shrink-0 cursor-pointer"
                 title="Delivery Pincode"
               >
                 <MapPin className="w-3 h-3 text-indigo shrink-0" />

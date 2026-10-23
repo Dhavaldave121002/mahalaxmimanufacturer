@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:mobile": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "admin:create": "node scripts/create-admin.js",
+    "db:seed-default-coupons": "node scripts/seed-default-coupons.js",
     "db:sync-core-collections": "node scripts/sync-core-collections.cjs"
   },
   "dependencies": {

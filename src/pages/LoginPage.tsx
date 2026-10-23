@@ -406,7 +406,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
 
             {/* Value Pillars */}
             <div className="space-y-3.5 pt-2 text-xs">
-              <div className="flex items-start gap-3 bg-white/10 backdrop-blur-sm p-3 rounded-2xl border border-white/10">
+              <div className="flex items-start gap-3 bg-white/10 p-3 rounded-2xl border border-white/10">
                 <Zap className="w-4 h-4 text-champagne shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-white">Up to 46% Direct Mill Margin</p>
@@ -414,15 +414,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 bg-white/10 backdrop-blur-sm p-3 rounded-2xl border border-white/10">
+              <div className="flex items-start gap-3 bg-white/10 p-3 rounded-2xl border border-white/10">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-bold text-white">100% GST ITC Invoicing</p>
-                  <p className="text-slate-300 text-[11px]">Download instant Tax Invoices with your GSTIN and HSN codes.</p>
+                  <p className="font-bold text-white">GST Tax Invoicing</p>
+                  <p className="text-slate-300 text-[11px]">Download tax invoices with your GSTIN and HSN details.</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 bg-white/10 backdrop-blur-sm p-3 rounded-2xl border border-white/10">
+              <div className="flex items-start gap-3 bg-white/10 p-3 rounded-2xl border border-white/10">
                 <Truck className="w-4 h-4 text-champagne shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-white">48-Hour Priority Dispatch</p>
@@ -784,7 +784,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                         </div>
                       </div>
                       <p className="text-[10px] text-emerald-700 font-medium">
-                        ✓ Registered GSTIN enables instant Input Tax Credit (ITC) on all wholesale mill orders.
+                        ✓ Your registered GSTIN can be included on eligible business invoices.
                       </p>
                     </div>
                   )}

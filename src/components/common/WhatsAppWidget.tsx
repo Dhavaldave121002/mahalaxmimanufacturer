@@ -19,7 +19,7 @@ export const WhatsAppWidget: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (isAdminPage) {
+  if (isAdminPage || isProductPage) {
     return null;
   }
 
@@ -41,9 +41,7 @@ export const WhatsAppWidget: React.FC = () => {
           ? 'opacity-100 translate-y-0 pointer-events-auto'
           : 'opacity-0 translate-y-3 pointer-events-none md:opacity-100 md:translate-y-0 md:pointer-events-auto'
       } ${
-        isProductPage
-          ? 'bottom-20 md:bottom-24'
-          : 'bottom-20 md:bottom-6'
+        'bottom-20 md:bottom-6'
       }`}
     >
       {/* Pop-up chat card */}

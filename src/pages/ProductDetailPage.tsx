@@ -40,7 +40,8 @@ import {
   UploadCloud,
   FileText,
   Trash2,
-  Paperclip
+  Paperclip,
+  Mail
 } from 'lucide-react';
 import { StickyPurchaseBar } from '../components/common/StickyPurchaseBar';
 import { FrequentlyBoughtTogether } from '../components/common/FrequentlyBoughtTogether';
@@ -143,6 +144,16 @@ export const ProductDetailPage: React.FC = () => {
   const [quantity, setQuantity] = useState<number>(product?.moq || 1);
   const [pinInput, setPinInput] = useState(deliveryPincode);
   const [addedAnimation, setAddedAnimation] = useState(false);
+  const [cartActionMessage, setCartActionMessage] = useState('');
+  const [restockEmail, setRestockEmail] = useState(currentUser?.email || '');
+  const [isSubmittingRestockAlert, setIsSubmittingRestockAlert] = useState(false);
+  const [restockAlertMessage, setRestockAlertMessage] = useState<{ text: string; success: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!restockEmail && currentUser?.email) {
+      setRestockEmail(currentUser.email);
+    }
+  }, [currentUser?.email, restockEmail]);
 
   // Interactive Customization Studio State (Matching Flutter App 1-to-1)
   const [customizationType, setCustomizationType] = useState<string>('No Customization');
@@ -213,6 +224,7 @@ export const ProductDetailPage: React.FC = () => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewImage, setReviewImage] = useState<string | null>(null);
   const [selectedImageModal, setSelectedImageModal] = useState<string | null>(null);
   const [photosOnlyFilter, setPhotosOnlyFilter] = useState(false);
@@ -306,6 +318,7 @@ export const ProductDetailPage: React.FC = () => {
     e.preventDefault();
     if (!newReview.comment.trim() || !product?.id) return;
     setReviewSubmitting(true);
+    setReviewError(null);
     try {
       const res = await fetch('/api/products', {
         method: 'POST',
@@ -323,16 +336,21 @@ export const ProductDetailPage: React.FC = () => {
           source: 'WEBSITE'
         })
       });
-      if (res.ok) {
-        setReviewSuccess(true);
-        fetchLiveReviews();
-        setTimeout(() => {
-          setReviewSuccess(false);
-          setShowReviewForm(false);
-          setReviewImage(null);
-          setNewReview(prev => ({ ...prev, comment: '' }));
-        }, 2000);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || data?.success !== true) {
+        throw new Error(
+          typeof data?.error === 'string' ? data.error : 'Review could not be submitted. Please try again.'
+        );
       }
+      setReviewSuccess(true);
+      window.setTimeout(() => {
+        setReviewSuccess(false);
+        setShowReviewForm(false);
+        setReviewImage(null);
+        setNewReview(prev => ({ ...prev, comment: '' }));
+      }, 2500);
+    } catch (error) {
+      setReviewError(error instanceof Error ? error.message : 'Review could not be submitted. Please try again.');
     } finally {
       setReviewSubmitting(false);
     }
@@ -366,9 +384,18 @@ export const ProductDetailPage: React.FC = () => {
   }
 
   const priceNeedsConfirmation = product.specifications?.['Source Price Status'] === 'Approximate - verify before sale';
-  const availabilityNeedsConfirmation = product.stock <= 0 ||
+  const outOfStock = product.stock <= 0;
+  const availabilityNeedsConfirmation = !outOfStock &&
     product.specifications?.['Source Availability'] === 'Needs confirmation';
-  const inquiryOnly = availabilityNeedsConfirmation;
+  const insufficientStockForMoq = product.stock > 0 && product.stock < Math.max(1, product.moq || 1);
+  const inquiryOnly = outOfStock || availabilityNeedsConfirmation || insufficientStockForMoq;
+  const stockStatus = outOfStock
+    ? 'Out of stock'
+    : availabilityNeedsConfirmation
+      ? 'Availability to confirm'
+      : insufficientStockForMoq
+        ? 'Insufficient stock for MOQ'
+        : `In stock (${product.stock} units)`;
 
   // Dynamic Wholesale Tier Calculation for current selected quantity
   const currentUnitPrice = activeWholesaleTier
@@ -414,14 +441,23 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const handleAddToCart = () => {
-    addToCart(product, quantity, selectedVariant, getCustomizationPayload());
+    const added = addToCart(product, quantity, selectedVariant, getCustomizationPayload());
+    if (!added) {
+      setCartActionMessage(outOfStock ? 'This product is out of stock.' : 'There is not enough stock for that quantity.');
+      return;
+    }
+    setCartActionMessage('');
     setAddedAnimation(true);
     setTimeout(() => setAddedAnimation(false), 2000);
   };
 
   const handleBuyNow = () => {
-    addToCart(product, quantity, selectedVariant, getCustomizationPayload());
-    navigate('/checkout');
+    if (addToCart(product, quantity, selectedVariant, getCustomizationPayload())) {
+      setCartActionMessage('');
+      navigate('/checkout');
+      return;
+    }
+    setCartActionMessage(outOfStock ? 'This product is out of stock.' : 'There is not enough stock for that quantity.');
   };
 
   const handleOrderSamplePiece = () => {
@@ -431,11 +467,15 @@ export const ProductDetailPage: React.FC = () => {
       sku: `${product.sku}-SMP`,
       inStock: true
     };
-    addToCart(product, 1, sampleVariant, {
+    const added = addToCart(product, 1, sampleVariant, {
       type: 'Sample Request (1 Pc)',
       designNote: `1-Piece Evaluation Sample for ${product.name}`
     });
-    navigate('/cart');
+    if (added) {
+      navigate('/cart');
+    } else {
+      setCartActionMessage(outOfStock ? 'This product is out of stock.' : 'There is not enough stock for a sample.');
+    }
   };
 
   const handleOrderSampleBundle = () => {
@@ -473,6 +513,31 @@ export const ProductDetailPage: React.FC = () => {
   const handlePincodeCheck = (e: React.FormEvent) => {
     e.preventDefault();
     checkPincode(pinInput);
+  };
+
+  const handleRestockAlertSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmittingRestockAlert(true);
+    setRestockAlertMessage(null);
+    try {
+      const response = await fetch('/api/restock-alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, email: restockEmail })
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || result?.success !== true) {
+        throw new Error(result?.error || 'Could not save your alert. Please try again.');
+      }
+      setRestockAlertMessage({ text: result.message, success: true });
+    } catch (error) {
+      setRestockAlertMessage({
+        text: error instanceof Error ? error.message : 'Could not save your alert. Please try again.',
+        success: false
+      });
+    } finally {
+      setIsSubmittingRestockAlert(false);
+    }
   };
 
   // Related products
@@ -684,18 +749,73 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               )}
               <span className="text-slate-300">•</span>
-              {availabilityNeedsConfirmation ? (
-                <span className="text-amber-700 font-semibold flex items-center gap-1">
-                  <Info className="w-3.5 h-3.5" />
-                  Availability unconfirmed
+              {outOfStock ? (
+                <span className="flex items-center gap-1 font-semibold text-red-700">
+                  <Info className="h-3.5 w-3.5" />
+                  Out of stock
+                </span>
+              ) : availabilityNeedsConfirmation ? (
+                <span className="flex items-center gap-1 font-semibold text-amber-700">
+                  <Info className="h-3.5 w-3.5" />
+                  Availability to confirm
+                </span>
+              ) : insufficientStockForMoq ? (
+                <span className="flex items-center gap-1 font-semibold text-amber-700">
+                  <Info className="h-3.5 w-3.5" />
+                  Insufficient stock for MOQ
                 </span>
               ) : (
                 <span className="text-emerald-700 font-semibold flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  In Stock ({product.stock} units)
+                  {stockStatus}
                 </span>
               )}
             </div>
+            {outOfStock && (
+              <form
+                onSubmit={handleRestockAlertSubmit}
+                className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5 sm:p-4"
+              >
+                <label htmlFor="restock-alert-email" className="block text-sm font-bold text-navy">
+                  Get an email when this product is back in stock
+                </label>
+                <p className="mt-1 text-xs text-slate-600">
+                  Enter your email and we’ll let you know when the mill restocks it.
+                </p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    id="restock-alert-email"
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    required
+                    maxLength={254}
+                    value={restockEmail}
+                    onChange={event => setRestockEmail(event.target.value)}
+                    placeholder="you@example.com"
+                    className="min-h-11 min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 text-sm text-navy outline-none transition focus:border-indigo focus:ring-2 focus:ring-indigo/20"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSubmittingRestockAlert}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-navy px-4 text-xs font-bold text-white transition hover:bg-navy-800 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <Mail className="h-4 w-4" />
+                    {isSubmittingRestockAlert ? 'Saving…' : 'Notify Me'}
+                  </button>
+                </div>
+                {restockAlertMessage && (
+                  <p
+                    role={restockAlertMessage.success ? 'status' : 'alert'}
+                    className={`mt-2 text-xs font-semibold ${
+                      restockAlertMessage.success ? 'text-emerald-800' : 'text-red-700'
+                    }`}
+                  >
+                    {restockAlertMessage.text}
+                  </p>
+                )}
+              </form>
+            )}
           </div>
 
           {/* Dynamic Pricing Engine Box */}
@@ -1497,13 +1617,14 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* Purchase Action Row: Quantity + Add to Cart + Buy Now */}
             <div id="main-product-actions" className="space-y-2 sm:space-y-3">
-              {/* Quantity Selector */}
+              {!inquiryOnly && (
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-[11px] font-bold text-slate-700 sm:text-xs">Qty:</span>
                 <div className="flex h-10 items-center overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm sm:h-12 sm:rounded-xl">
                   <button
+                    disabled={inquiryOnly || quantity <= Math.max(1, product.moq || 1)}
                     onClick={() => setQuantity(prev => Math.max(product.moq || 1, prev - 1))}
-                    className="flex h-full items-center justify-center px-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 sm:px-3.5 sm:text-base"
+                    className="flex h-full items-center justify-center px-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 sm:px-3.5 sm:text-base"
                     aria-label="Decrease quantity"
                   >
                     -
@@ -1511,14 +1632,22 @@ export const ProductDetailPage: React.FC = () => {
                   <input
                     type="number"
                     min={product.moq || 1}
+                    max={product.stock}
                     value={quantity}
-                    onChange={e => setQuantity(Math.max(product.moq || 1, Number(e.target.value)))}
-                    className="h-full w-10 text-center text-[11px] font-black text-navy focus:outline-none sm:w-14 sm:text-xs"
+                    disabled={inquiryOnly}
+                    onChange={e => {
+                      const nextQuantity = Math.floor(Number(e.target.value));
+                      if (Number.isFinite(nextQuantity)) {
+                        setQuantity(Math.max(product.moq || 1, Math.min(product.stock, nextQuantity)));
+                      }
+                    }}
+                    className="h-full w-10 text-center text-[11px] font-black text-navy focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-14 sm:text-xs"
                     aria-label="Quantity"
                   />
                   <button
-                    onClick={() => setQuantity(prev => prev + 1)}
-                    className="flex h-full items-center justify-center px-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 sm:px-3.5 sm:text-base"
+                    disabled={inquiryOnly || quantity >= product.stock}
+                    onClick={() => setQuantity(prev => Math.min(product.stock, prev + 1))}
+                    className="flex h-full items-center justify-center px-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 sm:px-3.5 sm:text-base"
                     aria-label="Increase quantity"
                   >
                     +
@@ -1531,17 +1660,25 @@ export const ProductDetailPage: React.FC = () => {
                   </span>
                 )}
               </div>
+              )}
 
+              {!inquiryOnly ? (
+                <>
               <div className="flex min-w-0 items-center gap-2">
                   <button
                     onClick={handleAddToCart}
+                    disabled={inquiryOnly}
                     className={`flex min-h-10 min-w-0 flex-1 items-center justify-center gap-1 rounded-lg px-2 text-[10px] font-bold leading-tight shadow-sm transition sm:min-h-12 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-xs ${
-                      addedAnimation
+                      inquiryOnly
+                        ? 'cursor-not-allowed bg-slate-200 text-slate-600'
+                        : addedAnimation
                         ? 'bg-emerald-600 text-white'
                         : 'bg-navy hover:bg-navy-800 text-white'
                     }`}
                   >
-                    {addedAnimation ? (
+                    {inquiryOnly ? (
+                      <span className="truncate">{outOfStock ? 'Out of Stock' : 'Check Availability'}</span>
+                    ) : addedAnimation ? (
                       <>
                         <Check className="h-4 w-4 shrink-0" />
                         <span className="truncate">Added</span>
@@ -1557,13 +1694,29 @@ export const ProductDetailPage: React.FC = () => {
 
                   <button
                     onClick={handleBuyNow}
-                    className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-lg bg-indigo px-2 text-[10px] font-bold leading-tight text-white shadow-premium transition hover:bg-indigo-dark sm:min-h-12 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-xs"
+                    disabled={inquiryOnly}
+                    className={`flex min-h-10 min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[10px] font-bold leading-tight shadow-premium transition sm:min-h-12 sm:gap-2 sm:rounded-xl sm:px-4 sm:text-xs ${
+                      inquiryOnly
+                        ? 'cursor-not-allowed bg-slate-200 text-slate-600'
+                        : 'bg-indigo text-white hover:bg-indigo-dark'
+                    }`}
                   >
-                    <Zap className="h-4 w-4 shrink-0" />
-                    <span className="truncate">Buy Now</span>
-                    <BuyNowPaymentIcons />
+                    {inquiryOnly ? (
+                      <span>{outOfStock ? 'Out of Stock' : 'Check Availability'}</span>
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4 shrink-0" />
+                        <span className="truncate">Buy Now</span>
+                        <BuyNowPaymentIcons />
+                      </>
+                    )}
                   </button>
               </div>
+              {cartActionMessage && (
+                <p role="alert" className="text-xs font-semibold text-red-700">{cartActionMessage}</p>
+              )}
+                </>
+              ) : null}
             </div>
 
             {/* Wishlist & WhatsApp Quick Action Row */}
@@ -1583,7 +1736,7 @@ export const ProductDetailPage: React.FC = () => {
               </button>
 
               <a
-                href={`https://wa.me/918511172099?text=${encodeURIComponent(
+                href={`https://wa.me/919033598639?text=${encodeURIComponent(
                   `Namaste Mahalaxmi Enterprises, I want to order ${product.name} (SKU: ${product.sku}). Qty: ${quantity} pcs at the listed rate ₹${currentUnitPrice}/pc. Please confirm stock and dispatch availability for ${deliveryInfo?.city || 'my city'}.`
                 )}`}
                 target="_blank"
@@ -1877,10 +2030,15 @@ export const ProductDetailPage: React.FC = () => {
 
                 {reviewSuccess ? (
                   <div className="p-4 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200 text-center font-bold">
-                    ✓ Review submitted to MySQL database and published live! Thank you!
+                    ✓ Review submitted successfully. It will appear after admin approval.
                   </div>
                 ) : (
                   <>
+                    {reviewError && (
+                      <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-red-800">
+                        {reviewError}
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="font-bold text-slate-700 block mb-1">Your Name *</label>
@@ -2203,7 +2361,7 @@ export const ProductDetailPage: React.FC = () => {
                   • <strong>Online:</strong> Go to <Link to="/orders" className="text-indigo font-bold underline">Track Order</Link> and click <em>"🔄 Return / Exchange"</em> on your delivered order.
                 </p>
                 <p className="text-slate-600">
-                  • <strong>WhatsApp:</strong> Message us at <a href="https://wa.me/918511172099" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">+91 85111 72099</a> with your Order ID.
+                  • <strong>WhatsApp:</strong> Message us at <a href="https://wa.me/919033598639" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">+91 90335 98639</a> with your Order ID.
                 </p>
               </div>
 
@@ -2229,6 +2387,7 @@ export const ProductDetailPage: React.FC = () => {
         onAddToCart={handleAddToCart}
         onBuyNow={handleBuyNow}
         addedAnimation={addedAnimation}
+        canPurchase={!inquiryOnly}
       />
     </div>
   );

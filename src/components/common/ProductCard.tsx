@@ -17,16 +17,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const isSaved = isInWishlist(product.id);
   const realRating = useRealRating(product.id, product.slug);
   const approximatePrice = product.specifications?.['Source Price Status'] === 'Approximate - verify before sale';
-  const stockNeedsConfirmation = product.stock <= 0 ||
-    product.specifications?.['Source Availability'] === 'Needs confirmation';
+  const outOfStock = product.stock <= 0;
+  const availabilityNeedsConfirmation = product.specifications?.['Source Availability'] === 'Needs confirmation';
+  const insufficientStockForMoq = product.stock > 0 && product.stock < Math.max(1, product.moq || 1);
+  const purchaseUnavailable = outOfStock || availabilityNeedsConfirmation || insufficientStockForMoq;
   const preferredImage = orderProductImagesByResolution(product.images)[0];
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product, Math.max(1, product.moq || 1), product.variants?.[0]);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1600);
+    if (addToCart(product, Math.max(1, product.moq || 1), product.variants?.[0])) {
+      setAdded(true);
+      setTimeout(() => setAdded(false), 1600);
+    }
   };
 
   // Best bulk savings tier
@@ -131,7 +134,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               </>
             ) : (
               <span className="max-w-full truncate rounded border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">
-                {stockNeedsConfirmation ? 'Availability unconfirmed' : 'Direct Mill Launch'}
+                {outOfStock
+                  ? 'Out of stock'
+                  : availabilityNeedsConfirmation
+                    ? 'Availability to confirm'
+                    : insufficientStockForMoq
+                      ? 'Insufficient stock for MOQ'
+                      : 'Direct Mill Launch'}
               </span>
             )}
           </div>
@@ -169,7 +178,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
           <div className="mt-2 grid grid-cols-2 gap-x-1 gap-y-1 text-[9px] font-medium text-slate-600 sm:mt-2 sm:flex sm:items-center sm:justify-between sm:gap-1 sm:whitespace-nowrap sm:text-[10px]">
             <span>{`MOQ ${product.moq}`}</span>
-            <span className="truncate">{stockNeedsConfirmation ? 'Stock to confirm' : `${product.stock} in stock`}</span>
+            <span className="truncate">
+              {outOfStock
+                ? 'Out of stock'
+                : availabilityNeedsConfirmation
+                  ? 'Stock to confirm'
+                  : `${product.stock} in stock`}
+            </span>
             <span className="col-span-2 sm:hidden">{approximatePrice ? 'Approx. price' : 'Price shown'}</span>
             <span className="hidden text-slate-300 sm:inline" aria-hidden="true">•</span>
             <span className="hidden sm:inline">{approximatePrice ? 'Approx. price' : 'Price shown'}</span>
@@ -179,14 +194,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <div className="mt-2 grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] gap-1 sm:mt-2.5 sm:flex sm:items-center sm:gap-1.5">
             <button
               onClick={handleQuickAdd}
+              disabled={purchaseUnavailable}
               aria-label={`Add ${product.name} to cart`}
               className={`col-span-3 flex min-w-0 items-center justify-center gap-1 rounded-lg px-1.5 py-2 text-[10px] font-bold shadow-sm transition sm:col-span-1 sm:flex-1 sm:gap-1.5 sm:rounded-xl sm:px-3 sm:py-2.5 sm:text-xs ${
-                added
+                purchaseUnavailable
+                  ? 'cursor-not-allowed bg-slate-200 text-slate-600'
+                  : added
                   ? 'bg-emerald-600 text-white'
                   : 'bg-navy hover:bg-navy-800 text-white'
               }`}
             >
-              {added ? (
+              {purchaseUnavailable ? (
+                <span className="truncate">
+                  {outOfStock ? 'Out of Stock' : availabilityNeedsConfirmation ? 'Check Availability' : 'Insufficient Stock'}
+                </span>
+              ) : added ? (
                 <>
                   <Check className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                   <span className="truncate">Added</span>
@@ -201,7 +223,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
             {/* 1-Click WhatsApp Direct Quick Buy */}
             <a
-              href={`https://wa.me/918511172099?text=${encodeURIComponent(
+              href={`https://wa.me/919033598639?text=${encodeURIComponent(
                 `Hello Mahalaxmi Enterprises, I want to order "${product.name}" (SKU: ${product.sku}) at ₹${product.retailPrice}. Please confirm stock & dispatch.`
               )}`}
               target="_blank"

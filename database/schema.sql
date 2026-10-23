@@ -118,9 +118,9 @@ CREATE TABLE IF NOT EXISTS `app_settings` (
   `min_supported_version` VARCHAR(20) DEFAULT '1.0.0',
   `maintenance_mode` BOOLEAN DEFAULT FALSE,
   `maintenance_message` TEXT,
-  `support_phone` VARCHAR(30) DEFAULT '+91 85111 72099',
-  `support_email` VARCHAR(100) DEFAULT 'dhavaldave121002@gmail.com',
-  `whatsapp_number` VARCHAR(30) DEFAULT '918511172099',
+  `support_phone` VARCHAR(30) DEFAULT '+91 90335 98639',
+  `support_email` VARCHAR(100) DEFAULT 'mahalaxmienterprise881@gmail.com',
+  `whatsapp_number` VARCHAR(30) DEFAULT '919033598639',
   `flash_sale_active` BOOLEAN DEFAULT TRUE,
   `flash_sale_tag` VARCHAR(255) DEFAULT 'DIWALI MILL DHAMAKA - UP TO 45% WHOLESALE',
   `catalog_download_url` VARCHAR(255) DEFAULT 'https://mahalaxmimanufacturer.vercel.app/catalog.pdf',
@@ -289,5 +289,5 @@ ON DUPLICATE KEY UPDATE `title`=VALUES(`title`), `tag`=VALUES(`tag`), `cta`=VALU
 -- ==============================================================================
 INSERT INTO `app_settings` (`id`, `app_name`, `app_version`, `min_supported_version`, `maintenance_mode`, `maintenance_message`, `support_phone`, `support_email`, `whatsapp_number`, `flash_sale_active`, `flash_sale_tag`, `catalog_download_url`, `gst_notice`, `local_flutter_project_path`)
 VALUES
-  (1, 'Mahalaxmi Enterprises', '1.0.3+4', '1.0.0', FALSE, 'Mahalaxmi Mill servers are undergoing scheduled routine maintenance. App ordering will resume shortly.', '+91 85111 72099', 'dhavaldave121002@gmail.com', '918511172099', TRUE, 'DIWALI MILL DHAMAKA - UP TO 45% WHOLESALE', 'https://mahalaxmimanufacturer.vercel.app/catalog.pdf', '100% Verified Input Tax Credit (ITC) invoices available for all commercial business orders.', 'C:\\mahalaxmi_enterprises')
+  (1, 'Mahalaxmi Enterprises', '1.0.3+4', '1.0.0', FALSE, 'Mahalaxmi Mill servers are undergoing scheduled routine maintenance. App ordering will resume shortly.', '+91 90335 98639', 'mahalaxmienterprise881@gmail.com', '919033598639', TRUE, 'DIWALI MILL DHAMAKA - UP TO 45% WHOLESALE', 'https://mahalaxmimanufacturer.vercel.app/catalog.pdf', 'GST tax invoices are available for eligible commercial business orders.', 'C:\\mahalaxmi_enterprises')
 ON DUPLICATE KEY UPDATE `app_name`=VALUES(`app_name`);

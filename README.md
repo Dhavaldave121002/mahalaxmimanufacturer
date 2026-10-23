@@ -34,7 +34,7 @@ Production product listings require a live MySQL connection. If the database can
    - Indian PIN Code delivery checker with instant delivery speed calculation.
    - Commercial discount coupon engine (`MILLDIRECT10`, `BULK500`, `MAHALAXMI20`).
    - Automated GST calculation (CGST + SGST or IGST based on buyer state).
-   - Dual checkout personas (Individual Consumer vs Registered Business with GSTIN for Input Tax Credit).
+   - Dual checkout personas (Individual Consumer vs Registered Business with GSTIN details for invoicing).
    - Payment methods: UPI QR, Bank Transfer / NEFT Escrow, Cash on Delivery (COD), and 30-Day B2B Trade Credit.
 
 5. **Order Tracking & Rule 46 GST Invoicing (`/orders`)**
@@ -78,6 +78,12 @@ npm run dev
 ```
 Open [http://localhost:5173](http://localhost:5173) in your browser.
 
+For Flutter Android-emulator testing, start the API server on the emulator-accessible host:
+```bash
+npm run dev:mobile
+```
+The debug app connects to the host through `10.0.2.2:5173`. Production order placement and live online payments remain disabled until server-side payment verification is implemented.
+
 ### 4. Build for production
 ```bash
 npm run build
@@ -99,8 +105,9 @@ Or connect your GitHub repository directly to Vercel with default Vite build set
 
 1. Create a MySQL database that is reachable from Vercel and run `database/schema.sql` against it.
 2. Add the database connection to Vercel Project Settings → Environment Variables using either `DATABASE_URL` or `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, and `MYSQL_DATABASE`. Set `MYSQL_SSL=true` when required by the provider. Never commit real credentials.
-3. To create a first administrator locally, set `.env` to the intended MySQL database and run `npm run admin:create` in an interactive terminal. The script displays the selected database, requires the exact confirmation `CREATE ADMIN`, asks for the password without echoing it, stores only a scrypt hash, and refuses to modify existing users. Never share the password or commit `.env`. For a hosted database, run the same command in a trusted environment configured for that database, or provision the user through a secure database administrator workflow.
-4. Redeploy after setting environment variables. Verify `/api/app-config?action=db-status` reports `connected: true` and `/api/products` returns `source: "MYSQL_DATABASE"` before relying on catalog data or the dashboard. Then sign in at `/admin` with the administrator email and password you provisioned.
+3. Set `.env` to the intended database and run `npm run db:seed-default-coupons` to add any missing factory coupons. The operation is additive and does not overwrite existing coupon settings or usage counts.
+4. To create a first administrator locally, run `npm run admin:create` in an interactive terminal. The script displays the selected database, requires the exact confirmation `CREATE ADMIN`, asks for the password without echoing it, stores only a scrypt hash, and refuses to modify existing users. Never share the password or commit `.env`. For a hosted database, run the same command in a trusted environment configured for that database, or provision the user through a secure database administrator workflow.
+5. Redeploy after setting environment variables. Verify `/api/app-config?action=db-status` reports `connected: true` and `/api/products` returns `source: "MYSQL_DATABASE"` before relying on catalog data or the dashboard. Then sign in at `/admin` with the administrator email and password you provisioned.
 
 Local MySQL connectivity was verified in the development environment. The Vercel database connection and its contents have not been verified. Production checkout, customer authentication, and return/exchange processing remain disabled until the missing server-side checks and payment integration are completed; configuring MySQL alone does not enable those flows.
 

@@ -4,15 +4,15 @@
   "minSupportedVersion": "1.0.0",
   "maintenanceMode": false,
   "maintenanceMessage": "Mahalaxmi Mill servers are undergoing scheduled routine maintenance. App ordering will resume shortly.",
-  "supportPhone": "+91 85111 72099",
-  "supportEmail": "dhavaldave121002@gmail.com",
-  "whatsappNumber": "918511172099",
+  "supportPhone": "+91 90335 98639",
+  "supportEmail": "mahalaxmienterprise881@gmail.com",
+  "whatsappNumber": "919033598639",
   "flashSaleActive": true,
   "flashSaleTag": "DIWALI MILL DHAMAKA - UP TO 45% WHOLESALE",
   "catalogDownloadUrl": "https://mahalaxmimanufacturer.vercel.app/catalog.pdf",
-  "gstNotice": "100% Verified Input Tax Credit (ITC) invoices available for all commercial business orders.",
+  "gstNotice": "GST tax invoices are available for eligible commercial business orders.",
   "localFlutterProjectPath": "C:\\mahalaxmi_enterprises",
-  "lastSyncedAt": "2026-10-22T13:26:34.780Z",
+  "lastSyncedAt": "2026-10-23T07:56:17.686Z",
   "banners": [
     {
       "id": "banner-textile",
@@ -138,6 +138,24 @@
     }
   ],
   "notifications": [
+    {
+      "id": "notif-1792742177649",
+      "title": "hy",
+      "message": "by",
+      "timestamp": "2026-10-23T07:56:17.649Z",
+      "targetCategory": "All",
+      "type": "OFFER",
+      "isSent": true
+    },
+    {
+      "id": "notif-1792735203135",
+      "title": "hy",
+      "message": "nice to meet you",
+      "timestamp": "2026-10-23T06:00:03.135Z",
+      "targetCategory": "All",
+      "type": "OFFER",
+      "isSent": true
+    },
     {
       "id": "notif-1792058395113",
       "title": "DDDDDDDDD",

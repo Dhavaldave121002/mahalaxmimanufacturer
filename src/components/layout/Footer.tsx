@@ -109,11 +109,11 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-champagne shrink-0" />
-                <span>Wholesale Line: +91 98765 43210 / +91 85111 72099</span>
+                <span>Wholesale Line: +91 90335 98639</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-champagne shrink-0" />
-                <span>orders@mahalaxmienterprises.com</span>
+                <span>mahalaxmienterprise881@gmail.com</span>
               </div>
             </div>
           </div>
@@ -191,13 +191,13 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="https://wa.me/918511172099?text=Namaste%20Mahalaxmi%20Enterprises,%20I%20have%20an%20inquiry%20regarding%20my%20Order/Return."
+                  href="https://wa.me/919033598639?text=Namaste%20Mahalaxmi%20Enterprises,%20I%20have%20an%20inquiry%20regarding%20my%20Order/Return."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-champagne transition text-emerald-400 flex items-center gap-1.5 font-semibold whitespace-nowrap"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                  <span>WhatsApp Helpdesk (+91 85111 72099)</span>
+                  <span>WhatsApp Helpdesk (+91 90335 98639)</span>
                 </a>
               </li>
               <li>
@@ -319,8 +319,8 @@ export const Footer: React.FC = () => {
                   <h4 className="font-bold text-navy">How to Request a Return or Exchange:</h4>
                   <div className="space-y-1 text-slate-600">
                     <p>• <strong>Method 1 (Instant Online):</strong> Visit <Link to="/orders" onClick={() => setLegalModal(null)} className="text-indigo font-bold underline">Track Order / Consignments</Link>, select your delivered order, and click the <strong>"🔄 Return / Exchange"</strong> button.</p>
-                    <p>• <strong>Method 2 (WhatsApp Desk):</strong> Ping our Ahmedabad Mill dispatch helpline on WhatsApp at <a href="https://wa.me/918511172099" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">+91 85111 72099</a> with your Order ID.</p>
-                    <p>• <strong>Method 3 (Email):</strong> Email our team at <a href="mailto:orders@mahalaxmienterprises.com" className="text-indigo font-bold underline">orders@mahalaxmienterprises.com</a>.</p>
+                    <p>• <strong>Method 2 (WhatsApp Desk):</strong> Ping our Ahmedabad Mill dispatch helpline on WhatsApp at <a href="https://wa.me/919033598639" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">+91 90335 98639</a> with your Order ID.</p>
+                    <p>• <strong>Method 3 (Email):</strong> Email our team at <a href="mailto:mahalaxmienterprise881@gmail.com" className="text-indigo font-bold underline">mahalaxmienterprise881@gmail.com</a>.</p>
                   </div>
                 </div>
               </div>
@@ -350,7 +350,7 @@ export const Footer: React.FC = () => {
                   <h3 className="text-lg font-black">GST Invoice Compliance</h3>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Every order includes an authorized B2B Tax Invoice compliant with Section 31 of the CGST Act. Valid for 100% Input Tax Credit (ITC) claiming.
+                  Business orders include a GST tax invoice with the details provided at checkout.
                 </p>
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono space-y-1">
                   <p><strong>GSTIN:</strong> 24AAECM8921P1ZA</p>

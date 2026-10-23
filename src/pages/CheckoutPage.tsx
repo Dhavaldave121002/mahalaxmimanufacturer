@@ -112,6 +112,7 @@ export const CheckoutPage: React.FC = () => {
   const [applyPoints, setApplyPoints] = useState<boolean>(isLoggedIn && (currentUser.walletBalance || 0) > 0);
   const [secondaryPaymentMethod, setSecondaryPaymentMethod] = useState<'RAZORPAY' | 'COD'>('RAZORPAY');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderSubmitError, setOrderSubmitError] = useState<string | null>(null);
 
   // Compute points and payable balance
   const pointsRedeemed = (isLoggedIn && applyPoints) ? Math.min(userWalletBalance, cartTotal) : 0;
@@ -314,10 +315,11 @@ export const CheckoutPage: React.FC = () => {
     }
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
     if (checkoutUnavailable) return;
+    setOrderSubmitError(null);
 
     if (!cart || cart.length === 0) {
       alert('Your cart is empty. Please add items to your cart before proceeding to checkout.');
@@ -363,8 +365,8 @@ export const CheckoutPage: React.FC = () => {
     // A. 100% PAID VIA MILL POINTS WALLET (₹0 Remaining)
     if (isFullyCoveredByPoints) {
       setIsSubmitting(true);
-      setTimeout(async () => {
-        const order = createOrder({
+      try {
+        const order = await createOrder({
           paymentMethod: 'WALLET_POINTS',
           shippingAddress: activeAddress,
           billingAddress: activeAddress,
@@ -376,7 +378,10 @@ export const CheckoutPage: React.FC = () => {
         await redeemWalletPoints(pointsRedeemed, order.orderNumber, order.id);
         setIsSubmitting(false);
         navigate(`/orders?success=${order.id}`);
-      }, 700);
+      } catch (error) {
+        setOrderSubmitError(error instanceof Error ? error.message : 'Order could not be saved. Please retry.');
+        setIsSubmitting(false);
+      }
       return;
     }
 
@@ -418,21 +423,25 @@ export const CheckoutPage: React.FC = () => {
         },
         handler: async function (response: any) {
           console.log('[Razorpay Live Success]', response);
-          const order = createOrder({
-            paymentMethod: pointsRedeemed > 0 ? 'PARTIAL_POINTS_RAZORPAY' : 'RAZORPAY',
-            shippingAddress: activeAddress,
-            billingAddress: activeAddress,
-            pointsRedeemed: pointsRedeemed,
-            amountPaid: remainingPayable
-          });
+          try {
+            const order = await createOrder({
+              paymentMethod: pointsRedeemed > 0 ? 'PARTIAL_POINTS_RAZORPAY' : 'RAZORPAY',
+              shippingAddress: activeAddress,
+              billingAddress: activeAddress,
+              pointsRedeemed: pointsRedeemed,
+              amountPaid: remainingPayable
+            });
 
-          // Deduct points from wallet if applied
-          if (pointsRedeemed > 0) {
-            await redeemWalletPoints(pointsRedeemed, order.orderNumber, order.id);
+            if (pointsRedeemed > 0) {
+              await redeemWalletPoints(pointsRedeemed, order.orderNumber, order.id);
+            }
+
+            setIsSubmitting(false);
+            navigate(`/orders?success=${order.id}&payment_id=${response.razorpay_payment_id || ''}`);
+          } catch (error) {
+            setOrderSubmitError(error instanceof Error ? error.message : 'Order could not be saved. Please contact support before retrying payment.');
+            setIsSubmitting(false);
           }
-
-          setIsSubmitting(false);
-          navigate(`/orders?success=${order.id}&payment_id=${response.razorpay_payment_id || ''}`);
         },
         modal: {
           ondismiss: function () {
@@ -459,8 +468,8 @@ export const CheckoutPage: React.FC = () => {
 
     // C. COD FLOW (Pay remainingPayable in cash/UPI upon delivery)
     setIsSubmitting(true);
-    setTimeout(async () => {
-      const order = createOrder({
+    try {
+      const order = await createOrder({
         paymentMethod: pointsRedeemed > 0 ? 'PARTIAL_POINTS_COD' : 'COD',
         shippingAddress: activeAddress,
         billingAddress: activeAddress,
@@ -478,7 +487,10 @@ export const CheckoutPage: React.FC = () => {
 
       setIsSubmitting(false);
       navigate(`/orders?success=${order.id}`);
-    }, 800);
+    } catch (error) {
+      setOrderSubmitError(error instanceof Error ? error.message : 'Order could not be saved. Please retry.');
+      setIsSubmitting(false);
+    }
   };
 
   if (cart.length === 0) return null;
@@ -547,7 +559,7 @@ export const CheckoutPage: React.FC = () => {
                 <Building2 className="w-5 h-5 text-indigo shrink-0" />
                 <div>
                   <p className="text-xs font-bold">Registered Business (B2B)</p>
-                  <p className="text-[10px] text-slate-500">Claim 5% / 12% GST Input Tax Credit</p>
+                  <p className="text-[10px] text-slate-500">Add GSTIN details for your business invoice</p>
                 </div>
               </button>
             </div>
@@ -1199,6 +1211,11 @@ export const CheckoutPage: React.FC = () => {
                   Orders can’t be confirmed until server-side pricing, stock, and payment verification are ready.
                   You can ask us to verify this cart on WhatsApp; that request does not place an order.
                 </p>
+              </div>
+            )}
+            {orderSubmitError && (
+              <div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-800">
+                <strong>Order not placed:</strong> {orderSubmitError}
               </div>
             )}
             <button

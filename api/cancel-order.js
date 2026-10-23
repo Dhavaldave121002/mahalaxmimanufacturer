@@ -333,7 +333,7 @@ async function sendCancellationEmails(data) {
                   <table width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
                       <td align="center">
-                        <a href="https://wa.me/918511172099?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, regarding cancelled order ${orderNumber}`)}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background-color: #F1F5F9; color: #14213D; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; padding: 11px; border-radius: 10px; border: 1px solid #CBD5E1;">
+                        <a href="https://wa.me/919033598639?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, regarding cancelled order ${orderNumber}`)}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background-color: #F1F5F9; color: #14213D; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; padding: 11px; border-radius: 10px; border: 1px solid #CBD5E1;">
                           💬 Chat with Mill Support on WhatsApp
                         </a>
                       </td>
@@ -343,7 +343,7 @@ async function sendCancellationEmails(data) {
               </tr>
               <tr>
                 <td style="background-color: #F8FAFC; padding: 14px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
-                  Mahalaxmi Enterprises • Textile Market Ring Road, Surat, Gujarat • +91 85111 72099
+                  Mahalaxmi Enterprises • Textile Market Ring Road, Surat, Gujarat • +91 90335 98639
                 </td>
               </tr>
             </table>

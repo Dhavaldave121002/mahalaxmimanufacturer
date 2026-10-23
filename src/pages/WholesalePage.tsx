@@ -45,8 +45,8 @@ export const WholesalePage: React.FC = () => {
     acceptAndConvertQuotation
   } = useApp();
 
-  // Active Tab: 'pad' | 'rfq' | 'quotes' | 'itc' | 'ratecard' | 'export'
-  const [activeTab, setActiveTab] = useState<'pad' | 'rfq' | 'quotes' | 'itc' | 'ratecard' | 'export'>('pad');
+  // Active Tab: 'pad' | 'rfq' | 'quotes' | 'gst' | 'ratecard' | 'export'
+  const [activeTab, setActiveTab] = useState<'pad' | 'rfq' | 'quotes' | 'gst' | 'ratecard' | 'export'>('pad');
 
   // Bulk SKU Order Pad State
   const [padRows, setPadRows] = useState<{ productId: string; quantity: number }[]>([
@@ -69,23 +69,11 @@ export const WholesalePage: React.FC = () => {
   // Swatch Box Feedback
   const [swatchAdded, setSwatchAdded] = useState(false);
 
-  // GSTIN & ITC Calculator State
+  // GSTIN format check and GST estimator state
   const [gstinInput, setGstinInput] = useState(currentUser.gstNumber || '24AAECM8921P1ZA');
   const [monthlyProcurement, setMonthlyProcurement] = useState<number>(200000);
   const [taxCategory, setTaxCategory] = useState<'textile' | 'household'>('textile');
-  const [gstinVerifiedData, setGstinVerifiedData] = useState<{
-    valid: boolean;
-    entityName?: string;
-    state?: string;
-    status?: string;
-    filingFrequency?: string;
-  } | null>({
-    valid: true,
-    entityName: currentUser.companyName || 'Mahalaxmi Wholesale Partner Enterprises',
-    state: 'Gujarat (State Code 24)',
-    status: 'ACTIVE - Regular Taxpayer',
-    filingFrequency: 'Monthly (GSTR-1 & GSTR-3B)'
-  });
+  const [gstinVerifiedData, setGstinVerifiedData] = useState<{ valid: boolean } | null>(null);
 
   // Rate Card State
   const [rateCardCategory, setRateCardCategory] = useState<string>('all');
@@ -170,23 +158,8 @@ export const WholesalePage: React.FC = () => {
 
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
     if (cleanGst.length === 15 && gstRegex.test(cleanGst)) {
-      const stateCode = cleanGst.substring(0, 2);
-      const stateNames: Record<string, string> = {
-        '24': 'Gujarat',
-        '27': 'Maharashtra',
-        '07': 'Delhi',
-        '29': 'Karnataka',
-        '33': 'Tamil Nadu',
-        '09': 'Uttar Pradesh',
-        '08': 'Rajasthan',
-        '19': 'West Bengal'
-      };
       setGstinVerifiedData({
-        valid: true,
-        entityName: currentUser.companyName || `${cleanGst.substring(2, 7)} Textile Traders`,
-        state: `${stateNames[stateCode] || 'Registered State'} (Code ${stateCode})`,
-        status: 'ACTIVE - Verified Taxpayer',
-        filingFrequency: 'Monthly (GSTR-1 / GSTR-3B Compliant)'
+        valid: true
       });
     } else if (cleanGst.length === 15) {
       setGstinVerifiedData({
@@ -223,11 +196,11 @@ export const WholesalePage: React.FC = () => {
     return matchCat && matchSearch;
   });
 
-  // Calculate ITC Savings
+  // Estimate the GST portion of the entered procurement total.
   const taxRate = taxCategory === 'textile' ? 0.05 : 0.12;
   const taxableBase = monthlyProcurement / (1 + taxRate);
-  const monthlyItcSavings = Math.round(monthlyProcurement - taxableBase);
-  const annualItcSavings = monthlyItcSavings * 12;
+  const monthlyGstEstimate = Math.round(monthlyProcurement - taxableBase);
+  const annualGstEstimate = monthlyGstEstimate * 12;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 pb-24">
@@ -244,10 +217,10 @@ export const WholesalePage: React.FC = () => {
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-            Direct Mill Sourcing, Multi-SKU Pad, RFQ & GSTR-2B Tax Credit Engine
+            Direct Mill Sourcing, Multi-SKU Pad, RFQ & GST Invoice Tools
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            High-speed procurement for retailers, distributors, hotels, and corporate resellers. Zero middlemen, instant Input Tax Credit (ITC) filings, and guaranteed commercial Net-30 credit terms.
+            High-speed procurement for retailers, distributors, hotels, and corporate resellers. Zero middlemen, GST invoice details, and commercial Net-30 credit terms subject to approval.
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-4 border-t border-slate-700 text-xs">
@@ -261,7 +234,7 @@ export const WholesalePage: React.FC = () => {
             </div>
             <div>
               <p className="text-champagne font-black text-sm sm:text-base">5% & 12% GST</p>
-              <p className="text-[11px] text-slate-300">100% Verified ITC</p>
+              <p className="text-[11px] text-slate-300">GST Invoice Details</p>
             </div>
             <div>
               <p className="text-champagne font-black text-sm sm:text-base">Mill Wallet Points</p>
@@ -329,15 +302,15 @@ export const WholesalePage: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('itc')}
+          onClick={() => setActiveTab('gst')}
           className={`pb-3.5 text-xs sm:text-sm font-bold border-b-2 transition flex items-center gap-2 whitespace-nowrap shrink-0 ${
-            activeTab === 'itc'
+            activeTab === 'gst'
               ? 'border-indigo text-indigo'
               : 'border-transparent text-slate-500 hover:text-navy'
           }`}
         >
           <Calculator className="w-4 h-4" />
-          <span>GSTIN & ITC Calculator</span>
+          <span>GST & Invoice Tools</span>
         </button>
 
         <button
@@ -817,22 +790,22 @@ export const WholesalePage: React.FC = () => {
       )}
 
       {/* ========================================================
-          TAB 4: GSTIN & GSTR-2B ITC CALCULATOR ENGINE
+          TAB 4: GSTIN FORMAT CHECK & GST ESTIMATOR
           ======================================================== */}
-      {activeTab === 'itc' && (
+      {activeTab === 'gst' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left: GSTIN Live Verification & Tax Policy */}
+            {/* Left: GSTIN format check and tax information */}
             <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-subtle space-y-6">
               <div>
                 <span className="text-[11px] font-bold text-indigo uppercase tracking-wider block">
-                  GOVERNMENT COMPLIANT B2B TAX PORTAL
+                  BUSINESS GST INVOICE DETAILS
                 </span>
                 <h2 className="text-xl sm:text-2xl font-black text-navy mt-1">
-                  GSTIN Validator & Input Tax Credit (ITC) Portal
+                  GSTIN Format Check
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  Validate your 15-digit GSTIN to activate corporate invoice generation, GSTR-1 live filing, and direct GSTR-2B tax refund eligibility.
+                  Check the format of a 15-digit GSTIN. This tool does not verify registration status with government records.
                 </p>
               </div>
 
@@ -855,7 +828,7 @@ export const WholesalePage: React.FC = () => {
                     onClick={() => handleValidateGstin(gstinInput)}
                     className="px-5 py-3 bg-navy hover:bg-navy-800 text-white rounded-xl text-xs font-bold transition shrink-0"
                   >
-                    Verify Status
+                    Check Format
                   </button>
                 </div>
 
@@ -873,30 +846,11 @@ export const WholesalePage: React.FC = () => {
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-emerald-800 flex items-center gap-1.5">
                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            GSTIN Verified & Active in CBIC Master
-                          </span>
-                          <span className="bg-emerald-200/80 text-emerald-900 font-bold px-2 py-0.5 rounded text-[10px]">
-                            ELIGIBLE FOR FULL ITC
+                            GSTIN format looks valid
                           </span>
                         </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-emerald-200 text-[11px]">
-                          <div>
-                            <span className="text-slate-500 block">Legal Entity Name:</span>
-                            <span className="font-bold text-navy">{gstinVerifiedData.entityName}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block">State Jurisdiction:</span>
-                            <span className="font-bold text-navy">{gstinVerifiedData.state}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block">Taxpayer Status:</span>
-                            <span className="font-bold text-emerald-700">{gstinVerifiedData.status}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block">Filing Mode:</span>
-                            <span className="font-bold text-slate-800">{gstinVerifiedData.filingFrequency}</span>
-                          </div>
+                        <div className="pt-2 border-t border-emerald-200 text-[11px]">
+                          Registration status must be checked with the relevant government service.
                         </div>
                       </>
                     ) : (
@@ -909,35 +863,35 @@ export const WholesalePage: React.FC = () => {
                 )}
               </div>
 
-              {/* Tax Credit Policy & Benefits */}
+              {/* GST invoice notes */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <h3 className="font-bold text-xs text-navy uppercase tracking-wider">
-                  Direct Mill Invoice GST Benefits:
+                  GST Invoice Information:
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <p className="font-bold text-navy">Textiles & Cotton Linen</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">HSN Chapter 52 & 63: Flat 5% GST with 100% GSTR-2B input refund.</p>
+                    <p className="text-slate-500 text-[11px] mt-0.5">GST is calculated using the product rate shown in the catalog and invoice.</p>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <p className="font-bold text-navy">Household & Cleaning Items</p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">HSN Chapter 39 & 63: Flat 12% GST claimable against business output tax.</p>
+                    <p className="text-slate-500 text-[11px] mt-0.5">Applicable GST rates can vary by product classification; check the invoice.</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Right: Interactive ITC ROI Calculator */}
+            {/* Right: GST amount estimator */}
             <div className="lg:col-span-5 bg-gradient-to-br from-navy via-navy-800 to-indigo-dark text-white rounded-3xl p-6 sm:p-8 shadow-premium space-y-6 flex flex-col justify-between">
               <div className="space-y-4">
                 <Badge variant="champagne" size="sm" className="font-bold">
-                  LIVE CASH SAVINGS ESTIMATOR
+                  GST AMOUNT ESTIMATE
                 </Badge>
                 <h3 className="text-xl font-black text-white">
-                  Monthly Input Tax Credit (ITC) Refund Calculator
+                  Monthly GST Estimate
                 </h3>
                 <p className="text-xs text-slate-300">
-                  See how much money your business claws back from the government on every bulk consignment from Mahalaxmi Enterprises.
+                  Estimate the GST portion included in your monthly procurement total using the selected rate.
                 </p>
 
                 {/* Sourcing Category */}
@@ -995,15 +949,15 @@ export const WholesalePage: React.FC = () => {
               {/* Calculated Outputs */}
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 space-y-3">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-300">Monthly ITC Refund Claim:</span>
-                  <span className="text-xl font-black text-emerald-400">₹{monthlyItcSavings.toLocaleString('en-IN')}</span>
+                  <span className="text-slate-300">Estimated Monthly GST:</span>
+                  <span className="text-xl font-black text-emerald-400">₹{monthlyGstEstimate.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-300">Annual Business Tax Savings:</span>
-                  <span className="text-2xl font-black text-champagne">₹{annualItcSavings.toLocaleString('en-IN')}</span>
+                  <span className="text-slate-300">Estimated Annual GST:</span>
+                  <span className="text-2xl font-black text-champagne">₹{annualGstEstimate.toLocaleString('en-IN')}</span>
                 </div>
                 <div className="text-[11px] text-slate-300 pt-2 border-t border-white/10">
-                  ✨ Automatically reflected in your GST portal under form GSTR-2B with Ahmedabad Mill E-Invoicing.
+                  Estimate only. Final GST amounts depend on product classification and the invoice.
                 </div>
               </div>
             </div>

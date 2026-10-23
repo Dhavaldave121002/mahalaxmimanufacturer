@@ -195,7 +195,7 @@ export default async function handler(req, res) {
         <button onclick="window.print()" class="btn">
           🖨️ Print / Save as PDF
         </button>
-        <a href="https://wa.me/918511172099?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, please send stamped PDF for Invoice ${invoiceNo}`)}" target="_blank" class="btn btn-green">
+        <a href="https://wa.me/919033598639?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, please send stamped PDF for Invoice ${invoiceNo}`)}" target="_blank" class="btn btn-green">
           💬 WhatsApp Invoice
         </a>
       </div>
@@ -214,7 +214,7 @@ export default async function handler(req, res) {
             <div style="font-size: 11px; color: #64748B; margin-top: 6px; line-height: 1.5;">
               Plot No. 42-45, Ring Road Textile Park Phase II, Surat, Gujarat - 395002<br>
               <strong>GSTIN:</strong> 24AAECM8921P1ZA • <strong>PAN:</strong> AAECM8921P • <strong>State Code:</strong> 24<br>
-              Direct Mill Hotline: +91 85111 72099 • billing@mahalaxmienterprises.com
+              Direct Mill Hotline: +91 90335 98639 • mahalaxmienterprise881@gmail.com
             </div>
           </td>
           <td style="vertical-align: top; text-align: right;">

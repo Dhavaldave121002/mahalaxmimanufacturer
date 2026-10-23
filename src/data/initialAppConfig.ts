@@ -131,13 +131,13 @@ export const INITIAL_MOBILE_APP_CONFIG: MobileAppConfig = {
     minSupportedVersion: '1.0.0',
     maintenanceMode: false,
     maintenanceMessage: 'Mahalaxmi Enterprises Mill servers are undergoing scheduled routine maintenance. App ordering will resume shortly.',
-    supportPhone: '+91 85111 72099',
-    supportEmail: 'dhavaldave121002@gmail.com',
-    whatsappNumber: '918511172099',
+    supportPhone: '+91 90335 98639',
+    supportEmail: 'mahalaxmienterprise881@gmail.com',
+    whatsappNumber: '919033598639',
     flashSaleActive: true,
     flashSaleTag: 'DIWALI MILL DHAMAKA - UP TO 45% WHOLESALE',
     catalogDownloadUrl: 'https://mahalaxmimanufacturer.vercel.app/catalog.pdf',
-    gstNotice: '100% Verified Input Tax Credit (ITC) invoices available for all commercial business orders.',
+    gstNotice: 'GST tax invoices are available for eligible commercial business orders.',
     localFlutterProjectPath: 'C:\\mahalaxmi_enterprises'
   },
   notifications: [

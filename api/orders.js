@@ -2,6 +2,8 @@ import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
 import { requireAdminSession } from './_lib/admin-session.js';
+import { ensureCouponsTable } from './coupons.js';
+import { validateCouponRecord } from './_lib/coupon-validation.js';
 
 // Local-development fallback only; customer order data must not be a public asset.
 if (!globalThis._mle_orders_cache) {
@@ -25,18 +27,6 @@ function readFallbackOrders() {
     console.warn('readFallbackOrders warning:', e.message);
   }
   return globalThis._mle_orders_cache || [];
-}
-
-function saveFallbackOrders(orders) {
-  globalThis._mle_orders_cache = orders;
-  try {
-    const dataDir = path.join(process.cwd(), 'private-data', 'fixtures');
-    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-    const fPath = path.join(dataDir, 'orders.json');
-    fs.writeFileSync(fPath, JSON.stringify(orders, null, 2), 'utf8');
-  } catch (e) {
-    console.warn('saveFallbackOrders warning:', e.message);
-  }
 }
 
 export default async function handler(req, res) {
@@ -70,13 +60,8 @@ export default async function handler(req, res) {
     }
     try {
       const [rows] = await pool.query('SELECT * FROM orders ORDER BY created_at DESC');
-      let allItems = [];
-      try {
-        const [itemRows] = await pool.query('SELECT * FROM order_items');
-        allItems = itemRows || [];
-      } catch (itemErr) {
-        console.warn('Could not fetch order_items:', itemErr.message);
-      }
+      const [itemRows] = await pool.query('SELECT * FROM order_items');
+      const allItems = itemRows || [];
 
       const itemsByOrderId = {};
       for (const item of allItems) {
@@ -199,12 +184,10 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ success: true, count: formatted.length, data: formatted });
     } catch (err) {
-      console.warn('MySQL fetch orders error, falling back to cache:', err.message);
-      return res.status(200).json({
-        success: true,
-        source: 'LOCAL_FALLBACK',
-        count: globalThis._mle_orders_cache.length,
-        data: globalThis._mle_orders_cache
+      console.error('MySQL fetch orders failed:', err);
+      return res.status(503).json({
+        success: false,
+        error: 'Orders could not be loaded from the database. Please retry.'
       });
     }
   }
@@ -299,8 +282,13 @@ export default async function handler(req, res) {
     const gstNumber = customer.gstNumber || o.gstNumber || null;
     const isB2B = customer.isB2B || o.isB2B ? 1 : 0;
 
-    const subtotal = Number(o.subtotal || o.totalAmount || 0);
-    const totalAmount = Number(o.totalAmount || o.subtotal || 0);
+    const subtotal = Number(o.subtotal ?? o.totalAmount ?? 0);
+    let totalAmount = Number(o.totalAmount ?? o.subtotal ?? 0);
+    let discount = Number(o.discount || 0);
+    const couponCode = String(o.couponCode || '').trim().toUpperCase();
+    const taxBreakdown = o.taxBreakdown || { cgst: 0, sgst: 0, igst: 0, totalTax: 0 };
+    const shippingCharge = Number(o.shippingCharge || 0);
+    let couponToUse = null;
     const paymentMethod = [
       'RAZORPAY',
       'UPI',
@@ -392,69 +380,122 @@ export default async function handler(req, res) {
       });
     }
 
-    // Send automated notification emails (Admin Alert + Customer Confirmation)
-    try {
-      await sendOrderNotificationEmails({
-        orderNumber,
-        customerName,
-        customerEmail,
-        customerPhone,
-        companyName,
-        source,
-        subtotal,
-        totalAmount,
-        paymentMethod,
-        paymentStatus,
-        shippingAddress: o.shippingAddress,
-        items: o.items || []
-      });
-    } catch (e) {
-      console.warn('Order notification email background error:', e);
+    if (!Array.isArray(o.items) || o.items.length === 0) {
+      return res.status(400).json({ success: false, error: 'An order must include at least one product.' });
     }
+
+    const inventoryRequirements = new Map();
+    for (const item of o.items) {
+      const productId = String(item.productId || item.id || '').trim();
+      const quantity = Number(item.quantity);
+      if (!productId || !Number.isInteger(quantity) || quantity < 1) {
+        return res.status(400).json({ success: false, error: 'Each order item must have a product ID and a positive whole-number quantity.' });
+      }
+      inventoryRequirements.set(productId, (inventoryRequirements.get(productId) || 0) + quantity);
+    }
+
+    const validateAndApplyCoupon = (coupon) => {
+      const validation = validateCouponRecord(coupon, {
+        subtotal,
+        platform: source === 'FLUTTER_APP' ? 'APP' : 'WEB',
+        customerType: isB2B ? 'B2B' : 'B2C'
+      });
+      if (!validation.valid) return validation;
+      couponToUse = coupon;
+      discount = validation.discount;
+      totalAmount = Math.max(
+        0,
+        Number((subtotal + Number(taxBreakdown.totalTax || 0) + shippingCharge - discount).toFixed(2))
+      );
+      return validation;
+    };
+
+    const sendOrderEmails = async () => {
+      try {
+        await sendOrderNotificationEmails({
+          orderNumber,
+          customerName,
+          customerEmail,
+          customerPhone,
+          companyName,
+          source,
+          subtotal,
+          totalAmount,
+          paymentMethod,
+          paymentStatus,
+          shippingAddress: o.shippingAddress,
+          items: o.items || []
+        });
+      } catch (e) {
+        console.warn('Order notification email background error:', e);
+      }
+    };
 
     if (!pool) {
-      const fallbackOrder = {
-        id: orderId,
-        orderNumber,
-        createdAt: new Date().toISOString(),
-        source,
-        deviceInfo: o.deviceInfo || (source === 'FLUTTER_APP' ? 'Flutter Android/iOS App' : 'Desktop/Mobile Web Browser'),
-        customer: {
-          id: customer.id || o.userId || null,
-          name: customerName,
-          email: customerEmail,
-          phone: customerPhone,
-          companyName,
-          gstNumber,
-          isB2B: !!isB2B
-        },
-        subtotal,
-        taxBreakdown: o.taxBreakdown || { cgst: 0, sgst: 0, igst: 0, totalTax: 0 },
-        shippingCharge: o.shippingCharge || 0,
-        discount: o.discount || 0,
-        couponCode: o.couponCode || undefined,
-        totalAmount,
-        paymentMethod,
-        paymentStatus,
-        status,
-        shippingAddress: typeof shippingAddress === 'string' ? JSON.parse(shippingAddress) : shippingAddress,
-        billingAddress: typeof billingAddress === 'string' ? JSON.parse(billingAddress) : billingAddress,
-        timeline: typeof timeline === 'string' ? JSON.parse(timeline) : timeline,
-        items: o.items || []
-      };
-      saveFallbackOrders([fallbackOrder, ...readFallbackOrders().filter(o => o.id !== orderId && o.orderNumber !== orderNumber)]);
-
-      return res.status(201).json({
-        success: true,
-        orderId,
-        orderNumber,
-        source,
-        message: 'Order created and saved in memory fallback store.'
+      return res.status(503).json({
+        success: false,
+        error: 'Order storage is unavailable. No order was created; please retry later.'
       });
     }
 
+    let connection;
     try {
-      await pool.query(
+      if (couponCode) await ensureCouponsTable(pool);
+      connection = await pool.getConnection();
+      await connection.beginTransaction();
+      const inventoryRows = new Map();
+      for (const [productId, quantity] of inventoryRequirements) {
+        const [rows] = await connection.query(
+          'SELECT id, name, stock, specifications FROM products WHERE id = ? LIMIT 1 FOR UPDATE',
+          [productId]
+        );
+        const product = rows[0];
+        if (!product) {
+          await connection.rollback();
+          return res.status(409).json({
+            success: false,
+            error: 'A product in this order has no verified inventory record. Please contact the mill desk.'
+          });
+        }
+
+        const specifications = typeof product.specifications === 'string'
+          ? JSON.parse(product.specifications)
+          : product.specifications;
+        if (
+          Number(product.stock) < quantity ||
+          specifications?.['Source Availability'] === 'Needs confirmation'
+        ) {
+          await connection.rollback();
+          return res.status(409).json({
+            success: false,
+            error: Number(product.stock) <= 0
+              ? `${product.name} is out of stock. Remove it from your cart before ordering.`
+              : `${product.name} does not have enough confirmed stock for this order.`
+          });
+        }
+        inventoryRows.set(productId, quantity);
+      }
+
+      if (couponCode) {
+        const [couponRows] = await connection.query(
+          'SELECT * FROM coupons WHERE UPPER(code) = ? LIMIT 1 FOR UPDATE',
+          [couponCode]
+        );
+        const validation = validateAndApplyCoupon(couponRows[0]);
+        if (!validation.valid) {
+          await connection.rollback();
+          return res.status(409).json({ success: false, error: validation.message });
+        }
+      }
+      let persistedUserId = customer.id || o.userId || null;
+      if (customerEmail) {
+        const [users] = await connection.query(
+          'SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1',
+          [customerEmail]
+        );
+        if (users.length > 0) persistedUserId = users[0].id;
+      }
+      await connection.query(
         `INSERT INTO orders (
           id, order_number, user_id, source, device_info,
           customer_name, customer_email, customer_phone, company_name, gst_number, is_b2b,
@@ -464,7 +505,7 @@ export default async function handler(req, res) {
         [
           orderId,
           orderNumber,
-          customer.id || o.userId || null,
+          persistedUserId,
           source,
           o.deviceInfo || (source === 'FLUTTER_APP' ? 'Flutter Android/iOS App' : 'Desktop/Mobile Web Browser'),
           customerName,
@@ -474,13 +515,13 @@ export default async function handler(req, res) {
           gstNumber,
           isB2B,
           subtotal,
-          o.taxBreakdown?.cgst || 0,
-          o.taxBreakdown?.sgst || 0,
-          o.taxBreakdown?.igst || 0,
-          o.taxBreakdown?.totalTax || 0,
-          o.shippingCharge || 0,
-          o.discount || 0,
-          o.couponCode || null,
+          taxBreakdown.cgst || 0,
+          taxBreakdown.sgst || 0,
+          taxBreakdown.igst || 0,
+          taxBreakdown.totalTax || 0,
+          shippingCharge,
+          discount,
+          couponCode || null,
           totalAmount,
           paymentMethod,
           paymentStatus,
@@ -499,7 +540,7 @@ export default async function handler(req, res) {
           const quantity = Number(item.quantity || 1);
           const totalPrice = Number(item.totalPrice || unitPrice * quantity);
 
-          await pool.query(
+          await connection.query(
             `INSERT INTO order_items (
               id, order_id, product_id, product_name, sku, hsn_code, quantity, unit_price, total_price, variant_description, image, gst_rate
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -521,6 +562,36 @@ export default async function handler(req, res) {
         }
       }
 
+      for (const [productId, quantity] of inventoryRows) {
+        const [updateResult] = await connection.query(
+          'UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?',
+          [quantity, productId, quantity]
+        );
+        if (updateResult.affectedRows !== 1) {
+          await connection.rollback();
+          return res.status(409).json({
+            success: false,
+            error: 'Product stock changed while placing your order. Refresh your cart and try again.'
+          });
+        }
+      }
+
+      if (couponToUse) {
+        const [updateResult] = await connection.query(
+          'UPDATE coupons SET used_count = used_count + 1 WHERE id = ? AND (usage_limit IS NULL OR usage_limit <= 0 OR used_count < usage_limit)',
+          [couponToUse.id]
+        );
+        if (updateResult.affectedRows !== 1) {
+          await connection.rollback();
+          return res.status(409).json({
+            success: false,
+            error: `Coupon code "${couponCode}" has reached its usage limit.`
+          });
+        }
+      }
+
+      await connection.commit();
+      await sendOrderEmails();
       return res.status(201).json({
         success: true,
         orderId,
@@ -529,45 +600,20 @@ export default async function handler(req, res) {
         message: `Order ${orderNumber} successfully booked and stored in MySQL database!`
       });
     } catch (err) {
-      console.warn('MySQL order insert error, saving to memory fallback:', err.message);
-      const fallbackOrder = {
-        id: orderId,
-        orderNumber,
-        createdAt: new Date().toISOString(),
-        source,
-        deviceInfo: o.deviceInfo || (source === 'FLUTTER_APP' ? 'Flutter Android/iOS App' : 'Desktop/Mobile Web Browser'),
-        customer: {
-          id: customer.id || o.userId || null,
-          name: customerName,
-          email: customerEmail,
-          phone: customerPhone,
-          companyName,
-          gstNumber,
-          isB2B: !!isB2B
-        },
-        subtotal,
-        taxBreakdown: o.taxBreakdown || { cgst: 0, sgst: 0, igst: 0, totalTax: 0 },
-        shippingCharge: o.shippingCharge || 0,
-        discount: o.discount || 0,
-        couponCode: o.couponCode || undefined,
-        totalAmount,
-        paymentMethod,
-        paymentStatus,
-        status,
-        shippingAddress: typeof shippingAddress === 'string' ? JSON.parse(shippingAddress) : shippingAddress,
-        billingAddress: typeof billingAddress === 'string' ? JSON.parse(billingAddress) : billingAddress,
-        timeline: typeof timeline === 'string' ? JSON.parse(timeline) : timeline,
-        items: o.items || []
-      };
-      saveFallbackOrders([fallbackOrder, ...readFallbackOrders().filter(o => o.id !== orderId && o.orderNumber !== orderNumber)]);
-
-      return res.status(201).json({
-        success: true,
-        orderId,
-        orderNumber,
-        source,
-        message: 'Order created and saved in memory fallback store.'
+      if (connection) {
+        try {
+          await connection.rollback();
+        } catch (rollbackError) {
+          console.warn('MySQL order rollback failed:', rollbackError.message);
+        }
+      }
+      console.warn('MySQL order insert failed:', err.message);
+      return res.status(503).json({
+        success: false,
+        error: 'Order could not be saved to MySQL and was not confirmed.'
       });
+    } finally {
+      connection?.release();
     }
   }
 

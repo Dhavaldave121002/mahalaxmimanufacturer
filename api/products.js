@@ -2,6 +2,7 @@ import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
 import { requireAdminSession, requirePersistentDatabase } from './_lib/admin-session.js';
+import { notifyRestockSubscribers } from './_lib/restock-alerts.js';
 
 const CATEGORY_NAMES = {
   'home-kitchen': 'Home and Kitchen',
@@ -201,8 +202,8 @@ export default async function handler(req, res) {
   if (req.method === 'GET' && (req.query?.action === 'reviews' || req.query?.type === 'reviews')) {
     const productId = req.query?.productId || req.query?.product_id;
     const email = req.query?.email ? req.query.email.trim().toLowerCase() : null;
-    const includePrivateReviews = req.query?.all === 'true' || Boolean(email);
-    if (includePrivateReviews) {
+    const includeAllReviews = req.query?.all === 'true';
+    if (includeAllReviews) {
       const admin = await requireAdminSession(req, res);
       if (!admin) return;
       if (!requirePersistentDatabase(pool, res)) return;
@@ -211,20 +212,22 @@ export default async function handler(req, res) {
     if (pool) {
       try {
         await ensureReviewsTable(pool);
-        let query = 'SELECT * FROM product_reviews WHERE status = "APPROVED"';
+        let query = includeAllReviews
+          ? 'SELECT * FROM product_reviews'
+          : 'SELECT * FROM product_reviews WHERE status = "APPROVED"';
         const params = [];
         if (productId) {
-          query += ' AND product_id = ?';
+          query += includeAllReviews ? ' WHERE product_id = ?' : ' AND product_id = ?';
           params.push(productId);
         } else if (email) {
-          query = 'SELECT * FROM product_reviews WHERE LOWER(customer_email) = ?';
+          query += includeAllReviews
+            ? ' WHERE LOWER(customer_email) = ?'
+            : ' AND LOWER(customer_email) = ?';
           params.push(email);
-        } else if (req.query?.all === 'true') {
-          query = 'SELECT * FROM product_reviews';
         }
         query += ' ORDER BY created_at DESC';
         const [rows] = await pool.query(query, params);
-        const visibleRows = includePrivateReviews
+        const visibleRows = includeAllReviews
           ? rows
           : rows.map(({ customer_email: _customerEmail, ...review }) => review);
         return res.status(200).json({ success: true, count: visibleRows.length, reviews: visibleRows });
@@ -253,7 +256,7 @@ export default async function handler(req, res) {
     } else if (email) {
       filtered = fallback.filter(f => (f.customer_email || '').toLowerCase() === email);
     }
-    const visibleReviews = includePrivateReviews
+    const visibleReviews = includeAllReviews
       ? filtered
       : filtered.filter(review => review.status === 'APPROVED').map(({ customer_email: _customerEmail, ...review }) => review);
     return res.status(200).json({ success: true, count: visibleReviews.length, reviews: visibleReviews });
@@ -429,6 +432,38 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, message: 'Review removed successfully.' });
     }
 
+    if (p.action === 'moderate_review') {
+      const admin = await requireAdminSession(req, res);
+      if (!admin) return;
+      if (!pool) {
+        return res.status(503).json({ success: false, error: 'Review moderation requires the database.' });
+      }
+
+      const targetId = String(p.id || p.reviewId || '').trim();
+      const status = String(p.status || '').trim().toUpperCase();
+      if (!targetId || !['APPROVED', 'REJECTED'].includes(status)) {
+        return res.status(400).json({ success: false, error: 'A review ID and APPROVED or REJECTED status are required.' });
+      }
+
+      try {
+        await ensureReviewsTable(pool);
+        const [result] = await pool.query(
+          'UPDATE product_reviews SET status = ? WHERE id = ?',
+          [status, targetId]
+        );
+        if (!result.affectedRows) {
+          const [rows] = await pool.query('SELECT id FROM product_reviews WHERE id = ? LIMIT 1', [targetId]);
+          if (!rows.length) {
+            return res.status(404).json({ success: false, error: 'Review was not found.' });
+          }
+        }
+        return res.status(200).json({ success: true, message: `Review ${status.toLowerCase()}.` });
+      } catch (error) {
+        console.error('Review moderation failed:', error);
+        return res.status(503).json({ success: false, error: 'Review moderation is unavailable.' });
+      }
+    }
+
     const admin = await requireAdminSession(req, res);
     if (!admin) return;
     if (!requirePersistentDatabase(pool, res)) return;
@@ -447,7 +482,10 @@ export default async function handler(req, res) {
     const subcategory = p.subcategory || 'General';
     const mrp = Number(p.mrp) || 999;
     const retailPrice = Number(p.retailPrice) || 499;
-    const stock = Number.isFinite(Number(p.stock)) ? Number(p.stock) : 100;
+    const stock = Number(p.stock ?? 100);
+    if (!Number.isSafeInteger(stock) || stock < 0) {
+      return res.status(400).json({ success: false, error: 'Stock must be a whole number of zero or more.' });
+    }
     const rating = p.rating ?? 4.8;
     const moq = p.moq === undefined ? 1 : Number(p.moq);
     if (!Number.isSafeInteger(moq) || moq < 1) {
@@ -467,9 +505,15 @@ export default async function handler(req, res) {
     const variants = p.variants || [];
 
     let dbSaved = false;
+    let previousStock = null;
     if (pool) {
       try {
         await ensureProductsTable(pool);
+        const [existingRows] = await pool.query(
+          'SELECT stock FROM products WHERE id = ? LIMIT 1',
+          [id]
+        );
+        if (existingRows.length > 0) previousStock = Number(existingRows[0].stock);
         await pool.query(
           `INSERT INTO products (
             id, name, slug, sku, category_id, category_name, subcategory,
@@ -496,6 +540,14 @@ export default async function handler(req, res) {
           ]
         );
         dbSaved = true;
+        if (previousStock !== null && previousStock <= 0 && stock > 0) {
+          try {
+            const notifiedCount = await notifyRestockSubscribers(pool, id);
+            console.log(`Restock alerts sent for product ${id}: ${notifiedCount}`);
+          } catch (error) {
+            console.error(`Restock alerts could not be dispatched for product ${id}:`, error);
+          }
+        }
       } catch (err) {
         console.warn('MySQL product save warning:', err.message);
         if (process.env.NODE_ENV === 'production') {
@@ -557,16 +609,43 @@ export default async function handler(req, res) {
       try { body = JSON.parse(body); } catch { body = {}; }
     }
     const { id, delta } = body || {};
-    if (!id || typeof delta !== 'number') {
+    if (!id || typeof delta !== 'number' || !Number.isSafeInteger(delta)) {
       return res.status(400).json({ success: false, error: 'id and numeric delta are required.' });
     }
 
+    let previousStock = null;
+    let updatedStock = null;
     if (pool) {
+      let connection;
       try {
-        await pool.query('UPDATE products SET stock = GREATEST(0, stock + ?) WHERE id = ?', [delta, id]);
-      } catch (e) {
-        console.warn('MySQL stock adjust warning:', e.message);
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const [rows] = await connection.query(
+          'SELECT stock FROM products WHERE id = ? LIMIT 1 FOR UPDATE',
+          [id]
+        );
+        if (rows.length === 0) {
+          await connection.rollback();
+          return res.status(404).json({ success: false, error: 'Product was not found.' });
+        }
+        previousStock = Number(rows[0].stock);
+        updatedStock = Math.max(0, previousStock + delta);
+        await connection.query('UPDATE products SET stock = ? WHERE id = ?', [updatedStock, id]);
+        await connection.commit();
+      } catch (error) {
+        if (connection) await connection.rollback();
+        console.warn('MySQL stock adjustment warning:', error.message);
         return res.status(503).json({ success: false, error: 'Stock adjustment could not be saved.' });
+      } finally {
+        if (connection) connection.release();
+      }
+      if (previousStock <= 0 && updatedStock > 0) {
+        try {
+          const notifiedCount = await notifyRestockSubscribers(pool, id);
+          console.log(`Restock alerts sent for product ${id}: ${notifiedCount}`);
+        } catch (error) {
+          console.error(`Restock alerts could not be dispatched for product ${id}:`, error);
+        }
       }
     }
 

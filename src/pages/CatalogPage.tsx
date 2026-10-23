@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { ProductCard } from '../components/common/ProductCard';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
+import { matchesProductSearch } from '../utils/searchProducts';
 import {
   SlidersHorizontal,
   ChevronDown,
@@ -49,15 +50,7 @@ export const CatalogPage: React.FC = () => {
     return products
       .filter(product => {
         // Search query filter
-        if (queryParam) {
-          const q = queryParam.toLowerCase();
-          const matches =
-            product.name.toLowerCase().includes(q) ||
-            product.categoryName.toLowerCase().includes(q) ||
-            product.subcategory.toLowerCase().includes(q) ||
-            product.tags.some(t => t.toLowerCase().includes(q));
-          if (!matches) return false;
-        }
+        if (!matchesProductSearch(product, queryParam)) return false;
 
         // Category filter
         if (selectedCategory && product.category !== selectedCategory) {

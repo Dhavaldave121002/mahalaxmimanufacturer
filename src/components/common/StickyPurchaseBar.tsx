@@ -12,6 +12,7 @@ interface StickyPurchaseBarProps {
   onAddToCart: () => void;
   onBuyNow: () => void;
   addedAnimation: boolean;
+  canPurchase: boolean;
 }
 
 export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
@@ -21,7 +22,8 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
   currentUnitPrice,
   onAddToCart,
   onBuyNow,
-  addedAnimation
+  addedAnimation,
+  canPurchase
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -62,50 +64,55 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
     };
   }, []);
 
-  if (!isVisible) return null;
+  if (!canPurchase) return null;
 
   const total = currentUnitPrice * quantity;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 box-border w-full max-w-full border-t border-slate-200 bg-white/95 px-2.5 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-2xl backdrop-blur-md transition-transform duration-300 animate-in slide-in-from-bottom sm:px-8 sm:py-3">
-      <div className="mx-auto flex w-full min-w-0 flex-col gap-2 sm:max-w-7xl sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+    <div
+      aria-hidden={!isVisible}
+      className={`fixed inset-x-0 bottom-0 z-50 box-border w-full max-w-full border-t border-slate-200 bg-white/95 px-2.5 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-2xl backdrop-blur-md transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none md:px-8 md:py-3 ${
+        isVisible ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-full opacity-0'
+      }`}
+    >
+      <div className="mx-auto flex w-full min-w-0 flex-col gap-2 md:max-w-7xl md:flex-row md:items-center md:justify-between md:gap-4">
         {/* Product Info Thumbnail & Title */}
-        <div className="flex min-w-0 w-full flex-1 items-center gap-2 sm:gap-3.5">
+        <div className="flex min-w-0 w-full flex-1 items-center gap-2 md:gap-3.5">
           <img
             src={orderProductImagesByResolution(product.images)[0]}
             alt={product.name}
-            className="h-9 w-9 shrink-0 rounded-lg border border-slate-200 object-cover sm:h-11 sm:w-11 sm:rounded-xl"
+            className="h-9 w-9 shrink-0 rounded-lg border border-slate-200 object-cover md:h-11 md:w-11 md:rounded-xl"
           />
-          <div className="min-w-0 flex-1 sm:pr-2">
+          <div className="min-w-0 flex-1 md:pr-2">
             <h4
-              className="line-clamp-1 break-all text-[11px] font-extrabold leading-tight text-navy sm:text-sm md:break-normal"
+              className="line-clamp-1 break-words text-[11px] font-extrabold leading-tight text-navy md:text-sm"
               title={product.name}
             >
               {product.name}
             </h4>
-            <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
-              <span className="shrink-0 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 sm:text-[11px]">
-                Qty {quantity}
-              </span>
-              {selectedVariant && (
-                <span className="truncate text-[10px] text-slate-500 sm:text-[11px]">
-                  • {selectedVariant.name}
+              <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+                <span className="shrink-0 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 md:text-[11px]">
+                  Qty {quantity}
                 </span>
-              )}
-            </div>
+                {selectedVariant && (
+                  <span className="truncate text-[10px] text-slate-500 md:text-[11px]">
+                    • {selectedVariant.name}
+                  </span>
+                )}
+              </div>
           </div>
         </div>
 
         {/* Action Buttons & Single Total Price */}
-        <div className="grid w-full min-w-0 grid-cols-[minmax(104px,auto)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5 sm:flex sm:w-auto sm:shrink-0 sm:gap-3">
-          <div className="min-w-0 text-left sm:shrink-0 sm:text-right">
-            <span className="block text-[9px] leading-tight text-slate-400 sm:text-[10px]">Total Payable:</span>
-            <div className="flex min-w-0 flex-wrap items-baseline justify-start gap-x-1 sm:justify-end">
-              <span className="whitespace-nowrap text-xs font-black text-navy sm:text-base">
+        <div className="grid w-full min-w-0 grid-cols-[minmax(90px,auto)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-1.5 md:flex md:w-auto md:shrink-0 md:gap-3">
+          <div className="min-w-0 text-left md:shrink-0 md:text-right">
+            <span className="block text-[9px] leading-tight text-slate-400 md:text-[10px]">Total Payable:</span>
+            <div className="flex min-w-0 flex-wrap items-baseline justify-start gap-x-1 md:justify-end">
+              <span className="whitespace-nowrap text-xs font-black text-navy md:text-base">
                 ₹{total.toLocaleString('en-IN')}
               </span>
               {product.mrp > currentUnitPrice && (
-                <span className="hidden whitespace-nowrap text-[10px] text-slate-400 line-through sm:inline">
+                <span className="hidden whitespace-nowrap text-[10px] text-slate-400 line-through md:inline">
                   ₹{(product.mrp * quantity).toLocaleString('en-IN')}
                 </span>
               )}
@@ -113,33 +120,33 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
           </div>
 
           <button
-            onClick={onAddToCart}
-            className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg px-1.5 text-[10px] font-bold leading-tight shadow-sm transition sm:min-h-11 sm:shrink-0 sm:gap-1.5 sm:rounded-xl sm:px-5 sm:py-2.5 sm:text-xs ${
-              addedAnimation
-                ? 'bg-emerald-600 text-white'
-                : 'bg-navy hover:bg-navy-800 text-white'
-            }`}
-          >
-            {addedAnimation ? (
-              <>
-                <Check className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">Added</span>
-              </>
-            ) : (
-              <>
-                <ShoppingCart className="h-3.5 w-3.5 shrink-0 text-champagne" />
-                <span className="truncate">Add to Cart</span>
-              </>
-            )}
+                onClick={onAddToCart}
+                className={`flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg px-1.5 text-[10px] font-bold leading-tight shadow-sm transition md:min-h-11 md:shrink-0 md:gap-1.5 md:rounded-xl md:px-5 md:py-2.5 md:text-xs ${
+                  addedAnimation
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-navy text-white hover:bg-navy-800'
+                }`}
+              >
+                {addedAnimation ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">Added</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-3.5 w-3.5 shrink-0 text-champagne" />
+                    <span className="truncate">Add to Cart</span>
+                  </>
+                )}
           </button>
 
           <button
-            onClick={onBuyNow}
-            className="flex min-h-10 min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg bg-indigo px-1.5 text-[10px] font-black leading-tight text-white shadow-premium transition hover:bg-indigo-dark sm:min-h-11 sm:shrink-0 sm:gap-1.5 sm:rounded-xl sm:px-6 sm:py-2.5 sm:text-xs"
-          >
-            <Zap className="h-3.5 w-3.5 shrink-0 max-[359px]:hidden" />
-            <span>Buy Now</span>
-            <BuyNowPaymentIcons />
+                onClick={onBuyNow}
+                className="flex min-h-10 min-w-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg bg-indigo px-1.5 text-[10px] font-black leading-tight text-white shadow-premium transition hover:bg-indigo-dark md:min-h-11 md:shrink-0 md:gap-1.5 md:rounded-xl md:px-6 md:py-2.5 md:text-xs"
+              >
+                <Zap className="h-3.5 w-3.5 shrink-0 max-[359px]:hidden" />
+                <span>Buy Now</span>
+                <BuyNowPaymentIcons />
           </button>
         </div>
       </div>

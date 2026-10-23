@@ -355,13 +355,13 @@ export const HomePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Box 3: 100% GSTR-2B ITC */}
+            {/* Box 3: GST invoice details */}
             <div className="flex min-w-0 items-start gap-2.5 rounded-xl bg-slate-50/70 p-2.5 sm:items-center lg:rounded-none lg:bg-transparent lg:px-6 lg:py-2">
               <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-100 bg-amber-50 text-amber-600 shadow-sm sm:mt-0 sm:h-11 sm:w-11">
                 <ShieldCheck className="w-5 h-5 text-amber-600" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="break-words text-[11px] font-bold leading-snug text-navy sm:text-sm">100% GSTR-2B ITC Claim</p>
+                <p className="break-words text-[11px] font-bold leading-snug text-navy sm:text-sm">GST Tax Invoice</p>
                 <p className="mt-0.5 break-words text-[10px] leading-snug text-slate-500 sm:text-xs">Verified GST Invoice with HSN</p>
               </div>
             </div>
@@ -436,7 +436,7 @@ export const HomePage: React.FC = () => {
                 </li>
                 <li className="flex items-center gap-2 font-semibold text-emerald-900">
                   <Check className="w-4 h-4 text-emerald-600" />
-                  100% Legal GST Tax Invoice for Business ITC Claims
+                  GST Tax Invoice with business details
                 </li>
                 <li className="flex items-center gap-2 font-semibold text-emerald-900">
                   <Check className="w-4 h-4 text-emerald-600" />
@@ -778,7 +778,7 @@ export const HomePage: React.FC = () => {
                 Wholesale Deals & Direct Mill Bulk Purchasing
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Unlock direct mill pricing tiers when purchasing 10, 50, or 200+ units. Automatic discount application at checkout with official GST tax invoices for commercial input tax credit.
+                Unlock direct mill pricing tiers when purchasing 10, 50, or 200+ units. Automatic discount application at checkout with GST tax invoices for eligible commercial orders.
               </p>
 
               <div className="space-y-2.5 pt-2 text-xs">

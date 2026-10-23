@@ -444,12 +444,14 @@ export default async function handler(req, res) {
       }));
 
       let formattedCoupons = [];
+      let couponsLoadedFromDatabase = false;
       try {
         // Only return Public 1-Click coupons for Mobile App (exclude WEB_ONLY, exclude SECRET_MANUAL_ONLY, exclude LAUNCH150)
         const [couponsRows] = await pool.query(
-          "SELECT * FROM coupons WHERE is_active = 1 AND is_featured = 1 AND (suggestion_mode IS NULL OR suggestion_mode != 'SECRET_MANUAL_ONLY') AND (target_platform IS NULL OR target_platform != 'WEB_ONLY') AND UPPER(code) != 'LAUNCH150' ORDER BY created_at DESC"
+          "SELECT * FROM coupons WHERE is_active = 1 AND (valid_until IS NULL OR valid_until >= UTC_TIMESTAMP()) AND (usage_limit IS NULL OR used_count < usage_limit) AND is_featured = 1 AND (suggestion_mode IS NULL OR suggestion_mode != 'SECRET_MANUAL_ONLY') AND (target_platform IS NULL OR target_platform != 'WEB_ONLY') AND UPPER(code) != 'LAUNCH150' ORDER BY created_at DESC"
         );
         if (Array.isArray(couponsRows)) {
+          couponsLoadedFromDatabase = true;
           formattedCoupons = couponsRows.map(c => ({
             id: c.id,
             code: c.code,
@@ -459,9 +461,13 @@ export default async function handler(req, res) {
             discountValue: Number(c.discount_value),
             minOrderValue: Number(c.min_order_value || 0),
             maxDiscountAmount: c.max_discount_amount ? Number(c.max_discount_amount) : undefined,
+            validUntil: c.valid_until ? new Date(c.valid_until).toISOString() : undefined,
             isActive: Boolean(c.is_active),
             isFeatured: true,
-            applicableFor: c.applicable_for || 'ALL'
+            applicableFor: c.applicable_for || 'ALL',
+            usageLimit: c.usage_limit == null ? undefined : Number(c.usage_limit),
+            usedCount: Number(c.used_count || 0),
+            targetPlatform: c.target_platform || 'ALL'
           }));
         }
       } catch (coupErr) {
@@ -493,7 +499,7 @@ export default async function handler(req, res) {
           banners: formattedBanners.length > 0 ? formattedBanners : (readFallbackConfig()?.banners || []),
           categories: formattedCategories.length > 0 ? formattedCategories : (readFallbackConfig()?.categories || []),
           notifications: formattedNotifications,
-          coupons: formattedCoupons.length > 0 ? formattedCoupons : fallbackCoupons,
+          coupons: couponsLoadedFromDatabase ? formattedCoupons : fallbackCoupons,
           bundleOffer: readFallbackConfig()?.bundleOffer || {
             enabled: true,
             title: "Frequently Bought Together • Mill Saver Bundle",

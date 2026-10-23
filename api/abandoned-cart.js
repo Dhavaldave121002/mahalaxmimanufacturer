@@ -505,7 +505,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
                   <table width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
                       <td align="center">
-                        <a href="https://wa.me/918511172099?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, I have items in my cart worth ₹${cartTotal}. Need help placing order.`)}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background-color: #25D366; color: #FFFFFF; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; padding: 12px; border-radius: 12px;">
+                        <a href="https://wa.me/919033598639?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, I have items in my cart worth ₹${cartTotal}. Need help placing order.`)}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background-color: #25D366; color: #FFFFFF; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; padding: 12px; border-radius: 12px;">
                           💬 Order via WhatsApp Mill Desk
                         </a>
                       </td>
@@ -518,7 +518,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
               <tr>
                 <td style="background-color: #F8FAFC; padding: 16px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
                   Mahalaxmi Enterprises • Ring Road Textile Market, Surat, Gujarat<br>
-                  Direct Loom Wholesale Hotline: +91 85111 72099
+                  Direct Loom Wholesale Hotline: +91 90335 98639
                 </td>
               </tr>
 

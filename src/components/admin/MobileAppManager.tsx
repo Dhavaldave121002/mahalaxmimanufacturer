@@ -1469,7 +1469,7 @@ export const MobileAppManager: React.FC = () => {
                     <div className="h-6 w-px bg-white/20" />
                     <div>
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 mx-auto" />
-                      <span className="text-[8px] font-bold block mt-0.5">GST B2B ITC</span>
+                      <span className="text-[8px] font-bold block mt-0.5">GST B2B</span>
                     </div>
                     <div className="h-6 w-px bg-white/20" />
                     <div>
