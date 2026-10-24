@@ -272,6 +272,28 @@ function localApiPlugin(): Plugin {
         }
 
         // 10. Business Enquiries & RFQ API
+        if (req.url?.startsWith('/api/categories')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          await ensureBodyParsed();
+          try {
+            // @ts-ignore
+            const mod = await import('./api/categories.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            expressRes.status(500).json({ success: false, error: e.message });
+          }
+          return;
+        }
+
+        // 11. Business Enquiries & RFQ API
         if (req.url?.startsWith('/api/enquiry')) {
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Access-Control-Allow-Origin', '*');
@@ -294,7 +316,7 @@ function localApiPlugin(): Plugin {
           return;
         }
 
-        // 11. Auth API (Login, Register, Profile Update)
+        // 12. Auth API (Login, Register, Profile Update)
         if (req.url?.startsWith('/api/auth')) {
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Access-Control-Allow-Origin', '*');

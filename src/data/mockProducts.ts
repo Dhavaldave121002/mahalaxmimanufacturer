@@ -616,7 +616,7 @@ export const CATEGORIES_CONFIG = [
     name: 'Textile',
     tagline: 'Bags, Covers & Household Textile Products',
     icon: 'Layers',
-    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800&auto=format&fit=crop',
+    image: '/assets/images/banner_textile.jpg',
     subcategories: ['Double Bedsheets', 'Curtains', 'Premium Linen', 'Fabrics', 'Sample Bundles'],
     description: 'Browse source-listed tote bags, saree covers, carry bags and related products. Product details and availability may need confirmation.'
   },
@@ -625,7 +625,7 @@ export const CATEGORIES_CONFIG = [
     name: 'Cotton Products',
     tagline: 'Cotton Products & Household Essentials',
     icon: 'Feather',
-    image: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=800&auto=format&fit=crop',
+    image: '/assets/images/banner_cotton.jpg',
     subcategories: ['Cotton Bath Towels', 'Canvas Bags', 'Cotton Essentials', 'Direct Mill Goods'],
     description: 'Browse cotton household products and source-listed product details. Confirm specifications, current availability and pricing before ordering.'
   },
@@ -634,7 +634,7 @@ export const CATEGORIES_CONFIG = [
     name: 'Home and Kitchen',
     tagline: 'Kitchen Covers, Aprons & Food Preparation Products',
     icon: 'UtensilsCrossed',
-    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=800&auto=format&fit=crop',
+    image: '/assets/images/banner_home_kitchen.jpg',
     subcategories: ['Kitchen Towels', 'Aprons', 'Table Linen'],
     description: 'Browse source-listed kitchen covers, aprons and food-preparation products. Confirm specifications, availability and current prices before ordering.'
   },
@@ -643,7 +643,7 @@ export const CATEGORIES_CONFIG = [
     name: 'Household',
     tagline: 'Storage Bags & Household Products',
     icon: 'Sparkles',
-    image: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?q=80&w=800&auto=format&fit=crop',
+    image: '/assets/images/banner_household.jpg',
     subcategories: ['Cleaning Cloths', 'Microfiber Dusters', 'Storage and Laundry'],
     description: 'Browse source-listed storage bags and household products. Confirm specifications, availability and current prices before ordering.'
   }

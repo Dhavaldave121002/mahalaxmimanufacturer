@@ -274,6 +274,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {}
   }, [categories]);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/categories')
+      .then(async response => {
+        const data = await response.json();
+        if (!response.ok || !data?.success || !Array.isArray(data.categories)) {
+          throw new Error(data?.error || `Categories could not be loaded (HTTP ${response.status}).`);
+        }
+
+        const savedCategories = new Map<string, Record<string, unknown>>(
+          data.categories.map((category: Record<string, unknown>) => [String(category.id), category])
+        );
+        const databaseCategories = CATEGORIES_CONFIG.map(config => {
+          const saved = savedCategories.get(config.id);
+          const image = typeof saved?.image === 'string' ? saved.image.trim() : '';
+          return {
+            ...config,
+            name: typeof saved?.name === 'string' ? saved.name : config.name,
+            image: image
+              ? image.startsWith('http://') || image.startsWith('https://') || image.startsWith('/')
+                ? image
+                : `/${image}`
+              : config.image
+          };
+        });
+        if (!cancelled) setCategories(databaseCategories);
+      })
+      .catch(error => {
+        console.warn('Category database sync failed; using configured category images:', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const addCategory = (categoryData: Omit<CollectionCategory, 'id'>) => {
     const slugId = categoryData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
     const newCat: CollectionCategory = {
@@ -303,7 +339,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateCategory = (id: string, updates: Partial<CollectionCategory>) => {
+    const existingCategory = categories.find(category => category.id === id);
     setCategories(prev => prev.map(c => (c.id === id ? { ...c, ...updates } : c)));
+
+    if (updates.image) {
+      fetch('/api/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, image: updates.image })
+      })
+        .then(async response => {
+          const data = await response.json();
+          if (!response.ok || !data?.success) {
+            throw new Error(data?.error || `Category image could not be saved (HTTP ${response.status}).`);
+          }
+        })
+        .catch(error => {
+          console.error('Category image database save failed:', error);
+          if (existingCategory) {
+            setCategories(prev => prev.map(category => (
+              category.id === id ? { ...category, image: existingCategory.image } : category
+            )));
+          }
+          window.alert(`The category image was not saved: ${error.message}`);
+        });
+    }
 
     // Synchronize to mobileAppConfig as well
     setMobileAppConfig(prev => ({

@@ -48,7 +48,8 @@ export const Header: React.FC = () => {
     recentSearches,
     addRecentSearch,
     coupons,
-    wishlist
+    wishlist,
+    categories
   } = useApp();
 
   const topPromo = coupons.find(c => c.isActive && c.isFeatured);
@@ -158,24 +159,36 @@ export const Header: React.FC = () => {
     {
       name: 'Home and Kitchen',
       path: '/category/home-kitchen',
-      img: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?q=80&w=200&auto=format&fit=crop'
+      categoryId: 'home-kitchen',
+      fallbackImage: '/assets/images/banner_home_kitchen.jpg'
     },
     {
       name: 'Household',
       path: '/category/household',
-      img: 'https://images.unsplash.com/photo-1585421514738-01798e348b17?q=80&w=200&auto=format&fit=crop'
+      categoryId: 'household',
+      fallbackImage: '/assets/images/banner_household.jpg'
     },
     {
       name: 'Textile',
       path: '/category/textile',
-      img: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=200&auto=format&fit=crop'
+      categoryId: 'textile',
+      fallbackImage: '/assets/images/banner_textile.jpg'
     },
     {
       name: 'Cotton Products',
       path: '/category/cotton-products',
-      img: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=200&auto=format&fit=crop'
+      categoryId: 'cotton-products',
+      fallbackImage: '/assets/images/banner_cotton.jpg'
     }
-  ];
+  ].map(category => {
+    const image = categories.find(item => item.id === category.categoryId)?.image || category.fallbackImage;
+    return {
+      ...category,
+      img: image.startsWith('http://') || image.startsWith('https://') || image.startsWith('/')
+        ? image
+        : `/${image}`
+    };
+  });
 
   return (
     <>

@@ -249,11 +249,11 @@ export const CategoryManager: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">Banner Image URL *</label>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Category Image URL *</label>
                 <input
-                  type="url"
+                  type="text"
                   required
-                  placeholder="https://images.unsplash.com/photo-..."
+                  placeholder="https://... or /assets/images/category.jpg"
                   value={formData.image}
                   onChange={e => setFormData({ ...formData, image: e.target.value })}
                   className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo font-mono text-[11px]"
