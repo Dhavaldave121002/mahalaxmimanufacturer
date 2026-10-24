@@ -208,6 +208,7 @@ export const HomePage: React.FC = () => {
           const currentHero = heroSlides[currentSlide] || heroSlides[0];
 
           return (
+            <>
             <div className="relative mx-auto aspect-[6/5] h-auto min-h-0 w-full overflow-hidden bg-slate-900 shadow-premium sm:mx-5 sm:aspect-[16/5] sm:max-w-[1600px] sm:rounded-3xl lg:mx-auto">
               <picture className="absolute inset-0 block h-full w-full">
                 {currentHero.mobileImage && (
@@ -227,7 +228,7 @@ export const HomePage: React.FC = () => {
                 className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/75 via-slate-950/20 to-transparent sm:h-40"
               />
 
-              <div className="absolute inset-x-0 bottom-0 z-10 px-3 pb-16 sm:px-8 sm:pb-20 lg:px-12">
+              <div className="absolute inset-x-0 bottom-0 z-10 px-3 pb-16 sm:hidden">
                 <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
                   {currentHero.ctaText && (
                     <Link
@@ -282,6 +283,25 @@ export const HomePage: React.FC = () => {
                 </>
               )}
             </div>
+            <div className="mx-auto hidden max-w-[1600px] items-center gap-3 bg-white px-5 py-3 sm:flex sm:px-8">
+              {currentHero.ctaText && (
+                <Link
+                  to={currentHero.ctaLink}
+                  className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                >
+                  <span>{currentHero.ctaText}</span>
+                  <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                </Link>
+              )}
+              <Link
+                to="/wholesale"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
+              >
+                <Building2 className="h-4 w-4 shrink-0 text-indigo-600" />
+                <span>Request Mill RFQ</span>
+              </Link>
+            </div>
+            </>
           );
         })()}
       </section>
@@ -289,7 +309,7 @@ export const HomePage: React.FC = () => {
       {/* ========================================================
           COMMERCIAL PERKS & ASSURANCE STRIP (Full-Width Edge-to-Edge)
           ======================================================== */}
-      <section className="w-full bg-white border-b border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] !-mt-12 relative z-10">
+      <section className="w-full bg-white border-b border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.04)] !-mt-12 lg:!mt-0 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 min-[360px]:grid-cols-2 lg:grid-cols-4 py-3 sm:py-4 gap-2.5 sm:gap-6 lg:gap-0 lg:divide-x lg:divide-slate-200">
             {/* Box 1: 5% Bank Discount */}
