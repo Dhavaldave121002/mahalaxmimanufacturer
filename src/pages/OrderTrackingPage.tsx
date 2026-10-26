@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Order, OrderStatus } from '../types';
 import { InvoiceModal } from '../components/common/InvoiceModal';
+import { BUSINESS_WHATSAPP_NUMBER } from '../constants/businessContact';
 import {
   CheckCircle2,
   Package,
@@ -269,7 +270,7 @@ export const OrderTrackingPage: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-3">
             <a
-              href={`https://wa.me/919033598639?text=${encodeURIComponent(
+              href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                 `Namaste Mahalaxmi Enterprises, mene order book kiya hai: ${currentOrder?.orderNumber || ''}. Total Amount: ₹${currentOrder?.totalAmount?.toLocaleString('en-IN') || ''}. Kripya confirmation & dispatch details bhejein.`
               )}`}
               target="_blank"

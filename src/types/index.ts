@@ -1,4 +1,4 @@
-export type CategoryId = 'home-kitchen' | 'roti-covers' | 'household' | 'textile' | 'cotton-products';
+export type CategoryId = string;
 
 export interface WholesaleTier {
   minQty: number;

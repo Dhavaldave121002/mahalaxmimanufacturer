@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { ProductCard } from '../components/common/ProductCard';
+import { BUSINESS_WHATSAPP_NUMBER } from '../constants/businessContact';
 
 export const CartPage: React.FC = () => {
   const navigate = useNavigate();
@@ -140,6 +141,42 @@ export const CartPage: React.FC = () => {
   const [emailCartInput, setEmailCartInput] = useState('');
   const [emailCartSending, setEmailCartSending] = useState(false);
   const [emailCartStatus, setEmailCartStatus] = useState<string | null>(null);
+  const [recoveryOffer, setRecoveryOffer] = useState<{ discount: number } | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setRecoveryOffer(null);
+    if (cart.length === 0) return;
+
+    fetch('/api/abandoned-cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'OFFER',
+        subtotal: cartSubtotal,
+        source: 'WEB',
+        customerType: currentUser?.role && currentUser.role !== 'consumer' ? 'B2B' : 'B2C'
+      })
+    })
+      .then(async response => {
+        if (!response.ok) return null;
+        return response.json();
+      })
+      .then(data => {
+        if (!cancelled && data?.success && data.available && Number.isFinite(Number(data.offer?.discount))) {
+          setRecoveryOffer({
+            discount: Number(data.offer.discount)
+          });
+        }
+      })
+      .catch(error => {
+        console.warn('Current cart offer could not be verified:', error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cart.length, cartSubtotal, currentUser?.role]);
 
   const handleSendCartEmail = async () => {
     if (!emailCartInput.trim() || !emailCartInput.includes('@')) {
@@ -150,7 +187,7 @@ export const CartPage: React.FC = () => {
     setEmailCartStatus(null);
     const res = await sendAbandonedCartEmail(emailCartInput.trim(), currentUser?.name || 'Valued Customer');
     setEmailCartSending(false);
-    setEmailCartStatus(res.message);
+    setEmailCartStatus(res.success ? `✅ ${res.message}` : res.message);
     if (res.success) {
       setEmailCartInput('');
     }
@@ -689,7 +726,7 @@ export const CartPage: React.FC = () => {
 
             {/* 1-Click WhatsApp Quick Order */}
             <a
-              href={`https://wa.me/919876543210?text=${encodeURIComponent(
+              href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                 `Hello Mahalaxmi Enterprises, I want to order my cart items:\n` +
                 cart.map(i => `- ${i.quantity}x ${i.product.name} (₹${i.unitPrice}/pc)`).join('\n') +
                 `\n\nTotal Amount: ₹${cartTotal}\nPlease confirm order and share payment link / bank RTGS details.`
@@ -701,26 +738,23 @@ export const CartPage: React.FC = () => {
               <span>💬 Confirm & Order Cart via WhatsApp</span>
             </a>
 
-            {/* Email Cart Summary & ₹150 Voucher (Abandoned Cart Recovery) */}
-            <div className="p-3.5 bg-gradient-to-br from-indigo-50/50 to-emerald-50/40 border border-indigo-100 rounded-2xl space-y-2.5 text-xs">
+            {/* Email Cart Summary & verified admin offer */}
+            {recoveryOffer && <div className="p-3.5 bg-gradient-to-br from-indigo-50/50 to-emerald-50/40 border border-indigo-100 rounded-2xl space-y-2.5 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-navy flex items-center gap-1.5">
                   <Mail className="w-4 h-4 text-indigo" />
-                  <span>⏱️ 30-Min Auto Cart Recovery & Voucher</span>
-                </span>
-                <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full">
-                  AUTO 30-MIN
+                  <span>Current store offer • Save ₹{recoveryOffer.discount.toLocaleString('en-IN')}</span>
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 leading-snug">
-                Your cart is automatically saved! Enter your email to immediately receive your cart items summary and an exclusive instant discount voucher code sent directly to your inbox:
+                Email yourself a cart reminder with this currently active admin offer. The coupon code will be included in the email.
               </p>
               <div className="flex gap-2">
                 <input
                   type="email"
                   value={emailCartInput}
                   onChange={e => setEmailCartInput(e.target.value)}
-                  placeholder="Enter your email to receive cart & voucher..."
+                  placeholder="Enter your email to receive the cart offer..."
                   className="flex-1 px-3 py-2 text-xs bg-white rounded-xl border border-slate-300 outline-none focus:border-indigo"
                 />
                 <button
@@ -737,7 +771,7 @@ export const CartPage: React.FC = () => {
                   {emailCartStatus}
                 </p>
               )}
-            </div>
+            </div>}
 
             {/* Payment & Security Trust Badges Strip */}
             <div className="pt-3 border-t border-slate-100 space-y-2.5">

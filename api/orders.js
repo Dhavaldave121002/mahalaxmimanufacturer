@@ -4,10 +4,49 @@ import path from 'path';
 import { requireAdminSession } from './_lib/admin-session.js';
 import { ensureCouponsTable } from './coupons.js';
 import { validateCouponRecord } from './_lib/coupon-validation.js';
+import { verifyRazorpayPayment } from './_lib/razorpay.js';
+import { calculateCheckoutQuote } from './_lib/checkout-pricing.js';
 
 // Local-development fallback only; customer order data must not be a public asset.
 if (!globalThis._mle_orders_cache) {
   globalThis._mle_orders_cache = [];
+}
+let paymentSchemaEnsured = false;
+
+async function ensureCustomizationDataColumn(pool) {
+  const [columns] = await pool.query(
+    "SHOW COLUMNS FROM order_items LIKE 'customization_data'"
+  );
+  if (columns.length > 0) return;
+  try {
+    await pool.query(
+      'ALTER TABLE order_items ADD COLUMN customization_data JSON NULL AFTER variant_description'
+    );
+  } catch (error) {
+    if (error.code !== 'ER_DUP_FIELDNAME') throw error;
+  }
+}
+
+async function ensurePaymentColumns(pool) {
+  if (paymentSchemaEnsured) return;
+  const [columns] = await pool.query('SHOW COLUMNS FROM orders');
+  const names = new Set(columns.map(column => column.Field));
+  if (!names.has('razorpay_order_id')) {
+    await pool.query('ALTER TABLE orders ADD COLUMN razorpay_order_id VARCHAR(64) NULL');
+  }
+  if (!names.has('razorpay_payment_id')) {
+    await pool.query('ALTER TABLE orders ADD COLUMN razorpay_payment_id VARCHAR(64) NULL');
+  }
+  const [indexes] = await pool.query('SHOW INDEX FROM orders WHERE Key_name = ?', ['uq_orders_razorpay_payment']);
+  if (indexes.length === 0) {
+    await pool.query('CREATE UNIQUE INDEX uq_orders_razorpay_payment ON orders (razorpay_payment_id)');
+  }
+  await pool.query(
+    `ALTER TABLE orders MODIFY payment_method
+     ENUM('RAZORPAY','UPI','COD','NET_BANKING','WALLET_POINTS','PARTIAL_POINTS_RAZORPAY','PARTIAL_POINTS_COD','CREDIT_30_DAYS')
+     DEFAULT 'RAZORPAY'`
+  );
+  paymentSchemaEnsured = true;
 }
 
 function readFallbackOrders() {
@@ -68,7 +107,16 @@ export default async function handler(req, res) {
         if (!itemsByOrderId[item.order_id]) itemsByOrderId[item.order_id] = [];
 
         let customization = null;
-        if (item.variant_description && (item.variant_description.includes('Customized [') || item.variant_description.includes('['))) {
+        if (item.customization_data) {
+          try {
+            customization = typeof item.customization_data === 'string'
+              ? JSON.parse(item.customization_data)
+              : item.customization_data;
+          } catch (error) {
+            console.warn('Invalid customization data on order item:', error.message);
+          }
+        }
+        if (!customization && item.variant_description && (item.variant_description.includes('Customized [') || item.variant_description.includes('['))) {
           const match = item.variant_description.match(/\[(.*)\]/);
           if (match && match[1]) {
             const parts = match[1].split(' • ').map(s => s.trim());
@@ -235,13 +283,6 @@ export default async function handler(req, res) {
       }
     }
 
-    if (process.env.NODE_ENV === 'production') {
-      return res.status(503).json({
-        success: false,
-        error: 'Order placement is unavailable until server-side pricing, inventory, and payment verification are configured.'
-      });
-    }
-
     const orderId = o.id || `ord-${Date.now()}`;
     const source = o.source === 'FLUTTER_APP' ? 'FLUTTER_APP' : 'WEB';
     const orderNumber =
@@ -282,12 +323,12 @@ export default async function handler(req, res) {
     const gstNumber = customer.gstNumber || o.gstNumber || null;
     const isB2B = customer.isB2B || o.isB2B ? 1 : 0;
 
-    const subtotal = Number(o.subtotal ?? o.totalAmount ?? 0);
+    let subtotal = Number(o.subtotal ?? o.totalAmount ?? 0);
     let totalAmount = Number(o.totalAmount ?? o.subtotal ?? 0);
     let discount = Number(o.discount || 0);
     const couponCode = String(o.couponCode || '').trim().toUpperCase();
-    const taxBreakdown = o.taxBreakdown || { cgst: 0, sgst: 0, igst: 0, totalTax: 0 };
-    const shippingCharge = Number(o.shippingCharge || 0);
+    let taxBreakdown = o.taxBreakdown || { cgst: 0, sgst: 0, igst: 0, totalTax: 0 };
+    let shippingCharge = Number(o.shippingCharge || 0);
     let couponToUse = null;
     const paymentMethod = [
       'RAZORPAY',
@@ -302,11 +343,16 @@ export default async function handler(req, res) {
       ? o.paymentMethod
       : 'RAZORPAY';
     const isCod = paymentMethod === 'COD' || paymentMethod === 'PARTIAL_POINTS_COD';
-    const paymentStatus = ['PAID', 'PENDING', 'REFUNDED', 'CREDIT_APPROVED'].includes(o.paymentStatus)
-      ? o.paymentStatus
-      : isCod
-      ? 'PENDING'
-      : 'PAID';
+    const paymentOrderId = String(o.razorpayOrderId || '');
+    const paymentId = String(o.razorpayPaymentId || '');
+    const paymentSignature = String(o.razorpaySignature || '');
+    const pointsRedeemed = Math.max(0, Number(o.pointsRedeemed || 0));
+    let amountPaid = Number(o.amountPaid ?? totalAmount - pointsRedeemed);
+    if (pointsRedeemed > 0 && amountPaid !== totalAmount - pointsRedeemed) {
+      return res.status(400).json({ success: false, error: 'The wallet redemption amount is invalid.' });
+    }
+    let verifiedPayment = false;
+    let paymentStatus = 'PENDING';
     const status = o.status || 'PLACED';
 
     let shippingAddress = '{}';
@@ -394,6 +440,75 @@ export default async function handler(req, res) {
       inventoryRequirements.set(productId, (inventoryRequirements.get(productId) || 0) + quantity);
     }
 
+    let checkoutQuote;
+    try {
+      checkoutQuote = await calculateCheckoutQuote(pool, {
+        items: o.items,
+        couponCode,
+        source,
+        customerType: isB2B ? 'B2B' : 'B2C',
+        shippingState: o.shippingAddress?.state || o.shippingAddress?.cityState || ''
+      });
+    } catch (error) {
+      return res.status(409).json({
+        success: false,
+        error: error.message || 'The cart could not be priced by the server.'
+      });
+    }
+    subtotal = checkoutQuote.subtotal;
+    totalAmount = checkoutQuote.totalAmount;
+    discount = checkoutQuote.discount;
+    shippingCharge = checkoutQuote.shippingCharge;
+    taxBreakdown = checkoutQuote.taxBreakdown;
+    o.items = o.items.map((item, index) => ({
+      ...item,
+      productName: checkoutQuote.items[index].productName,
+      unitPrice: checkoutQuote.items[index].unitPrice,
+      totalPrice: checkoutQuote.items[index].totalPrice,
+      gstRate: checkoutQuote.items[index].gstRate,
+      hsnCode: checkoutQuote.items[index].hsnCode
+    }));
+    if (Math.round(Number(o.subtotal) * 100) !== Math.round(checkoutQuote.subtotal * 100) ||
+        Math.round(Number(o.totalAmount) * 100) !== Math.round(checkoutQuote.totalAmount * 100)) {
+      return res.status(409).json({
+        success: false,
+        error: 'The server-verified cart total changed. Refresh checkout and try again.'
+      });
+    }
+    if (pointsRedeemed !== 0) {
+      return res.status(503).json({
+        success: false,
+        error: 'Wallet-point checkout is temporarily unavailable. No order was confirmed.'
+      });
+    }
+    amountPaid = checkoutQuote.totalAmount;
+    if (paymentMethod === 'RAZORPAY' || paymentMethod === 'PARTIAL_POINTS_RAZORPAY') {
+      try {
+        verifiedPayment = await verifyRazorpayPayment({
+          orderId: paymentOrderId,
+          paymentId,
+          signature: paymentSignature,
+          expectedAmount: Math.round(amountPaid * 100)
+        });
+      } catch (error) {
+        console.error('Razorpay verification service failed:', error.message);
+        return res.status(503).json({ success: false, error: 'Payment verification is temporarily unavailable.' });
+      }
+      if (!verifiedPayment) {
+        return res.status(402).json({ success: false, error: 'Payment could not be verified. No order was confirmed.' });
+      }
+    }
+    paymentStatus = verifiedPayment ? 'PAID' : 'PENDING';
+    if (
+      process.env.NODE_ENV === 'production' &&
+      (process.env.RAZORPAY_CHECKOUT_ENABLED !== 'true' || !verifiedPayment)
+    ) {
+      return res.status(503).json({
+        success: false,
+        error: 'Only verified online payments can be confirmed in production.'
+      });
+    }
+
     const validateAndApplyCoupon = (coupon) => {
       const validation = validateCouponRecord(coupon, {
         subtotal,
@@ -440,6 +555,8 @@ export default async function handler(req, res) {
 
     let connection;
     try {
+      await ensureCustomizationDataColumn(pool);
+      await ensurePaymentColumns(pool);
       if (couponCode) await ensureCouponsTable(pool);
       connection = await pool.getConnection();
       await connection.beginTransaction();
@@ -494,8 +611,9 @@ export default async function handler(req, res) {
           id, order_number, user_id, source, device_info,
           customer_name, customer_email, customer_phone, company_name, gst_number, is_b2b,
           subtotal, cgst, sgst, igst, total_tax, shipping_charge, discount, coupon_code, total_amount,
-          payment_method, payment_status, status, shipping_address, billing_address, timeline
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          payment_method, payment_status, status, shipping_address, billing_address, timeline,
+          razorpay_order_id, razorpay_payment_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           orderId,
           orderNumber,
@@ -522,7 +640,9 @@ export default async function handler(req, res) {
           status,
           shippingAddress,
           billingAddress,
-          timeline
+          timeline,
+          verifiedPayment ? paymentOrderId : null,
+          verifiedPayment ? paymentId : null
         ]
       );
 
@@ -536,8 +656,8 @@ export default async function handler(req, res) {
 
           await connection.query(
             `INSERT INTO order_items (
-              id, order_id, product_id, product_name, sku, hsn_code, quantity, unit_price, total_price, variant_description, image, gst_rate
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              id, order_id, product_id, product_name, sku, hsn_code, quantity, unit_price, total_price, variant_description, customization_data, image, gst_rate
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               itemId,
               orderId,
@@ -549,6 +669,7 @@ export default async function handler(req, res) {
               unitPrice,
               totalPrice,
               item.variantDescription || item.selectedVariant?.name || 'Standard Pack',
+              item.customization ? JSON.stringify(item.customization) : null,
               item.image || '',
               item.gstRate || 5.0
             ]
@@ -911,8 +1032,8 @@ async function sendOrderNotificationEmails(data) {
               <!-- Footer -->
               <tr>
                 <td style="background-color: #F8FAFC; padding: 16px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
-                  <strong style="color: #64748B;">Mahalaxmi Enterprises Central ERP</strong><br>
-                  Surat Direct Mill Rates & Wholesale Portal • Ring Road, Surat, Gujarat
+                  <strong style="color: #64748B;">                  Mahalaxmi Enterprises</strong><br>
+                  Direct Mill Rates & Wholesale Essentials
                 </td>
               </tr>
 
@@ -988,11 +1109,15 @@ async function sendOrderNotificationEmails(data) {
             subject: `Order Confirmed: #${orderNumber} | Mahalaxmi Enterprises`,
             headline: 'Order Confirmed!',
             code_box: `#${orderNumber}`,
-            subtext: `Total Value: ₹${Number(totalAmount).toLocaleString('en-IN')} • Ahmedabad Mill`,
+            subtext: `Order #${orderNumber} • Total ₹${Number(totalAmount).toLocaleString('en-IN')}`,
+            brand_name: 'Mahalaxmi Enterprises',
+            brand_tagline: 'Direct Mill Rates & Wholesale Essentials',
+            support_phone: '+91 90335 98639',
+            support_email: 'mahalaxmienterprise881@gmail.com',
             order_number: orderNumber,
             total_amount: Number(totalAmount).toLocaleString('en-IN'),
             items_block: orderItemsBlock,
-            message: `Thank you for your order! Your consignment #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')} is confirmed and being packed at Ahmedabad Direct Mill.`
+            message: `Thank you for choosing Mahalaxmi Enterprises. We have received order #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')}. We will share updates as it moves through processing and dispatch.`
           }
         };
         if (EMAILJS_PRIVATE_KEY) customerPayload.accessToken = EMAILJS_PRIVATE_KEY;
@@ -1013,6 +1138,8 @@ async function sendOrderNotificationEmails(data) {
             headline: 'New Order Received!',
             code_box: `#${orderNumber}`,
             subtext: `Customer: ${customerName} (${customerPhone}) • ₹${Number(totalAmount).toLocaleString('en-IN')}`,
+            brand_name: 'Mahalaxmi Enterprises',
+            brand_tagline: 'Direct Mill Rates & Wholesale Essentials',
             order_number: orderNumber,
             total_amount: Number(totalAmount).toLocaleString('en-IN'),
             customer_name: customerName,

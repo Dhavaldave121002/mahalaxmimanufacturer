@@ -2,6 +2,8 @@ import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
 import { requireAdminSession } from './_lib/admin-session.js';
+import { validateCouponRecord } from './_lib/coupon-validation.js';
+import { ensureCouponsTable, readFallbackCoupons } from './coupons.js';
 
 // Subscriber File Storage Helper
 function loadSubscribers() {
@@ -28,8 +30,63 @@ function saveSubscribers(list) {
 // Global In-Memory Cart Session Registry
 global.__mle_abandoned_carts = global.__mle_abandoned_carts || new Map();
 
-// 30-Minute Automatic Background Cron Timer
-if (!global.__mle_cart_interval) {
+async function findRecoveryOffer(pool, { subtotal, source, customerType }) {
+  let coupons;
+  if (pool) {
+    await ensureCouponsTable(pool);
+    const [rows] = await pool.query('SELECT * FROM coupons ORDER BY created_at DESC');
+    coupons = rows.map(row => ({
+      id: row.id,
+      code: row.code,
+      title: row.title,
+      description: row.description,
+      discountType: row.discount_type,
+      discountValue: Number(row.discount_value),
+      minOrderValue: Number(row.min_order_value || 0),
+      maxDiscountAmount: row.max_discount_amount == null ? undefined : Number(row.max_discount_amount),
+      validUntil: row.valid_until,
+      isActive: row.is_active,
+      usageLimit: row.usage_limit,
+      usedCount: row.used_count,
+      suggestionMode: row.suggestion_mode || 'PUBLIC_1CLICK',
+      targetPlatform: row.target_platform || 'ALL',
+      applicableFor: row.applicable_for || 'ALL'
+    }));
+  } else if (process.env.NODE_ENV !== 'production') {
+    coupons = readFallbackCoupons();
+  } else {
+    return null;
+  }
+
+  return coupons
+    .map(coupon => ({
+      coupon,
+      validation: validateCouponRecord(coupon, {
+        subtotal,
+        platform: source === 'FLUTTER_APP' ? 'APP' : 'WEB',
+        customerType
+      })
+    }))
+    .filter(result =>
+      result.validation.valid &&
+      result.validation.discount > 0 &&
+      String(result.coupon.code || '').trim()
+    )
+    .sort((a, b) => {
+      const discountDifference = b.validation.discount - a.validation.discount;
+      if (discountDifference !== 0) return discountDifference;
+      return Number(b.coupon.suggestionMode === 'SECRET_MANUAL_ONLY') -
+        Number(a.coupon.suggestionMode === 'SECRET_MANUAL_ONLY');
+    })
+    .map(({ coupon, validation }) => ({
+      code: String(coupon.code || '').trim().toUpperCase(),
+      title: coupon.title || coupon.code,
+      discount: validation.discount
+    }))[0] || null;
+}
+
+// Keep the in-memory timer for local development only; serverless instances are not durable.
+if (process.env.NODE_ENV !== 'production' && !global.__mle_cart_interval) {
   global.__mle_cart_interval = setInterval(async () => {
     const now = Date.now();
     const THIRTY_MINUTES_MS = 30 * 60 * 1000;
@@ -37,8 +94,12 @@ if (!global.__mle_cart_interval) {
     for (const [email, cart] of global.__mle_abandoned_carts.entries()) {
       if (!cart.sent && !cart.cleared && (now - cart.lastActivity) >= THIRTY_MINUTES_MS) {
         cart.sent = true;
-        console.log(`[AUTO 30-MIN ABANDONED CART] 30 minutes reached for ${email}. Dispatched recovery email!`);
         try {
+          const recoveryOffer = await findRecoveryOffer(getDbPool(), {
+            subtotal: cart.subtotal ?? cart.cartTotal,
+            source: cart.source,
+            customerType: cart.customerType || 'B2C'
+          });
           await sendAbandonedCartRecoveryEmails({
             customerName: cart.customerName,
             customerEmail: cart.customerEmail,
@@ -46,15 +107,16 @@ if (!global.__mle_cart_interval) {
             cartTotal: cart.cartTotal,
             items: cart.items,
             source: cart.source,
-            couponCode: 'LAUNCH150'
+            recoveryOffer
           });
-          console.log(`[AUTO 30-MIN ABANDONED CART] Successfully sent recovery email to ${email}`);
+          console.log(`[AUTO 30-MIN ABANDONED CART] Recovery email processed for ${email}.`);
 
           // Update subscriber status in file
           const subs = loadSubscribers();
           const target = subs.find(s => s.customerEmail === email);
           if (target) {
-            target.status = 'Voucher Emailed';
+            target.status = recoveryOffer ? 'Offer Emailed' : 'Reminder Emailed';
+            target.couponCode = recoveryOffer?.code || '';
             saveSubscribers(subs);
           }
         } catch (err) {
@@ -79,15 +141,14 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(503).json({
-      success: false,
-      error: 'Abandoned-cart tracking is unavailable until durable database storage is configured.'
-    });
-  }
-
   // GET: Return all subscriber leads and cart sessions for Admin Dashboard
   if (req.method === 'GET') {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(503).json({
+        success: false,
+        error: 'Abandoned-cart tracking is unavailable until durable database storage is configured.'
+      });
+    }
     const admin = await requireAdminSession(req, res);
     if (!admin) return;
     const subscribers = loadSubscribers();
@@ -111,7 +172,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      rule: 'Abandoned cart email is sent automatically after 30 minutes of inactivity',
+      rule: 'Local development may send cart reminders after 30 minutes of inactivity.',
       activeSessionsCount: sessions.length,
       sessions,
       subscribers
@@ -131,6 +192,61 @@ export default async function handler(req, res) {
     }
   }
   const action = body.action || 'RECORD_OR_SEND';
+  const source = body.source === 'FLUTTER_APP' ? 'FLUTTER_APP' : 'WEB';
+  const subtotal = Number(body.subtotal ?? body.cartSubtotal ?? body.cartTotal ?? body.totalAmount ?? 0);
+  const customerType = body.customerType === 'B2B' ? 'B2B' : 'B2C';
+  const pool = getDbPool();
+
+  if (action === 'OFFER') {
+    if (!Number.isFinite(subtotal) || subtotal < 0) {
+      return res.status(400).json({ success: false, error: 'A valid cart subtotal is required.' });
+    }
+    if (process.env.NODE_ENV === 'production' && !pool) {
+      return res.status(503).json({
+        success: false,
+        error: 'Recovery offers require the live coupon database.'
+      });
+    }
+    try {
+      const recoveryOffer = await findRecoveryOffer(pool, { subtotal, source, customerType });
+      return res.status(200).json({
+        success: true,
+        available: Boolean(recoveryOffer),
+        offer: recoveryOffer
+          ? {
+              discount: recoveryOffer.discount
+            }
+          : null
+      });
+    } catch (error) {
+      console.error('Cart recovery offer lookup failed:', error);
+      return res.status(503).json({
+        success: false,
+        error: 'Current cart offers could not be verified.'
+      });
+    }
+  }
+
+  if (process.env.NODE_ENV === 'production' && action === 'RECORD') {
+    return res.status(503).json({
+      success: false,
+      error: 'Automatic cart tracking is not available until durable storage is configured.'
+    });
+  }
+  if (action === 'DELETE') {
+    const admin = await requireAdminSession(req, res);
+    if (!admin) return;
+  }
+  if (
+    process.env.NODE_ENV === 'production' &&
+    !['OFFER', 'SEND_NOW', 'RECORD_OR_SEND', 'CLEAR', 'ORDER_COMPLETED', 'DELETE'].includes(action)
+  ) {
+    return res.status(503).json({
+      success: false,
+      error: 'This cart recovery action is unavailable in production.'
+    });
+  }
+
   const customerEmail = (body.customerEmail || body.email || '').trim().toLowerCase();
   let customerName = (body.customerName || body.name || '').trim();
   if (!customerName || customerName.toLowerCase() === 'valued buyer' || customerName.toLowerCase() === 'valued customer' || customerName.toLowerCase() === 'customer') {
@@ -145,9 +261,6 @@ export default async function handler(req, res) {
   const customerPhone = body.customerPhone || body.phone || '+91 85111 72099';
   const cartTotal = Number(body.cartTotal || body.totalAmount || 0);
   const items = Array.isArray(body.items) ? body.items : [];
-  const source = body.source === 'FLUTTER_APP' ? 'FLUTTER_APP' : 'WEB';
-  const couponCode = body.couponCode || 'LAUNCH150';
-
   if (!customerEmail || !customerEmail.includes('@')) {
     return res.status(400).json({ success: false, error: 'Valid customerEmail is required.' });
   }
@@ -175,7 +288,7 @@ export default async function handler(req, res) {
   }
 
   // Helper to persist subscriber into subscribers.json
-  const persistSubscriberLead = (status) => {
+  const persistSubscriberLead = (status, recoveryOffer = null) => {
     try {
       const subs = loadSubscribers();
       const existingIdx = subs.findIndex(s => s.customerEmail === customerEmail);
@@ -185,13 +298,14 @@ export default async function handler(req, res) {
         customerEmail,
         customerPhone,
         cartTotal,
+        subtotal,
         itemsCount: items.length,
         itemsSummary: items.length > 0
           ? items.map(i => `${i.quantity || 1}x ${i.productName || i.name || 'Textile'}`).slice(0, 3).join(', ') + (items.length > 3 ? ` +${items.length - 3} more` : '')
           : 'Active Cart Items',
-        couponCode: couponCode || 'LAUNCH150',
+        couponCode: recoveryOffer?.code || '',
         source: source === 'FLUTTER_APP' ? 'Mobile App' : 'Website',
-        status: status || 'Voucher Emailed',
+        status: status || 'Reminder Emailed',
         createdAt: existingIdx >= 0 ? subs[existingIdx].createdAt : new Date().toISOString(),
         lastActivity: new Date().toISOString()
       };
@@ -216,6 +330,8 @@ export default async function handler(req, res) {
       customerName,
       customerPhone,
       cartTotal,
+      subtotal,
+      customerType,
       items,
       source,
       lastActivity: Date.now(),
@@ -225,14 +341,22 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: `Cart activity tracked for ${customerEmail}. If checkout is not completed, recovery email will dispatch in 30 minutes.`,
+      message: `Cart activity tracked for ${customerEmail}.`,
       scheduledInMinutes: 30
     });
   }
 
   // 3. ACTION: SEND_NOW (Instant test or explicit customer request)
   try {
-    persistSubscriberLead('Voucher Emailed');
+    const recoveryOffer = await findRecoveryOffer(pool, {
+      subtotal,
+      source,
+      customerType
+    });
+    persistSubscriberLead(
+      recoveryOffer ? 'Offer Emailed' : 'Reminder Emailed',
+      recoveryOffer
+    );
 
     await sendAbandonedCartRecoveryEmails({
       customerName,
@@ -241,7 +365,7 @@ export default async function handler(req, res) {
       cartTotal,
       items,
       source,
-      couponCode
+      recoveryOffer
     });
 
     if (global.__mle_abandoned_carts.has(customerEmail)) {
@@ -250,7 +374,10 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: `Abandoned cart recovery email dispatched to ${customerEmail} & Store Admin!`
+      hasOffer: Boolean(recoveryOffer),
+      message: recoveryOffer
+        ? `Your cart reminder and active store offer were emailed to ${customerEmail}.`
+        : `Your cart reminder was emailed to ${customerEmail}. No active offer applies to this cart right now.`
     });
   } catch (err) {
     console.error('Abandoned cart recovery email error:', err);
@@ -272,7 +399,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
     cartTotal,
     items,
     source,
-    couponCode
+    recoveryOffer
   } = data;
 
 
@@ -412,7 +539,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
     </html>
   `;
 
-  // 2. Customer Cart Recovery Email (with ₹150 OFF Voucher)
+  // 2. Customer Cart Recovery Email (with a verified active offer, if eligible)
   const customerHtml = `
     <!DOCTYPE html>
     <html lang="en">
@@ -456,22 +583,22 @@ async function sendAbandonedCartRecoveryEmails(data) {
                     </p>
                   </div>
 
-                  <!-- Special Voucher Box -->
-                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 2px dashed #059669; border-radius: 14px; margin-bottom: 22px;">
+                  <!-- Current Admin-Managed Offer -->
+                  ${recoveryOffer ? `<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border: 2px dashed #059669; border-radius: 14px; margin-bottom: 22px;">
                     <tr>
                       <td style="padding: 16px; text-align: center;">
                         <span style="font-size: 11px; font-weight: 800; color: #065F46; text-transform: uppercase; letter-spacing: 1px;">
-                          🎁 Special Loom Completion Offer
+                          🎁 Current Store Offer
                         </span>
                         <div style="font-size: 18px; font-weight: 900; color: #047857; margin: 4px 0;">
-                          Get Flat ₹150 OFF on Your Order
+                          Save ₹${Number(recoveryOffer.discount).toLocaleString('en-IN')} on your order
                         </div>
                         <div style="display: inline-block; background-color: #FFFFFF; border: 1px solid #10B981; padding: 5px 14px; border-radius: 8px; font-family: monospace; font-size: 15px; font-weight: 900; color: #065F46; letter-spacing: 1px; margin-top: 4px;">
-                          COUPON: ${couponCode}
+                          COUPON: ${recoveryOffer.code}
                         </div>
                       </td>
                     </tr>
-                  </table>
+                  </table>` : ''}
 
                   <!-- Cart Items Table -->
                   <div style="font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; margin-bottom: 8px;">
@@ -517,8 +644,8 @@ async function sendAbandonedCartRecoveryEmails(data) {
               <!-- Footer -->
               <tr>
                 <td style="background-color: #F8FAFC; padding: 16px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
-                  Mahalaxmi Enterprises • Ring Road Textile Market, Surat, Gujarat<br>
-                  Direct Loom Wholesale Hotline: +91 90335 98639
+                  Mahalaxmi Enterprises • Direct Mill Rates &amp; Wholesale Essentials<br>
+                  WhatsApp: +91 90335 98639 • Email: mahalaxmienterprise881@gmail.com
                 </td>
               </tr>
 
@@ -547,11 +674,20 @@ async function sendAbandonedCartRecoveryEmails(data) {
           ${itemsHtml}
         </tbody>
       </table>
-      <div style="background-color: #F8FAFC; padding: 12px 16px; font-size: 12px; color: #059669; font-weight: 800; border-top: 1px solid #E2E8F0;">
-        🎁 Use Coupon Code: LAUNCH150 for Extra Flat ₹150 Instant Off!
-      </div>
     </div>
   `;
+  const customerItemsBlock = recoveryOffer
+    ? `${cartItemsBlock}<div style="background-color: #ECFDF5; padding: 12px 16px; font-size: 12px; color: #047857; font-weight: 800; border: 1px dashed #059669; border-radius: 10px;">Use coupon code ${recoveryOffer.code} to save ₹${Number(recoveryOffer.discount).toLocaleString('en-IN')} on this cart.</div>`
+    : cartItemsBlock;
+  const offerHeadline = recoveryOffer
+    ? `Active Store Offer: ${recoveryOffer.code}`
+    : 'Your Cart Reminder';
+  const offerSubject = recoveryOffer
+    ? `A current store offer is available for your cart | Mahalaxmi Enterprises`
+    : `Your cart is waiting for you | Mahalaxmi Enterprises`;
+  const offerMessage = recoveryOffer
+    ? `Your cart is waiting. Use the active coupon code ${recoveryOffer.code} to save ₹${Number(recoveryOffer.discount).toLocaleString('en-IN')} on this cart.`
+    : `Your cart is waiting. There is no active coupon offer for this cart right now, but you can still complete your order.`;
 
   // 1. Dispatch Customer Recovery Email via EmailJS
   if (customerEmail && customerEmail.includes('@')) {
@@ -572,18 +708,20 @@ async function sendAbandonedCartRecoveryEmails(data) {
           template_params: {
             to_email: customerEmail,
             to_name: customerName,
-            subject: `Flat ₹150 OFF on items waiting in your cart! | Mahalaxmi Enterprises`,
-            headline: 'Mill Voucher: LAUNCH150',
-            code_box: 'LAUNCH150',
-            subtext: `Cart Value: ₹${Number(cartTotal).toLocaleString('en-IN')} • Valid Today`,
+            subject: offerSubject,
+            headline: offerHeadline,
+            code_box: recoveryOffer?.code || '',
+            subtext: recoveryOffer
+              ? `Cart Value: ₹${Number(cartTotal).toLocaleString('en-IN')} • Save ₹${Number(recoveryOffer.discount).toLocaleString('en-IN')}`
+              : `Cart Value: ₹${Number(cartTotal).toLocaleString('en-IN')}`,
             cart_total: Number(cartTotal).toLocaleString('en-IN'),
-            items_block: cartItemsBlock,
-            message: `Items in your cart are waiting! Complete your order today and get instant flat ₹150 discount.`
+            items_block: customerItemsBlock,
+            message: offerMessage
           }
         };
         if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
 
-        await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -591,9 +729,13 @@ async function sendAbandonedCartRecoveryEmails(data) {
           },
           body: JSON.stringify(payload)
         });
+        if (!response.ok) {
+          throw new Error(`Customer email provider returned HTTP ${response.status}.`);
+        }
       }
     } catch (err) {
       console.error(`[ABANDONED CART] Customer email delivery error:`, err);
+      throw err;
     }
   }
 
@@ -622,7 +764,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
       };
       if (EMAILJS_PRIVATE_KEY) payload.accessToken = EMAILJS_PRIVATE_KEY;
 
-      await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -630,6 +772,9 @@ async function sendAbandonedCartRecoveryEmails(data) {
         },
         body: JSON.stringify(payload)
       });
+      if (!response.ok) {
+        throw new Error(`Admin email provider returned HTTP ${response.status}.`);
+      }
     }
   } catch (err) {
     console.error(`[ABANDONED CART] Admin lead alert delivery error:`, err);

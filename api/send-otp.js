@@ -66,15 +66,19 @@ export default async function handler(req, res) {
             to_name: customerName,
             user_email: email,
             user_name: customerName,
-            subject: `Namaste ${customerName}, Your Verification OTP is ${otp} - Mahalaxmi Enterprises`,
-            headline: 'Your Verification Code',
+            subject: 'Your verification code | Mahalaxmi Enterprises',
+            headline: 'Verify your account',
             code_box: otp,
             subtext: 'Valid for 5 minutes only',
+            brand_name: 'Mahalaxmi Enterprises',
+            brand_tagline: 'Direct Mill Rates & Wholesale Essentials',
+            support_phone: '+91 90335 98639',
+            support_email: 'mahalaxmienterprise881@gmail.com',
             otp: otp,
             passcode: otp,
             verification_code: otp,
             items_block: '',
-            message: `Use the One-Time Password (OTP) below to securely verify your account on Mahalaxmi Enterprises.`
+            message: 'Use this one-time code to verify your Mahalaxmi Enterprises account. It expires in 5 minutes. Never share this code with anyone.'
           }
         };
         if (EMAILJS_PRIVATE_KEY) {

@@ -1,6 +1,55 @@
 import { getDbPool } from '../database/db.js';
+import { requireAdminSession } from './_lib/admin-session.js';
+
+const BUSINESS_LEGAL_NAME = 'Mahalaxmi Enterprise';
+const BUSINESS_GSTIN = '24AKLPU0825E1Z8';
+const BUSINESS_ADDRESS =
+  '143, Raghuweer Estate, Behind Platinum Industrial Estate, Vatva Phase IV, Ahmedabad, Gujarat - 382440, India';
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[character]);
+}
+
+function parseAddress(value) {
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return { fullAddress: value };
+    }
+  }
+  return value && typeof value === 'object' ? value : {};
+}
+
+function addressLines(address) {
+  const parts = [
+    address.fullName,
+    address.companyName,
+    address.street || address.fullAddress || address.addressLine1,
+    address.landmark || address.addressLine2,
+    [address.city, address.state].filter(Boolean).join(', '),
+    address.pincode || address.postalCode,
+    address.country
+  ].filter(Boolean);
+  return parts.map(part => `<div>${escapeHtml(part)}</div>`).join('') || '<div>Not provided</div>';
+}
+
+function formatMoney(value) {
+  return Number(value || 0).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
 
 export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store, private');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
@@ -9,10 +58,21 @@ export default async function handler(req, res) {
     res.status(200).end();
     return;
   }
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET, OPTIONS');
+    res.status(405).json({ error: 'Method not allowed.' });
+    return;
+  }
+  const admin = await requireAdminSession(req, res);
+  if (!admin) return;
 
   const { orderNumber, orderNo, id } = req.query;
-  const rawTarget = (orderNumber || orderNo || id || '').trim();
+  const rawTarget = String(orderNumber || orderNo || id || '').trim();
   const cleanTarget = rawTarget.replace('Order #', '').replace('#', '').trim();
+  if (!cleanTarget) {
+    res.status(400).json({ error: 'An order number is required to create an invoice.' });
+    return;
+  }
 
   let order = null;
   let items = [];
@@ -22,12 +82,9 @@ export default async function handler(req, res) {
     try {
       const [rows] = await pool.query(
         `SELECT * FROM orders 
-         WHERE order_number = ? 
-            OR id = ? 
-            OR order_number LIKE ? 
-            OR id LIKE ?
-         ORDER BY created_at DESC LIMIT 1`,
-        [cleanTarget, cleanTarget, `%${cleanTarget}%`, `%${cleanTarget}%`]
+         WHERE order_number = ? OR id = ?
+         LIMIT 1`,
+        [cleanTarget, cleanTarget]
       );
 
       if (rows && rows.length > 0) {
@@ -37,6 +94,8 @@ export default async function handler(req, res) {
       }
     } catch (e) {
       console.warn('MySQL invoice query error:', e.message);
+      res.status(500).json({ error: 'Unable to load invoice order details.' });
+      return;
     }
   }
 
@@ -44,82 +103,103 @@ export default async function handler(req, res) {
   if (!order && globalThis._mle_orders_cache) {
     order = globalThis._mle_orders_cache.find(
       o =>
-        (o.orderNumber && o.orderNumber.includes(cleanTarget)) ||
-        (o.id && o.id.includes(cleanTarget))
+        (o.orderNumber && o.orderNumber === cleanTarget) ||
+          (o.order_number && o.order_number === cleanTarget) ||
+          (o.id && o.id === cleanTarget)
     );
     if (order) {
       items = order.items || [];
     }
   }
 
-  const displayOrderNo = order ? (order.order_number || order.orderNumber) : (cleanTarget ? `MLE-ORD-${cleanTarget}` : 'MLE-ORD-2026-1947100');
-  const invoiceNo = displayOrderNo.replace('MLE-APP-', 'INV-APP-').replace('MLE-ORD-', 'INV-ORD-').replace('Order #', 'INV-');
-  const invoiceDate = order ? new Date(order.created_at || order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-  
-  const customerName = order?.customer_name || order?.customer?.name || req.query.customerName || 'Valued Buyer';
-  const customerEmail = order?.customer_email || order?.customer?.email || req.query.customerEmail || 'buyer@mahalaxmi.in';
-  const customerPhone = order?.customer_phone || order?.customer?.phone || req.query.customerPhone || '+91 85111 72099';
-  const gstNumber = order?.gst_number || order?.customer?.gstNumber || '24AAACP1234M1Z5 (Registered B2B)';
-  const paymentMethod = order?.payment_method || order?.paymentMethod || 'UPI / Online Payment';
-  const paymentStatus = order?.payment_status || order?.paymentStatus || 'PAID';
-  const totalAmount = Number(order?.total_amount || order?.totalAmount || req.query.totalAmount || 85.00);
-  const tax = Number(order?.total_tax || (totalAmount * 0.05 / 1.05));
-  const cgst = tax / 2;
-  const sgst = tax / 2;
-
-  let itemsList = items;
-  if (!itemsList || itemsList.length === 0) {
-    if (req.query.item) {
-      itemsList = [{
-        product_name: req.query.item,
-        hsn_code: '630221',
-        quantity: Number(req.query.qty || 1),
-        unit_price: totalAmount,
-        total_price: totalAmount,
-        gst_rate: 5.0
-      }];
-    } else {
-      itemsList = [{
-        product_name: 'Premium Cotton Kitchen Towels (Direct Loom Finish)',
-        hsn_code: '630260',
-        quantity: 1,
-        unit_price: totalAmount,
-        total_price: totalAmount,
-        gst_rate: 5.0
-      }];
-    }
+  if (!order) {
+    res.status(pool ? 404 : 503).json({
+      error: pool ? 'Order not found. Check the order number and try again.' : 'Invoice service is temporarily unavailable.'
+    });
+    return;
   }
 
+  if (!items.length) {
+    res.status(404).json({ error: 'No order items were found for this invoice.' });
+    return;
+  }
+
+  const displayOrderNo = String(order.order_number || order.orderNumber || order.id);
+  const invoiceNo = displayOrderNo.replace('MLE-APP-', 'INV-APP-').replace('MLE-ORD-', 'INV-ORD-').replace('Order #', 'INV-');
+  const createdAt = order.created_at || order.createdAt;
+  const invoiceDate = createdAt
+    ? new Date(createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    : 'Not recorded';
+  
+  const customerName = order.customer_name || order.customer?.name || 'Not provided';
+  const customerEmail = order.customer_email || order.customer?.email || 'Not provided';
+  const customerPhone = order.customer_phone || order.customer?.phone || 'Not provided';
+  const companyName = order.company_name || order.customer?.companyName || '';
+  const gstNumber = order.gst_number || order.customer?.gstNumber || '';
+  const paymentMethod = order.payment_method || order.paymentMethod || 'Not provided';
+  const paymentStatus = order.payment_status || order.paymentStatus || 'Not provided';
+  const subtotal = Number(order.subtotal ?? order.subtotalAmount ?? 0);
+  const discount = Number(order.discount || 0);
+  const shippingCharge = Number(order.shipping_charge ?? order.shippingCharge ?? 0);
+  const totalAmount = Number(order.total_amount ?? order.totalAmount ?? 0);
+  const taxBreakdown = order.taxBreakdown || {};
+  const cgst = Number(order.cgst ?? taxBreakdown.cgst ?? 0);
+  const sgst = Number(order.sgst ?? taxBreakdown.sgst ?? 0);
+  const igst = Number(order.igst ?? taxBreakdown.igst ?? 0);
+  const tax = Number(order.total_tax ?? taxBreakdown.totalTax ?? cgst + sgst + igst);
+  const roundOff = Number((totalAmount - subtotal - tax - shippingCharge + discount).toFixed(2));
+  const billingAddress = parseAddress(order.billing_address || order.billingAddress);
+  const shippingAddress = parseAddress(order.shipping_address || order.shippingAddress);
+  const placeOfSupply = shippingAddress.state || shippingAddress.cityState || 'Not provided';
+  const escape = escapeHtml;
+
+  const itemsList = items;
+
   const itemsHtml = itemsList.map((item, idx) => {
-    const pName = item.product_name || item.productName || 'Textile Merchandise';
-    const hsn = item.hsn_code || item.hsnCode || '630221';
-    const qty = Number(item.quantity || 1);
-    const uPrice = Number(item.unit_price || item.unitPrice || (totalAmount / qty));
-    const tPrice = Number(item.total_price || item.totalPrice || (uPrice * qty));
-    const gstRate = Number(item.gst_rate || item.gstRate || 5.0);
+    const pName = item.product_name || item.productName || 'Not recorded';
+    const variant = item.variant_description || item.variantDescription || '';
+    const hsn = item.hsn_code || item.hsnCode || 'Not recorded';
+    const qty = Number(item.quantity ?? 0);
+    const uPrice = Number(item.unit_price ?? item.unitPrice ?? 0);
+    const tPrice = Number(item.total_price ?? item.totalPrice ?? uPrice * qty);
+    const gstValue = item.gst_rate ?? item.gstRate;
+    const gstRate = gstValue === null || gstValue === undefined || gstValue === ''
+      ? 'Not recorded'
+      : `${Number(gstValue)}%`;
 
     return `
       <tr>
         <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: center; color: #64748B;">${idx + 1}</td>
         <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0;">
-          <strong style="color: #0F172A; font-size: 13px;">${pName}</strong>
-          <div style="font-size: 11px; color: #64748B; margin-top: 2px;">Direct Loom Finish • 100% Quality Checked</div>
+          <strong style="color: #0F172A; font-size: 13px;">${escape(pName)}</strong>
+          ${variant ? `<div style="font-size: 11px; color: #64748B; margin-top: 2px;">${escape(variant)}</div>` : ''}
         </td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">${hsn}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: center; font-family: monospace; font-size: 12px; color: #475569;">${escape(hsn)}</td>
         <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: center; font-weight: bold; color: #0F172A;">${qty}</td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: right; font-family: monospace; color: #334155;">₹${uPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: center; font-size: 11px; color: #059669; font-weight: bold;">${gstRate}%</td>
-        <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: right; font-family: monospace; font-weight: bold; color: #0F172A;">₹${tPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: right; font-family: monospace; color: #334155;">₹${formatMoney(uPrice)}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: center; font-size: 11px; color: #059669; font-weight: bold;">${gstRate}</td>
+        <td style="padding: 10px 12px; border-bottom: 1px solid #E2E8F0; text-align: right; font-family: monospace; font-weight: bold; color: #0F172A;">₹${formatMoney(tPrice)}</td>
       </tr>
     `;
   }).join('');
+  const taxRowsHtml = [
+    ['CGST', cgst],
+    ['SGST', sgst],
+    ['IGST', igst]
+  ].filter(([, amount]) => Number(amount) > 0)
+    .map(([label, amount]) => `
+      <tr>
+        <td style="padding: 6px 0; color: #64748B;">${label}:</td>
+        <td style="padding: 6px 0; text-align: right; font-family: monospace; color: #475569;">₹${formatMoney(amount)}</td>
+      </tr>`)
+    .join('');
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GST Tax Invoice - ${invoiceNo} | Mahalaxmi Enterprises Surat</title>
+  <title>GST Tax Invoice - ${escape(invoiceNo)} | ${escape(BUSINESS_LEGAL_NAME)}</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -189,13 +269,13 @@ export default async function handler(req, res) {
     <div class="top-bar no-print">
       <div style="display: flex; align-items: center; gap: 8px;">
         <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #10B981;"></span>
-        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">ORIGINAL GST TAX INVOICE</span>
+        <span style="font-size: 13px; font-weight: 700; letter-spacing: 0.5px;">GST TAX INVOICE</span>
       </div>
       <div style="display: flex; gap: 8px;">
         <button onclick="window.print()" class="btn">
           🖨️ Print / Save as PDF
         </button>
-        <a href="https://wa.me/919033598639?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, please send stamped PDF for Invoice ${invoiceNo}`)}" target="_blank" class="btn btn-green">
+        <a href="https://wa.me/919033598639?text=${encodeURIComponent(`Namaste, please help me with invoice ${invoiceNo}.`)}" target="_blank" rel="noreferrer" class="btn btn-green">
           💬 WhatsApp Invoice
         </a>
       </div>
@@ -210,21 +290,21 @@ export default async function handler(req, res) {
               <span style="font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: #0F172A;">MAHALAXMI<span style="color: #2563EB;">.</span></span>
               <span style="background: #0F172A; color: #F59E0B; font-size: 10px; font-weight: 900; padding: 3px 7px; border-radius: 4px; letter-spacing: 1px;">ENTERPRISES</span>
             </div>
-            <div style="font-size: 12px; font-weight: 600; color: #475569; margin-top: 4px;">Direct Loom Manufacturer • Textile & Home Furnishing</div>
+            <div style="font-size: 12px; font-weight: 600; color: #475569; margin-top: 4px;">Textile & Home Furnishing</div>
             <div style="font-size: 11px; color: #64748B; margin-top: 6px; line-height: 1.5;">
-              Plot No. 42-45, Ring Road Textile Park Phase II, Surat, Gujarat - 395002<br>
-              <strong>GSTIN:</strong> 24AAECM8921P1ZA • <strong>PAN:</strong> AAECM8921P • <strong>State Code:</strong> 24<br>
-              Direct Mill Hotline: +91 90335 98639 • mahalaxmienterprise881@gmail.com
+              ${escape(BUSINESS_ADDRESS)}<br>
+              <strong>GSTIN:</strong> ${escape(BUSINESS_GSTIN)} • <strong>State Code:</strong> 24<br>
+              Support: +91 90335 98639 • mahalaxmienterprise881@gmail.com
             </div>
           </td>
           <td style="vertical-align: top; text-align: right;">
             <div style="display: inline-block; background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-transform: uppercase;">
               TAX INVOICE
             </div>
-            <div style="font-size: 15px; font-weight: 900; color: #0F172A; margin-top: 8px;">Invoice #: ${invoiceNo}</div>
-            <div style="font-size: 12px; color: #475569; margin-top: 2px;">Date: <strong>${invoiceDate}</strong></div>
-            <div style="font-size: 12px; color: #475569;">Order ID: <strong>${displayOrderNo}</strong></div>
-            <div style="font-size: 12px; color: #059669; font-weight: bold; margin-top: 4px;">Status: ${paymentStatus} (${paymentMethod})</div>
+            <div style="font-size: 15px; font-weight: 900; color: #0F172A; margin-top: 8px;">Invoice #: ${escape(invoiceNo)}</div>
+            <div style="font-size: 12px; color: #475569; margin-top: 2px;">Date: <strong>${escape(invoiceDate)}</strong></div>
+            <div style="font-size: 12px; color: #475569;">Order ID: <strong>${escape(displayOrderNo)}</strong></div>
+            <div style="font-size: 12px; color: #059669; font-weight: bold; margin-top: 4px;">Payment: ${escape(paymentStatus)} via ${escape(paymentMethod)}</div>
           </td>
         </tr>
       </table>
@@ -234,17 +314,18 @@ export default async function handler(req, res) {
         <tr>
           <td style="width: 50%; padding: 16px; vertical-align: top; border-right: 1px solid #E2E8F0;">
             <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #64748B; letter-spacing: 0.5px;">Billed To / Buyer Details</div>
-            <div style="font-size: 14px; font-weight: 800; color: #0F172A; margin-top: 4px;">${customerName}</div>
-            <div style="font-size: 12px; color: #475569; margin-top: 2px;">Phone: ${customerPhone}</div>
-            <div style="font-size: 12px; color: #475569;">Email: ${customerEmail}</div>
-            <div style="font-size: 11px; color: #0369A1; font-weight: bold; margin-top: 4px;">GSTIN: ${gstNumber}</div>
+            <div style="font-size: 14px; font-weight: 800; color: #0F172A; margin-top: 4px;">${escape(companyName || customerName)}</div>
+            ${companyName ? `<div style="font-size: 12px; color: #475569;">Contact: ${escape(customerName)}</div>` : ''}
+            ${addressLines(billingAddress)}
+            <div style="font-size: 12px; color: #475569; margin-top: 2px;">Phone: ${escape(customerPhone)}</div>
+            <div style="font-size: 12px; color: #475569;">Email: ${escape(customerEmail)}</div>
+            ${gstNumber ? `<div style="font-size: 11px; color: #0369A1; font-weight: bold; margin-top: 4px;">Buyer GSTIN: ${escape(gstNumber)}</div>` : ''}
           </td>
           <td style="width: 50%; padding: 16px; vertical-align: top;">
-            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #64748B; letter-spacing: 0.5px;">Dispatched & Fulfilled By</div>
-            <div style="font-size: 13px; font-weight: 800; color: #0F172A; margin-top: 4px;">Mahalaxmi Surat Central Mill Unit</div>
-            <div style="font-size: 12px; color: #475569; margin-top: 2px;">Ring Road Loom Complex, Surat, Gujarat 395002</div>
-            <div style="font-size: 12px; color: #475569;">Dispatch Mode: Direct Express Courier / Freight</div>
-            <div style="font-size: 11px; color: #16A34A; font-weight: bold; margin-top: 4px;">100% Verified Mill Stock</div>
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #64748B; letter-spacing: 0.5px;">Shipped To</div>
+            <div style="font-size: 13px; font-weight: 800; color: #0F172A; margin-top: 4px;">${escape(shippingAddress.fullName || customerName)}</div>
+            ${addressLines(shippingAddress)}
+            <div style="font-size: 12px; color: #475569;">Place of Supply: ${escape(placeOfSupply)}</div>
           </td>
         </tr>
       </table>
@@ -267,17 +348,15 @@ export default async function handler(req, res) {
         </tbody>
       </table>
 
-      <!-- Totals & Bank Details -->
+      <!-- Totals -->
       <table style="margin-bottom: 24px;">
         <tr>
-          <!-- Bank Details -->
           <td style="width: 55%; vertical-align: top; padding-right: 20px;">
             <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px; font-size: 11px; line-height: 1.6;">
-              <strong style="color: #0F172A;">Bank Account for B2B Payments:</strong><br>
-              Bank: <strong>Bank of Baroda</strong>, Ring Road Textile Branch, Surat<br>
-              A/C No: <strong>04210200001234</strong> (Current Account)<br>
-              IFSC Code: <strong>BARB0SURATX</strong> • MICR: 395012002<br>
-              UPI VPA: <strong>8511172099@okbizaxis</strong>
+              <strong style="color: #0F172A;">Seller:</strong><br>
+              ${escape(BUSINESS_LEGAL_NAME)}<br>
+              GSTIN: ${escape(BUSINESS_GSTIN)}<br>
+              ${escape(BUSINESS_ADDRESS)}
             </div>
           </td>
 
@@ -285,24 +364,23 @@ export default async function handler(req, res) {
           <td style="width: 45%; vertical-align: top;">
             <table style="font-size: 12px;">
               <tr>
-                <td style="padding: 6px 0; color: #64748B;">Taxable Subtotal:</td>
-                <td style="padding: 6px 0; text-align: right; font-family: monospace; font-weight: bold; color: #0F172A;">₹${(totalAmount - tax).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 6px 0; color: #64748B;">Items Subtotal:</td>
+                <td style="padding: 6px 0; text-align: right; font-family: monospace; font-weight: bold; color: #0F172A;">₹${formatMoney(subtotal)}</td>
+              </tr>
+              ${discount > 0 ? `<tr><td style="padding: 6px 0; color: #059669;">Discount:</td><td style="padding: 6px 0; text-align: right; font-family: monospace; color: #059669;">-₹${formatMoney(discount)}</td></tr>` : ''}
+              ${taxRowsHtml}
+              <tr>
+                <td style="padding: 6px 0; color: #64748B;">Total GST:</td>
+                <td style="padding: 6px 0; text-align: right; font-family: monospace; color: #475569;">₹${formatMoney(tax)}</td>
               </tr>
               <tr>
-                <td style="padding: 6px 0; color: #64748B;">CGST (2.5%):</td>
-                <td style="padding: 6px 0; text-align: right; font-family: monospace; color: #475569;">₹${cgst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 6px 0; color: #64748B;">Shipping:</td>
+                <td style="padding: 6px 0; text-align: right; font-family: monospace; color: #475569;">₹${formatMoney(shippingCharge)}</td>
               </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #64748B;">SGST (2.5%):</td>
-                <td style="padding: 6px 0; text-align: right; font-family: monospace; color: #475569;">₹${sgst.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #64748B;">Shipping / Loom Freight:</td>
-                <td style="padding: 6px 0; text-align: right; font-family: monospace; color: #059669; font-weight: bold;">FREE (Mill Promo)</td>
-              </tr>
+              ${Math.abs(roundOff) >= 0.01 ? `<tr><td style="padding: 6px 0; color: #64748B;">Rounding adjustment:</td><td style="padding: 6px 0; text-align: right; font-family: monospace; color: #475569;">₹${formatMoney(roundOff)}</td></tr>` : ''}
               <tr style="border-top: 2px solid #0F172A;">
-                <td style="padding: 10px 0; font-size: 15px; font-weight: 900; color: #0F172A;">Total Paid:</td>
-                <td style="padding: 10px 0; text-align: right; font-size: 20px; font-weight: 900; font-family: monospace; color: #059669;">₹${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 10px 0; font-size: 15px; font-weight: 900; color: #0F172A;">Order Total:</td>
+                <td style="padding: 10px 0; text-align: right; font-size: 20px; font-weight: 900; font-family: monospace; color: #059669;">₹${formatMoney(totalAmount)}</td>
               </tr>
             </table>
           </td>
@@ -313,19 +391,18 @@ export default async function handler(req, res) {
       <table style="border-top: 1px solid #E2E8F0; padding-top: 16px; margin-top: 16px;">
         <tr>
           <td style="font-size: 10px; color: #64748B; line-height: 1.5; vertical-align: top; width: 65%;">
-            <strong>Declaration & Terms of Sale:</strong><br>
-            1. We declare that this invoice shows actual price of the goods described and all particulars are true and correct.<br>
-            2. Goods once sold will not be returned unless manufacturing defects are reported within 7 days of delivery.<br>
-            3. Subject to Surat, Gujarat Jurisdiction only.
+            <strong>Order record:</strong><br>
+            This document reflects the order, buyer, item, payment and tax details recorded for this transaction.<br>
+            Please contact support promptly if any recorded detail needs correction.
           </td>
           <td style="text-align: right; vertical-align: bottom; width: 35%;">
-            <div style="font-size: 11px; font-weight: 800; color: #0F172A;">For Mahalaxmi Enterprises</div>
+            <div style="font-size: 11px; font-weight: 800; color: #0F172A;">For ${escape(BUSINESS_LEGAL_NAME)}</div>
             <div style="margin: 12px 0 6px 0;">
               <span style="display: inline-block; border: 1.5px dashed #059669; color: #059669; padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: 900; text-transform: uppercase;">
-                ✓ AUTHENTICATED & DIGITALLY SIGNED
+                COMPUTER GENERATED
               </span>
             </div>
-            <div style="font-size: 10px; color: #64748B;">Authorized Signatory • Accounts Desk</div>
+            <div style="font-size: 10px; color: #64748B;">No manual signature required</div>
           </td>
         </tr>
       </table>

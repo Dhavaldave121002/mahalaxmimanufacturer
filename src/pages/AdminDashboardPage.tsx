@@ -633,6 +633,48 @@ export const AdminDashboardPage: React.FC = () => {
     );
   }
 
+  const normalizedProductSearch = productSearch.trim().toLowerCase();
+  const filteredProducts = products.filter(product =>
+    [
+      product.name,
+      product.sku,
+      product.categoryName,
+      product.category,
+      product.subcategory,
+      product.hsnCode
+    ].some(value => String(value || '').toLowerCase().includes(normalizedProductSearch))
+  );
+  const normalizedOrderSearch = orderSearch.trim().toLowerCase();
+  const activeOrderStatuses = ['PLACED', 'MILL_PROCESSING', 'PACKED', 'IN_TRANSIT', 'DISPATCHED'];
+  const returnOrderStatuses = [
+    'RETURN_REQUESTED',
+    'EXCHANGE_REQUESTED',
+    'RETURN_APPROVED',
+    'EXCHANGE_APPROVED',
+    'REFUNDED',
+    'RETURN_REJECTED'
+  ];
+  const filteredOrders = orders.filter(order => {
+    const searchableFields = [
+      order.id,
+      order.orderNumber,
+      order.customer?.name,
+      order.customer?.companyName,
+      order.customer?.email,
+      order.customer?.phone,
+      order.shippingAddress?.phone
+    ];
+    const matchesSearch = !normalizedOrderSearch || searchableFields.some(value =>
+      String(value || '').toLowerCase().includes(normalizedOrderSearch)
+    );
+    if (!matchesSearch) return false;
+    if (orderFilter === 'ACTIVE') return activeOrderStatuses.includes(order.status);
+    if (orderFilter === 'DELIVERED') return order.status === 'DELIVERED';
+    if (orderFilter === 'RETURNS_REFUNDS') return returnOrderStatuses.includes(order.status as string);
+    if (orderFilter === 'CANCELLED') return order.status === 'CANCELLED';
+    return true;
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 pb-24">
       {/* Admin Title & Ops Badge */}
@@ -1030,7 +1072,7 @@ export const AdminDashboardPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
               <h3 className="font-extrabold text-base text-navy">Master Product Inventory & Wholesale Rules</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Manage SKUs, stock levels, wholesale volume tiers, and GST rates.</p>
+              <p className="text-xs text-slate-500 mt-0.5">Find products by name, SKU, category or HSN; manage stock, wholesale tiers and GST.</p>
             </div>
 
             <div className="relative">
@@ -1038,7 +1080,8 @@ export const AdminDashboardPage: React.FC = () => {
                 type="text"
                 value={productSearch}
                 onChange={e => setProductSearch(e.target.value)}
-                placeholder="Filter by name or SKU..."
+                placeholder="Name, SKU, category or HSN"
+                aria-label="Search products by name, SKU, category or HSN"
                 className="text-xs pl-8 pr-3 py-2 border border-slate-300 rounded-xl focus:border-indigo outline-none"
               />
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
@@ -1060,13 +1103,20 @@ export const AdminDashboardPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {products
-                  .filter(
-                    p =>
-                      p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-                      p.sku.toLowerCase().includes(productSearch.toLowerCase())
-                  )
-                  .map(prod => (
+                {filteredProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-12 text-center">
+                      <p className="font-bold text-slate-700">No products match this search.</p>
+                      <button
+                        type="button"
+                        onClick={() => setProductSearch('')}
+                        className="mt-2 text-xs font-bold text-indigo hover:underline"
+                      >
+                        Clear product search
+                      </button>
+                    </td>
+                  </tr>
+                ) : filteredProducts.map(prod => (
                     <tr key={prod.id} className="hover:bg-slate-50/70 transition">
                       <td className="py-3.5 px-4 min-w-[280px]">
                         <div className="flex items-center gap-3">
@@ -1200,12 +1250,16 @@ export const AdminDashboardPage: React.FC = () => {
                 type="text"
                 value={orderSearch}
                 onChange={e => setOrderSearch(e.target.value)}
-                placeholder="Search orders..."
-                className="text-xs pl-8 pr-3 py-2 border border-slate-300 rounded-xl focus:border-indigo outline-none"
+                placeholder="Order #, name, phone or email"
+                aria-label="Search orders by order number, customer, phone or email"
+                className="w-full sm:w-72 text-xs pl-8 pr-3 py-2 border border-slate-300 rounded-xl focus:border-indigo outline-none"
               />
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             </div>
           </div>
+          <p className="text-xs text-slate-500 -mt-3">
+            Showing <strong className="text-slate-700">{filteredOrders.length}</strong> of {orders.length} orders
+          </p>
 
           {/* Return & Refund Queue Filter Bar */}
           <div className="flex flex-wrap items-center gap-2">
@@ -1297,36 +1351,23 @@ export const AdminDashboardPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {orders
-                  .filter(o => {
-                    const matchesSearch =
-                      String(o.orderNumber || '').toLowerCase().includes(orderSearch.toLowerCase()) ||
-                      String(o.customer?.name || '').toLowerCase().includes(orderSearch.toLowerCase()) ||
-                      String(o.customer?.companyName || '').toLowerCase().includes(orderSearch.toLowerCase());
-                    if (!matchesSearch) return false;
-
-                    if (orderFilter === 'ACTIVE') {
-                      return ['PLACED', 'MILL_PROCESSING', 'PACKED', 'IN_TRANSIT', 'DISPATCHED'].includes(o.status);
-                    }
-                    if (orderFilter === 'DELIVERED') {
-                      return o.status === 'DELIVERED';
-                    }
-                    if (orderFilter === 'RETURNS_REFUNDS') {
-                      return (
-                        (o.status as string) === 'RETURN_REQUESTED' ||
-                        (o.status as string) === 'EXCHANGE_REQUESTED' ||
-                        o.status === 'RETURN_APPROVED' ||
-                        o.status === 'EXCHANGE_APPROVED' ||
-                        o.status === 'REFUNDED' ||
-                        (o.status as string) === 'RETURN_REJECTED'
-                      );
-                    }
-                    if (orderFilter === 'CANCELLED') {
-                      return o.status === 'CANCELLED';
-                    }
-                    return true;
-                  })
-                  .map(ord => (
+                {filteredOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-12 text-center">
+                      <p className="font-bold text-slate-700">No orders match this search or filter.</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOrderSearch('');
+                          setOrderFilter('ALL');
+                        }}
+                        className="mt-2 text-xs font-bold text-indigo hover:underline"
+                      >
+                        Clear search and show all orders
+                      </button>
+                    </td>
+                  </tr>
+                ) : filteredOrders.map(ord => (
                     <tr key={ord.id} className="hover:bg-slate-50/70 transition">
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <p className="font-mono font-bold text-navy">{ord.orderNumber}</p>
@@ -1984,21 +2025,19 @@ export const AdminDashboardPage: React.FC = () => {
                   <select
                     value={productForm.category}
                     onChange={e => {
-                      const cat = e.target.value as CategoryId;
-                      const catName = {
-                        textile: 'Textile',
-                        'cotton-products': 'Cotton Products',
-                        'home-kitchen': 'Home and Kitchen',
-                        household: 'Household'
-                      }[cat];
-                      setProductForm({ ...productForm, category: cat, categoryName: catName });
+                      const selectedCategory = categories.find(category => category.id === e.target.value);
+                      if (!selectedCategory) return;
+                      setProductForm({
+                        ...productForm,
+                        category: selectedCategory.id,
+                        categoryName: selectedCategory.name
+                      });
                     }}
                     className="w-full p-2 border border-slate-300 rounded-lg outline-none bg-white"
                   >
-                    <option value="textile">Textile</option>
-                    <option value="cotton-products">Cotton Products</option>
-                    <option value="home-kitchen">Home and Kitchen</option>
-                    <option value="household">Household</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>

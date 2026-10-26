@@ -6,6 +6,12 @@ import { ProductCard } from '../components/common/ProductCard';
 import { Badge } from '../components/common/Badge';
 import type { AppBanner } from '../types';
 import {
+  BUSINESS_ADDRESS,
+  BUSINESS_SUPPORT_EMAIL,
+  BUSINESS_SUPPORT_PHONE,
+  BUSINESS_SUPPORT_PHONE_LINK
+} from '../constants/businessContact';
+import {
   ArrowRight,
   ShieldCheck,
   Zap,
@@ -1026,9 +1032,9 @@ export const HomePage: React.FC = () => {
               </p>
 
               <div className="pt-2 text-xs text-slate-300 space-y-2">
-                <p>• Mahalaxmi Enterprises Sales: <a href="tel:+919033598639" className="text-champagne font-bold hover:underline">+91 90335 98639</a></p>
-                <p className="break-words">• Official Email: <a href="mailto:mahalaxmienterprise881@gmail.com" className="text-champagne font-bold hover:underline">mahalaxmienterprise881@gmail.com</a></p>
-                <p>• Address: Narol Textile Cluster, Ahmedabad, Gujarat 382405</p>
+                <p>• Mahalaxmi Enterprises Sales: <a href={`tel:${BUSINESS_SUPPORT_PHONE_LINK}`} className="text-champagne font-bold hover:underline">{BUSINESS_SUPPORT_PHONE}</a></p>
+                <p className="break-words">• Official Email: <a href={`mailto:${BUSINESS_SUPPORT_EMAIL}`} className="text-champagne font-bold hover:underline">{BUSINESS_SUPPORT_EMAIL}</a></p>
+                <p>• Address: {BUSINESS_ADDRESS}</p>
               </div>
             </div>
 

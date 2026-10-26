@@ -17,35 +17,32 @@ import {
 } from 'lucide-react';
 
 export const CategoryManager: React.FC = () => {
-  const { categories, addCategory, updateCategory, deleteCategory } = useApp();
+  const { categories, products, addCategory, updateCategory, deleteCategory } = useApp();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<{
     name: string;
-    tagline: string;
     image: string;
     description: string;
-    subcategories: string;
     color: string;
   }>({
     name: '',
-    tagline: '',
     image: '',
     description: '',
-    subcategories: '',
     color: '#312E81'
   });
 
   const handleOpenAdd = () => {
     setEditingId(null);
+    setFormError(null);
     setFormData({
       name: '',
-      tagline: '',
       image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800&auto=format&fit=crop',
       description: '',
-      subcategories: 'Double Bedsheets, Curtains, Fabrics',
       color: '#312E81'
     });
     setModalOpen(true);
@@ -53,54 +50,66 @@ export const CategoryManager: React.FC = () => {
 
   const handleOpenEdit = (cat: CollectionCategory) => {
     setEditingId(cat.id);
+    setFormError(null);
     setFormData({
       name: cat.name,
-      tagline: cat.tagline || '',
       image: cat.image,
       description: cat.description || '',
-      subcategories: (cat.subcategories || []).join(', '),
       color: cat.color || '#312E81'
     });
     setModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.image.trim()) return;
 
-    const subArray = formData.subcategories
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
-
-    if (editingId) {
-      updateCategory(editingId, {
-        name: formData.name.trim(),
-        tagline: formData.tagline.trim(),
-        image: formData.image.trim(),
-        description: formData.description.trim(),
-        subcategories: subArray,
-        color: formData.color
-      });
-    } else {
-      addCategory({
-        name: formData.name.trim(),
-        tagline: formData.tagline.trim(),
-        image: formData.image.trim(),
-        description: formData.description.trim(),
-        subcategories: subArray,
-        color: formData.color,
-        isFeaturedInApp: true
-      });
+    setIsSaving(true);
+    setFormError(null);
+    try {
+      if (editingId) {
+        await updateCategory(editingId, {
+          name: formData.name.trim(),
+          image: formData.image.trim(),
+          description: formData.description.trim(),
+          tagline: '',
+          subcategories: [],
+          color: formData.color
+        });
+      } else {
+        await addCategory({
+          name: formData.name.trim(),
+          image: formData.image.trim(),
+          description: formData.description.trim(),
+          tagline: '',
+          subcategories: [],
+          color: formData.color,
+          isFeaturedInApp: true
+        });
+      }
+      setModalOpen(false);
+      setEditingId(null);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'The collection could not be saved.');
+    } finally {
+      setIsSaving(false);
     }
-
-    setModalOpen(false);
-    setEditingId(null);
   };
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
+    const linkedProducts = products.filter(product => product.category === id);
+    if (linkedProducts.length > 0) {
+      window.alert(
+        `This collection still contains ${linkedProducts.length} product${linkedProducts.length === 1 ? '' : 's'}. Move those products to another collection before deleting it.`
+      );
+      return;
+    }
     if (confirm(`Are you sure you want to remove collection "${name}"? This will update both the website and mobile app.`)) {
-      deleteCategory(id);
+      try {
+        await deleteCategory(id);
+      } catch (error) {
+        window.alert(error instanceof Error ? error.message : 'The collection could not be deleted.');
+      }
     }
   };
 
@@ -117,6 +126,9 @@ export const CategoryManager: React.FC = () => {
           </div>
           <p className="text-xs text-slate-500 mt-1">
             Create and edit master catalog collections. Changes instantly reflect across both the <strong>Website</strong> and <strong>Flutter Mobile App</strong>.
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            Product counts help you see what is inside each collection. Move products before deleting a collection.
           </p>
         </div>
 
@@ -189,6 +201,9 @@ export const CategoryManager: React.FC = () => {
               <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
                 {cat.description || 'Direct mill woven collection crafted in Ahmedabad manufacturing unit.'}
               </p>
+              <p className="text-xs font-semibold text-slate-700">
+                {products.filter(product => product.category === cat.id).length} products assigned
+              </p>
 
               {/* Subcategories list */}
               {cat.subcategories && cat.subcategories.length > 0 && (
@@ -225,6 +240,11 @@ export const CategoryManager: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+              {formError && (
+                <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800">
+                  {formError}
+                </div>
+              )}
               <div>
                 <label className="text-[11px] font-bold text-slate-700 block mb-1">Collection Title / Name *</label>
                 <input
@@ -233,17 +253,6 @@ export const CategoryManager: React.FC = () => {
                   placeholder="e.g. Designer Kurtis & Dress Materials"
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">Tagline / Subtitle</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 100% Pure Ahmedabad Rayon & Cotton Fabrics"
-                  value={formData.tagline}
-                  onChange={e => setFormData({ ...formData, tagline: e.target.value })}
                   className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo"
                 />
               </div>
@@ -276,31 +285,26 @@ export const CategoryManager: React.FC = () => {
                 ></textarea>
               </div>
 
-              <div>
-                <label className="text-[11px] font-bold text-slate-700 block mb-1">Subcategories (comma separated)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Printed Kurtis, Anarkali Sets, Unstitched Suits"
-                  value={formData.subcategories}
-                  onChange={e => setFormData({ ...formData, subcategories: e.target.value })}
-                  className="w-full p-2.5 border border-slate-300 rounded-xl outline-none focus:border-indigo"
-                />
-              </div>
+              <p className="rounded-xl bg-indigo-50 px-3 py-2 text-[11px] text-indigo-900">
+                Add products to this collection from the Products tab. Subcategories are managed on each product.
+              </p>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
+                  disabled={isSaving}
                   className="px-4 py-2 border border-slate-300 rounded-xl text-slate-600 font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-indigo hover:bg-indigo-dark text-white font-bold rounded-xl shadow-sm transition cursor-pointer flex items-center gap-1.5"
+                  disabled={isSaving}
+                  className="px-5 py-2 bg-indigo hover:bg-indigo-dark disabled:opacity-60 text-white font-bold rounded-xl shadow-sm transition cursor-pointer flex items-center gap-1.5"
                 >
                   <Check className="w-4 h-4" />
-                  <span>{editingId ? 'Save Changes' : 'Create Collection'}</span>
+                  <span>{isSaving ? 'Saving…' : editingId ? 'Save Changes' : 'Create Collection'}</span>
                 </button>
               </div>
             </form>

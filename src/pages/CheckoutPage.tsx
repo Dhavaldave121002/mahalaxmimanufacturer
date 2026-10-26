@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { BuyNowPaymentIcons } from '../components/common/BuyNowPaymentIcons';
+import { BUSINESS_WHATSAPP_NUMBER } from '../constants/businessContact';
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
@@ -41,7 +42,6 @@ export const CheckoutPage: React.FC = () => {
     deliveryInfo,
     checkPincode
   } = useApp();
-  const checkoutUnavailable = import.meta.env.PROD;
 
   useEffect(() => {
     if (cart.length === 0) navigate('/cart');
@@ -99,9 +99,9 @@ export const CheckoutPage: React.FC = () => {
     phone: isLoggedIn ? currentUser.phone : '',
     street: '',
     landmark: '',
-    city: deliveryInfo?.city || 'Surat',
-    state: deliveryInfo?.state || 'Gujarat',
-    pincode: deliveryInfo?.pincode || '395002',
+    city: deliveryInfo?.city || '',
+    state: deliveryInfo?.state || '',
+    pincode: deliveryInfo?.pincode || '',
     addressType: isB2B ? 'COMMERCIAL' : 'HOME'
   });
 
@@ -223,9 +223,9 @@ export const CheckoutPage: React.FC = () => {
       phone: isLoggedIn ? currentUser.phone : '',
       street: '',
       landmark: '',
-      city: deliveryInfo?.city || 'Ahmedabad',
-      state: deliveryInfo?.state || 'Gujarat',
-      pincode: deliveryInfo?.pincode || '395002',
+      city: deliveryInfo?.city || '',
+      state: deliveryInfo?.state || '',
+      pincode: deliveryInfo?.pincode || '',
       addressType: isB2B ? 'COMMERCIAL' : 'HOME'
     });
     setShowAddressForm(true);
@@ -316,8 +316,11 @@ export const CheckoutPage: React.FC = () => {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    if (checkoutUnavailable) return;
     setOrderSubmitError(null);
+    if (pointsRedeemed > 0) {
+      setOrderSubmitError('Wallet points cannot be redeemed during checkout yet. Turn off points and retry securely.');
+      return;
+    }
 
     if (!cart || cart.length === 0) {
       alert('Your cart is empty. Please add items to your cart before proceeding to checkout.');
@@ -385,18 +388,82 @@ export const CheckoutPage: React.FC = () => {
 
     // B. RAZORPAY PAYMENT (Pay remainingPayable online via UPI/Cards/NetBanking)
     setIsSubmitting(true);
-    const razorpayKey = (import.meta as any).env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TXxnGK4dKMgIdA';
-
     if (typeof (window as any).Razorpay === 'undefined') {
       alert('Razorpay Payment Gateway is loading. Please check your internet connection and try again.');
       setIsSubmitting(false);
       return;
     }
 
+    let paymentOrder: { keyId: string; orderId: string; amount: number; currency: string };
+    try {
+      const response = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receipt: `web_${Date.now()}`,
+          items: cart.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            variantId: item.selectedVariant?.id
+          })),
+          couponCode: appliedCoupon,
+          source: 'WEB',
+          customerType: isB2B ? 'B2B' : 'B2C',
+          shippingState: activeAddress.state
+        })
+      });
+      const responseText = await response.text();
+      let result: unknown;
+      try {
+        result = JSON.parse(responseText);
+      } catch {
+        const responseKind = responseText.trim() ? 'invalid' : 'empty';
+        throw new Error(
+          `Payment service returned an ${responseKind} response (HTTP ${response.status}). No payment was started.`
+        );
+      }
+      if (!result || typeof result !== 'object') {
+        throw new Error(`Payment service returned an invalid response (HTTP ${response.status}). No payment was started.`);
+      }
+      const paymentResponse = result as Partial<typeof paymentOrder> & {
+        success?: unknown;
+        error?: unknown;
+      };
+      if (!response.ok || paymentResponse.success !== true) {
+        throw new Error(
+          typeof paymentResponse.error === 'string'
+            ? paymentResponse.error
+            : 'The payment service is unavailable.'
+        );
+      }
+      if (
+        typeof paymentResponse.keyId !== 'string' ||
+        typeof paymentResponse.orderId !== 'string' ||
+        typeof paymentResponse.amount !== 'number' ||
+        typeof paymentResponse.currency !== 'string'
+      ) {
+        throw new Error('Payment service returned incomplete order details. No payment was started.');
+      }
+      paymentOrder = {
+        keyId: paymentResponse.keyId,
+        orderId: paymentResponse.orderId,
+        amount: paymentResponse.amount,
+        currency: paymentResponse.currency
+      };
+      if (paymentOrder.amount !== Math.round(remainingPayable * 100) || paymentOrder.currency !== 'INR') {
+        throw new Error('Server-verified price differs from the cart. Refresh checkout; no payment was started.');
+      }
+    } catch (error) {
+      setOrderSubmitError(error instanceof Error ? error.message : 'Could not start secure payment.');
+      setIsSubmitting(false);
+      return;
+    }
+
     const options = {
-        key: razorpayKey,
-        amount: Math.round(remainingPayable * 100), // Amount in paise
-        currency: 'INR',
+        key: paymentOrder.keyId,
+        order_id: paymentOrder.orderId,
+        amount: paymentOrder.amount,
+        currency: paymentOrder.currency,
         name: 'Mahalaxmi Enterprises',
         description: pointsRedeemed > 0
           ? `Consignment Payment - ₹${remainingPayable.toLocaleString('en-IN')} (🪙 ${pointsRedeemed.toLocaleString('en-IN')} Points Redeemed)`
@@ -419,14 +486,16 @@ export const CheckoutPage: React.FC = () => {
           color: '#312E81' // Luxury Navy/Indigo Brand Theme
         },
         handler: async function (response: any) {
-          console.log('[Razorpay Live Success]', response);
           try {
             const order = await createOrder({
               paymentMethod: pointsRedeemed > 0 ? 'PARTIAL_POINTS_RAZORPAY' : 'RAZORPAY',
               shippingAddress: activeAddress,
               billingAddress: activeAddress,
               pointsRedeemed: pointsRedeemed,
-              amountPaid: remainingPayable
+              amountPaid: remainingPayable,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature
             });
 
             if (pointsRedeemed > 0) {
@@ -436,7 +505,9 @@ export const CheckoutPage: React.FC = () => {
             setIsSubmitting(false);
             navigate(`/orders?success=${order.id}&payment_id=${response.razorpay_payment_id || ''}`);
           } catch (error) {
-            setOrderSubmitError(error instanceof Error ? error.message : 'Order could not be saved. Please contact support before retrying payment.');
+            setOrderSubmitError(
+              `Payment was completed but the order was not confirmed. Do not pay again; contact support and provide payment reference ${response.razorpay_payment_id || 'shown in your Razorpay receipt'}. ${error instanceof Error ? error.message : ''}`
+            );
             setIsSubmitting(false);
           }
         },
@@ -1128,18 +1199,6 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             {/* Place Order CTA Button */}
-            {checkoutUnavailable && (
-              <div
-                role="status"
-                className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs leading-relaxed text-amber-950"
-              >
-                <p className="font-bold">Online checkout is temporarily unavailable.</p>
-                <p className="mt-1">
-                  Orders can’t be confirmed until server-side pricing, stock, and payment verification are ready.
-                  You can ask us to verify this cart on WhatsApp; that request does not place an order.
-                </p>
-              </div>
-            )}
             {orderSubmitError && (
               <div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-800">
                 <strong>Order not placed:</strong> {orderSubmitError}
@@ -1147,19 +1206,14 @@ export const CheckoutPage: React.FC = () => {
             )}
             <button
               type="submit"
-              disabled={isSubmitting || checkoutUnavailable}
+              disabled={isSubmitting}
               className={`flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-xs font-extrabold transition shadow-premium ${
-                isSubmitting || checkoutUnavailable
+                isSubmitting
                   ? 'cursor-not-allowed bg-slate-400 text-white'
                   : 'bg-indigo text-white hover:bg-indigo-dark'
               }`}
             >
-              {checkoutUnavailable ? (
-                <>
-                  <Lock className="w-4 h-4" />
-                  <span>Online Checkout Temporarily Unavailable</span>
-                </>
-              ) : isSubmitting ? (
+              {isSubmitting ? (
                 <>
                   <Clock className="w-4 h-4 animate-spin" />
                   <span>Processing Order & GST Invoice...</span>
@@ -1183,7 +1237,7 @@ export const CheckoutPage: React.FC = () => {
 
             {/* 1-Click WhatsApp Checkout Fallback */}
             <a
-              href={`https://wa.me/919876543210?text=${encodeURIComponent(
+              href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                 `Hello Mahalaxmi Enterprises, please verify pricing and availability for this cart:\n` +
                 `Name: ${activeAddress.fullName} (${activeAddress.phone})\n` +
                 `Delivery Address: ${activeAddress.street}, ${activeAddress.city}, ${activeAddress.state} - ${activeAddress.pincode}\n` +

@@ -276,7 +276,7 @@ async function sendEnquiryEmails(data) {
           </table>
 
           <div style="text-align: center; margin: 24px 0 10px;">
-            <a href="https://wa.me/${phone.replace(/\\D/g, '')}?text=${encodeURIComponent(`Namaste ${fullName}, we received your requirement #${enquiryCode} at Mahalaxmi Enterprises Surat. How can our production mill team assist you?`)}"
+            <a href="https://wa.me/${phone.replace(/\\D/g, '')}?text=${encodeURIComponent(`Namaste ${fullName}, we received your requirement #${enquiryCode} at Mahalaxmi Enterprises. Our team will follow up with you shortly.`)}"
                style="background: #10B981; color: #FFFFFF; font-weight: bold; font-size: 13px; text-decoration: none; padding: 12px 24px; border-radius: 12px; display: inline-block;">
               💬 Reply to Buyer on WhatsApp
             </a>
@@ -336,8 +336,12 @@ async function sendEnquiryEmails(data) {
               subject: `Requirement Confirmed: #${enquiryCode} | Mahalaxmi Enterprises`,
               headline: 'Requirement Received',
               code_box: `#${enquiryCode}`,
-              subtext: `Ahmedabad Mill Production Desk • Vol: ${expectedMonthlyVolume}`,
-              message: `Namaste ${fullName}! Thank you for your inquiry for ${businessName}. Our Ahmedabad Mill team is reviewing your volume request (${expectedMonthlyVolume}) and will contact you shortly.`
+              subtext: `Business enquiry received • Vol: ${expectedMonthlyVolume}`,
+              brand_name: 'Mahalaxmi Enterprises',
+              brand_tagline: 'Direct Mill Rates & Wholesale Essentials',
+              support_phone: '+91 90335 98639',
+              support_email: 'mahalaxmienterprise881@gmail.com',
+              message: `Namaste ${fullName}! Thank you for your enquiry for ${businessName}. Our team has received your volume request (${expectedMonthlyVolume}) and will contact you shortly.`
             }
           })
         }).catch(() => {});

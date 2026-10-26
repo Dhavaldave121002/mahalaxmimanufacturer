@@ -6,6 +6,7 @@ import { ShoppingCart, Star, Check, Zap, ArrowUpRight, ShieldCheck, Sparkles, Me
 import { Badge } from './Badge';
 import { useRealRating } from '../../hooks/useRealRating';
 import { orderProductImagesByResolution } from '../../utils/productImages';
+import { BUSINESS_WHATSAPP_NUMBER } from '../../constants/businessContact';
 
 interface ProductCardProps {
   product: Product;
@@ -243,7 +244,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
             {/* 1-Click WhatsApp Direct Quick Buy */}
             <a
-              href={`https://wa.me/919033598639?text=${encodeURIComponent(
+              href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                 `Hello Mahalaxmi Enterprises, I want to order "${product.name}" (SKU: ${product.sku}) at ₹${product.retailPrice}. Please confirm stock & dispatch.`
               )}`}
               target="_blank"

@@ -192,8 +192,10 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `discount` DECIMAL(10,2) DEFAULT 0.00,
   `coupon_code` VARCHAR(50),
   `total_amount` DECIMAL(12,2) NOT NULL,
-  `payment_method` ENUM('UPI', 'COD', 'NET_BANKING', 'CREDIT_30_DAYS') DEFAULT 'UPI',
+  `payment_method` ENUM('RAZORPAY', 'UPI', 'COD', 'NET_BANKING', 'WALLET_POINTS', 'PARTIAL_POINTS_RAZORPAY', 'PARTIAL_POINTS_COD', 'CREDIT_30_DAYS') DEFAULT 'RAZORPAY',
   `payment_status` ENUM('PAID', 'PENDING', 'REFUNDED', 'CREDIT_APPROVED') DEFAULT 'PAID',
+  `razorpay_order_id` VARCHAR(64) NULL,
+  `razorpay_payment_id` VARCHAR(64) NULL,
   `status` ENUM('PLACED', 'MILL_PROCESSING', 'PACKED', 'DISPATCHED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED') DEFAULT 'PLACED',
   `shipping_address` JSON NOT NULL,
   `billing_address` JSON NOT NULL,
@@ -205,7 +207,8 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_order_source` (`source`),
   INDEX `idx_order_status` (`status`),
-  INDEX `idx_order_number` (`order_number`)
+  INDEX `idx_order_number` (`order_number`),
+  UNIQUE INDEX `uq_orders_razorpay_payment` (`razorpay_payment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 8. ORDER ITEMS TABLE
@@ -220,6 +223,7 @@ CREATE TABLE IF NOT EXISTS `order_items` (
   `unit_price` DECIMAL(10,2) NOT NULL,
   `total_price` DECIMAL(12,2) NOT NULL,
   `variant_description` VARCHAR(255),
+  `customization_data` JSON NULL,
   `image` VARCHAR(255),
   `gst_rate` DECIMAL(4,2) DEFAULT 5.00,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

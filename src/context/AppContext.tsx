@@ -81,9 +81,9 @@ interface AppContextType {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   categories: CollectionCategory[];
-  addCategory: (category: Omit<CollectionCategory, 'id'>) => void;
-  updateCategory: (id: string, updates: Partial<CollectionCategory>) => void;
-  deleteCategory: (id: string) => void;
+  addCategory: (category: Omit<CollectionCategory, 'id'>) => Promise<void>;
+  updateCategory: (id: string, updates: Partial<CollectionCategory>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
   cart: CartItem[];
   addToCart: (product: Product, quantity?: number, variant?: ProductVariant, customization?: ProductCustomization) => boolean;
   removeFromCart: (itemId: string) => void;
@@ -152,6 +152,9 @@ interface AppContextType {
     amountPaid?: number;
     timelineNote?: string;
     customerEmail?: string;
+    razorpayOrderId?: string;
+    razorpayPaymentId?: string;
+    razorpaySignature?: string;
   }) => Promise<Order>;
   updateOrderStatus: (orderId: string, status: Order['status'], trackingNumber?: string, courierName?: string) => void;
   cancelOrder: (orderId: string, reason?: string) => Promise<{ success: boolean; message: string }>;
@@ -305,7 +308,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               .filter((subcategory, index, subcategories) =>
                 subcategory.length > 0 && subcategories.indexOf(subcategory) === index
               ),
-            color: typeof category.theme_color === 'string' ? category.theme_color : undefined
+            color: typeof category.color === 'string'
+              ? category.color
+              : typeof category.theme_color === 'string'
+                ? category.theme_color
+                : undefined,
+            isFeaturedInApp: category.isFeaturedInApp !== false && category.is_featured_in_app !== false
           };
         });
         if (!cancelled) setCategories(databaseCategories);
@@ -319,12 +327,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  const addCategory = (categoryData: Omit<CollectionCategory, 'id'>) => {
+  const addCategory = async (categoryData: Omit<CollectionCategory, 'id'>) => {
     const slugId = categoryData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
     const newCat: CollectionCategory = {
       ...categoryData,
       id: slugId || ('cat-' + Date.now())
     };
+    const response = await fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newCat)
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || data?.success !== true) {
+      throw new Error(data?.error || `Collection could not be created (HTTP ${response.status}).`);
+    }
     setCategories(prev => [...prev, newCat]);
 
     // Also sync to Flutter App categories
@@ -347,32 +364,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  const updateCategory = (id: string, updates: Partial<CollectionCategory>) => {
+  const updateCategory = async (id: string, updates: Partial<CollectionCategory>) => {
     const existingCategory = categories.find(category => category.id === id);
-    setCategories(prev => prev.map(c => (c.id === id ? { ...c, ...updates } : c)));
-
-    if (updates.image) {
-      fetch('/api/categories', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, image: updates.image })
-      })
-        .then(async response => {
-          const data = await response.json();
-          if (!response.ok || !data?.success) {
-            throw new Error(data?.error || `Category image could not be saved (HTTP ${response.status}).`);
-          }
-        })
-        .catch(error => {
-          console.error('Category image database save failed:', error);
-          if (existingCategory) {
-            setCategories(prev => prev.map(category => (
-              category.id === id ? { ...category, image: existingCategory.image } : category
-            )));
-          }
-          window.alert(`The category image was not saved: ${error.message}`);
-        });
+    if (!existingCategory) throw new Error('Collection could not be found.');
+    const updatedCategory = { ...existingCategory, ...updates };
+    const response = await fetch('/api/categories', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedCategory)
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || data?.success !== true) {
+      throw new Error(data?.error || `Collection could not be saved (HTTP ${response.status}).`);
     }
+    setCategories(prev => prev.map(c => (c.id === id ? { ...c, ...updates } : c)));
 
     // Synchronize to mobileAppConfig as well
     setMobileAppConfig(prev => ({
@@ -392,7 +397,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  const deleteCategory = (id: string) => {
+  const deleteCategory = async (id: string) => {
+    const response = await fetch('/api/categories', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || data?.success !== true) {
+      throw new Error(data?.error || `Collection could not be deleted (HTTP ${response.status}).`);
+    }
     setCategories(prev => prev.filter(c => c.id !== id));
     setMobileAppConfig(prev => ({
       ...prev,
@@ -1245,7 +1259,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const cartShipping = cartSubtotal >= 1499 || cartSubtotal === 0 ? 0 : 99;
   const cartTotal = Math.max(0, Math.round(cartSubtotal - couponDiscount + cartTax.totalTax + cartShipping));
 
-  // Automated 30-Minute Abandoned Cart Activity Sync
+  // Local cart recovery tracking; durable production tracking is not configured.
   useEffect(() => {
     if (!currentUser?.email || cart.length === 0) return;
 
@@ -1259,6 +1273,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           customerName: currentUser.name,
           customerPhone: currentUser.phone,
           cartTotal: cartTotal,
+          subtotal: cartSubtotal,
+          customerType: currentUser.role === 'consumer' ? 'B2C' : 'B2B',
           items: cart.map(i => ({
             productName: i.product?.name || 'Textile Item',
             variantDescription: i.selectedVariant?.size || (i.selectedVariant as any)?.color || 'Standard',
@@ -1698,6 +1714,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               phone: updated.phone,
               companyName: updated.companyName,
               gstNumber: updated.gstNumber,
+              addresses: updated.addresses,
             }
           })
         }).catch(err => console.warn('Failed to sync profile update to server:', err));
@@ -1707,14 +1724,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addSavedAddress = (addressData: Omit<Address, 'id'>) => {
+    const currentAddresses = currentUser?.addresses || [];
     const newAddress: Address = {
       ...addressData,
-      id: `addr-${Date.now()}`
+      id: `addr-${Date.now()}`,
+      isDefault: currentAddresses.length === 0 || !!addressData.isDefault
     };
-    setCurrentUser(prev => ({
-      ...prev,
-      addresses: [newAddress, ...prev.addresses]
-    }));
+    updateUserProfile({ addresses: [newAddress, ...currentAddresses] });
   };
 
   // Create Order
@@ -1726,6 +1742,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     amountPaid?: number;
     timelineNote?: string;
     customerEmail?: string;
+    razorpayOrderId?: string;
+    razorpayPaymentId?: string;
+    razorpaySignature?: string;
   }): Promise<Order> => {
     const quantitiesByProduct = cart.reduce<Record<string, number>>((totals, item) => {
       totals[item.productId] = (totals[item.productId] || 0) + item.quantity;
@@ -1764,6 +1783,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       return {
         productId: item.productId,
+        variantId: item.selectedVariant?.id,
         productName: item.product.name,
         sku: item.product.sku,
         hsnCode: item.product.hsnCode,
@@ -1827,7 +1847,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const response = await fetch('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newOrder)
+      body: JSON.stringify({
+        ...newOrder,
+        razorpayOrderId: orderData.razorpayOrderId,
+        razorpayPaymentId: orderData.razorpayPaymentId,
+        razorpaySignature: orderData.razorpaySignature
+      })
     });
     const result = await response.json().catch(() => null);
     if (!response.ok || result?.success !== true) {
@@ -2234,13 +2259,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             quantity: i.quantity,
             totalPrice: i.totalPrice
           })),
+          subtotal: cartSubtotal,
           source: 'WEB',
-          couponCode: 'LAUNCH150'
+          customerType: currentUser.role === 'consumer' ? 'B2C' : 'B2B'
         })
       });
       const data = await res.json();
       if (data.success) {
-        return { success: true, message: `✅ Success! Exclusive voucher code & cart items have been dispatched to ${targetEmail}. Check your inbox!` };
+        return {
+          success: true,
+          message: data.message || `✅ Your cart reminder was emailed to ${targetEmail}.`
+        };
       }
       return { success: false, message: data.error || 'Failed to dispatch email.' };
     } catch (e: any) {

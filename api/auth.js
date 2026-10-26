@@ -392,6 +392,9 @@ export default async function handler(req, res) {
       const cleanGst = (u.gstNumber || u.gst_number || '').trim().toUpperCase();
       const newWalletBal = u.walletBalance !== undefined ? Number(u.walletBalance) : undefined;
       const newWalletTxns = u.walletTransactions !== undefined ? JSON.stringify(u.walletTransactions) : undefined;
+      const newAddresses = Array.isArray(u.addresses)
+        ? JSON.stringify(u.addresses.slice(0, 20))
+        : undefined;
 
       if (!cleanEmail) {
         return res.status(400).json({ success: false, message: 'User email is required to update profile.' });
@@ -400,8 +403,8 @@ export default async function handler(req, res) {
       if (pool) {
         try {
           await pool.query(
-            'UPDATE users SET name = COALESCE(NULLIF(?, ""), name), company_name = COALESCE(NULLIF(?, ""), company_name), phone = COALESCE(NULLIF(?, ""), phone), gst_number = COALESCE(NULLIF(?, ""), gst_number), wallet_balance = COALESCE(?, wallet_balance), wallet_transactions = COALESCE(?, wallet_transactions) WHERE email = ?',
-            [cleanName, cleanCompany, cleanPhone, cleanGst, newWalletBal, newWalletTxns, cleanEmail]
+            'UPDATE users SET name = COALESCE(NULLIF(?, ""), name), company_name = COALESCE(NULLIF(?, ""), company_name), phone = COALESCE(NULLIF(?, ""), phone), gst_number = COALESCE(NULLIF(?, ""), gst_number), wallet_balance = COALESCE(?, wallet_balance), wallet_transactions = COALESCE(?, wallet_transactions), addresses = COALESCE(?, addresses) WHERE email = ?',
+            [cleanName, cleanCompany, cleanPhone, cleanGst, newWalletBal, newWalletTxns, newAddresses, cleanEmail]
           );
           const [updatedRows] = await pool.query('SELECT * FROM users WHERE email = ?', [cleanEmail]);
           if (updatedRows && updatedRows.length > 0) {
@@ -426,6 +429,7 @@ export default async function handler(req, res) {
         if (cleanGst) fallback[idx].gstNumber = cleanGst;
         if (newWalletBal !== undefined) fallback[idx].walletBalance = newWalletBal;
         if (u.walletTransactions !== undefined) fallback[idx].walletTransactions = u.walletTransactions;
+        if (Array.isArray(u.addresses)) fallback[idx].addresses = u.addresses.slice(0, 20);
         saveFallbackUsers(fallback);
         return res.status(200).json({
           success: true,
@@ -441,6 +445,12 @@ export default async function handler(req, res) {
     // ACTION: WALLET OPERATIONS (TOP-UP, REFUND CREDIT, REDEEM/PAY)
     // -------------------------------------------------------------
     if (action === 'wallet_topup' || action === 'wallet_refund' || action === 'wallet_pay') {
+      if (action === 'wallet_topup') {
+        return res.status(503).json({
+          success: false,
+          message: 'Wallet top-up is disabled until payment verification and account authorization are available.'
+        });
+      }
       const targetEmail = (req.body.email || req.body.userEmail || '').trim().toLowerCase();
       const amount = Number(req.body.amount || 0);
       const orderId = req.body.orderId || '';

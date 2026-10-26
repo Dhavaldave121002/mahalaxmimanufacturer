@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import {
+  BUSINESS_ADDRESS,
+  BUSINESS_GSTIN,
+  BUSINESS_WHATSAPP_NUMBER
+} from '../constants/businessContact';
 import { Product, Quotation } from '../types';
 import {
   Building2,
@@ -70,7 +75,7 @@ export const WholesalePage: React.FC = () => {
   const [swatchAdded, setSwatchAdded] = useState(false);
 
   // GSTIN format check and GST estimator state
-  const [gstinInput, setGstinInput] = useState(currentUser.gstNumber || '24AAECM8921P1ZA');
+  const [gstinInput, setGstinInput] = useState(currentUser.gstNumber || '');
   const [monthlyProcurement, setMonthlyProcurement] = useState<number>(200000);
   const [taxCategory, setTaxCategory] = useState<'textile' | 'household'>('textile');
   const [gstinVerifiedData, setGstinVerifiedData] = useState<{ valid: boolean } | null>(null);
@@ -536,7 +541,7 @@ export const WholesalePage: React.FC = () => {
               <div>
                 <p className="font-bold text-navy">Quoting as: {currentUser.name}</p>
                 <p className="text-slate-600 text-[11px]">
-                  Company: <span className="font-semibold">{currentUser.companyName || 'Not Set'}</span> • GSTIN: <span className="font-mono font-semibold">{currentUser.gstNumber || '24AAECM8921P1ZA'}</span>
+                  Company: <span className="font-semibold">{currentUser.companyName || 'Not Set'}</span> • GSTIN: <span className="font-mono font-semibold">{currentUser.gstNumber || 'Not provided'}</span>
                 </p>
               </div>
               <Badge variant="primary" size="sm">
@@ -820,7 +825,7 @@ export const WholesalePage: React.FC = () => {
                     maxLength={15}
                     value={gstinInput}
                     onChange={e => handleValidateGstin(e.target.value)}
-                    placeholder="e.g. 24AAECM8921P1ZA"
+                    placeholder="Enter your business GSTIN"
                     className="flex-1 p-3 border border-slate-300 rounded-xl text-xs font-mono font-bold text-navy uppercase tracking-widest focus:border-indigo outline-none"
                   />
                   <button
@@ -1164,7 +1169,7 @@ export const WholesalePage: React.FC = () => {
                 <p className="text-xs text-slate-500">Harmonized System codes for fast overseas customs clearance at major international ports.</p>
               </div>
               <a
-                href="https://wa.me/919876543210?text=Hello%20Mahalaxmi%20Enterprises%20Export%20Desk%2C%20I%20am%20an%20international%20buyer%20requesting%20FOB%2FCIF%20container%20quotation"
+                href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Hello Mahalaxmi Enterprises, I am an international buyer requesting a FOB/CIF quotation.')}`}
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition shadow-sm w-fit"
@@ -1193,7 +1198,7 @@ export const WholesalePage: React.FC = () => {
                     <td className="py-3 px-4 text-slate-600">PVC Book Fold or Photo-Card Export Carton</td>
                     <td className="py-3 px-4 font-black text-navy">$5.80 - $7.20 / Set</td>
                     <td className="py-3 px-4 text-center">
-                      <a href="https://wa.me/919876543210?text=Requesting%20FOB%20quote%20for%20HS%206302.21%20Bedsheets" target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
+                      <a href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Requesting FOB quote for HS 6302.21 Bedsheets')}`} target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
                     </td>
                   </tr>
                   <tr className="hover:bg-slate-50/60">
@@ -1203,7 +1208,7 @@ export const WholesalePage: React.FC = () => {
                     <td className="py-3 px-4 text-slate-600">Polybagged &amp; Compressed High-Density Bales</td>
                     <td className="py-3 px-4 font-black text-navy">$2.70 - $3.40 / Pc</td>
                     <td className="py-3 px-4 text-center">
-                      <a href="https://wa.me/919876543210?text=Requesting%20FOB%20quote%20for%20HS%206302.60%20Terry%20Towels" target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
+                      <a href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Requesting FOB quote for HS 6302.60 Terry Towels')}`} target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
                     </td>
                   </tr>
                   <tr className="hover:bg-slate-50/60">
@@ -1213,7 +1218,7 @@ export const WholesalePage: React.FC = () => {
                     <td className="py-3 px-4 text-slate-600">50-Pk Master Cartons, Barcoded for Retail</td>
                     <td className="py-3 px-4 font-black text-navy">$0.32 - $0.45 / Pc</td>
                     <td className="py-3 px-4 text-center">
-                      <a href="https://wa.me/919876543210?text=Requesting%20FOB%20quote%20for%20HS%206307.10%20Microfiber" target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
+                      <a href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Requesting FOB quote for HS 6307.10 Microfiber')}`} target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
                     </td>
                   </tr>
                   <tr className="hover:bg-slate-50/60">
@@ -1223,7 +1228,7 @@ export const WholesalePage: React.FC = () => {
                     <td className="py-3 px-4 text-slate-600">100 Pcs per Corrugated Export Box</td>
                     <td className="py-3 px-4 font-black text-navy">$0.65 - $0.85 / Bag</td>
                     <td className="py-3 px-4 text-center">
-                      <a href="https://wa.me/919876543210?text=Requesting%20FOB%20quote%20for%20HS%204202.92%20Canvas%20Bags" target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
+                      <a href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Requesting FOB quote for HS 4202.92 Canvas Bags')}`} target="_blank" rel="noreferrer" className="text-emerald-700 font-bold hover:underline">Get FOB Quote</a>
                     </td>
                   </tr>
                 </tbody>
@@ -1269,7 +1274,7 @@ export const WholesalePage: React.FC = () => {
               <div>
                 <h3 className="text-xl font-black text-navy tracking-tight">MAHALAXMI ENTERPRISES</h3>
                 <p className="text-[11px] text-slate-500">
-                  Narol Textile Market, Ahmedabad, Gujarat - 382405 • GSTIN: 24AAECM8921P1ZA
+                  {BUSINESS_ADDRESS} • GSTIN: {BUSINESS_GSTIN}
                 </p>
                 <p className="text-[11px] text-slate-500 font-semibold">Direct Mill Manufacturer & Master Distributor</p>
               </div>

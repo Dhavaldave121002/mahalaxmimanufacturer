@@ -1,6 +1,12 @@
 import React from 'react';
 import { Order } from '../../types';
 import { Printer, X, Download, ShieldCheck } from 'lucide-react';
+import {
+  BUSINESS_ADDRESS,
+  BUSINESS_GSTIN,
+  BUSINESS_LEGAL_NAME,
+  BUSINESS_SUPPORT_EMAIL
+} from '../../constants/businessContact';
 
 interface InvoiceModalProps {
   order: Order;
@@ -21,7 +27,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
     window.print();
   };
 
-  const isB2B = order.customer.isB2B && !!order.customer.gstNumber;
+  const isB2B = !!order.customer.gstNumber;
+  const roundOff = Number((
+    order.totalAmount -
+    order.subtotal -
+    order.taxBreakdown.totalTax -
+    order.shippingCharge +
+    order.discount
+  ).toFixed(2));
 
   return (
     <div className="fixed inset-0 z-[110] overflow-y-auto bg-navy/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
@@ -34,7 +47,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
             </div>
             <div className="min-w-0">
               <h3 className="font-semibold text-sm sm:text-lg text-white truncate">
-                {type === 'INVOICE' ? 'Official GST Tax Invoice' : 'Warehouse Packing Slip'}
+                {type === 'INVOICE' ? 'GST Tax Invoice' : 'Warehouse Packing Slip'}
               </h3>
               <p className="text-[10px] sm:text-xs text-slate-300 truncate">
                 Ref: {order.orderNumber} • Dated: {new Date(order.createdAt).toLocaleDateString('en-IN')}
@@ -65,14 +78,14 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
             <div className="flex flex-col sm:flex-row justify-between items-start gap-3 sm:gap-4">
               <div>
                 <span className="text-xl sm:text-2xl font-black tracking-tight text-navy">
-                  MAHALAXMI ENTERPRISES<span className="text-indigo">.</span>
+                  {BUSINESS_LEGAL_NAME.toUpperCase()}<span className="text-indigo">.</span>
                 </span>
                 <p className="text-xs text-slate-600 mt-1 font-medium">Direct Mill Rates & Wholesale Essentials</p>
                 <div className="text-[11px] sm:text-xs text-slate-600 mt-2 space-y-0.5">
-                  <p>Plot No. 42-45, Ring Road Textile Park Phase II</p>
-                  <p>Ahmedabad, Gujarat - 382405, India</p>
-                  <p><span className="font-semibold text-slate-800">GSTIN:</span> 24AAECM8921P1ZA | <span className="font-semibold text-slate-800">PAN:</span> AAECM8921P</p>
-                  <p><span className="font-semibold text-slate-800">State Code:</span> 24 (Gujarat) | <span className="font-semibold text-slate-800">Email:</span> mahalaxmienterprise881@gmail.com</p>
+                  <p>{BUSINESS_LEGAL_NAME}</p>
+                  <p>{BUSINESS_ADDRESS}</p>
+                  <p><span className="font-semibold text-slate-800">GSTIN:</span> {BUSINESS_GSTIN}</p>
+                  <p><span className="font-semibold text-slate-800">State Code:</span> 24 (Gujarat) | <span className="font-semibold text-slate-800">Email:</span> {BUSINESS_SUPPORT_EMAIL}</p>
                 </div>
               </div>
 
@@ -83,7 +96,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 <p className="text-xs sm:text-sm font-bold text-navy">Invoice No: {order.orderNumber.replace('ORD', 'INV')}</p>
                 <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">Invoice Date: {new Date(order.createdAt).toLocaleDateString('en-IN')}</p>
                 <p className="text-[11px] sm:text-xs text-slate-500">Order ID: {order.orderNumber}</p>
-                <p className="text-[11px] sm:text-xs text-slate-500">Payment: {order.paymentMethod} ({order.paymentStatus})</p>
+                <p className="text-[11px] sm:text-xs text-slate-500">Payment: {order.paymentStatus} via {order.paymentMethod}</p>
                 {order.trackingNumber && (
                   <p className="text-[11px] sm:text-xs text-indigo font-semibold mt-1">Waybill: {order.trackingNumber} ({order.courierName})</p>
                 )}
@@ -119,7 +132,7 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
               <p className="text-slate-700 mt-1">{order.shippingAddress.street}</p>
               <p className="text-slate-700">{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}</p>
               <p className="text-slate-700">Contact: {order.shippingAddress.phone}</p>
-              <p className="text-slate-500 mt-1">Place of Supply: {order.shippingAddress.state} (Destination)</p>
+              <p className="text-slate-500 mt-1">Place of Supply: {order.shippingAddress.state || 'Not provided'}</p>
             </div>
           </div>
 
@@ -178,9 +191,8 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
               </div>
 
               <div className="text-[10px] sm:text-[11px] text-slate-500 space-y-1">
-                <p>1. Goods sold under direct mill rate contract are subject to standard Ahmedabad jurisdiction.</p>
-                <p>2. E-Way bill reference generated under GSTIN 24AAECM8921P1ZA.</p>
-                <p>3. This is a computer generated tax invoice in compliance with CGST Rule 46.</p>
+                <p>This document reflects the order, buyer, item, payment and tax details recorded for this transaction.</p>
+                <p>Contact customer support promptly if any recorded detail needs correction.</p>
               </div>
             </div>
 
@@ -196,15 +208,23 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 </div>
               )}
               <div className="flex justify-between text-slate-700">
-                <span>GST Tax (CGST + SGST / IGST):</span>
-                <span className="font-semibold text-slate-900">₹{Math.round(order.taxBreakdown.totalTax).toLocaleString('en-IN')}</span>
+                <span>Total GST:</span>
+                <span className="font-semibold text-slate-900">₹{order.taxBreakdown.totalTax.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-slate-700">
                 <span>Freight & Handling:</span>
                 <span className="font-semibold text-slate-900">
-                  {order.shippingCharge === 0 ? 'FREE (Mill Dispatch)' : `₹${order.shippingCharge}`}
+                  ₹{order.shippingCharge.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
+              {Math.abs(roundOff) >= 0.01 && (
+                <div className="flex justify-between text-slate-700">
+                  <span>Rounding adjustment:</span>
+                  <span className="font-semibold text-slate-900">
+                    ₹{roundOff.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
               <div className="border-t border-slate-300 pt-2 flex justify-between text-xs sm:text-sm font-bold text-navy">
                 <span>Total Invoice Value (INR):</span>
                 <span className="text-sm sm:text-base text-indigo font-black">₹{order.totalAmount.toLocaleString('en-IN')}</span>
@@ -215,12 +235,12 @@ export const InvoiceModal: React.FC<InvoiceModalProps> = ({
           {/* Footer Signature */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 pt-3 sm:pt-4 border-t border-slate-200 text-xs">
             <div>
-              <p className="text-slate-500 text-[11px]">Authorized Digital Verification Code: <span className="font-mono text-slate-800">MLE-{order.id.slice(-6).toUpperCase()}</span></p>
+              <p className="text-slate-500 text-[11px]">System-generated document for order {order.orderNumber}.</p>
             </div>
             <div className="text-left sm:text-right w-full sm:w-auto">
-              <p className="font-bold text-slate-800">For Mahalaxmi Enterprises</p>
+              <p className="font-bold text-slate-800">For {BUSINESS_LEGAL_NAME}</p>
               <div className="h-6 sm:h-10"></div>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 border-t border-slate-400 pt-1">Authorized Mill Signatory / Dispatch Officer</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-500 border-t border-slate-400 pt-1">Computer-generated invoice</p>
             </div>
           </div>
         </div>

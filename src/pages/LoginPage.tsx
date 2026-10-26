@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { sendOtpEmail } from '../utils/sendOtpEmail';
+import { BUSINESS_SUPPORT_PHONE, BUSINESS_SUPPORT_PHONE_LINK } from '../constants/businessContact';
 import {
   Lock,
   Mail,
@@ -51,6 +52,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   const [loginOtp, setLoginOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const loginFormRef = useRef<HTMLFormElement>(null);
 
   // Register form state
   const [registerForm, setRegisterForm] = useState({
@@ -97,6 +99,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
   // 1. Handle Login
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     clearMessages();
 
     if (!loginIdentifier.trim()) {
@@ -562,7 +565,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                   </button>
                 </div>
 
-                <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <form ref={loginFormRef} onSubmit={handleLoginSubmit} className="space-y-4">
                   {/* Identifier Field (Email or Mobile) */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
@@ -624,8 +627,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                           <input
                             type="text"
                             maxLength={4}
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
                             value={loginOtp}
-                            onChange={e => setLoginOtp(e.target.value.replace(/\D/g, ''))}
+                            onChange={e => {
+                              const code = e.target.value.replace(/\D/g, '').slice(0, 4);
+                              setLoginOtp(code);
+                              if (otpSent && expectedLoginOtp && code.length === 4) {
+                                window.setTimeout(() => loginFormRef.current?.requestSubmit(), 0);
+                              }
+                            }}
                             placeholder="Enter 4-digit code sent to email"
                             className="w-full text-center font-mono tracking-widest text-sm py-2.5 rounded-xl border border-slate-300 focus:border-indigo focus:ring-2 focus:ring-indigo/20 outline-none"
                           />
@@ -995,7 +1006,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               256-bit SSL Direct Mill Encryption
             </span>
-            <span>Ahmedabad Mill Desk: +91 94291 87611</span>
+            <a href={`tel:${BUSINESS_SUPPORT_PHONE_LINK}`} className="hover:underline">
+              Support: {BUSINESS_SUPPORT_PHONE}
+            </a>
           </div>
 
         </div>

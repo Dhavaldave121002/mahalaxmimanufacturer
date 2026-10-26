@@ -343,7 +343,7 @@ async function sendCancellationEmails(data) {
               </tr>
               <tr>
                 <td style="background-color: #F8FAFC; padding: 14px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
-                  Mahalaxmi Enterprises • Textile Market Ring Road, Surat, Gujarat • +91 90335 98639
+                  Mahalaxmi Enterprises • Direct Mill Rates & Wholesale Essentials • +91 90335 98639
                 </td>
               </tr>
             </table>

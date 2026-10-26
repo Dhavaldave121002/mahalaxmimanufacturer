@@ -27,8 +27,9 @@ export interface SubscriberLead {
   itemsCount: number;
   itemsSummary: string;
   couponCode: string;
+  subtotal?: number;
   source: 'Website' | 'Mobile App';
-  status: 'Voucher Emailed' | 'Pending (30-Min)';
+  status: string;
   createdAt: string;
   lastActivity?: string;
 }
@@ -38,7 +39,7 @@ export const SubscriberManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sourceFilter, setSourceFilter] = useState<'ALL' | 'Website' | 'Mobile App'>('ALL');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'Voucher Emailed' | 'Pending (30-Min)'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'Offer Emailed' | 'Reminder Emailed' | 'Pending (30-Min)'>('ALL');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ text: string; success: boolean } | null>(null);
@@ -86,14 +87,14 @@ export const SubscriberManager: React.FC = () => {
           customerEmail: lead.customerEmail,
           customerPhone: lead.customerPhone,
           cartTotal: lead.cartTotal,
-          couponCode: lead.couponCode || 'LAUNCH150',
+          subtotal: lead.subtotal ?? 0,
           source: lead.source === 'Mobile App' ? 'FLUTTER_APP' : 'WEB',
           items: [{ productName: lead.itemsSummary || 'Textile Consignment', quantity: 1, totalPrice: lead.cartTotal }]
         })
       });
       const data = await res.json();
       if (data.success) {
-        setStatusMsg({ text: `✅ Voucher successfully resent to ${lead.customerEmail}!`, success: true });
+        setStatusMsg({ text: data.message || `Cart reminder sent to ${lead.customerEmail}.`, success: true });
         fetchSubscribers();
       } else {
         setStatusMsg({ text: data.error || 'Failed to resend voucher.', success: false });
@@ -140,7 +141,7 @@ export const SubscriberManager: React.FC = () => {
       `"${s.customerPhone || ''}"`,
       s.cartTotal || 0,
       `"${(s.itemsSummary || '').replace(/"/g, '""')}"`,
-      `"${s.couponCode || 'LAUNCH150'}"`,
+      `"${s.couponCode || ''}"`,
       `"${s.source}"`,
       `"${s.status}"`,
       `"${new Date(s.createdAt).toLocaleString('en-IN')}"`
@@ -179,7 +180,9 @@ export const SubscriberManager: React.FC = () => {
     const webCount = subscribers.filter(s => s.source === 'Website').length;
     const appCount = subscribers.filter(s => s.source === 'Mobile App').length;
     const totalCartValue = subscribers.reduce((sum, s) => sum + (s.cartTotal || 0), 0);
-    const sentCount = subscribers.filter(s => s.status === 'Voucher Emailed').length;
+    const sentCount = subscribers.filter(s =>
+      ['Offer Emailed', 'Reminder Emailed', 'Voucher Emailed'].includes(s.status)
+    ).length;
     return { total, webCount, appCount, totalCartValue, sentCount };
   }, [subscribers]);
 
@@ -315,7 +318,8 @@ export const SubscriberManager: React.FC = () => {
             className="px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 outline-none"
           >
             <option value="ALL">All Status</option>
-            <option value="Voucher Emailed">Voucher Emailed</option>
+            <option value="Offer Emailed">Offer Emailed</option>
+            <option value="Reminder Emailed">Reminder Emailed</option>
             <option value="Pending (30-Min)">Pending (30-Min)</option>
           </select>
         </div>
@@ -343,7 +347,7 @@ export const SubscriberManager: React.FC = () => {
                     <Mail className="w-8 h-8 mx-auto text-slate-300 mb-2" />
                     <p className="font-bold text-sm text-slate-600">No Subscriber Leads Found</p>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      When customers enter their email in the 30-min cart recovery box, they will appear here automatically.
+                      Cart offers and reminders are recorded here when a current admin coupon applies or a customer requests a reminder.
                     </p>
                   </td>
                 </tr>
@@ -354,7 +358,7 @@ export const SubscriberManager: React.FC = () => {
                   const waMessage = encodeURIComponent(
                     `Hello ${lead.customerName || 'Valued Customer'}, greetings from Mahalaxmi Enterprises Ahmedabad!\n\n` +
                     `We noticed you saved items worth ₹${lead.cartTotal || 0} (${lead.itemsSummary || 'Textile order'}) in your cart.\n\n` +
-                    `As a special token, you can use instant voucher code: ${lead.couponCode || 'LAUNCH150'} to get extra discount on completing your order today!\n\n` +
+                    `No coupon code is included in this follow-up. Please confirm current offers in the admin coupon settings before promising a discount.\n\n` +
                     `Would you like assistance with delivery or placing your wholesale order?`
                   );
 
@@ -439,7 +443,7 @@ export const SubscriberManager: React.FC = () => {
                       {/* Voucher Sent */}
                       <td className="py-3.5 px-4">
                         <span className="font-black text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded border border-amber-200 font-mono inline-block">
-                          {lead.couponCode || 'LAUNCH150'}
+                          {lead.couponCode || 'No active offer'}
                         </span>
                         <span className="block text-[10px] text-emerald-700 font-semibold mt-0.5">
                           {lead.status}

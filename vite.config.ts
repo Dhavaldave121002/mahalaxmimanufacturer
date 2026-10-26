@@ -88,6 +88,29 @@ function localApiPlugin(): Plugin {
           return;
         }
 
+        if (req.url?.startsWith('/api/payments')) {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+
+          if (req.method === 'OPTIONS') {
+            expressRes.status(200).end();
+            return;
+          }
+
+          await ensureBodyParsed();
+          try {
+            // @ts-ignore
+            const mod = await import('./api/payments.js');
+            await mod.default(req, expressRes);
+          } catch (e: any) {
+            console.error('Local payment API failed:', e);
+            expressRes.status(500).json({ success: false, error: 'Payment service is unavailable.' });
+          }
+          return;
+        }
+
         // 3. Products API
         if (req.url?.startsWith('/api/products')) {
           res.setHeader('Content-Type', 'application/json');
@@ -274,7 +297,8 @@ function localApiPlugin(): Plugin {
         // 10. Business Enquiries & RFQ API
         if (req.url?.startsWith('/api/categories')) {
           res.setHeader('Content-Type', 'application/json');
-          res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,OPTIONS');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
           res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
 
           if (req.method === 'OPTIONS') {

@@ -31,6 +31,12 @@ import {
 import { Badge } from '../common/Badge';
 import { WishlistDrawer } from '../common/WishlistDrawer';
 import { matchesProductSearch } from '../../utils/searchProducts';
+import {
+  BUSINESS_SUPPORT_PHONE,
+  BUSINESS_SUPPORT_PHONE_LINK,
+  BUSINESS_GSTIN,
+  BUSINESS_WHATSAPP_NUMBER
+} from '../../constants/businessContact';
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -231,12 +237,12 @@ export const Header: React.FC = () => {
 
           <div className="flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] md:w-auto md:text-[11px]">
             <a
-              href="tel:+919033598639"
+              href={`tel:${BUSINESS_SUPPORT_PHONE_LINK}`}
               className="text-slate-300 hover:text-champagne transition flex items-center gap-1 font-medium"
             >
               <PhoneCall className="h-3.5 w-3.5 text-champagne" />
-              <span className="sm:hidden">Call: +91 90335 98639</span>
-              <span className="hidden sm:inline">Mill Desk: +91 90335 98639</span>
+              <span className="sm:hidden">Call: {BUSINESS_SUPPORT_PHONE}</span>
+              <span className="hidden sm:inline">Mill Desk: {BUSINESS_SUPPORT_PHONE}</span>
             </a>
             <span className="text-slate-700 hidden md:inline">•</span>
             <Link
@@ -1011,16 +1017,16 @@ export const Header: React.FC = () => {
             {/* 3. Drawer Bottom Contact Strip */}
             <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs shrink-0 space-y-2">
               <a
-                href="https://wa.me/919876543210?text=Hello%20Mahalaxmi%20Enterprises%2C%20I%20want%20to%20order%20wholesale%20fabrics"
+                href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Namaste Mahalaxmi Enterprises, I would like to enquire about wholesale products and pricing.')}`}
                 target="_blank"
                 rel="noreferrer"
                 className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-sm text-center"
               >
-                <span>💬 WhatsApp Ahmedabad Mill Desk</span>
+                <span>💬 WhatsApp Support</span>
               </a>
 
               <div className="text-[10px] text-slate-400 text-center">
-                Ahmedabad Textile Cluster • GSTIN: 24AAECM8921P1ZA
+                GSTIN: {BUSINESS_GSTIN}
               </div>
             </div>
           </div>

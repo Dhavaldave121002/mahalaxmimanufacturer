@@ -16,6 +16,15 @@ import {
   X,
   MessageSquare
 } from 'lucide-react';
+import {
+  BUSINESS_SUPPORT_EMAIL,
+  BUSINESS_SUPPORT_PHONE,
+  BUSINESS_SUPPORT_PHONE_LINK,
+  BUSINESS_ADDRESS,
+  BUSINESS_GSTIN,
+  BUSINESS_TAGLINE,
+  BUSINESS_WHATSAPP_NUMBER
+} from '../../constants/businessContact';
 
 export const Footer: React.FC = () => {
   const location = useLocation();
@@ -96,7 +105,7 @@ export const Footer: React.FC = () => {
               </span>
             </div>
             <p className="text-xs font-semibold text-champagne tracking-wider uppercase">
-              Direct Mill Rates & Wholesale Essentials
+              {BUSINESS_TAGLINE}
             </p>
             <p className="text-xs text-slate-300 leading-relaxed max-w-sm">
               Mahalaxmi Enterprises is India's dedicated manufacturing marketplace for combed cotton bedsheets, 600 GSM bath towels, heavy canvas bags, and commercial hygiene textiles. Serving retail households and verified hospitality chains nationwide.
@@ -105,15 +114,19 @@ export const Footer: React.FC = () => {
             <div className="pt-2 text-xs text-slate-300 space-y-1.5">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-champagne shrink-0" />
-                <span>Narol Textile Cluster, Ahmedabad, Gujarat 382405</span>
+                <span>{BUSINESS_ADDRESS}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-champagne shrink-0" />
-                <span>Wholesale Line: +91 90335 98639</span>
+                <a href={`tel:${BUSINESS_SUPPORT_PHONE_LINK}`} className="hover:text-champagne">
+                  Wholesale Line: {BUSINESS_SUPPORT_PHONE}
+                </a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-champagne shrink-0" />
-                <span>mahalaxmienterprise881@gmail.com</span>
+                <a href={`mailto:${BUSINESS_SUPPORT_EMAIL}`} className="break-all hover:text-champagne">
+                  {BUSINESS_SUPPORT_EMAIL}
+                </a>
               </div>
             </div>
           </div>
@@ -191,7 +204,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="https://wa.me/919033598639?text=Namaste%20Mahalaxmi%20Enterprises,%20I%20have%20an%20inquiry%20regarding%20my%20Order/Return."
+                  href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Namaste Mahalaxmi Enterprises, I need help with an order or return.')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-champagne transition text-emerald-400 flex items-center gap-1.5 font-semibold whitespace-nowrap"
@@ -214,11 +227,7 @@ export const Footer: React.FC = () => {
             <ul className="text-xs text-slate-300 space-y-2">
               <li className="flex items-center gap-1.5 text-slate-300">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>GSTIN: 24AAECM8921P1ZA</span>
-              </li>
-              <li className="flex items-center gap-1.5 text-slate-300">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>UDYAM-GJ-22-0049182 (MSME)</span>
+                <span>GSTIN: {BUSINESS_GSTIN}</span>
               </li>
               <li className="flex items-center gap-1.5 text-slate-300">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -319,7 +328,7 @@ export const Footer: React.FC = () => {
                   <h4 className="font-bold text-navy">How to Request a Return or Exchange:</h4>
                   <div className="space-y-1 text-slate-600">
                     <p>• <strong>Method 1 (Instant Online):</strong> Visit <Link to="/orders" onClick={() => setLegalModal(null)} className="text-indigo font-bold underline">Track Order / Consignments</Link>, select your delivered order, and click the <strong>"🔄 Return / Exchange"</strong> button.</p>
-                    <p>• <strong>Method 2 (WhatsApp Desk):</strong> Ping our Ahmedabad Mill dispatch helpline on WhatsApp at <a href="https://wa.me/919033598639" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">+91 90335 98639</a> with your Order ID.</p>
+                    <p>• <strong>Method 2 (WhatsApp Desk):</strong> Message our support team on WhatsApp at <a href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">{BUSINESS_SUPPORT_PHONE}</a> with your Order ID.</p>
                     <p>• <strong>Method 3 (Email):</strong> Email our team at <a href="mailto:mahalaxmienterprise881@gmail.com" className="text-indigo font-bold underline">mahalaxmienterprise881@gmail.com</a>.</p>
                   </div>
                 </div>
@@ -353,7 +362,7 @@ export const Footer: React.FC = () => {
                   Business orders include a GST tax invoice with the details provided at checkout.
                 </p>
                 <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-mono space-y-1">
-                  <p><strong>GSTIN:</strong> 24AAECM8921P1ZA</p>
+                  <p><strong>GSTIN:</strong> {BUSINESS_GSTIN}</p>
                   <p><strong>HSN Codes:</strong> 6302 (Bed & Bath Linen - 5% / 12%), 5208 (Woven Cotton Fabrics - 5%)</p>
                   <p><strong>E-way Bill:</strong> Auto-generated for consignments exceeding ₹50,000</p>
                 </div>

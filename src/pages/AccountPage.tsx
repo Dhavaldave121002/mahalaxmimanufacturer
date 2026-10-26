@@ -32,7 +32,7 @@ import {
 import { Badge } from '../components/common/Badge';
 
 export const AccountPage: React.FC = () => {
-  const { currentUser, isLoggedIn, logout, deleteAccount, updateUserProfile, addSavedAddress, orders, quotations, submitBusinessEnquiry, topUpWallet, checkPincode } = useApp();
+  const { currentUser, isLoggedIn, logout, deleteAccount, updateUserProfile, addSavedAddress, orders, quotations, submitBusinessEnquiry, checkPincode } = useApp();
 
   const isAdminUser =
     currentUser?.role === 'admin' ||
@@ -141,76 +141,12 @@ export const AccountPage: React.FC = () => {
   const [showTopUpModal, setShowTopUpModal] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState<number>(500);
   const [customTopUpInput, setCustomTopUpInput] = useState<string>('500');
-  const [topUpSubmitting, setTopUpSubmitting] = useState(false);
-  const [topUpSuccessMsg, setTopUpSuccessMsg] = useState<string | null>(null);
+  const [topUpNotice, setTopUpNotice] = useState<string | null>(null);
   const [showWalletLedger, setShowWalletLedger] = useState(false);
 
   const handleTopUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const amt = Number(customTopUpInput) || topUpAmount;
-    if (!amt || amt <= 0) return;
-
-    const razorpayKey = (import.meta as any).env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TXxnGK4dKMgIdA';
-
-    if (typeof (window as any).Razorpay === 'undefined') {
-      alert('Razorpay Payment Gateway is loading. Please check your internet connection and try again.');
-      return;
-    }
-
-    setTopUpSubmitting(true);
-
-    const options = {
-      key: razorpayKey,
-      amount: Math.round(amt * 100), // in paise
-      currency: 'INR',
-      name: 'Mahalaxmi Enterprises',
-      description: `Purchase 🪙 \${amt} Mill Points for Wallet (1 Point = ₹1)`,
-      image: `${window.location.origin}/logo.png`,
-      prefill: {
-        name: currentUser.name || 'Valued Buyer',
-        email: currentUser.email || 'customer@mahalaxmi.in',
-        contact: currentUser.phone || '8511172099',
-      },
-      notes: {
-        purpose: 'WALLET_TOPUP',
-        points: amt.toString(),
-        user_email: currentUser.email
-      },
-      theme: {
-        color: '#312E81'
-      },
-      handler: async function (response: any) {
-        console.log('[Razorpay TopUp Live Success]', response);
-        const paymentId = response.razorpay_payment_id || `RZP-\${Date.now().toString().slice(-6)}`;
-        const res = await topUpWallet(amt, paymentId);
-        setTopUpSubmitting(false);
-        if (res.success) {
-          setTopUpSuccessMsg(res.message);
-          setTimeout(() => {
-            setTopUpSuccessMsg(null);
-            setShowTopUpModal(false);
-          }, 2000);
-        }
-      },
-      modal: {
-        ondismiss: function () {
-          setTopUpSubmitting(false);
-        }
-      }
-    };
-
-    try {
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on('payment.failed', function (resp: any) {
-        setTopUpSubmitting(false);
-        alert(`Payment failed: \${resp.error?.description || 'Transaction cancelled or declined.'}`);
-      });
-      rzp.open();
-    } catch (err: any) {
-      setTopUpSubmitting(false);
-      console.error('Razorpay initialization error:', err);
-      alert('Unable to launch Razorpay gateway. Please try again.');
-    }
+    setTopUpNotice('Wallet top-up is disabled until secure payment verification and account authorization are available.');
   };
 
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -218,9 +154,9 @@ export const AccountPage: React.FC = () => {
     fullName: currentUser?.name || '',
     phone: currentUser?.phone || '',
     street: '',
-    city: 'Surat',
-    state: 'Gujarat',
-    pincode: '395002',
+    city: '',
+    state: '',
+    pincode: '',
     addressType: 'COMMERCIAL'
   });
 
@@ -966,13 +902,10 @@ export const AccountPage: React.FC = () => {
               </p>
             </div>
 
-            {topUpSuccessMsg ? (
-              <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-2">
-                <div className="w-12 h-12 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto">
-                  <Check className="w-6 h-6 stroke-[3]" />
-                </div>
-                <h4 className="font-black text-emerald-950 text-base">Points Added Successfully!</h4>
-                <p className="text-xs text-emerald-800">{topUpSuccessMsg}</p>
+            {topUpNotice ? (
+              <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl text-center space-y-2">
+                <h4 className="font-black text-amber-950 text-base">Wallet top-up unavailable</h4>
+                <p className="text-xs text-amber-800">{topUpNotice}</p>
               </div>
             ) : (
               <form onSubmit={handleTopUpSubmit} className="space-y-4 text-xs">
@@ -1040,20 +973,18 @@ export const AccountPage: React.FC = () => {
                     </div>
                   </div>
                   <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                    Instant Auto-Credit
+                    Top-up disabled
                   </span>
                 </div>
 
                 <button
                   type="submit"
-                  disabled={topUpSubmitting || !(Number(customTopUpInput) > 0)}
+                  disabled={!(Number(customTopUpInput) > 0)}
                   className="w-full py-3.5 bg-indigo hover:bg-indigo-dark disabled:opacity-50 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 shadow-premium text-sm cursor-pointer"
                 >
                   <Coins className="w-4 h-4 text-champagne" />
                   <span>
-                    {topUpSubmitting
-                      ? 'Opening Razorpay Gateway...'
-                      : `Pay ₹${Number(customTopUpInput) || 0} via Razorpay & Add Points`}
+                    'Wallet top-up temporarily unavailable'
                   </span>
                 </button>
               </form>

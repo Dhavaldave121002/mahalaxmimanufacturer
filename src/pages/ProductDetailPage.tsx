@@ -6,6 +6,10 @@ import { INITIAL_PRODUCTS } from '../data/mockProducts';
 import { Badge } from '../components/common/Badge';
 import { ProductCard } from '../components/common/ProductCard';
 import {
+  BUSINESS_SUPPORT_PHONE,
+  BUSINESS_WHATSAPP_NUMBER
+} from '../constants/businessContact';
+import {
   Star,
   ShieldCheck,
   Truck,
@@ -93,6 +97,52 @@ const ExpandableTabContent: React.FC<{ children: React.ReactNode }> = ({ childre
           onClick={() => setIsExpanded(expanded => !expanded)}
           aria-expanded={isExpanded}
           className="text-xs font-bold text-indigo hover:text-indigo-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo rounded"
+        >
+          {isExpanded ? 'Read less' : 'Read more'}
+        </button>
+      )}
+    </div>
+  );
+};
+
+const ExpandableDescription: React.FC<{ text: string }> = ({ text }) => {
+  const contentRef = React.useRef<HTMLParagraphElement>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [canExpand, setCanExpand] = useState(false);
+
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+
+    const updateExpandableState = () => {
+      setCanExpand(
+        expandable => expandable || content.scrollHeight > content.clientHeight + 1
+      );
+    };
+
+    setIsExpanded(false);
+    setCanExpand(false);
+    updateExpandableState();
+    const observer = new ResizeObserver(updateExpandableState);
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [text]);
+
+  return (
+    <div>
+      <p
+        ref={contentRef}
+        className="text-xs text-slate-600 leading-relaxed max-w-3xl overflow-hidden"
+        style={!isExpanded ? { maxHeight: '4.5em' } : undefined}
+      >
+        {text}
+      </p>
+      {(canExpand || isExpanded) && (
+        <button
+          type="button"
+          onClick={() => setIsExpanded(expanded => !expanded)}
+          aria-expanded={isExpanded}
+          className="mt-1 text-xs font-bold text-indigo hover:text-indigo-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo rounded"
         >
           {isExpanded ? 'Read less' : 'Read more'}
         </button>
@@ -196,8 +246,8 @@ export const ProductDetailPage: React.FC = () => {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 15 * 1024 * 1024) {
-      alert('Logo file must be smaller than 15MB');
+    if (file.size > 1024 * 1024) {
+      alert('Logo file must be smaller than 1MB so it can be safely attached to your order.');
       return;
     }
     setLogoFileName(file.name);
@@ -436,17 +486,6 @@ export const ProductDetailPage: React.FC = () => {
       selectedSize === 'Custom Dimensions' && customSizeText.trim()
         ? `Custom (${customSizeText.trim()})`
         : selectedSize;
-
-    if (isImportedCatalogProduct) {
-      return {
-        type: customizationType,
-        logoText:
-          customizationType.toLowerCase().includes('logo') && logoText.trim()
-            ? logoText.trim()
-            : undefined,
-        designNote: designNote.trim() || undefined
-      };
-    }
 
     return {
       type: customizationType,
@@ -1969,7 +2008,7 @@ export const ProductDetailPage: React.FC = () => {
               </button>
 
               <a
-                href={`https://wa.me/919033598639?text=${encodeURIComponent(
+                href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
                   `Namaste Mahalaxmi Enterprises, please confirm the current price, tax, product details, stock and dispatch availability for ${product.name} (SKU: ${product.sku}), quantity ${quantity}, delivery to ${deliveryInfo?.city || 'my city'}.`
                 )}`}
                 target="_blank"
@@ -2130,7 +2169,7 @@ export const ProductDetailPage: React.FC = () => {
                   <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     Source product description — confirm details before ordering
                   </p>
-                  <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">{product.description}</p>
+                  <ExpandableDescription text={product.description} />
                 </div>
               ) : (
                 <p className="text-xs text-slate-500">
@@ -2201,8 +2240,7 @@ export const ProductDetailPage: React.FC = () => {
 
         {/* Tab 4: Reviews */}
         {activeTab === 'reviews' && (
-          <ExpandableTabContent>
-            <div className="space-y-4">
+          <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-gradient-to-br from-slate-50 to-white rounded-2xl border border-slate-200 shadow-sm">
               <div className="flex items-center gap-4">
                 <div className="text-center pr-6 border-r border-slate-200">
@@ -2480,8 +2518,7 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               );
             })()}
-            </div>
-          </ExpandableTabContent>
+          </div>
         )}
       </div>
 
@@ -2592,7 +2629,7 @@ export const ProductDetailPage: React.FC = () => {
                   • <strong>Online:</strong> Go to <Link to="/orders" className="text-indigo font-bold underline">Track Order</Link> and click <em>"🔄 Return / Exchange"</em> on your delivered order.
                 </p>
                 <p className="text-slate-600">
-                  • <strong>WhatsApp:</strong> Message us at <a href="https://wa.me/919033598639" target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">+91 90335 98639</a> with your Order ID.
+                  • <strong>WhatsApp:</strong> Message us at <a href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold underline">{BUSINESS_SUPPORT_PHONE}</a> with your Order ID.
                 </p>
               </div>
 

@@ -9,9 +9,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const apiHandlers = {
   '/api/app-config': '../api/app-config.js',
+  '/api/categories': '../api/categories.js',
   '/api/products': '../api/products.js',
   '/api/restock-alerts': '../api/restock-alerts.js',
   '/api/orders': '../api/orders.js',
+  '/api/payments': '../api/payments.js',
   '/api/coupons': '../api/coupons.js',
   '/api/return-exchange': '../api/return-exchange.js',
   '/api/enquiry': '../api/enquiry.js',
