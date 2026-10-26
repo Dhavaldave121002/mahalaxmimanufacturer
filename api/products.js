@@ -307,6 +307,7 @@ export default async function handler(req, res) {
               variants: typeof r.variants === 'string' ? JSON.parse(r.variants) : (r.variants || [])
             };
           });
+          res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=60');
           return res.status(200).json({ success: true, source: 'MYSQL_DATABASE', count: formatted.length, data: formatted });
         }
       } catch (err) {
@@ -322,6 +323,7 @@ export default async function handler(req, res) {
     }
 
     const fallback = readFallbackProducts();
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=60');
     return res.status(200).json({
       success: true,
       source: 'VERIFIED_STORAGE',

@@ -16,6 +16,7 @@ export default async function handler(req, res) {
          FROM categories
          ORDER BY display_order, name`
       );
+      res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=60');
       return res.status(200).json({ success: true, categories: rows });
     } catch (error) {
       console.error('Category database read failed:', error);

@@ -601,8 +601,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     syncCouponsFromBackend();
-    const interval = setInterval(syncCouponsFromBackend, 15000);
-    return () => clearInterval(interval);
+    const syncWhenVisible = () => {
+      if (document.visibilityState === 'visible') syncCouponsFromBackend();
+    };
+    const interval = window.setInterval(syncWhenVisible, 60000);
+    document.addEventListener('visibilitychange', syncWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', syncWhenVisible);
+    };
   }, [syncCouponsFromBackend]);
 
   // Synchronize products live from MySQL / Central API
@@ -626,8 +633,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     syncProductsFromBackend();
-    const interval = setInterval(syncProductsFromBackend, 15000);
-    return () => clearInterval(interval);
+    const syncWhenVisible = () => {
+      if (document.visibilityState === 'visible') syncProductsFromBackend();
+    };
+    const interval = window.setInterval(syncWhenVisible, 60000);
+    document.addEventListener('visibilitychange', syncWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', syncWhenVisible);
+    };
   }, [syncProductsFromBackend]);
 
   // Synchronize users live from MySQL / Central API
