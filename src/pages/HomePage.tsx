@@ -33,16 +33,20 @@ import {
   Boxes
 } from 'lucide-react';
 
-const HOME_PRIMARY_CATEGORY_IDS = ['home-kitchen', 'household', 'textile', 'cotton-products'];
+const HOME_PRIMARY_CATEGORY_IDS = ['home-kitchen', 'household', 'textile', 'cotton-products', 'roti-covers'];
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { products, submitBusinessEnquiry, addToCart, categories, mobileAppConfig } = useApp();
   const availableCategories = categories.length > 0 ? categories : CATEGORIES_CONFIG;
-  const homePrimaryCategories = HOME_PRIMARY_CATEGORY_IDS.flatMap(id => {
-    const category = availableCategories.find(item => item.id === id);
-    return category ? [category] : [];
-  });
+  const homeCollections = [
+    ...HOME_PRIMARY_CATEGORY_IDS.flatMap(id => {
+      const category = availableCategories.find(item => item.id === id);
+      return category ? [category] : [];
+    }),
+    ...availableCategories.filter(category => !HOME_PRIMARY_CATEGORY_IDS.includes(category.id))
+  ].filter(category => products.some(product => product.category === category.id));
+  const [showAllCollections, setShowAllCollections] = useState(false);
 
   // Hero Carousel State: Dynamic from Admin & CMS (Filtered for Website)
   const [websiteBanners, setWebsiteBanners] = useState<AppBanner[] | null>(null);
@@ -431,30 +435,43 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ========================================================
-          4. FOUR PRIMARY SHOPPING CATEGORIES
+          4. PRODUCT COLLECTIONS
           ======================================================== */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
             <div className="flex items-center gap-2 text-indigo font-bold text-xs uppercase tracking-wider mb-1">
               <Layers className="w-4 h-4" />
-              <span>Core Manufacturing Divisions</span>
+              <span>Shop by Collection</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-navy tracking-tight">
-              Primary Sourcing Categories
+              Browse Collections
             </h2>
           </div>
-          <Link
-            to="/catalog"
-            className="text-xs font-bold text-indigo hover:text-indigo-dark flex items-center gap-1"
-          >
-            <span>Browse Complete Master Catalog</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex flex-wrap items-center gap-4">
+            {homeCollections.length > 4 && (
+              <button
+                type="button"
+                onClick={() => setShowAllCollections(value => !value)}
+                aria-expanded={showAllCollections}
+                className="inline-flex items-center gap-1 text-xs font-bold text-indigo transition hover:text-indigo-dark"
+              >
+                <span>{showAllCollections ? 'View Fewer Collections' : 'View More Collections'}</span>
+                <ArrowRight className={`h-3.5 w-3.5 transition-transform ${showAllCollections ? 'rotate-90' : ''}`} />
+              </button>
+            )}
+            <Link
+              to="/catalog"
+              className="inline-flex items-center gap-1 text-xs font-bold text-indigo transition hover:text-indigo-dark"
+            >
+              <span>View All Products</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
-          {homePrimaryCategories.map(cat => (
+          {homeCollections.slice(0, showAllCollections ? homeCollections.length : 4).map(cat => (
             <Link
               key={cat.id}
               to={`/category/${cat.id}`}
@@ -546,7 +563,7 @@ export const HomePage: React.FC = () => {
             </div>
 
             {/* 3 Sample Offering Cards */}
-            <div className="grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
               {/* Card 1: Complete Commercial Sample Bundle */}
               <div className="bg-white/5 hover:bg-white/10 border-2 border-champagne/50 rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-all group relative overflow-hidden backdrop-blur-sm">
                 <div className="absolute top-3 right-3 bg-champagne text-navy text-[10px] font-black uppercase px-2 py-0.5 rounded shadow">
@@ -655,7 +672,7 @@ export const HomePage: React.FC = () => {
               </div>
 
               {/* Card 3: 1-Piece Individual Product Sample */}
-              <div className="bg-white/5 hover:bg-white/10 border border-white/30 rounded-2xl p-4 sm:p-5 flex flex-col justify-between transition-all group backdrop-blur-sm">
+              <div className="bg-white/5 hover:bg-white/10 border border-white/30 rounded-2xl p-4 sm:col-span-2 sm:mx-auto sm:w-1/2 sm:p-5 lg:col-span-1 lg:mx-0 lg:w-auto flex flex-col justify-between transition-all group backdrop-blur-sm">
                 <div>
                   <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center mb-4">
                     <Tag className="w-6 h-6" />

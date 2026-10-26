@@ -1,5 +1,107 @@
 [
   {
+    "id": "source-mle-001",
+    "name": "Round Multicolor Cotton Chapati Cover",
+    "slug": "round-multicolor-cotton-chapati-cover-001",
+    "sku": "SRC-MLE-001",
+    "category": "home-kitchen",
+    "categoryName": "Home and Kitchen",
+    "subcategory": "Cotton Chapati Cover",
+    "mrp": 999,
+    "retailPrice": 449,
+    "stock": 9900,
+    "moq": 100,
+    "rating": 0,
+    "reviewCount": 0,
+    "isBestSeller": true,
+    "isDirectMillDeal": false,
+    "isTrending": false,
+    "hsnCode": "630221",
+    "gstRate": 5,
+    "shortDescription": "Keep your rotis, chapatis, parathas, and other breads warm and fresh with our premium-quality 21x21cm Printed Round Cotton Chapati Cover. \n\nUses:\n\nKeeps rotis, chapatis, and parathas warm for longer\n\nSuitable for serving bread at home and in commercial kitchens\n\nIdeal for restaurants, hotels, canteens, and catering services\n\nCan also be used to keep puris and other flatbreads fresh\n\n\nFeatures:\n\nHigh-quality insulated material\n\nRetains heat effectively\n\nLightweight and durable\n\nEasy to clean and ",
+    "description": "Keep your rotis, chapatis, parathas, and other breads warm and fresh with our premium-quality 21x21cm Printed Round Cotton Chapati Cover. \n\nUses:\n\nKeeps rotis, chapatis, and parathas warm for longer\n\nSuitable for serving bread at home and in commercial kitchens\n\nIdeal for restaurants, hotels, canteens, and catering services\n\nCan also be used to keep puris and other flatbreads fresh\n\n\nFeatures:\n\nHigh-quality insulated material\n\nRetains heat effectively\n\nLightweight and durable\n\nEasy to clean and maintain\n\nReusable and long-lasting\n\nAttractive design and color options  for dining and serving\n\nRequest\nCallback\nYes! I am Interested\nCotton Roti Cover Bag With Durable Zipper, Flower Design Printed",
+    "images": [
+      "https://5.imimg.com/data5/SELLER/Default/2024/4/407712245/XN/JX/PM/150182247/round-cotton-chapati-cover-500x500.jpg"
+    ],
+    "tags": [
+      "Cotton Chapati Cover",
+      "Round Multicolor Cotton Chapati Cover",
+      "Source catalogue",
+      "Availability needs confirmation"
+    ],
+    "specifications": {
+      "Source Availability": "Confirmed",
+      "Source Price Status": "Supplier-confirmed",
+      "Source Listed Price": "Approx. Rs 15 / Piece",
+      "Source MOQ": "Minimum Order Quantity: 100 Piece",
+      "Material / Fabric": "Cotton",
+      "GSM": "150 GSM",
+      "Thickness": "Not provided",
+      "Layers": "Double Layer",
+      "Shape": "Round",
+      "Colour": "Not provided",
+      "Pattern / Design": "Printed",
+      "Dimensions / Size": "Diameter: 10 inch; Size: 21x21cm",
+      "Capacity": "Not provided",
+      "Closure": "Zip",
+      "Handle": "Not provided",
+      "Stitching": "Not provided",
+      "Printing / Customization": "Not provided",
+      "Source Product Code / SKU": "Not provided",
+      "Production Capacity": "Not provided",
+      "Delivery Time": "Not provided",
+      "Packaging": "Not provided",
+      "Source Review Flags": "None noted by extraction rules",
+      "Source Listing Classification": "Variant",
+      "Thread Count": "400 TC Percale Weave",
+      "Fabric": "100% Long Staple Cotton",
+      "Certification": "OEKO-TEX Standard 100",
+      "Dimensions": "Double (90\" x 108\")"
+    },
+    "careInstructions": [
+      "Wash before first use and after each food-contact use.",
+      "Wash gently in cool water with mild detergent; avoid bleach.",
+      "Rinse thoroughly and air-dry completely before using or storing.",
+      "Do not store damp; follow the care label if it specifies a different wash method."
+    ],
+    "b2bPolicy": [
+      "All bulk consignments include GST tax invoice details based on the information provided at checkout.",
+      "Consignments above ₹50,000 may require an E-Way bill as applicable under current regulations.",
+      "Earn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.",
+      "Commercial sample cost credited back 100% on subsequent wholesale consignment booking."
+    ],
+    "wholesaleTiers": [
+      {
+        "minQty": 1,
+        "maxQty": 9,
+        "pricePerUnit": 449,
+        "savingsPercent": 0,
+        "label": "Standard Rate"
+      },
+      {
+        "minQty": 10,
+        "maxQty": 49,
+        "pricePerUnit": 320,
+        "savingsPercent": 29,
+        "label": "Wholesale Tier 1"
+      },
+      {
+        "minQty": 50,
+        "maxQty": 199,
+        "pricePerUnit": 265,
+        "savingsPercent": 41,
+        "label": "Wholesale Tier 2"
+      },
+      {
+        "minQty": 200,
+        "pricePerUnit": 225,
+        "savingsPercent": 50,
+        "label": "Direct Mill Contract"
+      }
+    ],
+    "variants": []
+  },
+  {
     "id": "prod-bedsheet-01",
     "name": "Glance 300 TC 100% Pure Combed Cotton Double Bedsheet with 2 Pillow Covers",
     "slug": "glance-300-tc-cotton-double-bedsheet",

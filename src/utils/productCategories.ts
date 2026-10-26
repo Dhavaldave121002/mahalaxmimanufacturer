@@ -2,6 +2,7 @@ import { CategoryId, Product } from '../types';
 
 const CATEGORY_NAMES: Record<CategoryId, string> = {
   'home-kitchen': 'Home and Kitchen',
+  'roti-covers': 'Roti Covers',
   household: 'Household',
   textile: 'Textile',
   'cotton-products': 'Cotton Products'

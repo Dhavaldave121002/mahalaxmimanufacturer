@@ -1,7 +1,7 @@
 import { getDbPool } from '../database/db.js';
 import { requireAdminSession } from './_lib/admin-session.js';
 
-const CATEGORY_IDS = new Set(['home-kitchen', 'household', 'textile', 'cotton-products']);
+const CATEGORY_IDS = new Set(['home-kitchen', 'roti-covers', 'household', 'textile', 'cotton-products']);
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {

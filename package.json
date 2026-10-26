@@ -13,7 +13,9 @@
     "db:seed-default-coupons": "node scripts/seed-default-coupons.js",
     "db:seed-product-care": "node database/seed-product-care.cjs",
     "db:set-product-stock": "node database/set-product-stock.cjs",
-    "db:sync-core-collections": "node scripts/sync-core-collections.cjs"
+    "db:sync-core-collections": "node scripts/sync-core-collections.cjs",
+    "catalog:import-wrapzy": "node scripts/import-wrapzy-catalog.cjs",
+    "catalog:import-ecocarry": "node scripts/import-ecocarry-catalog.cjs"
   },
   "dependencies": {
     "autoprefixer": "^10.6.1",

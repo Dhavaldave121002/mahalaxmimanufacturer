@@ -111,6 +111,10 @@ Or connect your GitHub repository directly to Vercel with default Vite build set
 6. To add material-based care guidance only to products without existing care instructions, run `npm run db:seed-product-care` to preview, then `npm run db:seed-product-care -- --apply`. The apply command backs up current care fields and verifies every product; customers are advised to follow the item's care label if it differs.
 7. Redeploy after setting environment variables. Verify `/api/app-config?action=db-status` reports `connected: true` and `/api/products` returns `source: "MYSQL_DATABASE"` before relying on catalog data or the dashboard. Then sign in at `/admin` with the administrator email and password you provisioned.
 
+### Importing the public source catalog
+
+`npm run catalog:import-wrapzy` runs a read-only preview of the public product feed and its product-category collections. The source does not expose exact stock quantities, so applying requires a JSON file of verified product-level quantities keyed by source product ID: `npm run catalog:import-wrapzy -- --stock-file path\to\verified-stock.json --apply`. For example, the file shape is `{ "123456789": 12 }`; quantities must be exact non-negative integers. The importer refuses to apply if any new product lacks a quantity. It preserves current rows, skips possible duplicates for review, and removes source-brand text from listing fields. The Amazon Store page is accessible in a browser and currently displays product listings, but no complete seller export or verified inventory was provided; no Amazon products are included in this importer or the Wrapzy preview.
+
 Local MySQL connectivity was verified in the development environment. The Vercel database connection and its contents have not been verified. Production checkout, customer authentication, and return/exchange processing remain disabled until the missing server-side checks and payment integration are completed; configuring MySQL alone does not enable those flows.
 
 ---

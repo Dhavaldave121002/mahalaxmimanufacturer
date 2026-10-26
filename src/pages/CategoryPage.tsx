@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { ProductCard } from '../components/common/ProductCard';
@@ -8,9 +8,10 @@ import { Layers, ArrowLeft, SlidersHorizontal } from 'lucide-react';
 
 export const CategoryPage: React.FC = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { products, categories } = useApp();
 
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const selectedSubcategory = searchParams.get('subcategory') || '';
   const [sortBy, setSortBy] = useState<string>('relevance');
 
   const allCats = categories && categories.length > 0 ? categories : CATEGORIES_CONFIG;
@@ -106,7 +107,11 @@ export const CategoryPage: React.FC = () => {
               className="flex snap-x snap-mandatory items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible md:pb-0"
             >
             <button
-              onClick={() => setSelectedSubcategory('')}
+              onClick={() => {
+                const nextParams = new URLSearchParams(searchParams);
+                nextParams.delete('subcategory');
+                setSearchParams(nextParams, { replace: true });
+              }}
               aria-pressed={selectedSubcategory === ''}
               className={`shrink-0 snap-start whitespace-nowrap rounded-full px-3 py-2 text-[11px] font-bold transition sm:text-xs ${
                 selectedSubcategory === ''
@@ -122,7 +127,15 @@ export const CategoryPage: React.FC = () => {
               return (
                 <button
                   key={i}
-                  onClick={() => setSelectedSubcategory(selectedSubcategory === sub ? '' : sub)}
+                  onClick={() => {
+                    const nextParams = new URLSearchParams(searchParams);
+                    if (selectedSubcategory === sub) {
+                      nextParams.delete('subcategory');
+                    } else {
+                      nextParams.set('subcategory', sub);
+                    }
+                    setSearchParams(nextParams, { replace: true });
+                  }}
                   aria-pressed={selectedSubcategory === sub}
                   className={`shrink-0 snap-start whitespace-nowrap rounded-full px-3 py-2 text-[11px] font-bold transition sm:text-xs ${
                     selectedSubcategory === sub
@@ -169,7 +182,11 @@ export const CategoryPage: React.FC = () => {
               <h3 className="font-bold text-lg text-navy">No items in this subcategory</h3>
               <p className="text-xs text-slate-500">Try selecting "All {categoryConfig.name}" above.</p>
               <button
-                onClick={() => setSelectedSubcategory('')}
+                onClick={() => {
+                  const nextParams = new URLSearchParams(searchParams);
+                  nextParams.delete('subcategory');
+                  setSearchParams(nextParams, { replace: true });
+                }}
                 className="px-4 py-2 bg-indigo text-white rounded-xl text-xs font-bold"
               >
                 Show All Subcategories

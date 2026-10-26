@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '../../types';
 import { useApp } from '../../context/AppContext';
-import { ShoppingCart, Star, Check, Zap, ArrowUpRight, ShieldCheck, Sparkles, MessageCircle, Heart } from 'lucide-react';
+import { ShoppingCart, Star, Check, Zap, ArrowUpRight, ShieldCheck, Sparkles, MessageCircle, Heart, Package } from 'lucide-react';
 import { Badge } from './Badge';
 import { useRealRating } from '../../hooks/useRealRating';
 import { orderProductImagesByResolution } from '../../utils/productImages';
@@ -20,12 +20,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const outOfStock = product.stock <= 0;
   const availabilityNeedsConfirmation = product.specifications?.['Source Availability'] === 'Needs confirmation';
   const insufficientStockForMoq = product.stock > 0 && product.stock < Math.max(1, product.moq || 1);
-  const purchaseUnavailable = outOfStock || insufficientStockForMoq;
+  const purchaseUnavailable = outOfStock || insufficientStockForMoq || availabilityNeedsConfirmation || approximatePrice;
   const preferredImage = orderProductImagesByResolution(product.images)[0];
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (purchaseUnavailable) return;
     if (addToCart(product, Math.max(1, product.moq || 1), product.variants?.[0])) {
       setAdded(true);
       setTimeout(() => setAdded(false), 1600);
@@ -43,12 +44,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <div className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.08)] transition-all duration-300 hover:border-indigo/50 hover:shadow-premium sm:rounded-3xl">
       {/* Top Image Container */}
       <Link to={`/product/${product.slug}`} aria-label={`View details of ${product.name}`} className="relative aspect-square overflow-hidden bg-slate-50 block">
-        <img
-          src={preferredImage}
-          alt={product.name}
-          className="w-full h-full object-contain object-center"
-          loading="lazy"
-        />
+        {preferredImage ? (
+          <img
+            src={preferredImage}
+            alt={product.name}
+            className="w-full h-full object-contain object-center"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400">
+            <Package className="h-10 w-10" aria-hidden="true" />
+            <span className="text-xs font-semibold">Image coming soon</span>
+          </div>
+        )}
 
         {/* Top Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 items-start z-10">
@@ -138,7 +146,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                   ? 'Out of stock'
                   : insufficientStockForMoq
                     ? 'Insufficient stock for MOQ'
-                    : 'Direct Mill Launch'}
+                    : availabilityNeedsConfirmation || approximatePrice
+                      ? 'Confirm details before ordering'
+                      : 'Direct Mill Launch'}
               </span>
             )}
           </div>
@@ -186,7 +196,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               {outOfStock
                 ? 'Out of stock'
                 : availabilityNeedsConfirmation
-                  ? 'In stock • confirmation pending'
+                  ? 'Availability unconfirmed'
                   : insufficientStockForMoq
                     ? 'Insufficient stock for MOQ'
                     : 'In stock'}
@@ -212,7 +222,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             >
               {purchaseUnavailable ? (
                 <span className="truncate">
-                  {outOfStock ? 'Unavailable' : 'Insufficient Stock'}
+                  {outOfStock
+                    ? 'Unavailable'
+                    : insufficientStockForMoq
+                      ? 'Insufficient Stock'
+                      : 'Confirm Before Ordering'}
                 </span>
               ) : added ? (
                 <>

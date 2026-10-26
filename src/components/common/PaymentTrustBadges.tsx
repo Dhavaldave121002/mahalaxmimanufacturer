@@ -1,5 +1,5 @@
 import React from 'react';
-import { Lock, Building2, Truck } from 'lucide-react';
+import { Lock, Building2 } from 'lucide-react';
 
 interface PaymentTrustBadgesProps {
   showSslNotice?: boolean;
@@ -194,17 +194,6 @@ export const PaymentTrustBadges: React.FC<PaymentTrustBadgesProps> = ({
           <Building2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
           <span className="text-[10px] font-bold text-slate-700 tracking-tight leading-none">NetBanking</span>
         </div>
-      </div>
-
-      {/* 9. Cash on Delivery (COD) Full-Width Dedicated Trust Strip */}
-      <div
-        title="Cash on Delivery Doorstep Payment"
-        className="w-full h-8 px-3 bg-emerald-50/80 border border-emerald-200/90 rounded-lg shadow-2xs flex items-center justify-center gap-1.5 select-none hover:bg-emerald-50 transition"
-      >
-        <Truck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-        <span className="text-[11px] font-extrabold text-emerald-900 tracking-tight">
-          Cash on Delivery (COD) Available
-        </span>
       </div>
     </div>
   );

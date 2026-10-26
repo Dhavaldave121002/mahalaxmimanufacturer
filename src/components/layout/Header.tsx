@@ -155,12 +155,18 @@ export const Header: React.FC = () => {
   };
 
   // Circular Category Rail (Amazon / Flipkart / Meesho signature)
-  const categoryBubbles = [
+  const primaryCategoryBubbles = [
     {
       name: 'Home and Kitchen',
       path: '/category/home-kitchen',
       categoryId: 'home-kitchen',
       fallbackImage: '/assets/images/banner_home_kitchen.jpg'
+    },
+    {
+      name: 'Roti Covers',
+      path: '/category/roti-covers',
+      categoryId: 'roti-covers',
+      fallbackImage: 'https://cdn.shopify.com/s/files/1/0747/9472/9639/files/WhatsApp_Image_2026-10-15_at_12.14.32_PM.webp?v=1792047400'
     },
     {
       name: 'Household',
@@ -189,6 +195,21 @@ export const Header: React.FC = () => {
         : `/${image}`
     };
   });
+  const productTypeBubbles = Array.from(
+    new Map(
+      products
+        .filter(product => product.subcategory.trim())
+        .map(product => [
+          `${product.category}:${product.subcategory.trim().toLowerCase()}`,
+          {
+            name: product.subcategory.trim(),
+            path: `/category/${product.category}?subcategory=${encodeURIComponent(product.subcategory.trim())}`,
+            img: product.images[0] || '/assets/images/banner_home_kitchen.jpg'
+          }
+        ])
+    ).values()
+  );
+  const categoryBubbles = [...primaryCategoryBubbles, ...productTypeBubbles];
 
   return (
     <>
@@ -662,22 +683,22 @@ export const Header: React.FC = () => {
 
       {/* 3. Flipkart / Meesho Style Visual Category Circles Rail (Scrolls away under Bar 2, hidden on cart/checkout/admin) */}
       {!['/cart', '/checkout'].includes(location.pathname) && !location.pathname.startsWith('/admin') && (
-        <nav className="bg-white border-b border-slate-200 overflow-x-hidden sm:overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x py-2 sm:py-2.5">
-          <div className="grid grid-cols-4 items-start gap-x-1 px-2 sm:flex sm:items-center sm:gap-8 sm:px-4 sm:w-max sm:min-w-full sm:justify-center">
+        <nav className="bg-white border-b border-slate-200 overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x py-2 sm:py-2.5">
+          <div className="flex w-max min-w-full items-start gap-x-4 px-2 sm:items-center sm:gap-8 sm:px-4 sm:justify-center">
             {categoryBubbles.map((cat, i) => (
               <Link
-                key={i}
+                key={`${cat.path}-${i}`}
                 to={cat.path}
-                className="group flex min-w-0 flex-col items-center gap-1 text-center transition sm:gap-1.5"
+                className="group flex w-[76px] shrink-0 flex-col items-center gap-1 text-center transition sm:gap-1.5"
               >
-                <div className="relative h-10 w-10 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-slate-200 to-indigo/40 group-hover:from-indigo group-hover:to-champagne transition sm:h-12 sm:w-12">
+                <div className="relative h-14 w-14 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-slate-200 to-indigo/40 group-hover:from-indigo group-hover:to-champagne transition sm:h-16 sm:w-16">
                   <img
                     src={cat.img}
                     alt={cat.name}
                     className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
                   />
                 </div>
-                <span className="line-clamp-2 px-0.5 text-[9px] font-bold leading-tight text-slate-700 group-hover:text-indigo transition sm:whitespace-nowrap sm:px-0 sm:text-[11px]">
+                <span className="line-clamp-2 h-6 w-full px-0.5 text-[10px] font-semibold leading-3 text-slate-700 transition group-hover:text-indigo">
                   {cat.name}
                 </span>
               </Link>

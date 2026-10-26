@@ -274,9 +274,10 @@ SET FOREIGN_KEY_CHECKS = 1;
 INSERT INTO `categories` (`id`, `name`, `slug`, `description`, `image`, `theme_color`, `icon_name`, `product_count_text`, `is_featured_in_app`, `display_order`)
 VALUES
   ('home-kitchen', 'Home and kitchen', 'home-kitchen', 'Direct mill kitchen towels, dining aprons, and table linen.', 'assets/images/banner_home_kitchen.jpg', '#F59E0B', 'kitchen', '3 Products', TRUE, 1),
-  ('household', 'Household', 'household', 'Household cleaning cloths, laundry bags, and cotton organizers.', 'assets/images/banner_household.jpg', '#10B981', 'cleaning', '3 Products', TRUE, 2),
-  ('textile', 'Textile', 'textile', '300 TC Combed cotton bedsheets, woven fabrics, and curtain linen.', 'assets/images/banner_textile.jpg', '#3B82F6', 'checkroom', '3 Products', TRUE, 3),
-  ('cotton-products', 'Cotton products', 'cotton-products', 'Super-plush 600 GSM bath towels and durable tote bags.', 'assets/images/banner_cotton.jpg', '#8B5CF6', 'spa', '3 Products', TRUE, 4)
+  ('roti-covers', 'Roti Covers', 'roti-covers', 'Cotton roti and chapati covers.', 'https://cdn.shopify.com/s/files/1/0747/9472/9639/files/WhatsApp_Image_2026-10-15_at_12.14.32_PM.webp?v=1792047400', '#F97316', 'kitchen', '22 Products', TRUE, 2),
+  ('household', 'Household', 'household', 'Household cleaning cloths, laundry bags, and cotton organizers.', 'assets/images/banner_household.jpg', '#10B981', 'cleaning', '3 Products', TRUE, 3),
+  ('textile', 'Textile', 'textile', '300 TC Combed cotton bedsheets, woven fabrics, and curtain linen.', 'assets/images/banner_textile.jpg', '#3B82F6', 'checkroom', '3 Products', TRUE, 4),
+  ('cotton-products', 'Cotton products', 'cotton-products', 'Super-plush 600 GSM bath towels and durable tote bags.', 'assets/images/banner_cotton.jpg', '#8B5CF6', 'spa', '3 Products', TRUE, 5)
 ON DUPLICATE KEY UPDATE `name`=VALUES(`name`), `theme_color`=VALUES(`theme_color`);
 
 -- ==============================================================================

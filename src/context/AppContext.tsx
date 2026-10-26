@@ -32,7 +32,6 @@ interface PinCodeInfo {
   state: string;
   serviceable: boolean;
   estimatedDays: number;
-  codAvailable: boolean;
 }
 
 const PINCODE_DATABASE: Record<string, { city: string; state: string; days: number }> = {
@@ -171,8 +170,8 @@ interface AppContextType {
   submitBusinessEnquiry: (enquiry: Omit<BusinessEnquiry, 'id' | 'createdAt' | 'status'>) => void;
 
   // Product Admin Operations
-  addProduct: (product: Omit<Product, 'id'>) => void;
-  updateProduct: (id: string, product: Partial<Product>) => void;
+  addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
+  updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => void;
   adjustProductStock: (id: string, delta: number) => void;
 
@@ -283,20 +282,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           throw new Error(data?.error || `Categories could not be loaded (HTTP ${response.status}).`);
         }
 
-        const savedCategories = new Map<string, Record<string, unknown>>(
-          data.categories.map((category: Record<string, unknown>) => [String(category.id), category])
-        );
-        const databaseCategories = CATEGORIES_CONFIG.map(config => {
-          const saved = savedCategories.get(config.id);
-          const image = typeof saved?.image === 'string' ? saved.image.trim() : '';
+        const databaseCategories: CollectionCategory[] = data.categories.map((category: Record<string, unknown>) => {
+          const id = String(category.id || '');
+          const config = CATEGORIES_CONFIG.find(item => item.id === id);
+          const image = typeof category.image === 'string' ? category.image.trim() : '';
+          const databaseDescription = typeof category.description === 'string'
+            ? category.description.trim()
+            : '';
           return {
-            ...config,
-            name: typeof saved?.name === 'string' ? saved.name : config.name,
+            id,
+            name: typeof category.name === 'string' ? category.name : config?.name || id,
+            tagline: config?.tagline || '',
             image: image
               ? image.startsWith('http://') || image.startsWith('https://') || image.startsWith('/')
                 ? image
                 : `/${image}`
-              : config.image
+              : config?.image || '',
+            description: databaseDescription || config?.description || '',
+            subcategories: products
+              .filter(product => product.category === id)
+              .map(product => product.subcategory.trim())
+              .filter((subcategory, index, subcategories) =>
+                subcategory.length > 0 && subcategories.indexOf(subcategory) === index
+              ),
+            color: typeof category.theme_color === 'string' ? category.theme_color : undefined
           };
         });
         if (!cancelled) setCategories(databaseCategories);
@@ -617,6 +626,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     syncProductsFromBackend();
+    const interval = setInterval(syncProductsFromBackend, 15000);
+    return () => clearInterval(interval);
   }, [syncProductsFromBackend]);
 
   // Synchronize users live from MySQL / Central API
@@ -755,8 +766,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     city: 'Surat',
     state: 'Gujarat',
     serviceable: true,
-    estimatedDays: 1,
-    codAvailable: true
+    estimatedDays: 1
   });
 
   // Mill Saver Bundle Config (Admin & Database Controllable)
@@ -1044,17 +1054,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [currentUser]);
 
   // Price Calculation Engine based on Wholesale Tiers
-  const calculateEffectiveUnitPrice = (product: Product, quantity: number): { unitPrice: number; appliedTier?: WholesaleTier } => {
+  const calculateEffectiveUnitPrice = (
+    product: Product,
+    quantity: number,
+    variant?: ProductVariant
+  ): { unitPrice: number; appliedTier?: WholesaleTier } => {
+    const variantAdjustment = variant?.priceDelta || 0;
     if (!product.wholesaleTiers || product.wholesaleTiers.length === 0) {
-      return { unitPrice: product.retailPrice };
+      return { unitPrice: product.retailPrice + variantAdjustment };
     }
     // Find matching tier
     const sortedTiers = [...product.wholesaleTiers].sort((a, b) => b.minQty - a.minQty);
     const matched = sortedTiers.find(tier => quantity >= tier.minQty);
     if (matched) {
-      return { unitPrice: matched.pricePerUnit, appliedTier: matched };
+      return { unitPrice: matched.pricePerUnit + variantAdjustment, appliedTier: matched };
     }
-    return { unitPrice: product.retailPrice };
+    return { unitPrice: product.retailPrice + variantAdjustment };
   };
 
   const addToCart = (
@@ -1095,7 +1110,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (existingIndex > -1) {
         const currentItem = prev[existingIndex];
         const newTotalQty = currentItem.quantity + normalizedQuantity;
-        const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(product, newTotalQty);
+        const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(product, newTotalQty, variant);
 
         const updated = [...prev];
         updated[existingIndex] = {
@@ -1108,7 +1123,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
         return updated;
       } else {
-        const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(product, quantity);
+        const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(product, normalizedQuantity, variant);
         const newItem: CartItem = {
           id: `${product.id}-${variant?.id || 'std'}-${customization?.type ? 'custom-' : ''}${Date.now()}`,
           productId: product.id,
@@ -1156,7 +1171,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             ? 1
             : Math.max(1, item.product.moq || 1);
           const normalizedQuantity = Math.max(minimumQuantity, Math.floor(newQty));
-          const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(item.product, normalizedQuantity);
+          const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(
+            item.product,
+            normalizedQuantity,
+            item.selectedVariant
+          );
           return {
             ...item,
             quantity: normalizedQuantity,
@@ -2411,36 +2430,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Product CRUD
-  const addProduct = (productData: Omit<Product, 'id'>) => {
+  const addProduct = async (productData: Omit<Product, 'id'>) => {
     const newProduct = normalizeProductCategory({
       ...productData,
       id: `prod-${Date.now()}`
     });
-    setProducts(prev => [newProduct, ...prev]);
-
-    // Dispatch to MySQL database & Central API
-    fetch('/api/products', {
+    const response = await fetch('/api/products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newProduct)
-    }).catch(() => {});
+    });
+    const result = await response.json();
+    if (!response.ok || result?.success !== true || result?.dbSaved !== true) {
+      throw new Error(result?.error || 'Product and images were not saved to the shared database.');
+    }
+    setProducts(prev => [normalizeProductCategory(result.data as Product), ...prev]);
   };
 
-  const updateProduct = (id: string, updatedFields: Partial<Product>) => {
+  const updateProduct = async (id: string, updatedFields: Partial<Product>) => {
     const existingProduct = products.find(product => product.id === id);
-    if (!existingProduct) return;
+    if (!existingProduct) throw new Error('Product is no longer available to edit.');
     const targetProduct = normalizeProductCategory({ ...existingProduct, ...updatedFields });
-    setProducts(prev =>
-      prev.map(product => product.id === id ? targetProduct : product)
-    );
 
-    fetch('/api/products', {
+    const response = await fetch('/api/products', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(targetProduct)
-    }).then(response => {
-      if (!response.ok) throw new Error(`Product update failed (${response.status}).`);
-    }).catch(error => console.error('Product update could not be saved:', error));
+    });
+    const result = await response.json();
+    if (!response.ok || result?.success !== true || result?.dbSaved !== true) {
+      throw new Error(result?.error || 'Product changes and images were not saved to the shared database.');
+    }
+    const savedProduct = normalizeProductCategory(result.data as Product);
+    setProducts(prev =>
+      prev.map(product => product.id === id ? savedProduct : product)
+    );
   };
 
   const deleteProduct = (id: string) => {
@@ -2505,12 +2529,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       city: detectedCity || (is6Digit ? 'City not verified' : 'Unknown'),
       state: detectedState || (is6Digit ? 'India' : 'Unknown'),
       serviceable: false,
-      estimatedDays: 0,
-      codAvailable: false
+      estimatedDays: 0
     };
     setDeliveryInfo(initialInfo);
 
-    // Call live Delhivery API endpoint to verify exact COD & Express Delivery status
+    // Verify delivery serviceability for the entered postal code.
     if (cleanPin.length === 6) {
       fetch(`/api/app-config?action=pincode&pincode=${cleanPin}`)
         .then(res => res.json())
@@ -2521,8 +2544,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               city: cleanPin.startsWith('395') || cleanPin.startsWith('394') ? 'Surat' : (data.city || initialInfo.city),
               state: cleanPin.startsWith('395') || cleanPin.startsWith('394') ? 'Gujarat' : (data.state || initialInfo.state),
               serviceable: true,
-              estimatedDays: (data.state === 'GJ' || cleanPin.startsWith('395') || cleanPin.startsWith('394')) ? 1 : 3,
-              codAvailable: !!data.codAvailable
+              estimatedDays: (data.state === 'GJ' || cleanPin.startsWith('395') || cleanPin.startsWith('394')) ? 1 : 3
             });
           } else if (data && data.serviceable === false) {
             setDeliveryInfo({
@@ -2530,8 +2552,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               city: initialInfo.city,
               state: initialInfo.state,
               serviceable: false,
-              estimatedDays: 0,
-              codAvailable: false
+              estimatedDays: 0
             });
           }
         })

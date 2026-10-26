@@ -1,4 +1,4 @@
-export type CategoryId = 'home-kitchen' | 'household' | 'textile' | 'cotton-products';
+export type CategoryId = 'home-kitchen' | 'roti-covers' | 'household' | 'textile' | 'cotton-products';
 
 export interface WholesaleTier {
   minQty: number;
@@ -373,5 +373,3 @@ export interface BundleOfferConfig {
   savingsNote: string;
   bundleMaxProducts: number;
 }
-
-

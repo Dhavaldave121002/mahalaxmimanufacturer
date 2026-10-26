@@ -137,6 +137,10 @@ export const ProductDetailPage: React.FC = () => {
   // States
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isHoveredGallery, setIsHoveredGallery] = useState(false);
+  const activeImageIndex = Math.min(
+    selectedImageIndex,
+    Math.max(productImages.length - 1, 0)
+  );
 
   // Auto-slide / fade product image every 3.5 seconds (pauses on hover)
   useEffect(() => {
@@ -157,6 +161,12 @@ export const ProductDetailPage: React.FC = () => {
   const [restockEmail, setRestockEmail] = useState(currentUser?.email || '');
   const [isSubmittingRestockAlert, setIsSubmittingRestockAlert] = useState(false);
   const [restockAlertMessage, setRestockAlertMessage] = useState<{ text: string; success: boolean } | null>(null);
+
+  useEffect(() => {
+    setSelectedVariant(product?.variants?.[0]);
+    setQuantity(product?.moq || 1);
+    setSelectedImageIndex(0);
+  }, [product]);
 
   useEffect(() => {
     if (!restockEmail && currentUser?.email) {
@@ -393,26 +403,28 @@ export const ProductDetailPage: React.FC = () => {
   }
 
   const priceNeedsConfirmation = product.specifications?.['Source Price Status'] === 'Approximate - verify before sale';
+  const adminApprovedPrice = product.specifications?.['Source Price Status'] === 'Admin-approved current price';
+  const isImportedCatalogProduct = product.id.startsWith('catalog-');
   const outOfStock = product.stock <= 0;
   const availabilityNeedsConfirmation = !outOfStock &&
     product.specifications?.['Source Availability'] === 'Needs confirmation';
   const insufficientStockForMoq = product.stock > 0 && product.stock < Math.max(1, product.moq || 1);
-  const inquiryOnly = outOfStock || insufficientStockForMoq;
+  const inquiryOnly = outOfStock || insufficientStockForMoq || availabilityNeedsConfirmation || priceNeedsConfirmation;
   const stockStatus = outOfStock
     ? 'Out of stock'
     : availabilityNeedsConfirmation
-      ? 'In stock • supplier confirmation pending'
+      ? 'Supplier availability needs confirmation'
       : insufficientStockForMoq
         ? 'Insufficient stock for MOQ'
         : 'In stock';
 
   // Dynamic Wholesale Tier Calculation for current selected quantity
   const currentUnitPrice = activeWholesaleTier
-    ? activeWholesaleTier.pricePerUnit
-    : product.retailPrice;
+    ? activeWholesaleTier.pricePerUnit + (selectedVariant?.priceDelta || 0)
+    : product.retailPrice + (selectedVariant?.priceDelta || 0);
 
   const currentLineTotal = currentUnitPrice * quantity;
-  const standardRetailTotal = product.retailPrice * quantity;
+  const standardRetailTotal = (product.retailPrice + (selectedVariant?.priceDelta || 0)) * quantity;
   const wholesaleSavings = standardRetailTotal - currentLineTotal;
 
   const pcsNeededForNextTier = nextTier ? nextTier.minQty - quantity : 0;
@@ -424,6 +436,17 @@ export const ProductDetailPage: React.FC = () => {
       selectedSize === 'Custom Dimensions' && customSizeText.trim()
         ? `Custom (${customSizeText.trim()})`
         : selectedSize;
+
+    if (isImportedCatalogProduct) {
+      return {
+        type: customizationType,
+        logoText:
+          customizationType.toLowerCase().includes('logo') && logoText.trim()
+            ? logoText.trim()
+            : undefined,
+        designNote: designNote.trim() || undefined
+      };
+    }
 
     return {
       type: customizationType,
@@ -450,6 +473,10 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const handleAddToCart = () => {
+    if (inquiryOnly) {
+      setCartActionMessage('Confirm current price and availability before ordering.');
+      return;
+    }
     const added = addToCart(product, quantity, selectedVariant, getCustomizationPayload());
     if (!added) {
       setCartActionMessage(outOfStock ? 'This product is out of stock.' : 'There is not enough stock for that quantity.');
@@ -461,6 +488,10 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const handleBuyNow = () => {
+    if (inquiryOnly) {
+      setCartActionMessage('Confirm current price and availability before ordering.');
+      return;
+    }
     if (addToCart(product, quantity, selectedVariant, getCustomizationPayload())) {
       setCartActionMessage('');
       navigate('/checkout');
@@ -595,11 +626,16 @@ export const ProductDetailPage: React.FC = () => {
               className="relative mx-auto w-full max-w-[600px] aspect-square rounded-3xl overflow-hidden bg-slate-50 border border-slate-200 shadow-subtle group select-none"
             >
               {/* Layered Cross-fade Slide Images */}
-              {productImages.map((img, idx) => (
+              {productImages.length === 0 ? (
+                <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-slate-50 to-slate-100 text-slate-400">
+                  <Package className="h-16 w-16" aria-hidden="true" />
+                  <span className="text-sm font-semibold">Product image not available</span>
+                </div>
+              ) : productImages.map((img, idx) => (
                 <div
                   key={idx}
                   className={`absolute inset-0 w-full h-full transition-all duration-700 ease-in-out transform ${
-                    selectedImageIndex === idx
+                    activeImageIndex === idx
                       ? 'opacity-100 scale-100 pointer-events-auto z-0'
                       : 'opacity-0 scale-105 pointer-events-none -z-10'
                   }`}
@@ -654,7 +690,7 @@ export const ProductDetailPage: React.FC = () => {
                         }}
                         aria-label={`Go to slide ${idx + 1}`}
                         className={`h-1.5 rounded-full transition-all duration-300 ${
-                          selectedImageIndex === idx ? 'w-5 bg-white shadow-sm' : 'w-1.5 bg-white/50 hover:bg-white/80'
+                          activeImageIndex === idx ? 'w-5 bg-white shadow-sm' : 'w-1.5 bg-white/50 hover:bg-white/80'
                         }`}
                       />
                     ))}
@@ -677,9 +713,15 @@ export const ProductDetailPage: React.FC = () => {
                 )}
               </div>
 
-              <div className="absolute bottom-3.5 right-3.5 bg-navy/80 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full font-mono z-10 pointer-events-none">
-                HSN {product.hsnCode} • GST {product.gstRate}%
-              </div>
+              {product.hsnCode ? (
+                  <div className="absolute bottom-3.5 right-3.5 bg-navy/80 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full font-mono z-10 pointer-events-none">
+                    HSN {product.hsnCode} • GST {product.gstRate}%
+                  </div>
+                ) : (
+                  <div className="absolute bottom-3.5 right-3.5 bg-navy/80 backdrop-blur-md text-white text-[10px] px-3 py-1 rounded-full z-10 pointer-events-none">
+                    Tax details pending verification
+                  </div>
+              )}
             </div>
 
             {/* Thumbnails Row */}
@@ -691,7 +733,7 @@ export const ProductDetailPage: React.FC = () => {
                     onClick={() => setSelectedImageIndex(idx)}
                     aria-label={`View photo ${idx + 1} of ${product.name}`}
                     className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 transition shrink-0 ${
-                      selectedImageIndex === idx
+                      activeImageIndex === idx
                         ? 'border-indigo ring-2 ring-indigo/20 scale-105 shadow-sm'
                         : 'border-slate-200 hover:border-slate-300'
                     }`}
@@ -710,15 +752,17 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Factory Direct Assurance Notice */}
+            {/* Product verification notice */}
             <div className="p-3 bg-ivory rounded-2xl border border-slate-200 text-xs text-slate-700 flex items-start gap-2.5">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
                 <div className="text-navy font-bold text-xs">
-                  Ahmedabad Mill Quality Check
+                  {isImportedCatalogProduct ? 'Supplier Details Require Confirmation' : 'Ahmedabad Mill Quality Check'}
                 </div>
                 <p className="text-slate-600 leading-relaxed text-[11px]">
-                  Strength, color and size checked before dispatch.
+                  {isImportedCatalogProduct
+                    ? 'Confirm product specifications, price, tax and availability before placing an order.'
+                    : 'Strength, color and size checked before dispatch.'}
                 </p>
               </div>
             </div>
@@ -879,13 +923,27 @@ export const ProductDetailPage: React.FC = () => {
           </div>
 
           {/* Wholesale Quantity Pricing Tiers Grid */}
-          {!priceNeedsConfirmation && product.wholesaleTiers && product.wholesaleTiers.length > 0 && (
+          {product.wholesaleTiers && product.wholesaleTiers.length > 0 &&
+            (isImportedCatalogProduct || !priceNeedsConfirmation) && (
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-navy flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4 text-indigo" />
-                  <span>Quantity-Based Wholesale Pricing Tiers</span>
-                </label>
+                <div>
+                  <label className="text-xs font-bold text-navy flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-indigo" />
+                    <span>Quantity-Based Wholesale Pricing Tiers</span>
+                  </label>
+                  {isImportedCatalogProduct && (
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      {adminApprovedPrice
+                        ? 'Admin-approved listed prices · supplier confirmation not recorded'
+                        : product.specifications?.['Source Price Status'] === 'Admin-set temporary price'
+                          ? 'Temporary tier rates · Admin editable'
+                          : product.specifications?.['Source Price Status'] === 'Supplier-confirmed'
+                            ? 'Supplier-confirmed prices'
+                            : 'Price status not recorded'}
+                    </p>
+                  )}
+                </div>
                 <span className="text-[10px] text-slate-500">Automatic tier qualification</span>
               </div>
 
@@ -947,7 +1005,7 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
-          {priceNeedsConfirmation && (!product.wholesaleTiers || product.wholesaleTiers.length === 0) && (
+          {!isImportedCatalogProduct && priceNeedsConfirmation && (!product.wholesaleTiers || product.wholesaleTiers.length === 0) && (
             <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-amber-50/70 p-4 sm:p-5 space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                 <div>
@@ -1023,6 +1081,159 @@ export const ProductDetailPage: React.FC = () => {
 
           {/* Commercial Sample & Purchase Buttons Section */}
           <div className="space-y-4 pt-2 border-t border-slate-100">
+            {isImportedCatalogProduct ? (
+              <>
+                <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-amber-50/90 border border-amber-200/90 rounded-2xl space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
+                      <PackageCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                      Product Sample & Evaluation
+                    </span>
+                    <span className="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-full">
+                      Supplier confirmation required
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Request one piece to evaluate this product. The supplier must confirm sample availability, final price and dispatch before the request is accepted. Sample rebate and mill certification are not included unless confirmed separately.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={inquiryOnly}
+                    onClick={handleOrderSamplePiece}
+                    className="w-full sm:w-auto min-w-0 p-2.5 bg-white hover:bg-amber-100/70 border border-amber-300 text-navy rounded-xl font-bold text-xs transition flex items-start gap-2.5 shadow-sm text-left group disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <span className="mt-0.5 w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                      <Package className="w-4 h-4" />
+                    </span>
+                    <span className="min-w-0 break-words">
+                      <span className="block font-bold text-navy text-xs leading-tight">Request 1-Pc Sample</span>
+                      <span className="block text-[10px] text-slate-500 font-normal leading-snug">
+                        Listed price ₹{product.retailPrice} · subject to supplier confirmation
+                      </span>
+                    </span>
+                  </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={handleOrderSampleBundle}
+                      className="w-full min-w-0 p-2.5 bg-white hover:bg-indigo-50/80 border border-indigo-300 text-navy rounded-xl font-bold text-xs transition flex items-start gap-2.5 shadow-sm text-left group"
+                    >
+                      <span className="mt-0.5 w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo shrink-0">
+                        <Boxes className="w-4 h-4" />
+                      </span>
+                      <span className="min-w-0 break-words">
+                        <span className="block font-bold text-navy text-xs leading-tight">Order Sample Bundle</span>
+                        <span className="block text-[10px] text-slate-500 font-normal leading-snug">₹299 · 12 Swatches + 4 Minis</span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleOrderSwatchKit}
+                      className="w-full min-w-0 p-2.5 bg-white hover:bg-blue-50/80 border border-blue-300 text-navy rounded-xl font-bold text-xs transition flex items-start gap-2.5 shadow-sm text-left group"
+                    >
+                      <span className="mt-0.5 w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-700 shrink-0">
+                        <Layers className="w-4 h-4" />
+                      </span>
+                      <span className="min-w-0 break-words">
+                        <span className="block font-bold text-navy text-xs leading-tight">Pure Cotton Swatch Kit</span>
+                        <span className="block text-[10px] text-slate-500 font-normal leading-snug">₹199 · 12 Cotton Cuts</span>
+                      </span>
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-relaxed">
+                    Sample kit orders are separate from this product. Any sample-kit coupon or refund applies only as stated with that kit; it is not a rebate guarantee on this supplier product.
+                  </p>
+                </div>
+
+                <div className="p-4 sm:p-5 bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/60 border-2 border-purple-200/90 rounded-2xl shadow-sm space-y-4">
+                  <div className="flex items-center gap-2.5 pb-3 border-b border-purple-100">
+                    <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-sm">
+                      <Palette className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-black text-navy uppercase tracking-wider">
+                        Interactive Customization Studio
+                      </h4>
+                      <p className="text-[11px] text-slate-500 font-medium">
+                        Choose what you would like to ask the supplier to customize
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                    Custom options, pricing, available materials and minimum quantities must be confirmed by the supplier. This request is not a confirmed production commitment.
+                  </p>
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                      1. Select Customization Type
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {[
+                        { type: 'Supplier Design & Logo Request', label: 'Design & Logo', icon: Palette },
+                        { type: 'Supplier Logo Print Request', label: 'Logo Print', icon: Star },
+                        { type: 'Supplier Embroidery Request', label: 'Embroidery', icon: Sparkles },
+                        { type: 'Supplier Product Specification Request', label: 'Size / Specifications', icon: Layers },
+                        { type: 'No Customization', label: 'No Customization', icon: Check }
+                      ].map(option => {
+                        const IconComponent = option.icon;
+                        const isSelected = customizationType === option.type;
+                        return (
+                          <button
+                            key={option.type}
+                            type="button"
+                            onClick={() => setCustomizationType(option.type)}
+                            className={`min-h-16 p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
+                              isSelected
+                                ? 'border-purple-600 bg-purple-600 text-white shadow-sm ring-2 ring-purple-300'
+                                : 'border-slate-200 bg-white hover:border-purple-300 text-slate-700'
+                            }`}
+                          >
+                            <IconComponent className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-300' : 'text-purple-600'}`} />
+                            <span className="font-bold text-xs leading-snug">{option.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {customizationType !== 'No Customization' && (
+                    <div className="space-y-3 pt-3 border-t border-purple-100">
+                      {customizationType.toLowerCase().includes('logo') && (
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                            Requested Logo / Brand Name
+                          </label>
+                          <input
+                            type="text"
+                            maxLength={80}
+                            value={logoText}
+                            onChange={e => setLogoText(e.target.value)}
+                            placeholder="Enter your brand name (optional)"
+                            className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:border-purple-600 outline-none"
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                          2. Custom Requirements / Instructions
+                        </label>
+                        <textarea
+                          rows={3}
+                          maxLength={1000}
+                          value={designNote}
+                          onChange={e => setDesignNote(e.target.value)}
+                          placeholder="Describe the change requested. Supplier will confirm availability, price and MOQ."
+                          className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:border-purple-600 outline-none"
+                          aria-label="Customization request"
+                        />
+                      </div>
+                      <p className="text-[10px] font-semibold text-purple-800">
+                        Your request will be attached to the cart item for supplier confirmation.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
             {/* Commercial Sample & Sample Bundle Procurement Suite */}
               <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-amber-50/90 border border-amber-200/90 rounded-2xl space-y-3 shadow-sm">
               <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-1.5">
@@ -1622,10 +1833,23 @@ export const ProductDetailPage: React.FC = () => {
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+              </>
+            )}
 
             {/* Purchase Action Row: Quantity + Add to Cart + Buy Now */}
             <div id="main-product-actions" className="space-y-2 sm:space-y-3">
+              {isImportedCatalogProduct && inquiryOnly && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+                  {outOfStock
+                    ? 'This supplier listing is currently unavailable. Contact us to check whether it can be sourced.'
+                    : availabilityNeedsConfirmation
+                      ? 'Supplier availability must be confirmed before ordering.'
+                      : priceNeedsConfirmation
+                        ? 'This listing price is approximate and must be confirmed before ordering.'
+                        : 'Available stock is below the supplier minimum order quantity. Contact us to confirm options.'}
+                </div>
+              )}
               {!inquiryOnly && (
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-[11px] font-bold text-slate-700 sm:text-xs">Qty:</span>
@@ -1746,7 +1970,7 @@ export const ProductDetailPage: React.FC = () => {
 
               <a
                 href={`https://wa.me/919033598639?text=${encodeURIComponent(
-                  `Namaste Mahalaxmi Enterprises, I want to order ${product.name} (SKU: ${product.sku}). Qty: ${quantity} pcs at the listed rate ₹${currentUnitPrice}/pc. Please confirm stock and dispatch availability for ${deliveryInfo?.city || 'my city'}.`
+                  `Namaste Mahalaxmi Enterprises, please confirm the current price, tax, product details, stock and dispatch availability for ${product.name} (SKU: ${product.sku}), quantity ${quantity}, delivery to ${deliveryInfo?.city || 'my city'}.`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -1754,7 +1978,7 @@ export const ProductDetailPage: React.FC = () => {
               >
                 <MessageSquare className="h-4 w-4 shrink-0" />
                 <span className="truncate sm:hidden">WhatsApp</span>
-                <span className="hidden truncate sm:inline">Order via WhatsApp (Mill Desk)</span>
+                <span className="hidden truncate sm:inline">{isImportedCatalogProduct ? 'Ask about this product' : 'Order via WhatsApp (Mill Desk)'}</span>
               </a>
             </div>
 
@@ -1789,11 +2013,6 @@ export const ProductDetailPage: React.FC = () => {
                 <span className="font-bold text-navy text-[11px]">Fast Delivery</span>
                 <span className="text-[10px] text-slate-500">Pan-India Freight</span>
               </div>
-              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col items-center justify-center">
-                <Zap className="w-4 h-4 text-amber-500 mb-1" />
-                <span className="font-bold text-navy text-[11px]">COD Available</span>
-                <span className="text-[10px] text-slate-500">Pay on Inspection</span>
-              </div>
             </div>
               </>
             )}
@@ -1805,7 +2024,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className="flex min-w-0 items-start justify-between gap-2 sm:items-center">
               <div className="flex min-w-0 items-start gap-2 font-bold leading-tight text-navy sm:items-center">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-indigo sm:mt-0" />
-                <span>Check Delivery & COD to Your Pincode</span>
+                <span>Check Delivery to Your Pincode</span>
               </div>
               <span className="shrink-0 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-700 sm:text-[10px]">
                 Powered by Delhivery
@@ -1844,15 +2063,6 @@ export const ProductDetailPage: React.FC = () => {
                       <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-semibold">
                         ⚡ Est. Delivery: {deliveryInfo.estimatedDays} Days
                       </span>
-                      {deliveryInfo.codAvailable ? (
-                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo rounded-md font-semibold">
-                          💵 Cash on Delivery (COD) Available
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-md font-semibold">
-                          💳 Prepaid Only for this location
-                        </span>
-                      )}
                       <span className="text-slate-400">Direct Surat Mill Dispatch</span>
                     </div>
                   </>

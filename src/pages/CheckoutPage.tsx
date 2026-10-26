@@ -11,7 +11,6 @@ import {
   MapPin,
   CreditCard,
   QrCode,
-  Truck,
   ArrowRight,
   AlertCircle,
   Clock,
@@ -110,7 +109,6 @@ export const CheckoutPage: React.FC = () => {
   // Only show/use wallet balance if user is actually logged in — guests get 0
   const userWalletBalance = isLoggedIn ? (currentUser.walletBalance || 0) : 0;
   const [applyPoints, setApplyPoints] = useState<boolean>(isLoggedIn && (currentUser.walletBalance || 0) > 0);
-  const [secondaryPaymentMethod, setSecondaryPaymentMethod] = useState<'RAZORPAY' | 'COD'>('RAZORPAY');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSubmitError, setOrderSubmitError] = useState<string | null>(null);
 
@@ -386,17 +384,16 @@ export const CheckoutPage: React.FC = () => {
     }
 
     // B. RAZORPAY PAYMENT (Pay remainingPayable online via UPI/Cards/NetBanking)
-    if (secondaryPaymentMethod === 'RAZORPAY') {
-      setIsSubmitting(true);
-      const razorpayKey = (import.meta as any).env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TXxnGK4dKMgIdA';
+    setIsSubmitting(true);
+    const razorpayKey = (import.meta as any).env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TXxnGK4dKMgIdA';
 
-      if (typeof (window as any).Razorpay === 'undefined') {
-        alert('Razorpay Payment Gateway is loading. Please check your internet connection and try again.');
-        setIsSubmitting(false);
-        return;
-      }
+    if (typeof (window as any).Razorpay === 'undefined') {
+      alert('Razorpay Payment Gateway is loading. Please check your internet connection and try again.');
+      setIsSubmitting(false);
+      return;
+    }
 
-      const options = {
+    const options = {
         key: razorpayKey,
         amount: Math.round(remainingPayable * 100), // Amount in paise
         currency: 'INR',
@@ -448,48 +445,20 @@ export const CheckoutPage: React.FC = () => {
             setIsSubmitting(false);
           }
         }
-      };
+    };
 
-      try {
-        const rzp = new (window as any).Razorpay(options);
-        rzp.on('payment.failed', function (resp: any) {
-          console.error('[Razorpay Failed]', resp.error);
-          alert(`Payment failed: ${resp.error?.description || 'Transaction declined. Please try another card or UPI.'}`);
-          setIsSubmitting(false);
-        });
-        rzp.open();
-      } catch (err: any) {
-        console.error('Razorpay invocation error:', err);
-        setIsSubmitting(false);
-        alert('Could not launch payment gateway. Please select Cash on Delivery.');
-      }
-      return;
-    }
-
-    // C. COD FLOW (Pay remainingPayable in cash/UPI upon delivery)
-    setIsSubmitting(true);
     try {
-      const order = await createOrder({
-        paymentMethod: pointsRedeemed > 0 ? 'PARTIAL_POINTS_COD' : 'COD',
-        shippingAddress: activeAddress,
-        billingAddress: activeAddress,
-        pointsRedeemed: pointsRedeemed,
-        amountPaid: remainingPayable,
-        timelineNote: pointsRedeemed > 0
-          ? `Order booked with partial points. 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Mill Points deducted. Remaining ₹${remainingPayable.toLocaleString('en-IN')} to be collected on delivery.`
-          : 'Order placed successfully under Cash on Delivery. Dispatched from Ahmedabad Central Warehouse.'
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on('payment.failed', function (resp: any) {
+        console.error('[Razorpay Failed]', resp.error);
+        alert(`Payment failed: ${resp.error?.description || 'Transaction declined. Please try another card or UPI.'}`);
+        setIsSubmitting(false);
       });
-
-      // Deduct points immediately so balance cannot be double-spent
-      if (pointsRedeemed > 0) {
-        await redeemWalletPoints(pointsRedeemed, order.orderNumber, order.id);
-      }
-
+      rzp.open();
+    } catch (err: any) {
+      console.error('Razorpay invocation error:', err);
       setIsSubmitting(false);
-      navigate(`/orders?success=${order.id}`);
-    } catch (error) {
-      setOrderSubmitError(error instanceof Error ? error.message : 'Order could not be saved. Please retry.');
-      setIsSubmitting(false);
+      alert('Could not launch the payment gateway. Please try again or contact support.');
     }
   };
 
@@ -966,7 +935,7 @@ export const CheckoutPage: React.FC = () => {
                           <p className="text-[11px] text-slate-600 pl-6 leading-relaxed">
                             {userWalletBalance < cartTotal ? (
                               <span>
-                                🪙 <span className="font-bold text-navy">{pointsRedeemed.toLocaleString('en-IN')} points</span> will be cut directly from your wallet balance. You can pay the remaining <span className="font-bold text-indigo">₹{remainingPayable.toLocaleString('en-IN')}</span> via Razorpay or Cash on Delivery below!
+                                🪙 <span className="font-bold text-navy">{pointsRedeemed.toLocaleString('en-IN')} points</span> will be cut directly from your wallet balance. You can pay the remaining <span className="font-bold text-indigo">₹{remainingPayable.toLocaleString('en-IN')}</span> via Razorpay below.
                               </span>
                             ) : (
                               <span className="text-emerald-700 font-semibold">
@@ -1032,12 +1001,7 @@ export const CheckoutPage: React.FC = () => {
 
                 {/* Razorpay Live Gateway (Cards, UPI, NetBanking, Wallets) */}
                 <label
-                  onClick={() => setSecondaryPaymentMethod('RAZORPAY')}
-                  className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
-                    secondaryPaymentMethod === 'RAZORPAY'
-                      ? 'border-indigo bg-indigo-light/50 ring-2 ring-indigo shadow-sm'
-                      : 'border-slate-200 hover:bg-slate-50'
-                  }`}
+                  className="p-4 rounded-xl border border-indigo bg-indigo-light/50 ring-2 ring-indigo shadow-sm flex items-center justify-between cursor-pointer transition"
                 >
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-indigo text-white rounded-xl shadow-sm">
@@ -1064,49 +1028,12 @@ export const CheckoutPage: React.FC = () => {
                   <input
                     type="radio"
                     name="secondaryPayment"
-                    checked={secondaryPaymentMethod === 'RAZORPAY'}
-                    onChange={() => setSecondaryPaymentMethod('RAZORPAY')}
+                    checked
+                    readOnly
                     className="accent-indigo w-4 h-4"
                   />
                 </label>
 
-                {/* COD Option */}
-                <label
-                  onClick={() => setSecondaryPaymentMethod('COD')}
-                  className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${
-                    secondaryPaymentMethod === 'COD'
-                      ? 'border-indigo bg-indigo-light/50 ring-1 ring-indigo'
-                      : 'border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-indigo/10 text-indigo rounded-lg">
-                      <Truck className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs font-bold text-navy">
-                          Cash on Delivery (COD) - Pay ₹{remainingPayable.toLocaleString('en-IN')}
-                        </p>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                          DOORSTEP
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5">
-                        {pointsRedeemed > 0
-                          ? `🪙 ${pointsRedeemed.toLocaleString('en-IN')} points deducted now, remaining ₹${remainingPayable.toLocaleString('en-IN')} to be collected upon doorstep delivery.`
-                          : 'Pay cash or UPI upon delivery at your doorstep'}
-                      </p>
-                    </div>
-                  </div>
-                  <input
-                    type="radio"
-                    name="secondaryPayment"
-                    checked={secondaryPaymentMethod === 'COD'}
-                    onChange={() => setSecondaryPaymentMethod('COD')}
-                    className="accent-indigo w-4 h-4"
-                  />
-                </label>
               </div>
             )}
           </div>
@@ -1242,21 +1169,13 @@ export const CheckoutPage: React.FC = () => {
                   <CheckCircle2 className="w-4 h-4" />
                   <span>Confirm Order with 🪙 {pointsRedeemed.toLocaleString('en-IN')} Points (₹0 to Pay)</span>
                 </>
-              ) : secondaryPaymentMethod === 'RAZORPAY' ? (
+              ) : (
                 <>
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20">
                     <ShieldCheck className="h-3.5 w-3.5" />
                   </span>
                   <span className="truncate">
                     Pay ₹{remainingPayable.toLocaleString('en-IN')} via Razorpay
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Truck className="w-4 h-4" />
-                  <span>
-                    Confirm COD Order (Pay ₹{remainingPayable.toLocaleString('en-IN')} on Delivery
-                    {pointsRedeemed > 0 ? ` + 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Pts Cut` : ''})
                   </span>
                 </>
               )}

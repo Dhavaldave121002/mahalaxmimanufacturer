@@ -105,6 +105,16 @@ export const INITIAL_MOBILE_APP_CONFIG: MobileAppConfig = {
       displayOrder: 2
     },
     {
+      id: 'roti-covers',
+      name: 'Roti Covers',
+      color: '#F97316',
+      iconName: 'kitchen',
+      image: 'https://cdn.shopify.com/s/files/1/0747/9472/9639/files/WhatsApp_Image_2026-10-15_at_12.14.32_PM.webp?v=1792047400',
+      productCountText: '22 Products',
+      isFeaturedInApp: true,
+      displayOrder: 2
+    },
+    {
       id: 'app-cat-textile',
       name: 'Textile',
       color: '#3B82F6',
@@ -112,7 +122,7 @@ export const INITIAL_MOBILE_APP_CONFIG: MobileAppConfig = {
       image: 'assets/images/banner_textile.jpg',
       productCountText: '3 Products',
       isFeaturedInApp: true,
-      displayOrder: 3
+      displayOrder: 4
     },
     {
       id: 'app-cat-cotton',
@@ -122,7 +132,7 @@ export const INITIAL_MOBILE_APP_CONFIG: MobileAppConfig = {
       image: 'assets/images/banner_cotton.jpg',
       productCountText: '3 Products',
       isFeaturedInApp: true,
-      displayOrder: 4
+      displayOrder: 5
     }
   ],
   settings: {

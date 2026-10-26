@@ -171,7 +171,7 @@ export const AdminDashboardPage: React.FC = () => {
     gstRate: number;
     shortDescription: string;
     description: string;
-    image: string;
+    images: string[];
     threadCount: string;
     fabric: string;
     closure: string;
@@ -197,7 +197,7 @@ export const AdminDashboardPage: React.FC = () => {
     gstRate: 5,
     shortDescription: 'Direct mill combed cotton fabric.',
     description: 'High-durability weaving from Ahmedabad looms.',
-    image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
+    images: ['https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop'],
     threadCount: '400 TC Percale Weave',
     fabric: '100% Long Staple Cotton',
     closure: 'Concealed high-tensile nylon zipper',
@@ -360,7 +360,7 @@ export const AdminDashboardPage: React.FC = () => {
       gstRate: p.gstRate,
       shortDescription: p.shortDescription,
       description: p.description,
-      image: p.images[0] || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
+      images: p.images.length > 0 ? [...p.images] : [''],
       threadCount: p.specifications?.['Thread Count'] || '400 TC Percale Weave',
       fabric: p.specifications?.['Fabric'] || '100% Long Staple Cotton',
       closure: p.specifications?.['Closure'] || 'Concealed high-tensile nylon zipper',
@@ -376,23 +376,44 @@ export const AdminDashboardPage: React.FC = () => {
     setProductModalOpen(true);
   };
 
-  const handleSaveProduct = (e: React.FormEvent) => {
+  const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!Number.isSafeInteger(productForm.moq) || productForm.moq < 1) {
       window.alert('Minimum order quantity must be a whole number of at least 1.');
       return;
     }
+    const images = productForm.images.map(image => image.trim()).filter(Boolean);
+    for (const image of images) {
+      let parsedImage: URL;
+      try {
+        parsedImage = new URL(image, window.location.origin);
+      } catch {
+        window.alert(`Enter a valid image URL: ${image}`);
+        return;
+      }
+      if (!['http:', 'https:'].includes(parsedImage.protocol)) {
+        window.alert('Product images must use an HTTP or HTTPS URL.');
+        return;
+      }
+    }
     const savings1 = Math.max(0, Math.round(((productForm.retailPrice - productForm.tier1Price) / (productForm.retailPrice || 1)) * 100));
     const savings2 = Math.max(0, Math.round(((productForm.retailPrice - productForm.tier2Price) / (productForm.retailPrice || 1)) * 100));
     const savings3 = Math.max(0, Math.round(((productForm.retailPrice - productForm.tier3Price) / (productForm.retailPrice || 1)) * 100));
-    const computedTiers = [
+    const currentProd = editingProductId ? products.find(p => p.id === editingProductId) : null;
+    const existingTierPrices = currentProd?.wholesaleTiers ?? [];
+    const preserveExistingTiers = Boolean(currentProd && existingTierPrices.length > 0) &&
+      productForm.retailPrice === currentProd?.retailPrice &&
+      productForm.tier1Price === (existingTierPrices.find(tier => tier.minQty === 10)?.pricePerUnit ?? existingTierPrices[1]?.pricePerUnit ?? Math.round((currentProd?.retailPrice ?? 0) * 0.75)) &&
+      productForm.tier2Price === (existingTierPrices.find(tier => tier.minQty === 50)?.pricePerUnit ?? existingTierPrices[2]?.pricePerUnit ?? Math.round((currentProd?.retailPrice ?? 0) * 0.65)) &&
+      productForm.tier3Price === (existingTierPrices.find(tier => tier.minQty === 200)?.pricePerUnit ?? existingTierPrices[3]?.pricePerUnit ?? Math.round((currentProd?.retailPrice ?? 0) * 0.55));
+    const computedTiers = preserveExistingTiers
+      ? existingTierPrices
+      : [
       { minQty: 1, maxQty: 9, pricePerUnit: productForm.retailPrice, savingsPercent: 0, label: 'Standard Rate' },
       { minQty: 10, maxQty: 49, pricePerUnit: productForm.tier1Price, savingsPercent: savings1, label: 'Wholesale Tier 1' },
       { minQty: 50, maxQty: 199, pricePerUnit: productForm.tier2Price, savingsPercent: savings2, label: 'Wholesale Tier 2' },
       { minQty: 200, pricePerUnit: productForm.tier3Price, savingsPercent: savings3, label: 'Direct Mill Contract' }
     ];
-
-    const currentProd = editingProductId ? products.find(p => p.id === editingProductId) : null;
     const computedSpecs: Record<string, string> = {
       ...(currentProd?.specifications || {}),
       'Thread Count': productForm.threadCount.trim() || '400 TC Percale Weave',
@@ -401,13 +422,6 @@ export const AdminDashboardPage: React.FC = () => {
       'Certification': productForm.certification.trim() || 'OEKO-TEX Standard 100',
       'Dimensions': productForm.dimensions.trim() || 'Double (90" x 108")'
     };
-    for (const key of ['Source Listing ID', 'Source Product Page', 'Source Category Page', 'Admin Price Note']) {
-      delete computedSpecs[key];
-    }
-    if (currentProd?.specifications?.['Source Price Status'] === 'Admin-set temporary price') {
-      computedSpecs['Source Price Status'] = 'Admin-set price';
-    }
-
     const computedCare = productForm.careInstructions
       .split('\n')
       .map(s => s.trim())
@@ -418,8 +432,9 @@ export const AdminDashboardPage: React.FC = () => {
       .map(s => s.trim())
       .filter(Boolean);
 
-    if (editingProductId) {
-      updateProduct(editingProductId, {
+    try {
+      if (editingProductId) {
+        await updateProduct(editingProductId, {
         name: productForm.name,
         sku: productForm.sku,
         isBestSeller: productForm.isBestSeller,
@@ -434,14 +449,14 @@ export const AdminDashboardPage: React.FC = () => {
         gstRate: productForm.gstRate,
         shortDescription: productForm.shortDescription,
         description: productForm.description,
-        images: [productForm.image],
+        images,
         wholesaleTiers: computedTiers,
         specifications: computedSpecs,
         careInstructions: computedCare,
         b2bPolicy: computedB2b
-      });
-    } else {
-      addProduct({
+        });
+      } else {
+        await addProduct({
         name: productForm.name,
         slug: productForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         sku: productForm.sku || `MLE-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -460,13 +475,22 @@ export const AdminDashboardPage: React.FC = () => {
         gstRate: productForm.gstRate,
         shortDescription: productForm.shortDescription,
         description: productForm.description,
-        images: [productForm.image],
+        images,
         tags: [productForm.category, productForm.subcategory.toLowerCase()],
         specifications: computedSpecs,
         careInstructions: computedCare,
         b2bPolicy: computedB2b,
         wholesaleTiers: computedTiers
-      });
+        });
+      }
+    } catch (error) {
+      console.error('Product changes could not be saved:', error);
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : 'Product changes could not be saved. Please try again.'
+      );
+      return;
     }
     setProductModalOpen(false);
     setEditingProductId(null);
@@ -661,7 +685,7 @@ export const AdminDashboardPage: React.FC = () => {
                 gstRate: 5,
                 shortDescription: '100% Combed Indian Cotton product.',
                 description: 'Direct mill woven fabric with high thread density.',
-                image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
+                images: ['https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop'],
                 threadCount: '400 TC Percale Weave',
                 fabric: '100% Long Staple Cotton',
                 closure: 'Concealed high-tensile nylon zipper',
@@ -1089,7 +1113,13 @@ export const AdminDashboardPage: React.FC = () => {
                           <input
                             type="checkbox"
                             checked={Boolean(prod.isBestSeller)}
-                            onChange={e => updateProduct(prod.id, { isBestSeller: e.target.checked })}
+                            onChange={e => {
+                              void updateProduct(prod.id, { isBestSeller: e.target.checked })
+                                .catch(error => {
+                                  console.error('Featured product setting could not be saved:', error);
+                                  window.alert('Featured product setting could not be saved.');
+                                });
+                            }}
                             aria-label={`Show ${prod.name} in homepage featured products`}
                             className="accent-amber-600"
                           />
@@ -2110,14 +2140,69 @@ export const AdminDashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-bold text-slate-500 block mb-1">Image URL</label>
-                <input
-                  type="url"
-                  value={productForm.image}
-                  onChange={e => setProductForm({ ...productForm, image: e.target.value })}
-                  className="w-full p-2 border border-slate-300 rounded-lg outline-none"
-                />
+              <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-700 block">Product Images</label>
+                    <p className="text-[9px] text-slate-500">Add, edit, or remove gallery image URLs. Existing images are preserved when editing.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setProductForm(current => ({ ...current, images: [...current.images, ''] }))}
+                    className="shrink-0 rounded-lg bg-indigo px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-indigo-dark"
+                  >
+                    + Add Image
+                  </button>
+                </div>
+                {productForm.images.length === 0 && (
+                  <p className="rounded-lg border border-dashed border-slate-300 bg-white p-3 text-center text-[10px] text-slate-500">
+                    No product images. Add an image URL to show a product photo.
+                  </p>
+                )}
+                {productForm.images.map((image, index) => (
+                  <div key={`product-image-${index}`} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
+                    {image.trim() ? (
+                      <img
+                        src={image}
+                        alt={`Product preview ${index + 1}`}
+                        className="h-12 w-12 shrink-0 rounded-md border border-slate-200 bg-slate-50 object-contain"
+                        onError={event => { event.currentTarget.style.visibility = 'hidden'; }}
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-dashed border-slate-300 text-[9px] text-slate-400">
+                        Preview
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <label className="mb-1 block text-[9px] font-semibold text-slate-500">Image {index + 1} URL</label>
+                      <input
+                        type="text"
+                        value={image}
+                        onChange={event => setProductForm(current => ({
+                          ...current,
+                          images: current.images.map((currentImage, currentIndex) =>
+                            currentIndex === index ? event.target.value : currentImage
+                          )
+                        }))}
+                        placeholder="https://example.com/product-image.jpg"
+                        className="w-full min-w-0 rounded-lg border border-slate-300 p-2 text-xs outline-none focus:border-indigo"
+                        aria-label={`Product image ${index + 1} URL`}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setProductForm(current => ({
+                        ...current,
+                        images: current.images.filter((_, currentIndex) => currentIndex !== index)
+                      }))}
+                      className="shrink-0 rounded-lg p-2 text-slate-400 transition hover:bg-red-50 hover:text-error"
+                      title={`Remove image ${index + 1}`}
+                      aria-label={`Remove image ${index + 1}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
 
               {!editingProductId && (

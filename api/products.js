@@ -6,6 +6,7 @@ import { notifyRestockSubscribers } from './_lib/restock-alerts.js';
 
 const CATEGORY_NAMES = {
   'home-kitchen': 'Home and Kitchen',
+  'roti-covers': 'Roti Covers',
   household: 'Household',
   textile: 'Textile',
   'cotton-products': 'Cotton Products'

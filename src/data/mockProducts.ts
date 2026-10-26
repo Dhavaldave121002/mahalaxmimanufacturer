@@ -639,6 +639,15 @@ export const CATEGORIES_CONFIG = [
     description: 'Browse source-listed kitchen covers, aprons and food-preparation products. Confirm specifications, availability and current prices before ordering.'
   },
   {
+    id: 'roti-covers',
+    name: 'Roti Covers',
+    tagline: 'Cotton Roti and Chapati Covers',
+    icon: 'UtensilsCrossed',
+    image: 'https://cdn.shopify.com/s/files/1/0747/9472/9639/files/WhatsApp_Image_2026-10-15_at_12.14.32_PM.webp?v=1792047400',
+    subcategories: ['Cotton Chapati Cover'],
+    description: 'Browse cotton roti and chapati covers. Confirm product specifications, availability and current prices before ordering.'
+  },
+  {
     id: 'household',
     name: 'Household',
     tagline: 'Storage Bags & Household Products',
