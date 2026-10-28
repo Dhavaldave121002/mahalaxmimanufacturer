@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
 import { ProductCard } from '../components/common/ProductCard';
+import { getCustomizationCharge, getSizeCharge } from '../constants/customizationPricing';
 import { BUSINESS_WHATSAPP_NUMBER } from '../constants/businessContact';
 
 export const CartPage: React.FC = () => {
@@ -430,6 +431,16 @@ export const CartPage: React.FC = () => {
                           <Palette className="w-3 h-3" />
                           {item.customization.type}
                         </span>
+                        {getCustomizationCharge(item.customization.type) > 0 && (
+                          <span className="bg-purple-100 text-purple-800 border border-purple-300 px-1.5 py-0.2 rounded text-[10px] font-extrabold">
+                            +₹{getCustomizationCharge(item.customization.type)}/pc
+                          </span>
+                        )}
+                        {getSizeCharge(item.customization.selectedSize) > 0 && (
+                          <span className="bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.2 rounded text-[10px] font-extrabold">
+                            +₹{getSizeCharge(item.customization.selectedSize)}/pc Size Add-on
+                          </span>
+                        )}
                         {item.customization.logoText && (
                           <span className="font-mono bg-white px-1.5 py-0.5 rounded border border-purple-200 text-navy">
                             "{item.customization.logoText}"

@@ -643,9 +643,9 @@ export const CATEGORIES_CONFIG = [
     name: 'Roti Covers',
     tagline: 'Cotton Roti and Chapati Covers',
     icon: 'UtensilsCrossed',
-    image: 'https://cdn.shopify.com/s/files/1/0747/9472/9639/files/WhatsApp_Image_2026-10-15_at_12.14.32_PM.webp?v=1792047400',
+    image: 'https://cdn.shopify.com/s/files/1/0747/9472/9639/files/35480734-4cad-4ee7-9ec3-c3b53c2a6b3d.webp?v=1792060590',
     subcategories: ['Cotton Chapati Cover'],
-    description: 'Browse cotton roti and chapati covers. Confirm product specifications, availability and current prices before ordering.'
+    description: 'Cotton roti and chapati covers.'
   },
   {
     id: 'household',

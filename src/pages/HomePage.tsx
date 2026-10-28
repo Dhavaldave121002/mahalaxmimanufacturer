@@ -36,7 +36,8 @@ import {
   TrendingUp,
   PackageCheck,
   Package,
-  Boxes
+  Boxes,
+  UtensilsCrossed
 } from 'lucide-react';
 
 const HOME_PRIMARY_CATEGORY_IDS = ['home-kitchen', 'household', 'textile', 'cotton-products', 'roti-covers'];
@@ -233,31 +234,81 @@ export const HomePage: React.FC = () => {
                 />
               </picture>
 
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/75 via-slate-950/20 to-transparent sm:h-40"
-              />
+              {/* Overlay: Text and CTAs */}
+              {currentHero.showTextOverlay ? (
+                <>
+                  {/* Subtle left scrim on desktop to ensure crisp legibility */}
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-y-0 left-0 hidden w-full bg-gradient-to-r from-stone-50/85 via-stone-50/40 to-transparent sm:block sm:w-2/3"
+                  />
 
-              <div className="absolute inset-x-0 bottom-0 z-10 px-3 pb-16 sm:hidden">
-                <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-                  {currentHero.ctaText && (
-                    <Link
-                      to={currentHero.ctaLink}
-                      className="group inline-flex min-h-10 items-center gap-2 rounded-full border border-white/30 bg-indigo-600 px-4 py-2 text-[11px] font-bold text-white shadow-lg shadow-black/20 transition hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:min-h-12 sm:px-6 sm:text-sm"
-                    >
-                      <span>{currentHero.ctaText}</span>
-                      <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
-                    </Link>
-                  )}
-                  <Link
-                    to="/wholesale"
-                    className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/60 bg-slate-950/25 px-4 py-2 text-[11px] font-bold text-white shadow-lg shadow-black/15 backdrop-blur-sm transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:min-h-12 sm:px-6 sm:text-sm"
-                  >
-                    <Building2 className="h-4 w-4 shrink-0 text-champagne" />
-                    <span>Request Mill RFQ</span>
-                  </Link>
-                </div>
-              </div>
+                  {/* Desktop & Mobile Content Overlay */}
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col justify-end px-3 pb-12 text-left sm:inset-y-0 sm:left-0 sm:right-auto sm:max-w-xl sm:justify-center sm:px-12 sm:pb-0 md:px-16">
+                    <div className="pointer-events-auto rounded-2xl border border-stone-200/50 bg-white/90 p-4 shadow-lg backdrop-blur-md sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
+                      {currentHero.highlight && (
+                        <span className="inline-block rounded-full border border-amber-300/50 bg-amber-100/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-900 sm:text-xs">
+                          {currentHero.highlight}
+                        </span>
+                      )}
+                      <h1 className="mt-1.5 text-xl font-black leading-tight tracking-tight text-slate-900 sm:mt-2.5 sm:text-4xl lg:text-5xl">
+                        {currentHero.title}
+                      </h1>
+                      {currentHero.subtitle && (
+                        <p className="mt-1 max-w-md text-xs font-medium text-slate-700 line-clamp-2 sm:mt-2 sm:text-base sm:line-clamp-none lg:text-lg">
+                          {currentHero.subtitle}
+                        </p>
+                      )}
+                      <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-5 sm:gap-3">
+                        {currentHero.ctaText && (
+                          <Link
+                            to={currentHero.ctaLink}
+                            className="group inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-md transition hover:bg-slate-800 sm:px-6 sm:py-3 sm:text-sm"
+                          >
+                            <span>{currentHero.ctaText}</span>
+                            <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                          </Link>
+                        )}
+                        <Link
+                          to="/wholesale"
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white/80 px-4 py-2 text-xs font-bold text-slate-800 backdrop-blur-sm transition hover:bg-white sm:px-5 sm:py-3 sm:text-sm"
+                        >
+                          <Building2 className="h-4 w-4 shrink-0 text-slate-600" />
+                          <span>Mill RFQ</span>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/75 via-slate-950/20 to-transparent sm:h-40"
+                  />
+
+                  <div className="absolute inset-x-0 bottom-0 z-10 px-3 pb-16 sm:hidden">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+                      {currentHero.ctaText && (
+                        <Link
+                          to={currentHero.ctaLink}
+                          className="group inline-flex min-h-10 items-center gap-2 rounded-full border border-white/30 bg-indigo-600 px-4 py-2 text-[11px] font-bold text-white shadow-lg shadow-black/20 transition hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:min-h-12 sm:px-6 sm:text-sm"
+                        >
+                          <span>{currentHero.ctaText}</span>
+                          <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                        </Link>
+                      )}
+                      <Link
+                        to="/wholesale"
+                        className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/60 bg-slate-950/25 px-4 py-2 text-[11px] font-bold text-white shadow-lg shadow-black/15 backdrop-blur-sm transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:min-h-12 sm:px-6 sm:text-sm"
+                      >
+                        <Building2 className="h-4 w-4 shrink-0 text-champagne" />
+                        <span>Request Mill RFQ</span>
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {heroSlides.length > 1 && (
                 <>
@@ -293,24 +344,26 @@ export const HomePage: React.FC = () => {
                 </>
               )}
             </div>
-            <div className="mx-auto hidden max-w-[1600px] items-center gap-3 bg-white px-5 py-3 sm:flex sm:px-8">
-              {currentHero.ctaText && (
+            {!currentHero.showTextOverlay && (
+              <div className="mx-auto hidden max-w-[1600px] items-center gap-3 bg-white px-5 py-3 sm:flex sm:px-8">
+                {currentHero.ctaText && (
+                  <Link
+                    to={currentHero.ctaLink}
+                    className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    <span>{currentHero.ctaText}</span>
+                    <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                )}
                 <Link
-                  to={currentHero.ctaLink}
-                  className="group inline-flex min-h-11 items-center gap-2 rounded-full bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  to="/wholesale"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
                 >
-                  <span>{currentHero.ctaText}</span>
-                  <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                  <Building2 className="h-4 w-4 shrink-0 text-indigo-600" />
+                  <span>Request Mill RFQ</span>
                 </Link>
-              )}
-              <Link
-                to="/wholesale"
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
-              >
-                <Building2 className="h-4 w-4 shrink-0 text-indigo-600" />
-                <span>Request Mill RFQ</span>
-              </Link>
-            </div>
+              </div>
+            )}
             </>
           );
         })()}
@@ -477,59 +530,53 @@ export const HomePage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
-          {homeCollections.slice(0, showAllCollections ? homeCollections.length : 4).map(cat => (
-            <Link
-              key={cat.id}
-              to={`/category/${cat.id}`}
-              aria-label={`Open ${cat.name} category`}
-              className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-subtle transition-all duration-300 hover:shadow-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 sm:rounded-3xl"
-            >
-              <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 sm:aspect-[16/10]">
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-navy/95 via-navy/25 to-transparent"></div>
-                <div className="absolute bottom-3 left-3 right-3 text-white">
-                  <h3 className="font-extrabold text-base leading-tight text-white drop-shadow-sm transition group-hover:text-champagne sm:text-lg">
-                    {cat.name}
-                  </h3>
-                  <p className="mt-1 line-clamp-2 text-[10px] leading-snug text-white/90 sm:text-[11px]">
-                    {cat.tagline}
-                  </p>
+          {homeCollections.slice(0, showAllCollections ? homeCollections.length : 4).map(cat => {
+            const count = products.filter(p => p.category === cat.id).length;
+            const categoryImage =
+              cat.id === 'roti-covers'
+                ? 'https://cdn.shopify.com/s/files/1/0747/9472/9639/files/35480734-4cad-4ee7-9ec3-c3b53c2a6b3d.webp?v=1792060590'
+                : cat.image;
+
+            return (
+              <Link
+                key={cat.id}
+                to={`/category/${cat.id}`}
+                aria-label={`Open ${cat.name} category`}
+                className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1 hover:border-indigo-300 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 sm:rounded-3xl"
+              >
+                {/* Product Image */}
+                <div className="relative aspect-[4/3] sm:aspect-[16/11] overflow-hidden bg-slate-100">
+                  <img
+                    src={categoryImage}
+                    alt={cat.name}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/20 to-transparent" />
+                  
+                  {/* Category Name & Count Overlay */}
+                  <div className="absolute bottom-3 left-3 right-3 text-white">
+                    <span className="inline-block rounded-full bg-white/20 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white mb-1 shadow-xs">
+                      {count} {count === 1 ? 'Product' : 'Products'}
+                    </span>
+                    <h3 className="text-base sm:text-lg font-bold leading-tight text-white drop-shadow-sm group-hover:text-champagne transition-colors">
+                      {cat.name}
+                    </h3>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex flex-1 flex-col justify-between bg-white p-3 sm:p-4">
-                <p className="hidden text-xs leading-relaxed text-slate-600 line-clamp-2 sm:block">
-                  {cat.description}
-                </p>
-
-                <div className="mt-2 flex flex-wrap gap-1 border-t border-slate-100 pt-2 sm:mt-4 sm:pt-3">
-                  {cat.subcategories.map((sub, i) => (
-                    <span
-                      key={i}
-                      className={`rounded-lg bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-700 transition group-hover:bg-indigo-light group-hover:text-indigo sm:px-2.5 sm:text-[10px] ${
-                        i >= 2 ? 'hidden sm:inline-flex' : ''
-                      }`}
-                    >
-                      {sub}
-                    </span>
-                  ))}
-                  {cat.subcategories.length > 2 && (
-                    <span className="rounded-lg bg-indigo-light px-2 py-0.5 text-[9px] font-bold text-indigo sm:hidden">
-                      +{cat.subcategories.length - 2}
-                    </span>
-                  )}
-                  <span className="ml-auto inline-flex items-center gap-1 self-center whitespace-nowrap text-[10px] font-bold text-indigo sm:text-xs">
-                    Browse
-                    <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5 sm:h-3.5 sm:w-3.5" />
+                {/* Minimal Clean Content Bottom (No huge description, no cluttered tags) */}
+                <div className="flex items-center justify-between p-3 sm:p-4 bg-white">
+                  <span className="text-xs text-slate-500 font-medium line-clamp-1">
+                    {cat.tagline || 'Direct Mill Wholesale'}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo group-hover:text-indigo-dark transition-colors shrink-0 ml-2">
+                    <span>Browse</span>
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                   </span>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </section>
 

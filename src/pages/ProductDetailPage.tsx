@@ -9,6 +9,7 @@ import {
   BUSINESS_SUPPORT_PHONE,
   BUSINESS_WHATSAPP_NUMBER
 } from '../constants/businessContact';
+import { getCustomizationCharge, getSizeCharge, CUSTOM_SIZE_ADDON_CHARGE, CUSTOMIZATION_PRICING } from '../constants/customizationPricing';
 import {
   Star,
   ShieldCheck,
@@ -468,17 +469,22 @@ export const ProductDetailPage: React.FC = () => {
         ? 'Insufficient stock for MOQ'
         : 'In stock';
 
-  // Dynamic Wholesale Tier Calculation for current selected quantity
-  const currentUnitPrice = activeWholesaleTier
+  // Dynamic Wholesale Tier Calculation + Customization Fee for current selected quantity
+  const isCustomSize = selectedSize.includes('Custom') || selectedSize === 'Custom Dimensions';
+  const sizeFee = isCustomSize ? CUSTOM_SIZE_ADDON_CHARGE : 0;
+  const typeFee = getCustomizationCharge(customizationType);
+  const customizationFee = typeFee + sizeFee;
+  const baseTierPrice = activeWholesaleTier
     ? activeWholesaleTier.pricePerUnit + (selectedVariant?.priceDelta || 0)
     : product.retailPrice + (selectedVariant?.priceDelta || 0);
+  const currentUnitPrice = baseTierPrice + customizationFee;
 
   const currentLineTotal = currentUnitPrice * quantity;
-  const standardRetailTotal = (product.retailPrice + (selectedVariant?.priceDelta || 0)) * quantity;
-  const wholesaleSavings = standardRetailTotal - currentLineTotal;
+  const standardRetailTotal = (product.mrp || (product.retailPrice * 1.5)) * quantity;
+  const wholesaleSavings = Math.max(0, standardRetailTotal - currentLineTotal);
 
   const pcsNeededForNextTier = nextTier ? nextTier.minQty - quantity : 0;
-  const nextTierSavingsPerPc = nextTier ? currentUnitPrice - nextTier.pricePerUnit : 0;
+  const nextTierSavingsPerPc = nextTier ? baseTierPrice - nextTier.pricePerUnit : 0;
 
   const getCustomizationPayload = (): ProductCustomization | undefined => {
     if (customizationType === 'No Customization') return undefined;
@@ -1088,191 +1094,55 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* Variant Picker (Color / Size) */}
+          {/* Variant Picker (Color / Shade) */}
           {product.variants && product.variants.length > 0 && (
             <div className="space-y-2 pt-2 border-t border-slate-100">
-              <label className="text-xs font-bold text-navy block">
-                Select Shade / Dimension: <span className="text-indigo font-semibold">{selectedVariant?.name}</span>
+              <label className="text-xs font-bold text-navy flex items-center gap-1.5">
+                <span>Select Color / Shade:</span>
+                <span className="text-indigo font-black">
+                  {(selectedVariant?.colorName || selectedVariant?.name || '').replace(/\s*\/\s*\d+$/i, '').replace(/\s*\(?\s*pack\s+of\s+\d+\s*\)?/i, '').trim()}
+                </span>
               </label>
               <div className="flex flex-wrap gap-2">
-                {product.variants.map(v => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVariant(v)}
-                    className={`px-3 py-2 rounded-xl text-xs font-medium border transition flex items-center gap-2 ${
-                      selectedVariant?.id === v.id
-                        ? 'border-navy bg-navy text-white shadow-subtle'
-                        : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
-                    }`}
-                  >
-                    {v.colorHex && (
+                {product.variants.map(v => {
+                  const displayName = (v.colorName || v.name || '')
+                    .replace(/\s*\/\s*\d+$/i, '')
+                    .replace(/\s*\(?\s*pack\s+of\s+\d+\s*\)?/i, '')
+                    .trim();
+                  const isSelected = selectedVariant?.id === v.id || 
+                    (selectedVariant?.name || '').toLowerCase().includes(displayName.toLowerCase());
+                  const dotColor = v.colorHex || (displayName.toLowerCase().includes('pink') ? '#EC4899' :
+                    displayName.toLowerCase().includes('blue') ? '#3B82F6' :
+                    displayName.toLowerCase().includes('orange') ? '#F97316' :
+                    displayName.toLowerCase().includes('green') ? '#10B981' :
+                    displayName.toLowerCase().includes('beige') ? '#D2B48C' :
+                    displayName.toLowerCase().includes('white') ? '#FFFFFF' :
+                    displayName.toLowerCase().includes('black') ? '#1E293B' : '#94A3B8');
+
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariant(v)}
+                      className={`px-3 py-2 rounded-xl text-xs font-medium border transition flex items-center gap-2 ${
+                        isSelected
+                          ? 'border-navy bg-navy text-white shadow-subtle'
+                          : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
+                      }`}
+                    >
                       <span
-                        className="w-3.5 h-3.5 rounded-full border border-black/10 shrink-0"
-                        style={{ backgroundColor: v.colorHex }}
+                        className="w-3.5 h-3.5 rounded-full border border-black/15 shrink-0 shadow-2xs"
+                        style={{ backgroundColor: dotColor }}
                       ></span>
-                    )}
-                    <span>{v.name}</span>
-                  </button>
-                ))}
+                      <span>{displayName}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
 
           {/* Commercial Sample & Purchase Buttons Section */}
           <div className="space-y-4 pt-2 border-t border-slate-100">
-            {isImportedCatalogProduct ? (
-              <>
-                <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-amber-50/90 border border-amber-200/90 rounded-2xl space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
-                      <PackageCheck className="w-4 h-4 text-amber-600 shrink-0" />
-                      Product Sample & Evaluation
-                    </span>
-                    <span className="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-full">
-                      Supplier confirmation required
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 leading-relaxed">
-                    Request one piece to evaluate this product. The supplier must confirm sample availability, final price and dispatch before the request is accepted. Sample rebate and mill certification are not included unless confirmed separately.
-                  </p>
-                  <button
-                    type="button"
-                    disabled={inquiryOnly}
-                    onClick={handleOrderSamplePiece}
-                    className="w-full sm:w-auto min-w-0 p-2.5 bg-white hover:bg-amber-100/70 border border-amber-300 text-navy rounded-xl font-bold text-xs transition flex items-start gap-2.5 shadow-sm text-left group disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <span className="mt-0.5 w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
-                      <Package className="w-4 h-4" />
-                    </span>
-                    <span className="min-w-0 break-words">
-                      <span className="block font-bold text-navy text-xs leading-tight">Request 1-Pc Sample</span>
-                      <span className="block text-[10px] text-slate-500 font-normal leading-snug">
-                        Listed price ₹{product.retailPrice} · subject to supplier confirmation
-                      </span>
-                    </span>
-                  </button>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <button
-                      type="button"
-                      onClick={handleOrderSampleBundle}
-                      className="w-full min-w-0 p-2.5 bg-white hover:bg-indigo-50/80 border border-indigo-300 text-navy rounded-xl font-bold text-xs transition flex items-start gap-2.5 shadow-sm text-left group"
-                    >
-                      <span className="mt-0.5 w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo shrink-0">
-                        <Boxes className="w-4 h-4" />
-                      </span>
-                      <span className="min-w-0 break-words">
-                        <span className="block font-bold text-navy text-xs leading-tight">Order Sample Bundle</span>
-                        <span className="block text-[10px] text-slate-500 font-normal leading-snug">₹299 · 12 Swatches + 4 Minis</span>
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleOrderSwatchKit}
-                      className="w-full min-w-0 p-2.5 bg-white hover:bg-blue-50/80 border border-blue-300 text-navy rounded-xl font-bold text-xs transition flex items-start gap-2.5 shadow-sm text-left group"
-                    >
-                      <span className="mt-0.5 w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-700 shrink-0">
-                        <Layers className="w-4 h-4" />
-                      </span>
-                      <span className="min-w-0 break-words">
-                        <span className="block font-bold text-navy text-xs leading-tight">Pure Cotton Swatch Kit</span>
-                        <span className="block text-[10px] text-slate-500 font-normal leading-snug">₹199 · 12 Cotton Cuts</span>
-                      </span>
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-slate-500 leading-relaxed">
-                    Sample kit orders are separate from this product. Any sample-kit coupon or refund applies only as stated with that kit; it is not a rebate guarantee on this supplier product.
-                  </p>
-                </div>
-
-                <div className="p-4 sm:p-5 bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/60 border-2 border-purple-200/90 rounded-2xl shadow-sm space-y-4">
-                  <div className="flex items-center gap-2.5 pb-3 border-b border-purple-100">
-                    <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-sm">
-                      <Palette className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-black text-navy uppercase tracking-wider">
-                        Interactive Customization Studio
-                      </h4>
-                      <p className="text-[11px] text-slate-500 font-medium">
-                        Choose what you would like to ask the supplier to customize
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-[11px] text-slate-600 leading-relaxed">
-                    Custom options, pricing, available materials and minimum quantities must be confirmed by the supplier. This request is not a confirmed production commitment.
-                  </p>
-                  <div className="space-y-2">
-                    <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
-                      1. Select Customization Type
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {[
-                        { type: 'Supplier Design & Logo Request', label: 'Design & Logo', icon: Palette },
-                        { type: 'Supplier Logo Print Request', label: 'Logo Print', icon: Star },
-                        { type: 'Supplier Embroidery Request', label: 'Embroidery', icon: Sparkles },
-                        { type: 'Supplier Product Specification Request', label: 'Size / Specifications', icon: Layers },
-                        { type: 'No Customization', label: 'No Customization', icon: Check }
-                      ].map(option => {
-                        const IconComponent = option.icon;
-                        const isSelected = customizationType === option.type;
-                        return (
-                          <button
-                            key={option.type}
-                            type="button"
-                            onClick={() => setCustomizationType(option.type)}
-                            className={`min-h-16 p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
-                              isSelected
-                                ? 'border-purple-600 bg-purple-600 text-white shadow-sm ring-2 ring-purple-300'
-                                : 'border-slate-200 bg-white hover:border-purple-300 text-slate-700'
-                            }`}
-                          >
-                            <IconComponent className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-300' : 'text-purple-600'}`} />
-                            <span className="font-bold text-xs leading-snug">{option.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  {customizationType !== 'No Customization' && (
-                    <div className="space-y-3 pt-3 border-t border-purple-100">
-                      {customizationType.toLowerCase().includes('logo') && (
-                        <div>
-                          <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                            Requested Logo / Brand Name
-                          </label>
-                          <input
-                            type="text"
-                            maxLength={80}
-                            value={logoText}
-                            onChange={e => setLogoText(e.target.value)}
-                            placeholder="Enter your brand name (optional)"
-                            className="w-full text-xs px-3 py-2 border border-slate-300 rounded-xl focus:border-purple-600 outline-none"
-                          />
-                        </div>
-                      )}
-                      <div>
-                        <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                          2. Custom Requirements / Instructions
-                        </label>
-                        <textarea
-                          rows={3}
-                          maxLength={1000}
-                          value={designNote}
-                          onChange={e => setDesignNote(e.target.value)}
-                          placeholder="Describe the change requested. Supplier will confirm availability, price and MOQ."
-                          className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:border-purple-600 outline-none"
-                          aria-label="Customization request"
-                        />
-                      </div>
-                      <p className="text-[10px] font-semibold text-purple-800">
-                        Your request will be attached to the cart item for supplier confirmation.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
             {/* Commercial Sample & Sample Bundle Procurement Suite */}
               <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-amber-50/90 border border-amber-200/90 rounded-2xl space-y-3 shadow-sm">
               <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-1.5">
@@ -1378,13 +1248,14 @@ export const ProductDetailPage: React.FC = () => {
                 <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
                   1. Select Customization Type
                 </label>
-                <div className="grid grid-cols-2 xl:grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
                   {[
-                    { type: 'Design & Logo', label: 'Design & Logo', icon: Palette, badge: 'Popular' },
-                    { type: 'Only Logo', label: 'Only Logo Print', icon: Star, badge: 'Branding' },
-                    { type: 'Embroidery Branding', label: 'Embroidery', icon: Sparkles, badge: 'Luxury' },
-                    { type: 'Custom Weave & GSM', label: 'Weave & GSM', icon: Layers, badge: 'Bulk Mill' },
-                    { type: 'No Customization', label: 'Standard Pack', icon: Check, badge: 'Default' }
+                    { type: 'No Customization', label: 'Standard Pack', icon: Check, badge: 'Free (+₹0)', desc: 'Standard bulk packing' },
+                    { type: 'Only Logo', label: 'Only Logo Print', icon: Star, badge: '+₹12/pc', desc: 'Screen/DTF Logo' },
+                    { type: 'Only Design', label: 'Only Design', icon: Palette, badge: '+₹22/pc', desc: 'All-over custom print' },
+                    { type: 'Design & Logo', label: 'Design & Logo', icon: Sparkles, badge: '+₹32/pc', desc: 'Pattern + Logo' },
+                    { type: 'Embroidery Branding', label: 'Embroidery', icon: Sparkles, badge: '+₹42/pc', desc: 'Thread embroidery' },
+                    { type: 'Custom Weave & GSM', label: 'Weave & GSM', icon: Layers, badge: '+₹55/pc', desc: 'Mill loom & GSM spec' }
                   ].map(opt => {
                     const isSelected = customizationType === opt.type;
                     const IconComponent = opt.icon;
@@ -1402,17 +1273,56 @@ export const ProductDetailPage: React.FC = () => {
                         <div className="flex items-center justify-between w-full mb-1">
                           <IconComponent className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-300' : 'text-purple-600'}`} />
                           <span
-                            className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded ${
-                              isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                            className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                              isSelected ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'
                             }`}
                           >
                             {opt.badge}
                           </span>
                         </div>
                         <span className="font-bold text-xs leading-snug">{opt.label}</span>
+                        <span className={`text-[10px] mt-0.5 ${isSelected ? 'text-purple-100' : 'text-slate-400'}`}>
+                          {opt.desc}
+                        </span>
                       </button>
                     );
                   })}
+                </div>
+
+                {/* Real-time B2B Price & Customization Breakdown Card */}
+                <div className="p-3 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl text-xs flex flex-wrap items-center justify-between gap-2 shadow-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-bold text-slate-700">
+                      Base Rate: <strong className="text-navy">₹{baseTierPrice}/pc</strong>
+                      {activeWholesaleTier && <span className="text-[10px] font-normal text-slate-500 ml-1">({activeWholesaleTier.label})</span>}
+                    </span>
+                    <span className="text-slate-400">•</span>
+                    {customizationFee > 0 ? (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {typeFee > 0 && (
+                          <span className="font-bold text-purple-700 bg-purple-100/90 px-2.5 py-0.5 rounded-full border border-purple-300">
+                            {customizationType} (+₹{typeFee}/pc)
+                          </span>
+                        )}
+                        {sizeFee > 0 && (
+                          <span className="font-bold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-300">
+                            Custom Dimensions (+₹{sizeFee}/pc)
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="font-semibold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+                        Standard Pack (No Customization Charge)
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-bold text-slate-500 block">Calculated Net Rate:</span>
+                    <span className="font-black text-navy text-sm">
+                      ₹{currentUnitPrice} / pc
+                      <span className="text-xs font-semibold text-slate-600 ml-1.5">(Total: ₹{currentLineTotal.toLocaleString('en-IN')})</span>
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -1590,6 +1500,60 @@ export const ProductDetailPage: React.FC = () => {
                               type="file"
                               accept="image/*,.pdf,.svg,.eps,.ai"
                               onChange={handleLogoUpload}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Case 2b: Only Design Artwork Upload */}
+                    {customizationType === 'Only Design' && (
+                      <div className="p-3 bg-slate-50/80 rounded-xl border-2 border-dashed border-indigo-200 hover:border-indigo-400 transition">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-bold text-navy flex items-center gap-1.5">
+                            <Palette className="w-3.5 h-3.5 text-indigo" />
+                            Upload Design Pattern / Artwork File
+                          </span>
+                          {designFile && (
+                            <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                              ✓ Attached
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-500 mb-2">
+                          Fabric layout pattern, jacquard weave draft, or full design (PDF, SVG, CDR, AI, PSD, PNG).
+                        </p>
+
+                        {designFile ? (
+                          <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-slate-200">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {designFile.startsWith('data:image') ? (
+                                <img src={designFile} alt="Design" className="w-8 h-8 rounded object-cover border border-slate-200 bg-slate-50 shrink-0" />
+                              ) : (
+                                <FileText className="w-6 h-6 text-indigo shrink-0" />
+                              )}
+                              <span className="text-xs font-bold text-navy truncate" title={designFileName}>
+                                {designFileName}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => { setDesignFile(null); setDesignFileName(''); }}
+                              className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                              title="Remove file"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex items-center justify-center gap-2 py-2.5 px-3 bg-white hover:bg-indigo-50 text-indigo border border-indigo-300 rounded-xl text-xs font-bold cursor-pointer transition shadow-xs">
+                            <UploadCloud className="w-4 h-4 text-indigo" />
+                            <span>Select Design Artwork File</span>
+                            <input
+                              type="file"
+                              accept="image/*,.pdf,.svg,.eps,.ai,.cdr,.psd"
+                              onChange={handleDesignUpload}
                               className="hidden"
                             />
                           </label>
@@ -1821,7 +1785,7 @@ export const ProductDetailPage: React.FC = () => {
                         <option value="Standard Mill Cut">Standard Mill Cut (Factory Default)</option>
                         <option value="Medium Commercial Cut (50x100cm)">Medium Commercial Cut (50x100cm)</option>
                         <option value="Large Hospitality Cut (75x150cm)">Large Hospitality Cut (75x150cm)</option>
-                        <option value="Custom Dimensions">Custom Dimensions (Enter below)</option>
+                        <option value="Custom Dimensions">Custom Dimensions (+₹20/pc Add-on)</option>
                       </select>
                       {selectedSize === 'Custom Dimensions' && (
                         <input
@@ -1873,8 +1837,6 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               )}
               </div>
-              </>
-            )}
 
             {/* Purchase Action Row: Quantity + Add to Cart + Buy Now */}
             <div id="main-product-actions" className="space-y-2 sm:space-y-3">

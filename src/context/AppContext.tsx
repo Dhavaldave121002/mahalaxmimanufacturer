@@ -25,6 +25,7 @@ import { INITIAL_PRODUCTS, CATEGORIES_CONFIG } from '../data/mockProducts';
 import { normalizeProductCategory } from '../utils/productCategories';
 import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
 import { INITIAL_COUPONS } from '../data/initialCoupons';
+import { getCustomizationCharge, getSizeCharge, updateCustomizationPricing } from '../constants/customizationPricing';
 
 interface PinCodeInfo {
   pincode: string;
@@ -208,6 +209,10 @@ interface AppContextType {
   // Mill Saver Bundle Config (Admin & Database Controllable)
   bundleOffer: BundleOfferConfig;
   updateBundleOffer: (config: Partial<BundleOfferConfig>) => Promise<boolean>;
+
+  // Customization Condition Pricing Config (Admin Controllable)
+  customizationPricing: Record<string, number>;
+  updateCustomizationPricingConfig: (pricing: Record<string, number>) => Promise<{ success: boolean; message: string }>;
 }
 
 const GUEST_USER_PROFILE: User = {
@@ -819,7 +824,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return defaultBundleOffer;
   });
 
-  // Fetch live bundle config from server / database
+  // Fetch live bundle and customization config from server / database
   useEffect(() => {
     fetch('/api/app-config')
       .then(res => res.json())
@@ -832,9 +837,55 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             return merged;
           });
         }
+        const livePricing = resData?.data?.customizationPricing || resData?.customizationPricing;
+        if (livePricing) {
+          setCustomizationPricingState(prev => ({ ...prev, ...livePricing }));
+          updateCustomizationPricing(livePricing);
+          try { localStorage.setItem('mle_customization_pricing', JSON.stringify(livePricing)); } catch {}
+        }
       })
       .catch(() => {});
   }, []);
+
+  const [customizationPricingState, setCustomizationPricingState] = useState<Record<string, number>>(() => {
+    const saved = safeLoadFromStorage<Record<string, number>>('mle_customization_pricing', {
+      'No Customization': 0,
+      'Only Logo': 12,
+      'Only Design': 22,
+      'Design & Logo': 32,
+      'Embroidery Branding': 42,
+      'Custom Weave & GSM': 55,
+      'Custom Size': 20
+    });
+    updateCustomizationPricing(saved);
+    return saved;
+  });
+
+  const updateCustomizationPricingConfig = async (newPricing: Record<string, number>): Promise<{ success: boolean; message: string }> => {
+    try {
+      const merged = { ...customizationPricingState, ...newPricing };
+      setCustomizationPricingState(merged);
+      updateCustomizationPricing(merged);
+      try { localStorage.setItem('mle_customization_pricing', JSON.stringify(merged)); } catch {}
+
+      const res = await fetch('/api/app-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_customization_pricing',
+          customizationPricing: merged
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        return { success: false, message: data.error || 'Failed to update customization pricing on server' };
+      }
+      return { success: true, message: data.message || 'Customization pricing updated successfully!' };
+    } catch (err: any) {
+      console.error('Failed to update customization pricing:', err);
+      return { success: false, message: err.message || 'Network error updating customization pricing' };
+    }
+  };
 
   const updateBundleOffer = async (configUpdate: Partial<BundleOfferConfig>): Promise<boolean> => {
     try {
@@ -1081,23 +1132,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [currentUser]);
 
-  // Price Calculation Engine based on Wholesale Tiers
+  // Price Calculation Engine based on Wholesale Tiers + Customization Charges
   const calculateEffectiveUnitPrice = (
     product: Product,
     quantity: number,
-    variant?: ProductVariant
-  ): { unitPrice: number; appliedTier?: WholesaleTier } => {
+    variant?: ProductVariant,
+    customization?: ProductCustomization
+  ): { unitPrice: number; appliedTier?: WholesaleTier; baseUnitPrice: number; customizationCharge: number } => {
     const variantAdjustment = variant?.priceDelta || 0;
+    const typeCharge = getCustomizationCharge(customization?.type);
+    const sizeCharge = getSizeCharge(customization?.selectedSize);
+    const customCharge = typeCharge + sizeCharge;
     if (!product.wholesaleTiers || product.wholesaleTiers.length === 0) {
-      return { unitPrice: product.retailPrice + variantAdjustment };
+      const base = product.retailPrice + variantAdjustment;
+      return {
+        unitPrice: base + customCharge,
+        baseUnitPrice: base,
+        customizationCharge: customCharge
+      };
     }
     // Find matching tier
     const sortedTiers = [...product.wholesaleTiers].sort((a, b) => b.minQty - a.minQty);
     const matched = sortedTiers.find(tier => quantity >= tier.minQty);
     if (matched) {
-      return { unitPrice: matched.pricePerUnit + variantAdjustment, appliedTier: matched };
+      const base = matched.pricePerUnit + variantAdjustment;
+      return {
+        unitPrice: base + customCharge,
+        appliedTier: matched,
+        baseUnitPrice: base,
+        customizationCharge: customCharge
+      };
     }
-    return { unitPrice: product.retailPrice + variantAdjustment };
+    const base = product.retailPrice + variantAdjustment;
+    return {
+      unitPrice: base + customCharge,
+      baseUnitPrice: base,
+      customizationCharge: customCharge
+    };
   };
 
   const addToCart = (
@@ -1138,7 +1209,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (existingIndex > -1) {
         const currentItem = prev[existingIndex];
         const newTotalQty = currentItem.quantity + normalizedQuantity;
-        const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(product, newTotalQty, variant);
+        const activeCustomization = customization || currentItem.customization;
+        const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(
+          product,
+          newTotalQty,
+          variant,
+          activeCustomization
+        );
 
         const updated = [...prev];
         updated[existingIndex] = {
@@ -1147,11 +1224,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           unitPrice,
           totalPrice: unitPrice * newTotalQty,
           appliedTier,
-          customization: customization || currentItem.customization
+          customization: activeCustomization
         };
         return updated;
       } else {
-        const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(product, normalizedQuantity, variant);
+        const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(
+          product,
+          normalizedQuantity,
+          variant,
+          customization
+        );
         const newItem: CartItem = {
           id: `${product.id}-${variant?.id || 'std'}-${customization?.type ? 'custom-' : ''}${Date.now()}`,
           productId: product.id,
@@ -1202,7 +1284,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const { unitPrice, appliedTier } = calculateEffectiveUnitPrice(
             item.product,
             normalizedQuantity,
-            item.selectedVariant
+            item.selectedVariant,
+            item.customization
           );
           return {
             ...item,
@@ -2890,7 +2973,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
         // Mill Saver Bundle Config
         bundleOffer,
-        updateBundleOffer
+        updateBundleOffer,
+
+        // Customization Pricing Config
+        customizationPricing: customizationPricingState,
+        updateCustomizationPricingConfig
       }}
     >
       {children}

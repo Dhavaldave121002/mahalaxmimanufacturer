@@ -15,7 +15,8 @@
     "db:set-product-stock": "node database/set-product-stock.cjs",
     "db:sync-core-collections": "node scripts/sync-core-collections.cjs",
     "catalog:import-wrapzy": "node scripts/import-wrapzy-catalog.cjs",
-    "catalog:import-ecocarry": "node scripts/import-ecocarry-catalog.cjs"
+    "catalog:import-ecocarry": "node scripts/import-ecocarry-catalog.cjs",
+    "images:update-all": "node scripts/update-all-product-images.cjs"
   },
   "dependencies": {
     "autoprefixer": "^10.6.1",

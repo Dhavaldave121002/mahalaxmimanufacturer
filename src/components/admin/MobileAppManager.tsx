@@ -3,6 +3,7 @@ import { useApp } from '../../context/AppContext';
 import { AppBanner, AppCategoryConfig, AppNotification, OrderStatus } from '../../types';
 import {
   Smartphone,
+  Palette,
   Layers,
   Image as ImageIcon,
   Plus,
@@ -60,7 +61,9 @@ export const MobileAppManager: React.FC = () => {
     products,
     orders,
     updateOrderStatus,
-    refreshOrders
+    refreshOrders,
+    customizationPricing,
+    updateCustomizationPricingConfig
   } = useApp();
 
   const [isRefreshingOrders, setIsRefreshingOrders] = useState(false);
@@ -77,8 +80,59 @@ export const MobileAppManager: React.FC = () => {
 
   // Active Sub-tab
   const [activeSubTab, setActiveSubTab] = useState<
-    'banners' | 'categories' | 'products' | 'orders' | 'notifications' | 'settings' | 'mysql'
+    'banners' | 'categories' | 'products' | 'orders' | 'notifications' | 'settings' | 'mysql' | 'customization'
   >('banners');
+
+  // Customization Pricing State
+  const [customPricingForm, setCustomPricingForm] = useState<Record<string, number>>(() => ({
+    'Only Logo': customizationPricing?.['Only Logo'] ?? 12,
+    'Only Design': customizationPricing?.['Only Design'] ?? 22,
+    'Design & Logo': customizationPricing?.['Design & Logo'] ?? 32,
+    'Embroidery Branding': customizationPricing?.['Embroidery Branding'] ?? 42,
+    'Custom Weave & GSM': customizationPricing?.['Custom Weave & GSM'] ?? 55,
+    'Custom Size': customizationPricing?.['Custom Size'] ?? 20,
+  }));
+  const [savingCustomPricing, setSavingCustomPricing] = useState(false);
+  const [customPricingMsg, setCustomPricingMsg] = useState('');
+
+  useEffect(() => {
+    if (customizationPricing) {
+      setCustomPricingForm(prev => ({
+        ...prev,
+        ...customizationPricing,
+      }));
+    }
+  }, [customizationPricing]);
+
+  const handleSaveCustomPricing = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingCustomPricing(true);
+    setCustomPricingMsg('');
+    try {
+      const res = await updateCustomizationPricingConfig(customPricingForm);
+      if (res.success) {
+        setCustomPricingMsg('✅ Customization pricing saved and synced across Website & Mobile App!');
+        triggerSyncAlert('Customization fees updated & synced to Website and Mobile App.');
+      } else {
+        setCustomPricingMsg('❌ ' + res.message);
+      }
+    } catch (err: any) {
+      setCustomPricingMsg('❌ Error: ' + err.message);
+    } finally {
+      setSavingCustomPricing(false);
+    }
+  };
+
+  const handleResetCustomPricing = () => {
+    setCustomPricingForm({
+      'Only Logo': 12,
+      'Only Design': 22,
+      'Design & Logo': 32,
+      'Embroidery Branding': 42,
+      'Custom Weave & GSM': 55,
+      'Custom Size': 20,
+    });
+  };
 
   // MySQL Test Connection state
   const [dbTestLoading, setDbTestLoading] = useState(false);
@@ -525,6 +579,18 @@ export const MobileAppManager: React.FC = () => {
               <Database className="w-3.5 h-3.5 text-amber-500" />
               <span>🗄️ MySQL Database & Hosting</span>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            </button>
+
+            <button
+              onClick={() => setActiveSubTab('customization')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap ${
+                activeSubTab === 'customization'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'bg-purple-50 text-purple-800 hover:bg-purple-100'
+              }`}
+            >
+              <Palette className="w-3.5 h-3.5" />
+              <span>🎨 Customization Pricing</span>
             </button>
           </div>
 

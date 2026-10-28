@@ -96,7 +96,7 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
                 </span>
                 {selectedVariant && (
                   <span className="truncate text-[10px] text-slate-500 md:text-[11px]">
-                    • {selectedVariant.name}
+                    • {(selectedVariant.colorName || selectedVariant.name || '').replace(/\s*\/\s*\d+$/i, '').replace(/\s*\(?\s*pack\s+of\s+\d+\s*\)?/i, '').trim()}
                   </span>
                 )}
               </div>

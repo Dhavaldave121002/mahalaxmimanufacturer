@@ -399,6 +399,39 @@ export default async function handler(req, res) {
         data: currentConfig.bundleOffer
       });
     }
+
+    // 5. Customization Pricing Sync & Configuration
+    if (action === 'update_customization_pricing') {
+      const pricing = body.customizationPricing || body.pricing;
+      if (!pricing || typeof pricing !== 'object') {
+        return res.status(400).json({ success: false, error: 'Invalid customization pricing payload' });
+      }
+      const currentConfig = readFallbackConfig() || {};
+      currentConfig.customizationPricing = {
+        ...(currentConfig.customizationPricing || {}),
+        ...pricing
+      };
+      currentConfig.lastSyncedAt = new Date().toISOString();
+      saveFallbackConfig(currentConfig);
+
+      if (pool) {
+        try {
+          await pool.query(
+            `INSERT INTO app_settings (setting_key, setting_value) VALUES ('customization_pricing', ?)
+             ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)`,
+            [JSON.stringify(currentConfig.customizationPricing)]
+          );
+        } catch (e) {
+          // quiet fallback if app_settings schema differs
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'Customization pricing updated and synced across Website & Mobile App!',
+        data: currentConfig.customizationPricing
+      });
+    }
   }
 
   // ----------------------------------------------------
@@ -409,7 +442,7 @@ export default async function handler(req, res) {
       const requestUrl = new URL(req.url || '/', 'http://localhost');
       if (requestUrl.searchParams.get('platform') === 'website') {
         const [websiteBanners] = await pool.query(
-          "SELECT * FROM app_banners WHERE is_active = 1 AND visibility = 'WEB_ONLY' ORDER BY display_order ASC"
+          "SELECT * FROM app_banners WHERE is_active = 1 AND (visibility = 'WEB_ONLY' OR visibility = 'ALL' OR visibility IS NULL) ORDER BY display_order ASC"
         );
         return res.status(200).json({
           success: true,
@@ -562,6 +595,15 @@ export default async function handler(req, res) {
             minItemsForDiscount: 2,
             savingsNote: "You save ₹{savings} ({discount}% off combo)",
             bundleMaxProducts: 3
+          },
+          customizationPricing: readFallbackConfig()?.customizationPricing || {
+            'No Customization': 0,
+            'Only Logo': 12,
+            'Only Design': 22,
+            'Design & Logo': 32,
+            'Embroidery Branding': 42,
+            'Custom Weave & GSM': 55,
+            'Custom Size': 20
           }
         }
       });
