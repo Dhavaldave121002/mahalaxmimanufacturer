@@ -666,13 +666,13 @@ export const ProductDetailPage: React.FC = () => {
       {/* Main Product Layout: Gallery (Left) + Details & Tiers (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
         {/* Left Column: Image Gallery (Sticky on desktop until right column finishes) */}
-        <div className="lg:col-span-6 lg:self-stretch">
-          <div className="lg:sticky lg:top-20 space-y-3 z-10">
+        <div className="lg:col-span-5 lg:self-start">
+          <div className="lg:sticky lg:top-20 space-y-3 z-10 max-w-[480px] mx-auto lg:mx-0">
             {/* Hero Main Image with Auto-Slide, Cross-fade & Zoom container */}
             <div 
               onMouseEnter={() => setIsHoveredGallery(true)}
               onMouseLeave={() => setIsHoveredGallery(false)}
-              className="relative mx-auto w-full max-w-[600px] aspect-square rounded-3xl overflow-hidden bg-slate-50 border border-slate-200 shadow-subtle group select-none"
+              className="relative mx-auto w-full aspect-square rounded-2xl sm:rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-subtle group select-none flex items-center justify-center"
             >
               {/* Layered Cross-fade Slide Images */}
               {productImages.length === 0 ? (
@@ -683,10 +683,10 @@ export const ProductDetailPage: React.FC = () => {
               ) : productImages.map((img, idx) => (
                 <div
                   key={idx}
-                  className={`absolute inset-0 w-full h-full transition-all duration-700 ease-in-out transform ${
+                  className={`absolute inset-0 w-full h-full p-3 sm:p-5 flex items-center justify-center transition-all duration-500 ease-in-out transform ${
                     activeImageIndex === idx
                       ? 'opacity-100 scale-100 pointer-events-auto z-0'
-                      : 'opacity-0 scale-105 pointer-events-none -z-10'
+                      : 'opacity-0 scale-95 pointer-events-none -z-10'
                   }`}
                 >
                   <img
@@ -696,7 +696,8 @@ export const ProductDetailPage: React.FC = () => {
                       const target = e.target as HTMLImageElement;
                       if (target.src !== productImages[0]) target.src = productImages[0];
                     }}
-                    className="w-full h-full object-contain"
+                    className="max-w-full max-h-full w-auto h-auto object-contain select-none"
+                    loading={idx === 0 ? "eager" : "lazy"}
                   />
                 </div>
               ))}
@@ -711,9 +712,9 @@ export const ProductDetailPage: React.FC = () => {
                       setSelectedImageIndex(prev => (prev - 1 + productImages.length) % productImages.length);
                     }}
                     aria-label="Previous image"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/85 hover:bg-white text-navy shadow-md flex items-center justify-center opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm active:scale-95"
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/90 hover:bg-white text-navy shadow-md flex items-center justify-center opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm active:scale-95 border border-slate-200"
                   >
-                    <ChevronLeft className="w-5 h-5" />
+                    <ChevronLeft className="w-4 h-4" />
                   </button>
 
                   <button
@@ -723,9 +724,9 @@ export const ProductDetailPage: React.FC = () => {
                       setSelectedImageIndex(prev => (prev + 1) % productImages.length);
                     }}
                     aria-label="Next image"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/85 hover:bg-white text-navy shadow-md flex items-center justify-center opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm active:scale-95"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/90 hover:bg-white text-navy shadow-md flex items-center justify-center opacity-80 sm:opacity-0 group-hover:opacity-100 transition-all z-20 backdrop-blur-sm active:scale-95 border border-slate-200"
                   >
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="w-4 h-4" />
                   </button>
 
                   {/* Dot Progress Indicators */}
@@ -775,13 +776,13 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* Thumbnails Row */}
             {productImages.length > 1 && (
-              <div className="flex items-center gap-2.5 overflow-x-auto pb-1 hide-scrollbar">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
                 {productImages.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImageIndex(idx)}
                     aria-label={`View photo ${idx + 1} of ${product.name}`}
-                    className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 transition shrink-0 ${
+                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition shrink-0 p-1 bg-white ${
                       activeImageIndex === idx
                         ? 'border-indigo ring-2 ring-indigo/20 scale-105 shadow-sm'
                         : 'border-slate-200 hover:border-slate-300'
@@ -794,7 +795,7 @@ export const ProductDetailPage: React.FC = () => {
                         const target = e.target as HTMLImageElement;
                         if (target.src !== productImages[0]) target.src = productImages[0];
                       }}
-                      className="w-full h-full object-contain bg-slate-50"
+                      className="w-full h-full object-contain"
                     />
                   </button>
                 ))}
@@ -819,7 +820,7 @@ export const ProductDetailPage: React.FC = () => {
         </div>
 
         {/* Right Column: Pricing, Tiers, Variants, and Action Controls */}
-        <div id="product-right-column" className="lg:col-span-6 space-y-6">
+        <div id="product-right-column" className="lg:col-span-7 space-y-6">
           {/* Header & Title */}
           <div>
             <div className="flex items-center gap-2 mb-2">
