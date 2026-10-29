@@ -53,6 +53,7 @@ import { FrequentlyBoughtTogether } from '../components/common/FrequentlyBoughtT
 import { SEOProductHead } from '../components/common/SEOProductHead';
 import { orderProductImagesByResolution } from '../utils/productImages';
 import { BuyNowPaymentIcons } from '../components/common/BuyNowPaymentIcons';
+import { toSubcategorySlug } from '../utils/productCategories';
 
 const TAB_CONTENT_COLLAPSED_HEIGHT = 200;
 const isInternalProductSpecification = (key: string) =>
@@ -648,9 +649,12 @@ export const ProductDetailPage: React.FC = () => {
         {product.subcategory && product.subcategory !== product.categoryName && (
           <>
             <span aria-hidden="true" className="shrink-0">/</span>
-            <span className="max-w-[24%] shrink truncate text-slate-400 sm:max-w-[12rem]">
+            <Link
+              to={`/category/${product.category}?subcategory=${toSubcategorySlug(product.subcategory)}`}
+              className="max-w-[24%] shrink truncate text-slate-500 hover:text-indigo sm:max-w-[12rem]"
+            >
               {product.subcategory}
-            </span>
+            </Link>
           </>
         )}
         <span aria-hidden="true" className="shrink-0">/</span>

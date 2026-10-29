@@ -1,18 +1,33 @@
-import React, { useState } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { ProductCard } from '../components/common/ProductCard';
 import { CategoryId } from '../types';
 import { Layers, ArrowLeft, SlidersHorizontal } from 'lucide-react';
+import { toSubcategorySlug, matchesSubcategorySlug } from '../utils/productCategories';
 
 export const CategoryPage: React.FC = () => {
-  const { categoryId } = useParams<{ categoryId: string }>();
+  const { categoryId, subcategorySlug } = useParams<{ categoryId: string; subcategorySlug?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { products, categories } = useApp();
 
-  const selectedSubcategory = searchParams.get('subcategory') || '';
+  const selectedSubcategory = subcategorySlug || searchParams.get('subcategory') || '';
   const [sortBy, setSortBy] = useState<string>('relevance');
+
+  // Auto-clean any percent-encoded (%20) or uppercase query param in the URL address bar to a sleek SEO slug
+  useEffect(() => {
+    const raw = searchParams.get('subcategory');
+    if (raw && (raw.includes(' ') || raw.includes('%20') || /[A-Z]/.test(raw))) {
+      const cleanSlug = toSubcategorySlug(raw);
+      if (cleanSlug && cleanSlug !== raw) {
+        const next = new URLSearchParams(searchParams);
+        next.set('subcategory', cleanSlug);
+        setSearchParams(next, { replace: true });
+      }
+    }
+  }, [searchParams, setSearchParams]);
 
   const allCats = categories && categories.length > 0 ? categories : CATEGORIES_CONFIG;
   const categoryConfig = allCats.find(c => c.id === categoryId);
@@ -32,11 +47,11 @@ export const CategoryPage: React.FC = () => {
     );
   }
 
-  // Filter products for this category
+  // Filter products for this category using slug-tolerant matching
   const categoryProducts = products
     .filter(p => {
       if (p.category !== categoryId) return false;
-      if (selectedSubcategory && p.subcategory !== selectedSubcategory) return false;
+      if (selectedSubcategory && !matchesSubcategorySlug(p.subcategory, selectedSubcategory)) return false;
       return true;
     })
     .sort((a, b) => {
@@ -50,6 +65,37 @@ export const CategoryPage: React.FC = () => {
     products.filter(product => product.category === categoryId).map(product => product.subcategory)
   ));
 
+  const matchedSubcategoryName = availableSubcategories.find(s => matchesSubcategorySlug(s, selectedSubcategory));
+
+  // Dynamic SEO title
+  useEffect(() => {
+    if (categoryConfig) {
+      const subTitle = matchedSubcategoryName ? ` - ${matchedSubcategoryName}` : '';
+      document.title = `${categoryConfig.name}${subTitle} | Mahalaxmi Enterprises`;
+    }
+  }, [categoryConfig, matchedSubcategoryName]);
+
+  const handleSelectSubcategory = (sub?: string) => {
+    if (!sub || matchesSubcategorySlug(sub, selectedSubcategory)) {
+      if (subcategorySlug) {
+        navigate(`/category/${categoryId}`);
+      } else {
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.delete('subcategory');
+        setSearchParams(nextParams, { replace: true });
+      }
+    } else {
+      const slug = toSubcategorySlug(sub);
+      if (subcategorySlug) {
+        navigate(`/category/${categoryId}/${slug}`);
+      } else {
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.set('subcategory', slug);
+        setSearchParams(nextParams, { replace: true });
+      }
+    }
+  };
+
   return (
     <div className="space-y-10 pb-16">
       {/* Category Hero Banner */}
@@ -62,7 +108,15 @@ export const CategoryPage: React.FC = () => {
             <span>/</span>
             <Link to="/catalog" className="hover:text-white">Catalog</Link>
             <span>/</span>
-            <span className="text-champagne font-semibold">{categoryConfig.name}</span>
+            {selectedSubcategory ? (
+              <>
+                <Link to={`/category/${categoryId}`} className="hover:text-white">{categoryConfig.name}</Link>
+                <span>/</span>
+                <span className="text-champagne font-semibold">{matchedSubcategoryName || selectedSubcategory.replace(/-/g, ' ')}</span>
+              </>
+            ) : (
+              <span className="text-champagne font-semibold">{categoryConfig.name}</span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
@@ -71,7 +125,7 @@ export const CategoryPage: React.FC = () => {
                 PRODUCT CATEGORY
               </span>
               <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-                {categoryConfig.name}
+                {matchedSubcategoryName ? `${categoryConfig.name} - ${matchedSubcategoryName}` : categoryConfig.name}
               </h1>
               <p className="text-sm text-slate-300 max-w-2xl leading-relaxed">
                 Browse source-listed products in {categoryConfig.name}. Confirm product specifications, current availability and prices before ordering.
@@ -107,14 +161,10 @@ export const CategoryPage: React.FC = () => {
               className="flex snap-x snap-mandatory items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible md:pb-0"
             >
             <button
-              onClick={() => {
-                const nextParams = new URLSearchParams(searchParams);
-                nextParams.delete('subcategory');
-                setSearchParams(nextParams, { replace: true });
-              }}
-              aria-pressed={selectedSubcategory === ''}
+              onClick={() => handleSelectSubcategory()}
+              aria-pressed={!selectedSubcategory}
               className={`shrink-0 snap-start whitespace-nowrap rounded-full px-3 py-2 text-[11px] font-bold transition sm:text-xs ${
-                selectedSubcategory === ''
+                !selectedSubcategory
                   ? 'bg-navy text-white shadow-sm'
                   : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
               }`}
@@ -124,26 +174,19 @@ export const CategoryPage: React.FC = () => {
 
             {availableSubcategories.map((sub, i) => {
               const count = products.filter(p => p.category === categoryId && p.subcategory === sub).length;
+              const isSelected = matchesSubcategorySlug(sub, selectedSubcategory);
               return (
                 <button
                   key={i}
-                  onClick={() => {
-                    const nextParams = new URLSearchParams(searchParams);
-                    if (selectedSubcategory === sub) {
-                      nextParams.delete('subcategory');
-                    } else {
-                      nextParams.set('subcategory', sub);
-                    }
-                    setSearchParams(nextParams, { replace: true });
-                  }}
-                  aria-pressed={selectedSubcategory === sub}
+                  onClick={() => handleSelectSubcategory(sub)}
+                  aria-pressed={isSelected}
                   className={`shrink-0 snap-start whitespace-nowrap rounded-full px-3 py-2 text-[11px] font-bold transition sm:text-xs ${
-                    selectedSubcategory === sub
+                    isSelected
                       ? 'bg-indigo text-white shadow-sm'
                       : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  {sub} <span className={selectedSubcategory === sub ? 'opacity-80' : 'text-slate-400'}>({count})</span>
+                  {sub} <span className={isSelected ? 'opacity-80' : 'text-slate-400'}>({count})</span>
                 </button>
               );
             })}
@@ -182,11 +225,7 @@ export const CategoryPage: React.FC = () => {
               <h3 className="font-bold text-lg text-navy">No items in this subcategory</h3>
               <p className="text-xs text-slate-500">Try selecting "All {categoryConfig.name}" above.</p>
               <button
-                onClick={() => {
-                  const nextParams = new URLSearchParams(searchParams);
-                  nextParams.delete('subcategory');
-                  setSearchParams(nextParams, { replace: true });
-                }}
+                onClick={() => handleSelectSubcategory()}
                 className="px-4 py-2 bg-indigo text-white rounded-xl text-xs font-bold"
               >
                 Show All Subcategories

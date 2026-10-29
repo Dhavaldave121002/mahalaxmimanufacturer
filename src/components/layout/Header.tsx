@@ -31,6 +31,7 @@ import {
 import { Badge } from '../common/Badge';
 import { WishlistDrawer } from '../common/WishlistDrawer';
 import { matchesProductSearch } from '../../utils/searchProducts';
+import { toSubcategorySlug } from '../../utils/productCategories';
 import {
   BUSINESS_SUPPORT_PHONE,
   BUSINESS_SUPPORT_PHONE_LINK,
@@ -209,7 +210,7 @@ export const Header: React.FC = () => {
           `${product.category}:${product.subcategory.trim().toLowerCase()}`,
           {
             name: product.subcategory.trim(),
-            path: `/category/${product.category}?subcategory=${encodeURIComponent(product.subcategory.trim())}`,
+            path: `/category/${product.category}?subcategory=${toSubcategorySlug(product.subcategory.trim())}`,
             img: product.images[0] || '/assets/images/banner_home_kitchen.jpg'
           }
         ])

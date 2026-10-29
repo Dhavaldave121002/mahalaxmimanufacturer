@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { ProductCard } from '../components/common/ProductCard';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { matchesProductSearch } from '../utils/searchProducts';
+import { toSubcategorySlug, matchesSubcategorySlug } from '../utils/productCategories';
 import {
   SlidersHorizontal,
   ChevronDown,
@@ -22,17 +23,47 @@ export const CatalogPage: React.FC = () => {
 
   const queryParam = searchParams.get('q') || '';
   const categoryParam = searchParams.get('category') || '';
+  const subcategoryParam = searchParams.get('subcategory') || '';
   const filterParam = searchParams.get('filter') || '';
 
   // Filter States
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryParam);
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>(subcategoryParam);
   const [maxPrice, setMaxPrice] = useState<number>(3000);
   const [inStockOnly, setInStockOnly] = useState<boolean>(false);
   const [directMillOnly, setDirectMillOnly] = useState<boolean>(false);
   const [minRating, setMinRating] = useState<number>(0);
   const [sortBy, setSortBy] = useState<string>('relevance');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  // Auto-clean any percent-encoded (%20) or uppercase query param in the URL address bar to a sleek SEO slug
+  useEffect(() => {
+    const raw = searchParams.get('subcategory');
+    if (raw && (raw.includes(' ') || raw.includes('%20') || /[A-Z]/.test(raw))) {
+      const cleanSlug = toSubcategorySlug(raw);
+      if (cleanSlug && cleanSlug !== raw) {
+        const next = new URLSearchParams(searchParams);
+        next.set('subcategory', cleanSlug);
+        setSearchParams(next, { replace: true });
+        setSelectedSubcategory(cleanSlug);
+      }
+    }
+  }, [searchParams, setSearchParams]);
+
+  const toggleSubcategory = (sub: string) => {
+    if (!sub || matchesSubcategorySlug(sub, selectedSubcategory)) {
+      setSelectedSubcategory('');
+      const next = new URLSearchParams(searchParams);
+      next.delete('subcategory');
+      setSearchParams(next, { replace: true });
+    } else {
+      const slug = toSubcategorySlug(sub);
+      setSelectedSubcategory(slug);
+      const next = new URLSearchParams(searchParams);
+      next.set('subcategory', slug);
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   // Available subcategories based on selected category
   const availableSubcategories = useMemo(() => {
@@ -57,8 +88,8 @@ export const CatalogPage: React.FC = () => {
           return false;
         }
 
-        // Subcategory filter
-        if (selectedSubcategory && product.subcategory !== selectedSubcategory) {
+        // Subcategory filter with slug matching
+        if (selectedSubcategory && !matchesSubcategorySlug(product.subcategory, selectedSubcategory)) {
           return false;
         }
 
@@ -209,7 +240,14 @@ export const CatalogPage: React.FC = () => {
             <label className="text-xs font-bold text-slate-800 block">Category</label>
             <div className="space-y-1">
               <button
-                onClick={() => { setSelectedCategory(''); setSelectedSubcategory(''); }}
+                onClick={() => {
+                  setSelectedCategory('');
+                  setSelectedSubcategory('');
+                  const next = new URLSearchParams(searchParams);
+                  next.delete('category');
+                  next.delete('subcategory');
+                  setSearchParams(next, { replace: true });
+                }}
                 className={`w-full text-left text-xs px-2.5 py-1.5 rounded-lg transition ${
                   selectedCategory === ''
                     ? 'bg-indigo-light text-indigo font-bold'
@@ -224,6 +262,10 @@ export const CatalogPage: React.FC = () => {
                   onClick={() => {
                     setSelectedCategory(cat.id);
                     setSelectedSubcategory('');
+                    const next = new URLSearchParams(searchParams);
+                    next.set('category', cat.id);
+                    next.delete('subcategory');
+                    setSearchParams(next, { replace: true });
                   }}
                   className={`w-full text-left text-xs px-2.5 py-1.5 rounded-lg transition flex items-center justify-between ${
                     selectedCategory === cat.id
@@ -242,19 +284,22 @@ export const CatalogPage: React.FC = () => {
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <label className="text-xs font-bold text-slate-800 block">Subcategory</label>
               <div className="flex flex-wrap gap-1.5">
-                {availableSubcategories.map((sub, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedSubcategory(selectedSubcategory === sub ? '' : sub)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
-                      selectedSubcategory === sub
-                        ? 'bg-navy text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    {sub}
-                  </button>
-                ))}
+                {availableSubcategories.map((sub, i) => {
+                  const isSelected = matchesSubcategorySlug(sub, selectedSubcategory);
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => toggleSubcategory(sub)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
+                        isSelected
+                          ? 'bg-navy text-white'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      {sub}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -342,8 +387,8 @@ export const CatalogPage: React.FC = () => {
 
               {selectedSubcategory && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium">
-                  Subcategory: {selectedSubcategory}
-                  <button onClick={() => setSelectedSubcategory('')}><X className="w-3 h-3 text-slate-400 hover:text-navy" /></button>
+                  Subcategory: {availableSubcategories.find(s => matchesSubcategorySlug(s, selectedSubcategory)) || selectedSubcategory}
+                  <button onClick={() => toggleSubcategory('')}><X className="w-3 h-3 text-slate-400 hover:text-navy" /></button>
                 </span>
               )}
 
@@ -422,7 +467,14 @@ export const CatalogPage: React.FC = () => {
                 <label className="font-bold text-slate-800 block">Category</label>
                 <div className="grid grid-cols-2 gap-1.5">
                   <button
-                    onClick={() => { setSelectedCategory(''); setSelectedSubcategory(''); }}
+                    onClick={() => {
+                      setSelectedCategory('');
+                      setSelectedSubcategory('');
+                      const next = new URLSearchParams(searchParams);
+                      next.delete('category');
+                      next.delete('subcategory');
+                      setSearchParams(next, { replace: true });
+                    }}
                     className={`text-left p-2 rounded-xl border text-xs transition ${
                       selectedCategory === ''
                         ? 'bg-indigo-light text-indigo font-bold border-indigo'
@@ -437,6 +489,10 @@ export const CatalogPage: React.FC = () => {
                       onClick={() => {
                         setSelectedCategory(cat.id);
                         setSelectedSubcategory('');
+                        const next = new URLSearchParams(searchParams);
+                        next.set('category', cat.id);
+                        next.delete('subcategory');
+                        setSearchParams(next, { replace: true });
                       }}
                       className={`text-left p-2 rounded-xl border text-xs transition truncate ${
                         selectedCategory === cat.id
@@ -455,19 +511,22 @@ export const CatalogPage: React.FC = () => {
                 <div className="space-y-2 pt-2 border-t border-slate-100">
                   <label className="font-bold text-slate-800 block">Subcategory</label>
                   <div className="flex flex-wrap gap-1.5">
-                    {availableSubcategories.map((sub, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setSelectedSubcategory(selectedSubcategory === sub ? '' : sub)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-medium transition ${
-                          selectedSubcategory === sub
-                            ? 'bg-navy text-white font-bold'
-                            : 'bg-slate-100 text-slate-700'
-                        }`}
-                      >
-                        {sub}
-                      </button>
-                    ))}
+                    {availableSubcategories.map((sub, i) => {
+                      const isSelected = matchesSubcategorySlug(sub, selectedSubcategory);
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => toggleSubcategory(sub)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-medium transition ${
+                            isSelected
+                              ? 'bg-navy text-white font-bold'
+                              : 'bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          {sub}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
