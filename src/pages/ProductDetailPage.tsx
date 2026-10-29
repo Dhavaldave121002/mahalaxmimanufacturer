@@ -1252,10 +1252,10 @@ export const ProductDetailPage: React.FC = () => {
                 <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
                   1. Select Customization Type
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
                   {[
                     { type: 'No Customization', label: 'Standard Pack', icon: Check, badge: 'Free (+₹0)', desc: 'Standard bulk packing' },
-                    { type: 'Only Logo', label: 'Only Logo Print', icon: Star, badge: '+₹12/pc', desc: 'Screen/DTF Logo' },
+                    { type: 'Only Logo', label: 'Only Logo Print', icon: Star, badge: '+₹12/pc', desc: 'Screen / DTF Logo' },
                     { type: 'Only Design', label: 'Only Design', icon: Palette, badge: '+₹22/pc', desc: 'All-over custom print' },
                     { type: 'Design & Logo', label: 'Design & Logo', icon: Sparkles, badge: '+₹32/pc', desc: 'Pattern + Logo' },
                     { type: 'Embroidery Branding', label: 'Embroidery', icon: Sparkles, badge: '+₹42/pc', desc: 'Thread embroidery' },
@@ -1268,26 +1268,46 @@ export const ProductDetailPage: React.FC = () => {
                         key={opt.type}
                         type="button"
                         onClick={() => setCustomizationType(opt.type)}
-                        className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer ${
+                        className={`group relative p-2.5 sm:p-3 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer select-none ${
                           isSelected
-                            ? 'border-purple-600 bg-purple-600 text-white shadow-sm ring-2 ring-purple-300'
-                            : 'border-slate-200 bg-white hover:border-purple-300 text-slate-700'
+                            ? 'border-purple-600 bg-gradient-to-br from-purple-600 to-indigo-700 text-white shadow-md shadow-purple-500/15 ring-2 ring-purple-400/50'
+                            : 'border-slate-200 bg-white hover:border-purple-300 hover:bg-purple-50/30 text-slate-700 shadow-xs'
                         }`}
                       >
-                        <div className="flex items-center justify-between w-full mb-1">
-                          <IconComponent className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-300' : 'text-purple-600'}`} />
+                        <div className="flex items-center justify-between w-full mb-2">
+                          <div
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                              isSelected
+                                ? 'bg-white/20 text-amber-300'
+                                : 'bg-purple-50 text-purple-600 group-hover:bg-purple-100'
+                            }`}
+                          >
+                            <IconComponent className="w-3.5 h-3.5" />
+                          </div>
                           <span
-                            className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
-                              isSelected ? 'bg-white/20 text-white' : 'bg-purple-100 text-purple-800'
+                            className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full transition-colors ${
+                              isSelected
+                                ? 'bg-white/20 text-white'
+                                : opt.badge.includes('Free')
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                                : 'bg-purple-100/80 text-purple-700 border border-purple-200/50'
                             }`}
                           >
                             {opt.badge}
                           </span>
                         </div>
-                        <span className="font-bold text-xs leading-snug">{opt.label}</span>
-                        <span className={`text-[10px] mt-0.5 ${isSelected ? 'text-purple-100' : 'text-slate-400'}`}>
-                          {opt.desc}
-                        </span>
+                        <div className="min-w-0">
+                          <span className="font-bold text-xs sm:text-[13px] leading-tight block truncate">
+                            {opt.label}
+                          </span>
+                          <span
+                            className={`text-[10px] sm:text-[11px] mt-0.5 block truncate leading-tight ${
+                              isSelected ? 'text-purple-100' : 'text-slate-500'
+                            }`}
+                          >
+                            {opt.desc}
+                          </span>
+                        </div>
                       </button>
                     );
                   })}
