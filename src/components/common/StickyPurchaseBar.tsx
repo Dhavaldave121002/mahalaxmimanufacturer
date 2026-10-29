@@ -81,7 +81,7 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
           <img
             src={orderProductImagesByResolution(product.images)[0]}
             alt={product.name}
-            className="h-9 w-9 shrink-0 rounded-lg border border-slate-200 object-cover md:h-11 md:w-11 md:rounded-xl"
+            className="h-9 w-9 shrink-0 rounded-lg border border-slate-200 object-contain p-0.5 bg-white md:h-11 md:w-11 md:rounded-xl"
           />
           <div className="min-w-0 flex-1 md:pr-2">
             <h4
