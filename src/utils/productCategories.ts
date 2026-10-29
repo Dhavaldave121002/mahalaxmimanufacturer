@@ -8,12 +8,37 @@ const CATEGORY_NAMES: Record<CategoryId, string> = {
   'cotton-products': 'Cotton Products'
 };
 
-export const getCategoryName = (category: CategoryId): string => CATEGORY_NAMES[category];
+export const getCategoryName = (category: CategoryId): string => CATEGORY_NAMES[category] || category;
 
-export const normalizeProductCategory = (product: Product): Product => ({
-  ...product,
-  categoryName: getCategoryName(product.category)
-});
+export const normalizeProductCategory = (product: Product): Product => {
+  const category = (product.category || (product as any).category_id || 'textile') as CategoryId;
+  const rawCollections = product.collections || (product as any).collections;
+  const collections = Array.isArray(rawCollections) && rawCollections.length > 0
+    ? Array.from(new Set(rawCollections.filter(Boolean)))
+    : [category];
+
+  return {
+    ...product,
+    category,
+    categoryName: getCategoryName(category) || product.categoryName || category,
+    collections
+  };
+};
+
+/**
+ * Checks whether a product belongs to a given collection or category ID.
+ * Returns true if the collectionId matches either the product's primary category or any of its assigned collections.
+ */
+export const productBelongsToCollection = (product: Product, collectionId?: string): boolean => {
+  if (!collectionId) return true;
+  const target = collectionId.trim().toLowerCase();
+  const primary = (product.category || '').trim().toLowerCase();
+  if (primary === target) return true;
+  const colls = Array.isArray(product.collections) && product.collections.length > 0
+    ? product.collections.map(c => c.trim().toLowerCase())
+    : [primary];
+  return colls.includes(target);
+};
 
 /**
  * Converts a subcategory or product name into a clean, human-readable SEO slug.

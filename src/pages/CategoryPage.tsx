@@ -5,7 +5,7 @@ import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { ProductCard } from '../components/common/ProductCard';
 import { CategoryId } from '../types';
 import { Layers, ArrowLeft, SlidersHorizontal } from 'lucide-react';
-import { toSubcategorySlug, matchesSubcategorySlug } from '../utils/productCategories';
+import { toSubcategorySlug, matchesSubcategorySlug, productBelongsToCollection } from '../utils/productCategories';
 
 export const CategoryPage: React.FC = () => {
   const { categoryId, subcategorySlug } = useParams<{ categoryId: string; subcategorySlug?: string }>();
@@ -32,7 +32,7 @@ export const CategoryPage: React.FC = () => {
   const allCats = categories && categories.length > 0 ? categories : CATEGORIES_CONFIG;
   const categoryConfig = allCats.find(c => c.id === categoryId);
   const categoryHeroImage = categoryId === 'home-kitchen'
-    ? products.find(product => product.category === categoryId && product.subcategory === 'Aprons')?.images[0] || null
+    ? products.find(product => productBelongsToCollection(product, categoryId) && product.subcategory === 'Aprons')?.images[0] || null
     : null;
 
   if (!categoryConfig) {
@@ -47,10 +47,10 @@ export const CategoryPage: React.FC = () => {
     );
   }
 
-  // Filter products for this category using slug-tolerant matching
+  // Filter products for this category using multi-collection and slug-tolerant matching
   const categoryProducts = products
     .filter(p => {
-      if (p.category !== categoryId) return false;
+      if (!productBelongsToCollection(p, categoryId)) return false;
       if (selectedSubcategory && !matchesSubcategorySlug(p.subcategory, selectedSubcategory)) return false;
       return true;
     })
@@ -62,7 +62,7 @@ export const CategoryPage: React.FC = () => {
       return 0;
     });
   const availableSubcategories = Array.from(new Set(
-    products.filter(product => product.category === categoryId).map(product => product.subcategory)
+    products.filter(product => productBelongsToCollection(product, categoryId)).map(product => product.subcategory)
   ));
 
   const matchedSubcategoryName = availableSubcategories.find(s => matchesSubcategorySlug(s, selectedSubcategory));
@@ -169,11 +169,11 @@ export const CategoryPage: React.FC = () => {
                   : 'border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
               }`}
             >
-              All {categoryConfig.name} ({products.filter(p => p.category === categoryId).length})
+              All {categoryConfig.name} ({products.filter(p => productBelongsToCollection(p, categoryId)).length})
             </button>
 
             {availableSubcategories.map((sub, i) => {
-              const count = products.filter(p => p.category === categoryId && p.subcategory === sub).length;
+              const count = products.filter(p => productBelongsToCollection(p, categoryId) && p.subcategory === sub).length;
               const isSelected = matchesSubcategorySlug(sub, selectedSubcategory);
               return (
                 <button

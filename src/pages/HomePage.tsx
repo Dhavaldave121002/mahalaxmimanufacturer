@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { ProductCard } from '../components/common/ProductCard';
 import { Badge } from '../components/common/Badge';
+import { productBelongsToCollection } from '../utils/productCategories';
 import type { AppBanner } from '../types';
 import {
   BUSINESS_ADDRESS,
@@ -52,7 +53,7 @@ export const HomePage: React.FC = () => {
       return category ? [category] : [];
     }),
     ...availableCategories.filter(category => !HOME_PRIMARY_CATEGORY_IDS.includes(category.id))
-  ].filter(category => products.some(product => product.category === category.id));
+  ].filter(category => products.some(product => productBelongsToCollection(product, category.id)));
   const [showAllCollections, setShowAllCollections] = useState(false);
 
   // Hero Carousel State: Dynamic from Admin & CMS (Filtered for Website)

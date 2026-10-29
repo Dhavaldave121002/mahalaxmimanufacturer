@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import { ProductCard } from '../components/common/ProductCard';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { matchesProductSearch } from '../utils/searchProducts';
-import { toSubcategorySlug, matchesSubcategorySlug } from '../utils/productCategories';
+import { toSubcategorySlug, matchesSubcategorySlug, productBelongsToCollection } from '../utils/productCategories';
 import {
   SlidersHorizontal,
   ChevronDown,
@@ -65,14 +65,14 @@ export const CatalogPage: React.FC = () => {
     }
   };
 
-  // Available subcategories based on selected category
+  // Available subcategories based on selected category (supports multi-collection products)
   const availableSubcategories = useMemo(() => {
     if (!selectedCategory) {
       return Array.from(new Set(products.map(p => p.subcategory)));
     }
     const cat = CATEGORIES_CONFIG.find(c => c.id === selectedCategory);
     return cat
-      ? Array.from(new Set(products.filter(product => product.category === selectedCategory).map(product => product.subcategory)))
+      ? Array.from(new Set(products.filter(product => productBelongsToCollection(product, selectedCategory)).map(product => product.subcategory)))
       : [];
   }, [selectedCategory, products]);
 
@@ -83,8 +83,8 @@ export const CatalogPage: React.FC = () => {
         // Search query filter
         if (!matchesProductSearch(product, queryParam)) return false;
 
-        // Category filter
-        if (selectedCategory && product.category !== selectedCategory) {
+        // Category / Collection filter
+        if (selectedCategory && !productBelongsToCollection(product, selectedCategory)) {
           return false;
         }
 

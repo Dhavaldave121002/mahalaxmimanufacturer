@@ -172,6 +172,7 @@ export const AdminDashboardPage: React.FC = () => {
     shortDescription: string;
     description: string;
     images: string[];
+    collections: string[];
     threadCount: string;
     fabric: string;
     closure: string;
@@ -186,6 +187,7 @@ export const AdminDashboardPage: React.FC = () => {
     category: 'textile',
     categoryName: 'Textile',
     subcategory: 'Double Bedsheets',
+    collections: ['textile'],
     mrp: 1499,
     retailPrice: 799,
     tier1Price: 599,
@@ -349,6 +351,7 @@ export const AdminDashboardPage: React.FC = () => {
       category: p.category,
       categoryName: p.categoryName,
       subcategory: p.subcategory,
+      collections: (p.collections && p.collections.length > 0) ? [...p.collections] : [p.category],
       mrp: p.mrp,
       retailPrice: p.retailPrice,
       tier1Price: t1,
@@ -441,6 +444,7 @@ export const AdminDashboardPage: React.FC = () => {
         category: productForm.category,
         categoryName: productForm.categoryName,
         subcategory: productForm.subcategory,
+        collections: productForm.collections.length > 0 ? productForm.collections : [productForm.category],
         mrp: productForm.mrp,
         retailPrice: productForm.retailPrice,
         stock: productForm.stock,
@@ -464,6 +468,7 @@ export const AdminDashboardPage: React.FC = () => {
         category: productForm.category,
         categoryName: productForm.categoryName,
         subcategory: productForm.subcategory,
+        collections: productForm.collections.length > 0 ? productForm.collections : [productForm.category],
         mrp: productForm.mrp,
         retailPrice: productForm.retailPrice,
         stock: productForm.stock,
@@ -716,6 +721,7 @@ export const AdminDashboardPage: React.FC = () => {
                 category: 'textile',
                 categoryName: 'Textile',
                 subcategory: 'Double Bedsheets',
+                collections: ['textile'],
                 mrp: 1699,
                 retailPrice: 849,
                 tier1Price: 649,
@@ -1130,6 +1136,16 @@ export const AdminDashboardPage: React.FC = () => {
                             <span className="text-[11px] text-indigo font-semibold block truncate mt-0.5">
                               {prod.categoryName} &bull; {prod.subcategory}
                             </span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {((prod.collections && prod.collections.length > 0) ? prod.collections : [prod.category]).map(cId => {
+                                const cName = categories.find(c => c.id === cId)?.name || cId;
+                                return (
+                                  <span key={cId} className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[9px] font-bold">
+                                    {cName}
+                                  </span>
+                                );
+                              })}
+                            </div>
                             {prod.isBestSeller && (
                               <span className="text-[10px] text-amber-700 font-bold block mt-0.5">Homepage featured</span>
                             )}
@@ -2021,7 +2037,7 @@ export const AdminDashboardPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 block mb-1">Category</label>
+                  <label className="text-[10px] font-bold text-slate-500 block mb-1">Primary Category</label>
                   <select
                     value={productForm.category}
                     onChange={e => {
@@ -2030,7 +2046,8 @@ export const AdminDashboardPage: React.FC = () => {
                       setProductForm({
                         ...productForm,
                         category: selectedCategory.id,
-                        categoryName: selectedCategory.name
+                        categoryName: selectedCategory.name,
+                        collections: Array.from(new Set([...productForm.collections, selectedCategory.id]))
                       });
                     }}
                     className="w-full p-2 border border-slate-300 rounded-lg outline-none bg-white"
@@ -2049,6 +2066,60 @@ export const AdminDashboardPage: React.FC = () => {
                     onChange={e => setProductForm({ ...productForm, subcategory: e.target.value })}
                     className="w-full p-2 border border-slate-300 rounded-lg outline-none"
                   />
+                </div>
+              </div>
+
+              {/* Multi-Collection Selector */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-extrabold text-navy flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-indigo" />
+                    <span>Catalog Collections (Select one or more collections)</span>
+                  </label>
+                  <span className="text-[10px] font-bold text-indigo bg-indigo-light px-2.5 py-0.5 rounded-full">
+                    {productForm.collections.length} {productForm.collections.length === 1 ? 'collection' : 'collections'} selected
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  Select all collections where this product should be displayed (e.g. Textile, Cotton Products, Household). Customers can find this product in any of the selected collections.
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {categories.map(cat => {
+                    const isChecked = productForm.collections.includes(cat.id);
+                    return (
+                      <button
+                        type="button"
+                        key={cat.id}
+                        onClick={() => {
+                          const next = isChecked
+                            ? productForm.collections.filter(id => id !== cat.id)
+                            : [...productForm.collections, cat.id];
+                          setProductForm({
+                            ...productForm,
+                            collections: next.length > 0 ? next : [cat.id],
+                            category: (isChecked && productForm.category === cat.id && next.length > 0)
+                              ? next[0]
+                              : productForm.category,
+                            categoryName: (isChecked && productForm.category === cat.id && next.length > 0)
+                              ? (categories.find(c => c.id === next[0])?.name || productForm.categoryName)
+                              : productForm.categoryName
+                          });
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                          isChecked
+                            ? 'bg-indigo text-white shadow-xs'
+                            : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300'
+                        }`}
+                      >
+                        <span className={`w-3.5 h-3.5 rounded flex items-center justify-center text-[10px] ${
+                          isChecked ? 'bg-white/20 text-white font-black' : 'border border-slate-300'
+                        }`}>
+                          {isChecked && '✓'}
+                        </span>
+                        <span>{cat.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 

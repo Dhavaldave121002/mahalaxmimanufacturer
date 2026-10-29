@@ -28,6 +28,7 @@ export interface Product {
   category: CategoryId;
   categoryName: string;
   subcategory: string;
+  collections?: string[];
   description: string;
   shortDescription: string;
   images: string[];

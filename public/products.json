@@ -149,7 +149,12 @@
         "label": "Direct Mill Deal (1000+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "catalog-10929087185063",
@@ -333,7 +338,13 @@
         "label": "Direct Mill Deal (1000+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "catalog-11060268859559",
@@ -537,7 +548,13 @@
         "label": "Direct Mill Deal (1000+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "catalog-11069991420071",
@@ -694,7 +711,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-11070056562855",
@@ -847,7 +869,12 @@
         "label": "Direct Mill Deal (1000+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "catalog-11070152343719",
@@ -1000,7 +1027,12 @@
         "label": "Direct Mill Deal (250+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "catalog-11070165549223",
@@ -1160,7 +1192,12 @@
         "label": "Direct Mill Deal (250+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "home-kitchen",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-11073538556071",
@@ -1347,7 +1384,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "roti-covers",
+      "home-kitchen",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-11125680341159",
@@ -1500,7 +1542,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125719531687",
@@ -1650,7 +1697,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125770682535",
@@ -1801,7 +1853,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125793325223",
@@ -1954,7 +2011,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125810495655",
@@ -2107,7 +2169,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125822554279",
@@ -2260,7 +2327,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125835006119",
@@ -2413,7 +2485,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125845196967",
@@ -2556,7 +2633,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125869478055",
@@ -2708,7 +2790,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125884420263",
@@ -2861,7 +2948,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125899788455",
@@ -3012,7 +3104,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125917745319",
@@ -3165,7 +3262,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125934293159",
@@ -3318,7 +3420,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125952217255",
@@ -3468,7 +3575,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125971943591",
@@ -3618,7 +3730,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11125993242791",
@@ -3768,7 +3885,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11126006087847",
@@ -3918,7 +4040,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11126021619879",
@@ -4070,7 +4197,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11129559810215",
@@ -4248,7 +4380,14 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "home-kitchen",
+      "roti-covers",
+      "cotton-products",
+      "textile",
+      "household"
+    ]
   },
   {
     "id": "catalog-11129767067815",
@@ -4426,7 +4565,14 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "home-kitchen",
+      "roti-covers",
+      "cotton-products",
+      "household",
+      "textile"
+    ]
   },
   {
     "id": "catalog-11129849249959",
@@ -4579,7 +4725,13 @@
         "label": "Direct Mill Deal (250+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "home-kitchen",
+      "cotton-products",
+      "textile",
+      "household"
+    ]
   },
   {
     "id": "catalog-11129886671015",
@@ -4753,7 +4905,13 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "home-kitchen",
+      "roti-covers",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "catalog-11129982156967",
@@ -4910,7 +5068,13 @@
         "label": "Direct Mill Deal (250+ pcs)"
       }
     ],
-    "unitText": "per set"
+    "unitText": "per set",
+    "collections": [
+      "home-kitchen",
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11130047266983",
@@ -5068,7 +5232,13 @@
         "label": "Direct Mill Deal (250+ pcs)"
       }
     ],
-    "unitText": "per set"
+    "unitText": "per set",
+    "collections": [
+      "home-kitchen",
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11130103627943",
@@ -5226,7 +5396,13 @@
         "label": "Direct Mill Deal (250+ pcs)"
       }
     ],
-    "unitText": "per set"
+    "unitText": "per set",
+    "collections": [
+      "home-kitchen",
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11130126565543",
@@ -5384,7 +5560,13 @@
         "label": "Direct Mill Deal (250+ pcs)"
       }
     ],
-    "unitText": "per set"
+    "unitText": "per set",
+    "collections": [
+      "home-kitchen",
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11130173751463",
@@ -5542,7 +5724,12 @@
         "label": "Direct Mill Deal (250+ pcs)"
       }
     ],
-    "unitText": "per set"
+    "unitText": "per set",
+    "collections": [
+      "home-kitchen",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-11135670583463",
@@ -5726,7 +5913,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "household",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-11237633753255",
@@ -5859,7 +6051,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11237638275239",
@@ -5992,7 +6189,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11237640339623",
@@ -6125,7 +6327,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11237641814183",
@@ -6258,7 +6465,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11237644173479",
@@ -6391,7 +6603,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11237645877415",
@@ -6524,7 +6741,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11237647777959",
@@ -6657,7 +6879,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11237649383591",
@@ -6790,7 +7017,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11237651415207",
@@ -6923,7 +7155,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11237653971111",
@@ -7056,7 +7293,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-11237656133799",
@@ -7189,7 +7431,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-8832468549799",
@@ -7375,7 +7622,11 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "home-kitchen",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-8832468746407",
@@ -7548,7 +7799,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-8832468779175",
@@ -7711,7 +7967,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-8832468910247",
@@ -7882,7 +8143,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-8832468975783",
@@ -8054,7 +8320,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-8832469008551",
@@ -8226,7 +8497,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-8832469074087",
@@ -8399,7 +8675,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-8832469139623",
@@ -8571,7 +8852,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-8832469205159",
@@ -8743,7 +9029,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-8832469794983",
@@ -8901,7 +9192,13 @@
         "label": "Direct Mill Deal (1000+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "catalog-8832470057127",
@@ -9089,7 +9386,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "roti-covers",
+      "home-kitchen",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-8832470155431",
@@ -9235,7 +9537,13 @@
         "label": "Direct Mill Deal (1000+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "catalog-8832470253735",
@@ -9407,7 +9715,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-8832470352039",
@@ -9577,7 +9890,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-8832470417575",
@@ -9740,7 +10058,13 @@
         "label": "Direct Mill Deal (1000+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "catalog-8832470483111",
@@ -9907,7 +10231,12 @@
         "label": "Direct Mill Deal (1000+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "catalog-8832470646951",
@@ -10098,7 +10427,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "roti-covers",
+      "home-kitchen",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-8832470843559",
@@ -10256,7 +10590,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "household",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-8832471040167",
@@ -10426,7 +10765,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "roti-covers",
+      "home-kitchen",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-8832471335079",
@@ -10575,7 +10919,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-8842126950567",
@@ -10733,7 +11082,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-8967726694567",
@@ -10917,7 +11271,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "household",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-8968927969447",
@@ -11085,7 +11444,11 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "home-kitchen"
+    ]
   },
   {
     "id": "catalog-9231307931815",
@@ -11230,7 +11593,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "roti-covers",
+      "home-kitchen",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-10220600066118",
@@ -11338,7 +11706,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-10270300766278",
@@ -11446,7 +11819,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933162389574",
@@ -11556,7 +11934,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "household",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-7933163143238",
@@ -11663,7 +12046,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163176006",
@@ -11769,7 +12157,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163208774",
@@ -11876,7 +12269,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163241542",
@@ -11985,7 +12383,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163274310",
@@ -12092,7 +12495,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163372614",
@@ -12199,7 +12607,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163405382",
@@ -12310,7 +12723,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163438150",
@@ -12419,7 +12837,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163470918",
@@ -12528,7 +12951,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163503686",
@@ -12638,7 +13066,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163536454",
@@ -12744,7 +13177,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163569222",
@@ -12851,7 +13289,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163634758",
@@ -12956,7 +13399,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163667526",
@@ -13061,7 +13509,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163798598",
@@ -13166,7 +13619,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163831366",
@@ -13271,7 +13729,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933163864134",
@@ -13376,7 +13839,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933164486726",
@@ -13481,7 +13949,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933164519494",
@@ -13591,7 +14064,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933164552262",
@@ -13696,7 +14174,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933164650566",
@@ -13801,7 +14284,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933164683334",
@@ -13906,7 +14394,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933164716102",
@@ -14010,7 +14503,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7933164748870",
@@ -14114,7 +14612,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7945989062726",
@@ -14224,7 +14727,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "household",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-7946123149382",
@@ -14333,7 +14841,12 @@
         "label": "Direct Mill Deal (250+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-7957736783942",
@@ -14440,7 +14953,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7957736915014",
@@ -14547,7 +15065,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7957738094662",
@@ -14654,7 +15177,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7957745139782",
@@ -14761,7 +15289,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7957747925062",
@@ -14868,7 +15401,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7957752217670",
@@ -14975,7 +15513,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7957756543046",
@@ -15082,7 +15625,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7957761982534",
@@ -15189,7 +15737,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7957762539590",
@@ -15296,7 +15849,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7966117298246",
@@ -15404,7 +15962,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7966141087814",
@@ -15509,7 +16072,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7966188601414",
@@ -15614,7 +16182,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7966214193222",
@@ -15719,7 +16292,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7966238998598",
@@ -15824,7 +16402,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7966315905094",
@@ -15929,7 +16512,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7966320656454",
@@ -16034,7 +16622,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7966364532806",
@@ -16138,7 +16731,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7966380261446",
@@ -16246,7 +16844,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7966388125766",
@@ -16354,7 +16957,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-7966390878278",
@@ -16458,7 +17066,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8133176524870",
@@ -16567,7 +17180,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8133193891910",
@@ -16675,7 +17293,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8133203853382",
@@ -16783,7 +17406,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8237968949318",
@@ -16889,7 +17517,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "household",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8238298660934",
@@ -16995,7 +17628,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "household",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8238369275974",
@@ -17101,7 +17739,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "household",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8466104385606",
@@ -17208,7 +17851,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8466108350534",
@@ -17316,7 +17964,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8466114314310",
@@ -17425,7 +18078,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8466742902854",
@@ -17533,7 +18191,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8466771378246",
@@ -17643,7 +18306,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8466788122694",
@@ -17752,7 +18420,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8470916137030",
@@ -17861,7 +18534,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8477499490374",
@@ -17969,7 +18647,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8477518364742",
@@ -18077,7 +18760,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8499612188742",
@@ -18186,7 +18874,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8501452832838",
@@ -18294,7 +18987,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8501496217670",
@@ -18402,7 +19100,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8502055403590",
@@ -18511,7 +19214,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "household",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8502059696198",
@@ -18621,7 +19329,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8509232840774",
@@ -18730,7 +19443,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8510587863110",
@@ -18840,7 +19558,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8510593269830",
@@ -18950,7 +19673,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8510754521158",
@@ -19061,7 +19789,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8513606320198",
@@ -19170,7 +19903,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8513611071558",
@@ -19279,7 +20017,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8516044980294",
@@ -19387,7 +20130,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "catalog-external-8516120936518",
@@ -19497,7 +20245,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8524338626630",
@@ -19606,7 +20359,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8524338757702",
@@ -19715,7 +20473,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8524338790470",
@@ -19824,7 +20587,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "textile",
+      "cotton-products"
+    ]
   },
   {
     "id": "catalog-external-8535542497350",
@@ -19934,7 +20702,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "textile",
+      "cotton-products",
+      "household"
+    ]
   },
   {
     "id": "source-mle-031",
@@ -20059,7 +20832,12 @@
         "label": "Direct Mill Deal (250+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "source-mle-067",
@@ -20184,7 +20962,12 @@
         "label": "Direct Mill Deal (250+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   },
   {
     "id": "source-mle-068",
@@ -20309,6 +21092,12 @@
         "label": "Direct Mill Deal (500+ pcs)"
       }
     ],
-    "unitText": "per piece"
+    "unitText": "per piece",
+    "collections": [
+      "household",
+      "home-kitchen",
+      "cotton-products",
+      "textile"
+    ]
   }
 ]

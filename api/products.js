@@ -148,6 +148,7 @@ async function ensureProductsTable(pool) {
         b2b_policy JSON,
         wholesale_tiers JSON,
         variants JSON,
+        collections JSON,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_sku (sku),
@@ -159,6 +160,9 @@ async function ensureProductsTable(pool) {
        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products'`
     );
     const columnNames = new Set(columns.map(column => column.COLUMN_NAME));
+    if (!columnNames.has('collections')) {
+      await pool.query('ALTER TABLE products ADD COLUMN collections JSON NULL');
+    }
     if (!columnNames.has('care_instructions')) {
       await pool.query('ALTER TABLE products ADD COLUMN care_instructions JSON NULL');
     }
@@ -304,7 +308,10 @@ export default async function handler(req, res) {
                 ? JSON.parse(r.b2b_policy)
                 : (r.b2b_policy || []),
               wholesaleTiers: typeof r.wholesale_tiers === 'string' ? JSON.parse(r.wholesale_tiers) : (r.wholesale_tiers || []),
-              variants: typeof r.variants === 'string' ? JSON.parse(r.variants) : (r.variants || [])
+              variants: typeof r.variants === 'string' ? JSON.parse(r.variants) : (r.variants || []),
+              collections: typeof r.collections === 'string'
+                ? JSON.parse(r.collections)
+                : (Array.isArray(r.collections) && r.collections.length > 0 ? r.collections : (r.category_id ? [r.category_id] : []))
             };
           });
           res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=60');
@@ -328,10 +335,17 @@ export default async function handler(req, res) {
       success: true,
       source: 'VERIFIED_STORAGE',
       count: fallback.length,
-      data: fallback.map(product => ({
-        ...product,
-        categoryName: CATEGORY_NAMES[product.category] || product.categoryName
-      }))
+      data: fallback.map(product => {
+        const cat = product.category || product.category_id;
+        const rawColls = product.collections;
+        const collections = Array.isArray(rawColls) && rawColls.length > 0 ? rawColls : (cat ? [cat] : []);
+        return {
+          ...product,
+          category: cat,
+          categoryName: CATEGORY_NAMES[cat] || product.categoryName || cat,
+          collections
+        };
+      })
     });
   }
 
@@ -517,13 +531,18 @@ export default async function handler(req, res) {
           [id]
         );
         if (existingRows.length > 0) previousStock = Number(existingRows[0].stock);
+        const rawCollections = p.collections;
+        const collections = Array.isArray(rawCollections) && rawCollections.length > 0
+          ? rawCollections
+          : (category ? [category] : []);
+
         await pool.query(
           `INSERT INTO products (
             id, name, slug, sku, category_id, category_name, subcategory,
             mrp, retail_price, stock, moq, rating, review_count,
             is_bestseller, hsn_code, gst_rate, short_description, description,
-            images, tags, specifications, care_instructions, b2b_policy, wholesale_tiers, variants
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            images, tags, specifications, care_instructions, b2b_policy, wholesale_tiers, variants, collections
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON DUPLICATE KEY UPDATE
             name=VALUES(name), slug=VALUES(slug), category_id=VALUES(category_id), category_name=VALUES(category_name),
             subcategory=VALUES(subcategory), mrp=VALUES(mrp), retail_price=VALUES(retail_price),
@@ -532,14 +551,14 @@ export default async function handler(req, res) {
             short_description=VALUES(short_description), description=VALUES(description),
             images=VALUES(images), tags=VALUES(tags), specifications=VALUES(specifications),
             care_instructions=VALUES(care_instructions), b2b_policy=VALUES(b2b_policy),
-            wholesale_tiers=VALUES(wholesale_tiers), variants=VALUES(variants)`,
+            wholesale_tiers=VALUES(wholesale_tiers), variants=VALUES(variants), collections=VALUES(collections)`,
           [
             id, p.name, slug, p.sku, category, categoryName, subcategory,
             mrp, retailPrice, stock, moq, rating, p.reviewCount ?? 0, isBestSeller,
             hsnCode, gstRate, shortDescription, description,
             JSON.stringify(images), JSON.stringify(tags), JSON.stringify(specifications),
             JSON.stringify(careInstructions), JSON.stringify(b2bPolicy),
-            JSON.stringify(wholesaleTiers), JSON.stringify(variants)
+            JSON.stringify(wholesaleTiers), JSON.stringify(variants), JSON.stringify(collections)
           ]
         );
         dbSaved = true;
@@ -564,6 +583,10 @@ export default async function handler(req, res) {
 
     // Persist to fallback JSON
     const existing = readFallbackProducts();
+    const rawCollections = p.collections;
+    const collections = Array.isArray(rawCollections) && rawCollections.length > 0
+      ? rawCollections
+      : (category ? [category] : []);
     const cleanProd = {
       ...p,
       id,
@@ -586,7 +609,8 @@ export default async function handler(req, res) {
       careInstructions,
       b2bPolicy,
       wholesaleTiers,
-      variants
+      variants,
+      collections
     };
 
     const updated = [cleanProd, ...existing.filter(item => item.id !== id && item.sku !== p.sku)];

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { CollectionCategory } from '../../types';
+import { productBelongsToCollection } from '../../utils/productCategories';
 import {
   Layers,
   Plus,
@@ -97,7 +98,7 @@ export const CategoryManager: React.FC = () => {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    const linkedProducts = products.filter(product => product.category === id);
+    const linkedProducts = products.filter(product => productBelongsToCollection(product, id));
     if (linkedProducts.length > 0) {
       window.alert(
         `This collection still contains ${linkedProducts.length} product${linkedProducts.length === 1 ? '' : 's'}. Move those products to another collection before deleting it.`
@@ -202,7 +203,7 @@ export const CategoryManager: React.FC = () => {
                 {cat.description || 'Direct mill woven collection crafted in Ahmedabad manufacturing unit.'}
               </p>
               <p className="text-xs font-semibold text-slate-700">
-                {products.filter(product => product.category === cat.id).length} products assigned
+                {products.filter(product => productBelongsToCollection(product, cat.id)).length} products assigned
               </p>
 
               {/* Subcategories list */}
