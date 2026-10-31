@@ -861,7 +861,7 @@ async function sendOrderNotificationEmails(data) {
   const rawPhone = (customerPhone || '').replace(/\D/g, '');
   const cleanPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-    `Namaste ${customerName}, Mahalaxmi Enterprises se aapke Order #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) ki details hume mil gayi hain. Jaldi dispatch karenge!`
+    `Namaste ${customerName}, Mahalaxmi Enterprise se aapke Order #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) ki details hume mil gayi hain. Jaldi dispatch karenge!`
   )}`;
 
   // 1. Dispatch Alert Email to Store Owner
@@ -892,7 +892,7 @@ async function sendOrderNotificationEmails(data) {
                           M
                         </div>
                         <div style="color: #FFFFFF; font-size: 18px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">
-                          MAHALAXMI ENTERPRISES
+                          MAHALAXMI ENTERPRISE
                         </div>
                         <div style="color: #C6AA80; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 3px;">
                           SURAT DIRECT MILL DISPATCH DESK
@@ -1032,7 +1032,7 @@ async function sendOrderNotificationEmails(data) {
               <!-- Footer -->
               <tr>
                 <td style="background-color: #F8FAFC; padding: 16px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
-                  <strong style="color: #64748B;">                  Mahalaxmi Enterprises</strong><br>
+                  <strong style="color: #64748B;">                  Mahalaxmi Enterprise</strong><br>
                   Direct Mill Rates & Wholesale Essentials
                 </td>
               </tr>
@@ -1106,18 +1106,18 @@ async function sendOrderNotificationEmails(data) {
           template_params: {
             to_email: customerEmail,
             to_name: customerName,
-            subject: `Order Confirmed: #${orderNumber} | Mahalaxmi Enterprises`,
+            subject: `Order Confirmed: #${orderNumber} | Mahalaxmi Enterprise`,
             headline: 'Order Confirmed!',
             code_box: `#${orderNumber}`,
             subtext: `Order #${orderNumber} • Total ₹${Number(totalAmount).toLocaleString('en-IN')}`,
-            brand_name: 'Mahalaxmi Enterprises',
+            brand_name: 'Mahalaxmi Enterprise',
             brand_tagline: 'Direct Mill Rates & Wholesale Essentials',
             support_phone: '+91 90335 98639',
             support_email: 'mahalaxmienterprise881@gmail.com',
             order_number: orderNumber,
             total_amount: Number(totalAmount).toLocaleString('en-IN'),
             items_block: orderItemsBlock,
-            message: `Thank you for choosing Mahalaxmi Enterprises. We have received order #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')}. We will share updates as it moves through processing and dispatch.`
+            message: `Thank you for choosing Mahalaxmi Enterprise. We have received order #${orderNumber} for ₹${Number(totalAmount).toLocaleString('en-IN')}. We will share updates as it moves through processing and dispatch.`
           }
         };
         if (EMAILJS_PRIVATE_KEY) customerPayload.accessToken = EMAILJS_PRIVATE_KEY;
@@ -1138,7 +1138,7 @@ async function sendOrderNotificationEmails(data) {
             headline: 'New Order Received!',
             code_box: `#${orderNumber}`,
             subtext: `Customer: ${customerName} (${customerPhone}) • ₹${Number(totalAmount).toLocaleString('en-IN')}`,
-            brand_name: 'Mahalaxmi Enterprises',
+            brand_name: 'Mahalaxmi Enterprise',
             brand_tagline: 'Direct Mill Rates & Wholesale Essentials',
             order_number: orderNumber,
             total_amount: Number(totalAmount).toLocaleString('en-IN'),

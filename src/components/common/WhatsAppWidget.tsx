@@ -28,7 +28,7 @@ export const WhatsAppWidget: React.FC = () => {
     e.preventDefault();
     const text = encodeURIComponent(
       message.trim() ||
-        `Namaste Mahalaxmi Enterprises, I need help with your products or an order. ${BUSINESS_TAGLINE}.`
+        `Namaste Mahalaxmi Enterprise, I need help with your products or an order. ${BUSINESS_TAGLINE}.`
     );
     window.open(`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${text}`, '_blank', 'noopener,noreferrer');
     setIsOpen(false);
@@ -58,7 +58,7 @@ export const WhatsAppWidget: React.FC = () => {
                 <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full"></span>
               </div>
               <div>
-                <h4 className="font-bold text-sm">Mahalaxmi Enterprises</h4>
+                <h4 className="font-bold text-sm">Mahalaxmi Enterprise</h4>
                 <p className="text-[11px] text-emerald-100">
                   Customer care • WhatsApp
                 </p>
@@ -76,9 +76,9 @@ export const WhatsAppWidget: React.FC = () => {
           {/* Chat Body */}
           <div className="p-4 bg-slate-50 space-y-3 text-xs">
             <div className="bg-white p-3 rounded-2xl shadow-subtle border border-slate-100 max-w-[85%] text-slate-800 space-y-1">
-              <p className="font-semibold text-emerald-800 text-[11px]">Mahalaxmi Enterprises</p>
+              <p className="font-semibold text-emerald-800 text-[11px]">Mahalaxmi Enterprise</p>
               <p>
-                Namaste! Welcome to Mahalaxmi Enterprises. How can we help with products, wholesale pricing, delivery, or an existing order?
+                Namaste! Welcome to Mahalaxmi Enterprise. How can we help with products, wholesale pricing, delivery, or an existing order?
               </p>
               <span className="text-[9px] text-slate-500 block text-right">Just now</span>
             </div>

@@ -1,4 +1,4 @@
-// Automated Live Search Engine Ping & IndexNow Submitter for Mahalaxmi Enterprises
+// Automated Live Search Engine Ping & IndexNow Submitter for Mahalaxmi Enterprise
 import https from 'https';
 
 const DOMAIN = 'mahalaxmimanufacturer.com';

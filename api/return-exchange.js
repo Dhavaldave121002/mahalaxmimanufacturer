@@ -207,11 +207,11 @@ async function sendReturnEmails(data) {
   const customerHtml = `
     <!DOCTYPE html>
     <html>
-    <head><meta charset="utf-8"><title>${requestType} Request Received - Mahalaxmi Enterprises</title></head>
+    <head><meta charset="utf-8"><title>${requestType} Request Received - Mahalaxmi Enterprise</title></head>
     <body style="margin: 0; padding: 20px; background-color: #F8FAFC; font-family: sans-serif;">
       <div style="max-width: 600px; margin: 0 auto; background: #FFFFFF; border-radius: 12px; overflow: hidden; border: 1px solid #E2E8F0;">
         <div style="background: #14213D; padding: 20px; color: #FFFFFF; text-align: center;">
-          <h2 style="margin: 0; font-size: 20px;">Mahalaxmi Enterprises</h2>
+          <h2 style="margin: 0; font-size: 20px;">Mahalaxmi Enterprise</h2>
           <p style="margin: 6px 0 0 0; font-size: 13px; color: #FCA311; font-weight: 700;">${typeLabel} Confirmation</p>
         </div>
         <div style="padding: 24px;">
@@ -277,7 +277,7 @@ async function sendReturnEmails(data) {
             template_params: {
               to_email: customerEmail,
               to_name: customerName,
-              subject: `${requestType === 'EXCHANGE' ? 'Exchange' : 'Return'} Acknowledged: #${orderNumber} | Mahalaxmi Enterprises`,
+              subject: `${requestType === 'EXCHANGE' ? 'Exchange' : 'Return'} Acknowledged: #${orderNumber} | Mahalaxmi Enterprise`,
               headline: `${requestType} Request Logged`,
               code_box: `#${orderNumber}`,
               subtext: `Status: Under Verification • Ahmedabad Mill Support`,

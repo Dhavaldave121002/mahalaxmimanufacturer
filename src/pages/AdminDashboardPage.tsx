@@ -567,7 +567,7 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
             <h1 className="text-2xl font-black text-navy tracking-tight">Staff & Operations Portal</h1>
             <p className="text-xs text-slate-500">
-              Restricted management access for Mahalaxmi Enterprises.
+              Restricted management access for Mahalaxmi Enterprise.
             </p>
           </div>
 
@@ -692,7 +692,7 @@ export const AdminDashboardPage: React.FC = () => {
             <span className="text-xs text-slate-400">Ahmedabad Central Warehouse Unit 1</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-navy tracking-tight mt-1">
-            Mahalaxmi Enterprises Admin Dashboard
+            Mahalaxmi Enterprise Admin Dashboard
           </h1>
         </div>
 
@@ -925,7 +925,7 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h4 className="font-extrabold text-sm sm:text-base">Mahalaxmi Enterprises Flutter Mobile App Hub</h4>
+                  <h4 className="font-extrabold text-sm sm:text-base">Mahalaxmi Enterprise Flutter Mobile App Hub</h4>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-500 text-white flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                     v1.0.3 LIVE
@@ -1670,7 +1670,7 @@ export const AdminDashboardPage: React.FC = () => {
                           {ord.customer?.phone && (
                             <a
                               href={`https://wa.me/${ord.customer.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                                `Namaste ${ord.customer.name}, Mahalaxmi Enterprises Ahmedabad se aapka order #${ord.orderNumber} (₹${ord.totalAmount.toLocaleString('en-IN')}) successfully verify ho gaya hai. Current Status: ${ord.status}. Kisi bhi help ke liye batayein.`
+                                `Namaste ${ord.customer.name}, Mahalaxmi Enterprise Ahmedabad se aapka order #${ord.orderNumber} (₹${ord.totalAmount.toLocaleString('en-IN')}) successfully verify ho gaya hai. Current Status: ${ord.status}. Kisi bhi help ke liye batayein.`
                               )}`}
                               target="_blank"
                               rel="noopener noreferrer"

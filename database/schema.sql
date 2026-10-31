@@ -1,5 +1,5 @@
 -- ==============================================================================
--- MAHALAXMI ENTERPRISES - COMPLETE PRODUCTION MYSQL DATABASE SCHEMA
+-- MAHALAXMI ENTERPRISE - COMPLETE PRODUCTION MYSQL DATABASE SCHEMA
 -- Compatible with MySQL 5.7+, MySQL 8.0+, MariaDB, AWS RDS, Hostinger, cPanel, PlanetScale
 -- ==============================================================================
 
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS `app_banners` (
 -- 4. APP GLOBAL SETTINGS TABLE
 CREATE TABLE IF NOT EXISTS `app_settings` (
   `id` INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  `app_name` VARCHAR(100) DEFAULT 'Mahalaxmi Enterprises',
+  `app_name` VARCHAR(100) DEFAULT 'Mahalaxmi Enterprise',
   `app_version` VARCHAR(20) DEFAULT '1.0.3+4',
   `min_supported_version` VARCHAR(20) DEFAULT '1.0.0',
   `maintenance_mode` BOOLEAN DEFAULT FALSE,
@@ -300,5 +300,5 @@ ON DUPLICATE KEY UPDATE `title`=VALUES(`title`), `tag`=VALUES(`tag`), `cta`=VALU
 -- ==============================================================================
 INSERT INTO `app_settings` (`id`, `app_name`, `app_version`, `min_supported_version`, `maintenance_mode`, `maintenance_message`, `support_phone`, `support_email`, `whatsapp_number`, `flash_sale_active`, `flash_sale_tag`, `catalog_download_url`, `gst_notice`, `local_flutter_project_path`)
 VALUES
-  (1, 'Mahalaxmi Enterprises', '1.0.3+4', '1.0.0', FALSE, 'Mahalaxmi Mill servers are undergoing scheduled routine maintenance. App ordering will resume shortly.', '+91 90335 98639', 'mahalaxmienterprise881@gmail.com', '919033598639', TRUE, 'DIWALI MILL DHAMAKA - UP TO 45% WHOLESALE', 'https://mahalaxmimanufacturer.vercel.app/catalog.pdf', 'GST tax invoices are available for eligible commercial business orders.', 'C:\\mahalaxmi_enterprises')
+  (1, 'Mahalaxmi Enterprise', '1.0.3+4', '1.0.0', FALSE, 'Mahalaxmi Mill servers are undergoing scheduled routine maintenance. App ordering will resume shortly.', '+91 90335 98639', 'mahalaxmienterprise881@gmail.com', '919033598639', TRUE, 'DIWALI MILL DHAMAKA - UP TO 45% WHOLESALE', 'https://mahalaxmimanufacturer.vercel.app/catalog.pdf', 'GST tax invoices are available for eligible commercial business orders.', 'C:\\mahalaxmi_enterprises')
 ON DUPLICATE KEY UPDATE `app_name`=VALUES(`app_name`);

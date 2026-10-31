@@ -276,7 +276,7 @@ async function sendEnquiryEmails(data) {
           </table>
 
           <div style="text-align: center; margin: 24px 0 10px;">
-            <a href="https://wa.me/${phone.replace(/\\D/g, '')}?text=${encodeURIComponent(`Namaste ${fullName}, we received your requirement #${enquiryCode} at Mahalaxmi Enterprises. Our team will follow up with you shortly.`)}"
+            <a href="https://wa.me/${phone.replace(/\\D/g, '')}?text=${encodeURIComponent(`Namaste ${fullName}, we received your requirement #${enquiryCode} at Mahalaxmi Enterprise. Our team will follow up with you shortly.`)}"
                style="background: #10B981; color: #FFFFFF; font-weight: bold; font-size: 13px; text-decoration: none; padding: 12px 24px; border-radius: 12px; display: inline-block;">
               💬 Reply to Buyer on WhatsApp
             </a>
@@ -333,11 +333,11 @@ async function sendEnquiryEmails(data) {
             template_params: {
               to_email: email,
               to_name: fullName,
-              subject: `Requirement Confirmed: #${enquiryCode} | Mahalaxmi Enterprises`,
+              subject: `Requirement Confirmed: #${enquiryCode} | Mahalaxmi Enterprise`,
               headline: 'Requirement Received',
               code_box: `#${enquiryCode}`,
               subtext: `Business enquiry received • Vol: ${expectedMonthlyVolume}`,
-              brand_name: 'Mahalaxmi Enterprises',
+              brand_name: 'Mahalaxmi Enterprise',
               brand_tagline: 'Direct Mill Rates & Wholesale Essentials',
               support_phone: '+91 90335 98639',
               support_email: 'mahalaxmienterprise881@gmail.com',

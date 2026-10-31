@@ -1,13 +1,10 @@
 import react from '@vitejs/plugin-react';
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, type Plugin, type PreviewServer, type ViteDevServer } from 'vite';
 // @ts-ignore
 import { testDbConnection } from './database/db.js';
 
-function localApiPlugin(): Plugin {
-  return {
-    name: 'local-api-handler',
-    configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
+function registerLocalApiMiddleware(server: ViteDevServer | PreviewServer) {
+  server.middlewares.use(async (req, res, next) => {
         const requestUrl = new URL(req.url || '/', 'http://localhost');
         (req as any).query = Object.fromEntries(requestUrl.searchParams.entries());
 
@@ -411,9 +408,15 @@ function localApiPlugin(): Plugin {
           return;
         }
 
-        next();
-      });
-    }
+    next();
+  });
+}
+
+function localApiPlugin(): Plugin {
+  return {
+    name: 'local-api-handler',
+    configureServer: registerLocalApiMiddleware,
+    configurePreviewServer: registerLocalApiMiddleware
   };
 }
 

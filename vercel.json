@@ -1,6 +1,26 @@
 {
   "rewrites": [
     {
+      "source": "/product/:slug",
+      "destination": "/product/:slug/index.html"
+    },
+    {
+      "source": "/locations/:stateSlug/districts/:districtSlug",
+      "destination": "/locations/:stateSlug/districts/:districtSlug/index.html"
+    },
+    {
+      "source": "/locations/:stateSlug/:citySlug",
+      "destination": "/locations/:stateSlug/:citySlug/index.html"
+    },
+    {
+      "source": "/locations/:stateSlug",
+      "destination": "/locations/:stateSlug/index.html"
+    },
+    {
+      "source": "/locations",
+      "destination": "/locations/index.html"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

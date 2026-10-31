@@ -27,8 +27,8 @@ async function updateBanners() {
       tag: '100% PURE COTTON',
       cta: 'Shop Roti Covers',
       cta_link: '/catalog?category=home-kitchen',
-      image: '/banner-designs/banner-roti-cover-desktop.svg',
-      mobile_image: '/banner-designs/banner-roti-cover-mobile.svg',
+      image: '/banner-designs/banner-roti-cover.jpg',
+      mobile_image: '/banner-designs/banner-roti-cover.jpg',
       gradient_from: '#F5F7F4',
       gradient_via: '#EEF3EE',
       gradient_to: '#E6EFE7',
@@ -36,7 +36,7 @@ async function updateBanners() {
       display_order: 1,
       is_active: 1,
       visibility: 'ALL',
-      show_text_overlay: 0
+      show_text_overlay: 1
     },
     {
       id: 'banner-veg-bag-pro',
@@ -46,8 +46,8 @@ async function updateBanners() {
       tag: 'ZERO-PLASTIC LIVING',
       cta: 'Shop Produce Bags',
       cta_link: '/catalog?category=household',
-      image: '/banner-designs/banner-veg-bag-desktop.svg',
-      mobile_image: '/banner-designs/banner-veg-bag-mobile.svg',
+      image: '/banner-designs/banner-veg-bag.jpg',
+      mobile_image: '/banner-designs/banner-veg-bag.jpg',
       gradient_from: '#FAF6EE',
       gradient_via: '#F3EDE1',
       gradient_to: '#ECE4D4',
@@ -55,7 +55,7 @@ async function updateBanners() {
       display_order: 2,
       is_active: 1,
       visibility: 'ALL',
-      show_text_overlay: 0
+      show_text_overlay: 1
     },
     {
       id: 'banner-tote-bag-pro',
@@ -65,8 +65,8 @@ async function updateBanners() {
       tag: 'DAILY ESSENTIALS',
       cta: 'Explore Tote Bags',
       cta_link: '/catalog?category=textile',
-      image: '/banner-designs/banner-tote-bag-desktop.svg',
-      mobile_image: '/banner-designs/banner-tote-bag-mobile.svg',
+      image: '/banner-designs/banner-tote-bag.jpg',
+      mobile_image: '/banner-designs/banner-tote-bag.jpg',
       gradient_from: '#FAF3F1',
       gradient_via: '#F4E8E5',
       gradient_to: '#EFE3DF',
@@ -74,7 +74,7 @@ async function updateBanners() {
       display_order: 3,
       is_active: 1,
       visibility: 'ALL',
-      show_text_overlay: 0
+      show_text_overlay: 1
     },
     {
       id: 'banner-saree-cover-pro',
@@ -84,8 +84,8 @@ async function updateBanners() {
       tag: 'WARDROBE CARE',
       cta: 'Shop Saree Covers',
       cta_link: '/catalog?category=textile',
-      image: '/banner-designs/banner-saree-cover-desktop.svg',
-      mobile_image: '/banner-designs/banner-saree-cover-mobile.svg',
+      image: '/banner-designs/banner-saree-cover.jpg',
+      mobile_image: '/banner-designs/banner-saree-cover.jpg',
       gradient_from: '#F7F8FA',
       gradient_via: '#EEF2F6',
       gradient_to: '#E9ECF1',
@@ -93,7 +93,7 @@ async function updateBanners() {
       display_order: 4,
       is_active: 1,
       visibility: 'ALL',
-      show_text_overlay: 0
+      show_text_overlay: 1
     }
   ];
 

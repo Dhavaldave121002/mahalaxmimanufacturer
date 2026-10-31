@@ -13,8 +13,8 @@ const banners = [
     tag: '100% PURE COTTON',
     cta: 'Shop Roti Covers',
     cta_link: '/catalog?category=home-kitchen',
-    image: '/banner-designs/hero-roti-cover.jpg',
-    mobile_image: 'assets/images/banner_roti_cover.jpg',
+    image: '/banner-designs/banner-roti-cover.jpg',
+    mobile_image: '/banner-designs/banner-roti-cover.jpg',
     gradient_from: '#881337',
     gradient_via: '#9F1239',
     gradient_to: '#BE123C',
@@ -34,8 +34,8 @@ const banners = [
     tag: 'ZERO-PLASTIC LIVING',
     cta: 'Shop Produce Bags',
     cta_link: '/catalog?category=household',
-    image: '/banner-designs/hero-veg-bag.jpg',
-    mobile_image: 'assets/images/banner_veg_bag.jpg',
+    image: '/banner-designs/banner-veg-bag.jpg',
+    mobile_image: '/banner-designs/banner-veg-bag.jpg',
     gradient_from: '#064E3B',
     gradient_via: '#047857',
     gradient_to: '#059669',
@@ -55,8 +55,8 @@ const banners = [
     tag: 'DAILY ESSENTIALS',
     cta: 'Explore Tote Bags',
     cta_link: '/catalog?category=textile',
-    image: '/banner-designs/hero-tote-bag.jpg',
-    mobile_image: 'assets/images/banner_tote_bag.jpg',
+    image: '/banner-designs/banner-tote-bag.jpg',
+    mobile_image: '/banner-designs/banner-tote-bag.jpg',
     gradient_from: '#1E293B',
     gradient_via: '#334155',
     gradient_to: '#475569',
@@ -76,8 +76,8 @@ const banners = [
     tag: 'WARDROBE CARE',
     cta: 'Shop Saree Covers',
     cta_link: '/catalog?category=textile',
-    image: '/banner-designs/hero-saree-cover.jpg',
-    mobile_image: 'assets/images/banner_saree_cover.jpg',
+    image: '/banner-designs/banner-saree-cover.jpg',
+    mobile_image: '/banner-designs/banner-saree-cover.jpg',
     gradient_from: '#312E81',
     gradient_via: '#4338CA',
     gradient_to: '#6366F1',
@@ -187,7 +187,7 @@ async function syncAll() {
       badgeIcon: b.badge_icon,
       isActive: true,
       displayOrder: b.display_order,
-      showTextOverlay: true
+      showTextOverlay: b.show_text_overlay === 1
     }));
     config.lastSyncedAt = new Date().toISOString();
     fs.writeFileSync(webConfigFile, JSON.stringify(config, null, 2), 'utf8');

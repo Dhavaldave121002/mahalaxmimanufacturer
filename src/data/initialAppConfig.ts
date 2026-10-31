@@ -136,11 +136,11 @@ export const INITIAL_MOBILE_APP_CONFIG: MobileAppConfig = {
     }
   ],
   settings: {
-    appName: 'Mahalaxmi Enterprises',
+    appName: 'Mahalaxmi Enterprise',
     appVersion: '1.0.3+4',
     minSupportedVersion: '1.0.0',
     maintenanceMode: false,
-    maintenanceMessage: 'Mahalaxmi Enterprises Mill servers are undergoing scheduled routine maintenance. App ordering will resume shortly.',
+    maintenanceMessage: 'Mahalaxmi Enterprise Mill servers are undergoing scheduled routine maintenance. App ordering will resume shortly.',
     supportPhone: '+91 90335 98639',
     supportEmail: 'mahalaxmienterprise881@gmail.com',
     whatsappNumber: '919033598639',
@@ -150,25 +150,7 @@ export const INITIAL_MOBILE_APP_CONFIG: MobileAppConfig = {
     gstNotice: 'GST tax invoices are available for eligible commercial business orders.',
     localFlutterProjectPath: 'C:\\mahalaxmi_enterprises'
   },
-  notifications: [
-    {
-      id: 'notif-1',
-      title: 'Diwali Mill Sale is Live! 🎉',
-      message: 'Direct factory rates now active across all 300 TC Combed Cotton Double Bedsheets and Towels.',
-      timestamp: new Date(Date.now() - 3600000 * 4).toISOString(),
-      targetCategory: 'Textile',
-      type: 'OFFER',
-      isSent: true
-    },
-    {
-      id: 'notif-2',
-      title: 'Order Dispatch Notification 🚚',
-      message: 'Ahmedabad Central Warehouse dispatch team has fulfilled B2B consignment for immediate logistics handoff.',
-      timestamp: new Date(Date.now() - 3600000 * 24).toISOString(),
-      type: 'ORDER',
-      isSent: true
-    }
-  ],
+  notifications: [],
   appExclusiveProductIds: ['prod-bedsheet-01', 'prod-cotton-towel-01', 'prod-tote-01'],
   lastSyncedAt: new Date().toISOString()
 };

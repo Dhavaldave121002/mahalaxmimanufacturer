@@ -33,6 +33,7 @@ interface PinCodeInfo {
   state: string;
   serviceable: boolean;
   estimatedDays: number;
+  verified?: boolean;
 }
 
 const PINCODE_DATABASE: Record<string, { city: string; state: string; days: number }> = {
@@ -201,7 +202,7 @@ interface AppContextType {
   updateMobileAppCategories: (categories: AppCategoryConfig[]) => void;
   updateMobileAppCategoryConfig: (id: string, updates: Partial<AppCategoryConfig>) => void;
   updateMobileAppSettings: (settings: Partial<AppSettings>) => void;
-  sendAppPushNotification: (notification: Omit<AppNotification, 'id' | 'timestamp' | 'isSent'>) => void;
+  sendAppPushNotification: (notification: Omit<AppNotification, 'id' | 'timestamp' | 'isSent'>) => Promise<void>;
   deleteAppNotification: (id: string) => void;
   toggleAppExclusiveProduct: (productId: string) => void;
   syncConfigToFlutter: () => { success: boolean; message: string; timestamp: string };
@@ -1641,7 +1642,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     return {
       success: true,
-      message: `Account registered successfully! Welcome to Mahalaxmi Enterprises, ${newUser.name}.`,
+      message: `Account registered successfully! Welcome to Mahalaxmi Enterprise, ${newUser.name}.`,
       user: newUser
     };
   };
@@ -1887,7 +1888,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const defaultTimelineDesc = orderData.timelineNote || (
       pointsRedeemed > 0
         ? `Order booked. 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Mill Points redeemed (-₹${pointsRedeemed.toLocaleString('en-IN')}). Remaining balance ₹${amountPaid.toLocaleString('en-IN')} ${isCod ? 'payable on delivery (COD)' : 'paid via Razorpay'}.`
-        : 'Order placed successfully. Allocated to Mahalaxmi Enterprises Ahmedabad Central Warehouse.'
+        : 'Order placed successfully. Allocated to Mahalaxmi Enterprise Ahmedabad Central Warehouse.'
     );
 
     const newOrder: Order = {
@@ -2665,12 +2666,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .then(res => res.json())
         .then(data => {
           if (data && data.success && data.serviceable) {
+            const verifiedState = String(data.state || '').trim().toLowerCase();
+            const isGujarat = verifiedState === 'gj' || verifiedState === 'gujarat'
+              || cleanPin.startsWith('395') || cleanPin.startsWith('394');
             setDeliveryInfo({
               pincode: cleanPin,
               city: cleanPin.startsWith('395') || cleanPin.startsWith('394') ? 'Surat' : (data.city || initialInfo.city),
               state: cleanPin.startsWith('395') || cleanPin.startsWith('394') ? 'Gujarat' : (data.state || initialInfo.state),
               serviceable: true,
-              estimatedDays: (data.state === 'GJ' || cleanPin.startsWith('395') || cleanPin.startsWith('394')) ? 1 : 3
+              estimatedDays: isGujarat ? 1 : 3,
+              verified: true
             });
           } else if (data && data.serviceable === false) {
             setDeliveryInfo({
@@ -2678,7 +2683,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               city: initialInfo.city,
               state: initialInfo.state,
               serviceable: false,
-              estimatedDays: 0
+              estimatedDays: 0,
+              verified: true
             });
           }
         })
@@ -2782,35 +2788,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
-  const sendAppPushNotification = (notification: Omit<AppNotification, 'id' | 'timestamp' | 'isSent'>) => {
+  const sendAppPushNotification = async (notification: Omit<AppNotification, 'id' | 'timestamp' | 'isSent'>) => {
     const newNotif: AppNotification = {
       ...notification,
       id: `notif-${Date.now()}`,
       timestamp: new Date().toISOString(),
       isSent: true
     };
-    setMobileAppConfig(prev => ({
-      ...prev,
-      notifications: [newNotif, ...prev.notifications],
-      lastSyncedAt: new Date().toISOString()
-    }));
 
-    // Broadcast directly to MySQL database and live API
-    fetch('/api/app-config', {
+    const response = await fetch('/api/app-config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'send_notification',
         notification: newNotif
       })
-    })
-      .then(res => res.json())
-      .then(data => {
-        console.log('App Notification dispatched to MySQL/API:', data);
-      })
-      .catch(err => {
-        console.warn('API push broadcast error:', err);
-      });
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'The notification could not be saved.');
+    }
+
+    setMobileAppConfig(prev => ({
+      ...prev,
+      notifications: [data.notification || newNotif, ...prev.notifications],
+      lastSyncedAt: new Date().toISOString()
+    }));
   };
 
   const deleteAppNotification = (id: string) => {

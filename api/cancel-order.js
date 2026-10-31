@@ -192,7 +192,7 @@ async function sendCancellationEmails(data) {
                     ⚠️ Order Cancelled
                   </div>
                   <div style="color: #FFFFFF; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;">
-                    MAHALAXMI ENTERPRISES
+                    MAHALAXMI ENTERPRISE
                   </div>
                   <div style="color: #FCA5A5; font-size: 11px; font-weight: 700; margin-top: 4px;">
                     SOURCE: ${source === 'FLUTTER_APP' ? '📱 Mobile App' : '🌐 Web Store'}
@@ -263,7 +263,7 @@ async function sendCancellationEmails(data) {
     <html lang="en">
     <head>
       <meta charset="utf-8">
-      <title>Order Cancellation Confirmed - Mahalaxmi Enterprises</title>
+      <title>Order Cancellation Confirmed - Mahalaxmi Enterprise</title>
     </head>
     <body style="margin: 0; padding: 16px 8px; background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="max-width: 580px; margin: 0 auto;">
@@ -276,7 +276,7 @@ async function sendCancellationEmails(data) {
                     M
                   </div>
                   <div style="color: #FFFFFF; font-size: 17px; font-weight: 900; letter-spacing: 0.5px;">
-                    MAHALAXMI ENTERPRISES
+                    MAHALAXMI ENTERPRISE
                   </div>
                   <div style="color: #C6AA80; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">
                     SURAT TEXTILE MANUFACTURER
@@ -333,7 +333,7 @@ async function sendCancellationEmails(data) {
                   <table width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
                       <td align="center">
-                        <a href="https://wa.me/919033598639?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, regarding cancelled order ${orderNumber}`)}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background-color: #F1F5F9; color: #14213D; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; padding: 11px; border-radius: 10px; border: 1px solid #CBD5E1;">
+                        <a href="https://wa.me/919033598639?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprise, regarding cancelled order ${orderNumber}`)}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background-color: #F1F5F9; color: #14213D; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; padding: 11px; border-radius: 10px; border: 1px solid #CBD5E1;">
                           💬 Chat with Mill Support on WhatsApp
                         </a>
                       </td>
@@ -343,7 +343,7 @@ async function sendCancellationEmails(data) {
               </tr>
               <tr>
                 <td style="background-color: #F8FAFC; padding: 14px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
-                  Mahalaxmi Enterprises • Direct Mill Rates & Wholesale Essentials • +91 90335 98639
+                  Mahalaxmi Enterprise • Direct Mill Rates & Wholesale Essentials • +91 90335 98639
                 </td>
               </tr>
             </table>
@@ -394,7 +394,7 @@ async function sendCancellationEmails(data) {
           template_params: {
             to_email: customerEmail,
             to_name: customerName,
-            subject: `Order #${orderNumber} Cancelled | Mahalaxmi Enterprises`,
+            subject: `Order #${orderNumber} Cancelled | Mahalaxmi Enterprise`,
             headline: 'Order Cancelled',
             code_box: `#${orderNumber}`,
             subtext: `Total: ₹${Number(totalAmount).toLocaleString('en-IN')} • Refund in 2-4 days`,

@@ -29,6 +29,18 @@ function saveFallbackConfig(newConfig) {
   }
 }
 
+function getUnexpiredNotifications(notifications) {
+  const now = Date.now();
+  const cutoff = now - 7 * 24 * 60 * 60 * 1000;
+  return (Array.isArray(notifications) ? notifications : []).filter(notification => {
+    const timestamp = Date.parse(
+      notification.timestamp || notification.createdAt || notification.created_at || ''
+    );
+    return notification.isSent !== false && notification.is_sent !== 0 &&
+      Number.isFinite(timestamp) && timestamp <= now && timestamp >= cutoff;
+  });
+}
+
 export default async function handler(req, res) {
   // Set CORS headers so Flutter mobile app or any web client can query
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -232,12 +244,16 @@ export default async function handler(req, res) {
     // 1. Send / Broadcast Mobile App Notification
     if (action === 'send_notification') {
       const notif = body.notification || body;
+      const allowedTypes = new Set(['ORDER', 'OFFER', 'SYSTEM', 'PRICE_DROP']);
+      const type = String(notif.type || 'SYSTEM').toUpperCase();
+      const title = String(notif.title || '').trim();
+      const message = String(notif.message || '').trim();
+      if (!title || !message || !allowedTypes.has(type)) {
+        return res.status(400).json({ success: false, error: 'A title, message, and valid notification type are required.' });
+      }
       const notifId = notif.id || `notif-${Date.now()}`;
-      const title = notif.title || 'Mill Notification';
-      const message = notif.message || '';
       const targetCategory = notif.targetCategory || notif.target_category || 'All';
-      const type = notif.type || 'OFFER';
-      const timestamp = notif.timestamp || new Date().toISOString();
+      const timestamp = new Date().toISOString();
 
       let dbSaved = false;
 
@@ -262,7 +278,7 @@ export default async function handler(req, res) {
 
       // Also persist to public/app-config.json
       const currentConfig = readFallbackConfig() || {};
-      const existingNotifs = currentConfig.notifications || [];
+      const existingNotifs = getUnexpiredNotifications(currentConfig.notifications);
       const updatedNotifs = [
         {
           id: notifId,
@@ -274,7 +290,7 @@ export default async function handler(req, res) {
           isSent: true
         },
         ...existingNotifs.filter(n => n.id !== notifId)
-      ];
+      ].slice(0, 15);
 
       currentConfig.notifications = updatedNotifs;
       currentConfig.lastSyncedAt = new Date().toISOString();
@@ -283,8 +299,8 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true,
         message: dbSaved
-          ? 'Notification broadcasted and saved to MySQL database!'
-          : 'Notification broadcasted and saved to app configuration!',
+          ? 'Notification saved to MySQL and the mobile app inbox.'
+          : 'Notification saved to the mobile app inbox configuration.',
         dbSaved,
         notification: {
           id: notifId,
@@ -478,7 +494,9 @@ export default async function handler(req, res) {
       const [banners] = await pool.query('SELECT * FROM app_banners WHERE is_active = 1 ORDER BY display_order ASC');
       const [categories] = await pool.query('SELECT * FROM categories ORDER BY display_order ASC');
       const [settingsRows] = await pool.query('SELECT * FROM app_settings LIMIT 1');
-      const [notifications] = await pool.query('SELECT * FROM app_notifications ORDER BY created_at DESC LIMIT 15');
+      const [notifications] = await pool.query(
+        'SELECT * FROM app_notifications WHERE is_sent = 1 AND created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY) ORDER BY created_at DESC LIMIT 15'
+      );
 
       const settings = settingsRows[0] || {};
 
@@ -563,11 +581,12 @@ export default async function handler(req, res) {
         c => c.isActive && c.isFeatured !== false && c.suggestionMode !== 'SECRET_MANUAL_ONLY' && (c.code || '').toUpperCase() !== 'LAUNCH150' && c.targetPlatform !== 'WEB_ONLY'
       );
 
+      fallback.notifications = getUnexpiredNotifications(fallback.notifications);
       return res.status(200).json({
         success: true,
         source: 'MYSQL_DATABASE',
         data: {
-          appName: settings.app_name || 'Mahalaxmi Enterprises',
+          appName: settings.app_name || 'Mahalaxmi Enterprise',
           appVersion: settings.app_version || '1.0.3+4',
           minSupportedVersion: settings.min_supported_version || '1.0.0',
           maintenanceMode: Boolean(settings.maintenance_mode),
@@ -614,7 +633,7 @@ export default async function handler(req, res) {
 
   // Fallback to local config file if MySQL is offline or not configured
   const fallback = readFallbackConfig() || {
-    appName: 'Mahalaxmi Enterprises',
+    appName: 'Mahalaxmi Enterprise',
     appVersion: '1.0.3+4',
     banners: [],
     categories: [],

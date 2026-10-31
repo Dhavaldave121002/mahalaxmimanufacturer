@@ -11,8 +11,8 @@ const banners = [
     tag: 'DIRECT MILL PRODUCER',
     cta: 'Shop Roti Covers',
     cta_link: '/catalog?category=home-kitchen',
-    image: '/banner-designs/hero-roti-cover.jpg',
-    mobile_image: '/banner-designs/hero-roti-cover.jpg',
+    image: '/banner-designs/banner-roti-cover.jpg',
+    mobile_image: '/banner-designs/banner-roti-cover.jpg',
     is_active: 1,
     display_order: 1,
     visibility: 'ALL',
@@ -26,8 +26,8 @@ const banners = [
     tag: 'ZERO-PLASTIC LIVING',
     cta: 'Shop Produce Bags',
     cta_link: '/catalog?category=household',
-    image: '/banner-designs/hero-veg-bag.jpg',
-    mobile_image: '/banner-designs/hero-veg-bag.jpg',
+    image: '/banner-designs/banner-veg-bag.jpg',
+    mobile_image: '/banner-designs/banner-veg-bag.jpg',
     is_active: 1,
     display_order: 2,
     visibility: 'ALL',
@@ -41,8 +41,8 @@ const banners = [
     tag: 'COMMERCIAL BULK SUPPLY',
     cta: 'Explore Tote Bags',
     cta_link: '/catalog?category=textile',
-    image: '/banner-designs/hero-tote-bag.jpg',
-    mobile_image: '/banner-designs/hero-tote-bag.jpg',
+    image: '/banner-designs/banner-tote-bag.jpg',
+    mobile_image: '/banner-designs/banner-tote-bag.jpg',
     is_active: 1,
     display_order: 3,
     visibility: 'ALL',
@@ -56,8 +56,8 @@ const banners = [
     tag: 'WARDROBE STORAGE CARE',
     cta: 'Shop Saree Covers',
     cta_link: '/catalog?category=textile',
-    image: '/banner-designs/hero-saree-cover.jpg',
-    mobile_image: '/banner-designs/hero-saree-cover.jpg',
+    image: '/banner-designs/banner-saree-cover.jpg',
+    mobile_image: '/banner-designs/banner-saree-cover.jpg',
     is_active: 1,
     display_order: 4,
     visibility: 'ALL',
@@ -129,7 +129,7 @@ async function updateBanners() {
       mobileImage: b.mobile_image,
       isActive: true,
       displayOrder: b.display_order,
-      showTextOverlay: true
+      showTextOverlay: Boolean(b.show_text_overlay)
     }));
     config.lastSyncedAt = new Date().toISOString();
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');

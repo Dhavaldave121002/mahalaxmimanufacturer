@@ -221,8 +221,9 @@ export const MobileAppManager: React.FC = () => {
   // Push Notification Form
   const [notifTitle, setNotifTitle] = useState('');
   const [notifMessage, setNotifMessage] = useState('');
-  const [notifCategory, setNotifCategory] = useState('All');
   const [notifType, setNotifType] = useState<'OFFER' | 'ORDER' | 'SYSTEM' | 'PRICE_DROP'>('OFFER');
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState<{ message: string; error: boolean } | null>(null);
 
   // Filter for App Orders (matches source, id, or orderNumber with 'app')
   const appOrders = orders.filter(
@@ -307,20 +308,29 @@ export const MobileAppManager: React.FC = () => {
   };
 
   // Push Notification Handler
-  const handleSendNotification = (e: React.FormEvent) => {
+  const handleSendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!notifTitle.trim() || !notifMessage.trim()) return;
+    if (!notifTitle.trim() || !notifMessage.trim() || isSendingNotification) return;
 
-    sendAppPushNotification({
-      title: notifTitle.trim(),
-      message: notifMessage.trim(),
-      targetCategory: notifCategory !== 'All' ? notifCategory : undefined,
-      type: notifType
-    });
-
-    setNotifTitle('');
-    setNotifMessage('');
-    triggerSyncAlert('Push broadcast sent to all registered mobile app devices!');
+    setIsSendingNotification(true);
+    setNotificationStatus(null);
+    try {
+      await sendAppPushNotification({
+        title: notifTitle.trim(),
+        message: notifMessage.trim(),
+        type: notifType
+      });
+      setNotifTitle('');
+      setNotifMessage('');
+      setNotificationStatus({ message: 'Saved to the mobile app inbox. It expires after 7 days.', error: false });
+    } catch (error) {
+      setNotificationStatus({
+        message: error instanceof Error ? error.message : 'The notification could not be saved.',
+        error: true
+      });
+    } finally {
+      setIsSendingNotification(false);
+    }
   };
 
   // Sync to Flutter Action
@@ -1010,13 +1020,13 @@ export const MobileAppManager: React.FC = () => {
             </div>
           )}
 
-          {/* SUB-TAB 5: PUSH NOTIFICATIONS */}
+          {/* SUB-TAB 5: APP INBOX NOTIFICATIONS */}
           {activeSubTab === 'notifications' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-base font-bold text-navy">Mobile App Push Notifications</h3>
+                <h3 className="text-base font-bold text-navy">Mobile App Inbox Notifications</h3>
                 <p className="text-xs text-slate-500">
-                  Broadcast promotional updates, flash mill discounts, and system alerts to all mobile app users.
+                  Broadcast offers and general updates to the in-app inbox. Messages expire after 7 days.
                 </p>
               </div>
 
@@ -1024,7 +1034,7 @@ export const MobileAppManager: React.FC = () => {
               <form onSubmit={handleSendNotification} className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-4">
                 <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                   <Send className="w-4 h-4 text-indigo" />
-                  <span>Compose Live Broadcast Alert</span>
+                  <span>Compose In-App Notification</span>
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1041,17 +1051,16 @@ export const MobileAppManager: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-700">Target Category Filter</label>
+                    <label className="text-xs font-bold text-slate-700">Notification Type</label>
                     <select
-                      value={notifCategory}
-                      onChange={e => setNotifCategory(e.target.value)}
+                      value={notifType}
+                      onChange={e => setNotifType(e.target.value as typeof notifType)}
                       className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:ring-1 focus:ring-indigo mt-1"
                     >
-                      <option value="All">All App Users (Pan-India)</option>
-                      <option value="Textile">Textiles & Bedsheets</option>
-                      <option value="Home and kitchen">Home & Kitchen Linen</option>
-                      <option value="Household">Household Supplies</option>
-                      <option value="Cotton products">Pure Cotton Products</option>
+                      <option value="OFFER">Offer</option>
+                      <option value="PRICE_DROP">Price drop</option>
+                      <option value="SYSTEM">App update</option>
+                      <option value="ORDER">General order update</option>
                     </select>
                   </div>
                 </div>
@@ -1069,15 +1078,28 @@ export const MobileAppManager: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
-                  <span className="text-[11px] text-slate-400">
-                    Will trigger instant notification banner on Android & iOS devices.
-                  </span>
+                  <div className="max-w-[65%]">
+                    <p className="text-[11px] text-slate-500">
+                      Saved to the app inbox; this does not send an Android/iOS lock-screen push.
+                    </p>
+                    {notifType === 'ORDER' && (
+                      <p className="text-[11px] text-amber-700 mt-1">
+                        General message only. Do not include private order or customer details.
+                      </p>
+                    )}
+                    {notificationStatus && (
+                      <p className={`text-xs mt-2 ${notificationStatus.error ? 'text-red-600' : 'text-emerald-700'}`}>
+                        {notificationStatus.message}
+                      </p>
+                    )}
+                  </div>
                   <button
                     type="submit"
+                    disabled={isSendingNotification}
                     className="px-4 py-2 bg-navy hover:bg-navy-800 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-1.5"
                   >
-                    <Radio className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                    <span>Broadcast Now</span>
+                    <Radio className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{isSendingNotification ? 'Saving...' : 'Save to Inbox'}</span>
                   </button>
                 </div>
               </form>

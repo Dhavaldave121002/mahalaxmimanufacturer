@@ -738,7 +738,7 @@ export const CartPage: React.FC = () => {
             {/* 1-Click WhatsApp Quick Order */}
             <a
               href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
-                `Hello Mahalaxmi Enterprises, I want to order my cart items:\n` +
+                `Hello Mahalaxmi Enterprise, I want to order my cart items:\n` +
                 cart.map(i => `- ${i.quantity}x ${i.product.name} (₹${i.unitPrice}/pc)`).join('\n') +
                 `\n\nTotal Amount: ₹${cartTotal}\nPlease confirm order and share payment link / bank RTGS details.`
               )}`}

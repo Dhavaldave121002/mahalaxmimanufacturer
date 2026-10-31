@@ -32,6 +32,7 @@ import { Badge } from '../common/Badge';
 import { WishlistDrawer } from '../common/WishlistDrawer';
 import { matchesProductSearch } from '../../utils/searchProducts';
 import { toSubcategorySlug } from '../../utils/productCategories';
+import { useDeliveryLocationPage } from '../../hooks/useDeliveryLocationPage';
 import {
   BUSINESS_SUPPORT_PHONE,
   BUSINESS_SUPPORT_PHONE_LINK,
@@ -60,6 +61,7 @@ export const Header: React.FC = () => {
   } = useApp();
 
   const topPromo = coupons.find(c => c.isActive && c.isFeatured);
+  const deliveryLocationPage = useDeliveryLocationPage(deliveryInfo);
 
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -158,7 +160,6 @@ export const Header: React.FC = () => {
   const handlePincodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     checkPincode(pinInput);
-    setPinModalOpen(false);
   };
 
   // Circular Category Rail (Amazon / Flipkart / Meesho signature)
@@ -307,12 +308,12 @@ export const Header: React.FC = () => {
               <Link to="/" className="flex items-center gap-1.5 sm:gap-2 group min-w-0">
                 <img
                   src="/logo.png"
-                  alt="Mahalaxmi Enterprises Logo"
+                  alt="Mahalaxmi Enterprise Logo"
                   className="w-8 h-8 sm:w-11 sm:h-11 rounded-full object-cover shadow-sm group-hover:scale-105 transition-transform border border-slate-200 shrink-0"
                 />
                 <div className="flex flex-col min-w-0">
                   <span className="font-black text-[9px] min-[390px]:text-[10px] sm:text-base lg:text-lg tracking-tight text-navy leading-none whitespace-nowrap">
-                    MAHALAXMI ENTERPRISES
+                    MAHALAXMI ENTERPRISE
                   </span>
                   <span className="text-[7px] sm:text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mt-0.5 hidden xs:block">
                     Direct Mill Rates
@@ -690,22 +691,22 @@ export const Header: React.FC = () => {
 
       {/* 3. Flipkart / Meesho Style Visual Category Circles Rail (Scrolls away under Bar 2, hidden on cart/checkout/admin) */}
       {!['/cart', '/checkout'].includes(location.pathname) && !location.pathname.startsWith('/admin') && (
-        <nav className="bg-white border-b border-slate-200 overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x py-2 sm:py-2.5">
-          <div className="flex w-max min-w-full items-start gap-x-4 px-2 sm:items-center sm:gap-8 sm:px-4 sm:justify-center">
+        <nav className="bg-white border-b border-slate-200 overflow-x-auto hide-scrollbar relative z-10 w-full max-w-full touch-pan-x py-3 sm:py-4">
+          <div className="flex w-max min-w-full items-start gap-x-3 px-3 sm:items-center sm:gap-5 sm:px-5 sm:justify-center">
             {categoryBubbles.map((cat, i) => (
               <Link
                 key={`${cat.path}-${i}`}
                 to={cat.path}
-                className="group flex w-[76px] shrink-0 flex-col items-center gap-1 text-center transition sm:gap-1.5"
+                className="group flex w-36 shrink-0 flex-col items-center gap-2 text-center transition sm:w-44"
               >
-                <div className="relative h-14 w-14 rounded-full overflow-hidden p-0.5 bg-gradient-to-tr from-slate-200 to-indigo/40 group-hover:from-indigo group-hover:to-champagne transition sm:h-16 sm:w-16">
+                <div className="relative h-32 w-32 rounded-full overflow-hidden p-1 bg-gradient-to-tr from-slate-200 to-indigo/40 group-hover:from-indigo group-hover:to-champagne transition sm:h-40 sm:w-40">
                   <img
                     src={cat.img}
                     alt={cat.name}
                     className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300"
                   />
                 </div>
-                <span className="line-clamp-2 h-6 w-full px-0.5 text-[10px] font-semibold leading-3 text-slate-700 transition group-hover:text-indigo">
+                <span className="line-clamp-2 min-h-9 w-full px-1 text-xs font-medium leading-4 text-slate-700 transition group-hover:text-indigo">
                   {cat.name}
                 </span>
               </Link>
@@ -772,6 +773,15 @@ export const Header: React.FC = () => {
                     ? `Serviceable • Estimated Delivery: ${deliveryInfo.estimatedDays} ${deliveryInfo.estimatedDays === 1 ? 'day' : 'days'}`
                     : 'Delivery serviceability is not confirmed yet.'}
                 </p>
+                {deliveryInfo.serviceable && deliveryLocationPage && (
+                  <Link
+                    to={deliveryLocationPage.to}
+                    onClick={() => setPinModalOpen(false)}
+                    className="mt-2 inline-flex font-bold text-indigo underline underline-offset-2 hover:text-indigo-dark"
+                  >
+                    View {deliveryLocationPage.city} location details and products
+                  </Link>
+                )}
               </div>
             )}
           </div>
@@ -796,11 +806,11 @@ export const Header: React.FC = () => {
                 <div className="flex items-center gap-2.5">
                   <img
                     src="/logo.png"
-                    alt="Mahalaxmi Enterprises Logo"
+                    alt="Mahalaxmi Enterprise Logo"
                     className="w-10 h-10 rounded-full object-cover shadow-sm border border-champagne/40 shrink-0"
                   />
                   <div>
-                    <h4 className="font-black text-sm tracking-tight leading-tight">MAHALAXMI ENTERPRISES</h4>
+                    <h4 className="font-black text-sm tracking-tight leading-tight">MAHALAXMI ENTERPRISE</h4>
                     <p className="text-[10px] text-champagne font-bold tracking-wider uppercase">Direct Mill Weaves</p>
                   </div>
                 </div>
@@ -1018,7 +1028,7 @@ export const Header: React.FC = () => {
             {/* 3. Drawer Bottom Contact Strip */}
             <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs shrink-0 space-y-2">
               <a
-                href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Namaste Mahalaxmi Enterprises, I would like to enquire about wholesale products and pricing.')}`}
+                href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Namaste Mahalaxmi Enterprise, I would like to enquire about wholesale products and pricing.')}`}
                 target="_blank"
                 rel="noreferrer"
                 className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition shadow-sm text-center"

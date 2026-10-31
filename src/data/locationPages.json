@@ -1,0 +1,75 @@
+{
+  "services": [
+    { "title": "Textile", "detail": "Cotton and fabric products.", "collection": "textile", "href": "/category/textile", "image": "/banner-designs/b2b-hero-textile.jpg" },
+    { "title": "Home Furnishing", "detail": "Home utility products.", "collection": "household", "href": "/category/household", "image": "/assets/images/banner_textile.jpg" },
+    { "title": "Kitchen and Dining", "detail": "Kitchen accessories and dining essentials.", "collection": "home-kitchen", "href": "/category/home-kitchen", "image": "/assets/images/banner_home_kitchen.jpg" },
+    { "title": "Bags and Accessories", "detail": "Tote bags, canvas bags and organizers.", "collection": "cotton-products", "href": "/category/cotton-products", "image": "/banner-designs/hero-tote-bag.jpg" },
+    { "title": "Sustainable Products", "detail": "Eco-friendly reusable product options.", "collection": "cotton-products", "href": "/category/cotton-products", "image": "/banner-designs/hero-veg-bag.jpg" },
+    { "title": "Lifestyle Products", "detail": "Daily-use household essentials.", "collection": "household", "href": "/category/household", "image": "/assets/images/banner_household.jpg" },
+    { "title": "Manufacturing", "detail": "Cotton product manufacturing enquiries.", "collection": "cotton-products", "href": "/wholesale", "image": "/banner-designs/b2b-hero-canvas-totes.jpg" },
+    { "title": "E-commerce", "detail": "Browse the online product catalogue.", "collection": "textile", "href": "/catalog", "image": "/banner-designs/hero-tote-bag.jpg" },
+    { "title": "Retail", "detail": "Consumer and retail product catalogue.", "collection": "home-kitchen", "href": "/catalog", "image": "/assets/images/banner_cotton.jpg" },
+    { "title": "Storage and Organization", "detail": "Storage solutions and household organization.", "collection": "household", "href": "/category/household", "image": "/assets/images/banner_household.jpg" }
+  ],
+  "states": [
+  {
+    "state": "Jammu and Kashmir",
+    "slug": "jammu-and-kashmir",
+    "cities": [
+      "Srinagar", "Jammu", "Anantnag", "Baramulla", "Sopore", "Kathua", "Udhampur",
+      "Rajouri", "Poonch", "Pulwama", "Budgam", "Ganderbal", "Bandipora", "Kupwara",
+      "Kulgam", "Shopian"
+    ]
+  },
+  {
+    "state": "Ladakh",
+    "slug": "ladakh",
+    "cities": ["Leh", "Kargil"]
+  },
+  {
+    "state": "Himachal Pradesh",
+    "slug": "himachal-pradesh",
+    "cities": [
+      "Shimla", "Dharamshala", "Solan", "Mandi", "Kullu", "Manali", "Una", "Hamirpur",
+      "Bilaspur", "Chamba", "Nahan", "Palampur", "Baddi", "Kangra"
+    ]
+  },
+  {
+    "state": "Punjab",
+    "slug": "punjab",
+    "cities": [
+      "Amritsar", "Ludhiana", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Pathankot",
+      "Hoshiarpur", "Moga", "Firozpur", "Kapurthala", "Sangrur", "Barnala", "Faridkot",
+      "Muktsar", "Malerkotla", "Rupnagar", "Fatehgarh Sahib"
+    ]
+  },
+  {
+    "state": "Haryana",
+    "slug": "haryana",
+    "cities": [
+      "Gurugram", "Faridabad", "Panipat", "Ambala", "Karnal", "Hisar", "Rohtak", "Sonipat",
+      "Yamunanagar", "Panchkula", "Kurukshetra", "Sirsa", "Rewari", "Bhiwani", "Jind",
+      "Kaithal", "Palwal", "Bahadurgarh", "Jhajjar", "Narnaul"
+    ]
+  },
+  {
+    "state": "Rajasthan",
+    "slug": "rajasthan",
+    "cities": [
+      "Jaipur", "Jodhpur", "Udaipur", "Kota", "Ajmer", "Bikaner", "Alwar", "Bharatpur",
+      "Bhilwara", "Sikar", "Pali", "Sri Ganganagar", "Hanumangarh", "Chittorgarh", "Tonk",
+      "Kishangarh", "Beawar", "Barmer", "Jaisalmer", "Nagaur", "Bundi", "Dausa", "Jhunjhunu"
+    ]
+  },
+  {
+    "state": "Gujarat",
+    "slug": "gujarat",
+    "cities": [
+      "Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar", "Bhavnagar", "Jamnagar",
+      "Junagadh", "Anand", "Nadiad", "Mehsana", "Morbi", "Surendranagar", "Navsari", "Valsad",
+      "Vapi", "Bharuch", "Ankleshwar", "Porbandar", "Godhra", "Palanpur", "Patan", "Dahod",
+      "Amreli", "Botad", "Gondal", "Veraval", "Dwarka", "Bhuj", "Gandhidham"
+    ]
+  }
+  ]
+}

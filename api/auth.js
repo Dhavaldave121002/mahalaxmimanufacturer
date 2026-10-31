@@ -272,7 +272,7 @@ export default async function handler(req, res) {
           return res.status(201).json({
             success: true,
             source: 'MYSQL_DATABASE',
-            message: 'Account registered successfully! Welcome to Mahalaxmi Enterprises.',
+            message: 'Account registered successfully! Welcome to Mahalaxmi Enterprise.',
             user: newUser
           });
         } catch (dbErr) {
@@ -314,7 +314,7 @@ export default async function handler(req, res) {
       return res.status(201).json({
         success: true,
         source: 'LOCAL_FALLBACK',
-        message: 'Account registered successfully! Welcome to Mahalaxmi Enterprises.',
+        message: 'Account registered successfully! Welcome to Mahalaxmi Enterprise.',
         user: newUser
       });
     }

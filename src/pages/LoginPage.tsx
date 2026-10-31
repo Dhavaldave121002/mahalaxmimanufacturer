@@ -288,7 +288,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
 
       setLoading(false);
       if (res.success) {
-        setSuccessMsg(`🎉 Account verified & created! Welcome to Mahalaxmi Enterprises, ${registerForm.name}.`);
+        setSuccessMsg(`🎉 Account verified & created! Welcome to Mahalaxmi Enterprise, ${registerForm.name}.`);
         setTimeout(() => {
           navigate(redirectPath);
         }, 800);
@@ -397,12 +397,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
             <Link to="/" className="inline-flex items-center gap-2.5">
               <img
                 src="/logo.png"
-                alt="Mahalaxmi Enterprises Logo"
+                alt="Mahalaxmi Enterprise Logo"
                 className="w-11 h-11 rounded-full object-cover shadow-sm border border-champagne/50"
               />
               <div className="flex flex-col text-left">
                 <span className="font-black text-lg tracking-tight text-white leading-none">
-                  MAHALAXMI ENTERPRISES
+                  MAHALAXMI ENTERPRISE
                 </span>
                 <span className="text-[9px] font-extrabold text-champagne uppercase tracking-widest mt-0.5">
                   Direct Mill Rates & Portal

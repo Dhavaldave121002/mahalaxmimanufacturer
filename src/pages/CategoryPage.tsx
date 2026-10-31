@@ -3,8 +3,7 @@ import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { ProductCard } from '../components/common/ProductCard';
-import { CategoryId } from '../types';
-import { Layers, ArrowLeft, SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { toSubcategorySlug, matchesSubcategorySlug, productBelongsToCollection } from '../utils/productCategories';
 
 export const CategoryPage: React.FC = () => {
@@ -35,18 +34,6 @@ export const CategoryPage: React.FC = () => {
     ? products.find(product => productBelongsToCollection(product, categoryId) && product.subcategory === 'Aprons')?.images[0] || null
     : null;
 
-  if (!categoryConfig) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-16 text-center space-y-4">
-        <h2 className="text-2xl font-bold text-navy">Category Not Found</h2>
-        <p className="text-sm text-slate-500">The requested category does not exist in our catalog.</p>
-        <Link to="/catalog" className="inline-block px-5 py-2.5 bg-indigo text-white rounded-xl text-xs font-bold">
-          Return to Catalog
-        </Link>
-      </div>
-    );
-  }
-
   // Filter products for this category using multi-collection and slug-tolerant matching
   const categoryProducts = products
     .filter(p => {
@@ -67,13 +54,58 @@ export const CategoryPage: React.FC = () => {
 
   const matchedSubcategoryName = availableSubcategories.find(s => matchesSubcategorySlug(s, selectedSubcategory));
 
-  // Dynamic SEO title
   useEffect(() => {
-    if (categoryConfig) {
-      const subTitle = matchedSubcategoryName ? ` - ${matchedSubcategoryName}` : '';
-      document.title = `${categoryConfig.name}${subTitle} | Mahalaxmi Enterprises`;
+    if (!categoryConfig) return;
+
+    const categoryName = matchedSubcategoryName
+      ? `${matchedSubcategoryName} - ${categoryConfig.name}`
+      : categoryConfig.name;
+    const title = `Shop ${categoryName} Online | Mahalaxmi Enterprise`;
+    const description = `${categoryConfig.description} Browse ${categoryName.toLowerCase()} online from Mahalaxmi Enterprise. Check product details, delivery availability by PIN code and bulk order options.`;
+    const canonicalPath = subcategorySlug
+      ? `/category/${categoryId}/${subcategorySlug}`
+      : `/category/${categoryId}`;
+    const canonicalUrl = `https://mahalaxmimanufacturer.com${canonicalPath}`;
+    const previousTitle = document.title;
+    document.title = title;
+
+    const updateMeta = (selector: string, key: 'name' | 'property', value: string, content: string) => {
+      let element = document.head.querySelector<HTMLMetaElement>(selector);
+      const previousContent = element?.content;
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(key, value);
+        document.head.appendChild(element);
+      }
+      element.content = content;
+      return () => {
+        if (previousContent === undefined) element?.remove();
+        else if (element) element.content = previousContent;
+      };
+    };
+
+    const restoreMeta = [
+      updateMeta('meta[name="description"]', 'name', 'description', description),
+      updateMeta('meta[property="og:title"]', 'property', 'og:title', title),
+      updateMeta('meta[property="og:description"]', 'property', 'og:description', description),
+      updateMeta('meta[property="og:url"]', 'property', 'og:url', canonicalUrl)
+    ];
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    const previousCanonical = canonical?.href;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
     }
-  }, [categoryConfig, matchedSubcategoryName]);
+    canonical.href = canonicalUrl;
+
+    return () => {
+      document.title = previousTitle;
+      restoreMeta.forEach(restore => restore());
+      if (previousCanonical && canonical) canonical.href = previousCanonical;
+      else canonical?.remove();
+    };
+  }, [categoryConfig, categoryId, matchedSubcategoryName, subcategorySlug]);
 
   const handleSelectSubcategory = (sub?: string) => {
     if (!sub || matchesSubcategorySlug(sub, selectedSubcategory)) {
@@ -95,6 +127,18 @@ export const CategoryPage: React.FC = () => {
       }
     }
   };
+
+  if (!categoryConfig) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-16 text-center space-y-4">
+        <h2 className="text-2xl font-bold text-navy">Category Not Found</h2>
+        <p className="text-sm text-slate-500">The requested category does not exist in our catalog.</p>
+        <Link to="/catalog" className="inline-block px-5 py-2.5 bg-indigo text-white rounded-xl text-xs font-bold">
+          Return to Catalog
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10 pb-16">

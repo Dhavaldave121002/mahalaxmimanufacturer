@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function runSeed() {
-  console.log('--- Mahalaxmi Enterprises MySQL Auto-Migration & Seed ---');
+  console.log('--- Mahalaxmi Enterprise MySQL Auto-Migration & Seed ---');
   const connTest = await testDbConnection();
   if (!connTest.connected) {
     console.error('❌ Connection Failed:', connTest.message);

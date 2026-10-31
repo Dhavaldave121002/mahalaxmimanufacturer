@@ -12,10 +12,15 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product }) => {
     if (!product) return;
 
     const inquiryOnly = product.stock <= 0;
-    const baseTitle = `${product.name} | Mahalaxmi Manufacturer`;
+    const baseTitle = `${product.name} | Mahalaxmi Enterprise`;
+    const productSummary = (product.shortDescription || product.description || product.name)
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     const metaDesc = inquiryOnly
-      ? `${product.shortDescription || product.description || product.name} Source-listed details may need confirmation. Contact us to verify current availability and price.`
-      : `${product.shortDescription || product.description || product.name} Contact Mahalaxmi Manufacturer for product and order details.`;
+      ? `${product.name}: Contact Mahalaxmi Enterprise to confirm current availability, pricing and restock details.`
+      : `${product.name}: ${productSummary}`;
+    const description = metaDesc.length > 155 ? `${metaDesc.slice(0, 152).trimEnd()}...` : metaDesc;
 
     // 1. Update Document Title
     document.title = baseTitle;
@@ -43,15 +48,15 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product }) => {
     };
 
     // 2. Standard Meta Tags
-    setMeta('name', 'description', metaDesc);
-    const keywords = `${product.name}, ${product.categoryName}, ${product.subcategory}, Mahalaxmi Manufacturer`;
+    setMeta('name', 'description', description);
+    const keywords = `${product.name}, ${product.categoryName}, ${product.subcategory}, Mahalaxmi Enterprise`;
     setMeta('name', 'keywords', keywords);
 
     // 4. OpenGraph Tags for Social & WhatsApp Previews
     const canonicalUrl = `https://mahalaxmimanufacturer.com/product/${product.slug || product.id}`;
     setLink('canonical', canonicalUrl);
     setMeta('property', 'og:title', baseTitle);
-    setMeta('property', 'og:description', metaDesc);
+    setMeta('property', 'og:description', description);
     setMeta('property', 'og:type', 'product');
     setMeta('property', 'og:url', canonicalUrl);
     if (product.images && product.images[0]) {
@@ -80,16 +85,16 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product }) => {
           "@id": `${canonicalUrl}#product`,
           "name": product.name,
           "image": product.images || [],
-          "description": product.shortDescription || product.description || metaDesc,
+          "description": product.shortDescription || product.description || description,
           "sku": product.sku,
           ...(product.sku.startsWith('SRC-') ? {} : { "mpn": product.sku }),
           "brand": {
             "@type": "Brand",
-            "name": "Mahalaxmi Enterprises"
+            "name": "Mahalaxmi Enterprise"
           },
           "manufacturer": {
             "@type": "Organization",
-            "name": "Mahalaxmi Manufacturer",
+            "name": "Mahalaxmi Enterprise",
             "url": "https://mahalaxmimanufacturer.com"
           },
           ...(!inquiryOnly ? { "offers": {
@@ -103,7 +108,7 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product }) => {
             "itemCondition": "https://schema.org/NewCondition",
             "seller": {
               "@type": "Organization",
-              "name": "Mahalaxmi Enterprises",
+              "name": "Mahalaxmi Enterprise",
               "url": "https://mahalaxmimanufacturer.com"
             }
           } } : {}),
@@ -152,7 +157,7 @@ export const SEOProductHead: React.FC<SEOProductHeadProps> = ({ product }) => {
 
     return () => {
       // Reset title to default on unmount
-      document.title = 'Mahalaxmi Enterprises | Direct Mill Rates & Wholesale Essentials';
+      document.title = 'Mahalaxmi Enterprise | Direct Mill Rates & Wholesale Essentials';
     };
   }, [product]);
 

@@ -1,5 +1,5 @@
 {
-  "appName": "Mahalaxmi Enterprises",
+  "appName": "Mahalaxmi Enterprise",
   "appVersion": "1.0.3+4",
   "minSupportedVersion": "1.0.0",
   "maintenanceMode": false,
@@ -22,8 +22,8 @@
       "tag": "100% PURE COTTON",
       "cta": "Shop Roti Covers",
       "ctaLink": "/catalog?category=home-kitchen",
-      "image": "/banner-designs/hero-roti-cover.jpg",
-      "mobileImage": "assets/images/banner_roti_cover.jpg",
+      "image": "/banner-designs/banner-roti-cover.jpg",
+      "mobileImage": "/banner-designs/banner-roti-cover.jpg",
       "gradientFrom": "#881337",
       "gradientVia": "#9F1239",
       "gradientTo": "#BE123C",
@@ -42,8 +42,8 @@
       "tag": "ZERO-PLASTIC LIVING",
       "cta": "Shop Produce Bags",
       "ctaLink": "/catalog?category=household",
-      "image": "/banner-designs/hero-veg-bag.jpg",
-      "mobileImage": "assets/images/banner_veg_bag.jpg",
+      "image": "/banner-designs/banner-veg-bag.jpg",
+      "mobileImage": "/banner-designs/banner-veg-bag.jpg",
       "gradientFrom": "#064E3B",
       "gradientVia": "#047857",
       "gradientTo": "#059669",
@@ -62,8 +62,8 @@
       "tag": "DAILY ESSENTIALS",
       "cta": "Explore Tote Bags",
       "ctaLink": "/catalog?category=textile",
-      "image": "/banner-designs/hero-tote-bag.jpg",
-      "mobileImage": "assets/images/banner_tote_bag.jpg",
+      "image": "/banner-designs/banner-tote-bag.jpg",
+      "mobileImage": "/banner-designs/banner-tote-bag.jpg",
       "gradientFrom": "#1E293B",
       "gradientVia": "#334155",
       "gradientTo": "#475569",
@@ -82,8 +82,8 @@
       "tag": "WARDROBE CARE",
       "cta": "Shop Saree Covers",
       "ctaLink": "/catalog?category=textile",
-      "image": "/banner-designs/hero-saree-cover.jpg",
-      "mobileImage": "assets/images/banner_saree_cover.jpg",
+      "image": "/banner-designs/banner-saree-cover.jpg",
+      "mobileImage": "/banner-designs/banner-saree-cover.jpg",
       "gradientFrom": "#312E81",
       "gradientVia": "#4338CA",
       "gradientTo": "#6366F1",
@@ -147,62 +147,7 @@
       "displayOrder": 5
     }
   ],
-  "notifications": [
-    {
-      "id": "notif-1792742177649",
-      "title": "hy",
-      "message": "by",
-      "timestamp": "2026-10-23T07:56:17.649Z",
-      "targetCategory": "All",
-      "type": "OFFER",
-      "isSent": true
-    },
-    {
-      "id": "notif-1792735203135",
-      "title": "hy",
-      "message": "nice to meet you",
-      "timestamp": "2026-10-23T06:00:03.135Z",
-      "targetCategory": "All",
-      "type": "OFFER",
-      "isSent": true
-    },
-    {
-      "id": "notif-1792058395113",
-      "title": "DDDDDDDDD",
-      "message": "FEFEFEEFEEEF",
-      "timestamp": "2026-10-15T09:59:55.113Z",
-      "targetCategory": "All",
-      "type": "OFFER",
-      "isSent": true
-    },
-    {
-      "id": "notif-live-1792057412103",
-      "title": "Diwali Special Mill Dhamaka! 🪔",
-      "message": "Exclusive 35% Flat Discount unlocked for all B2B and retail textile orders.",
-      "timestamp": "2026-10-15T09:43:32.233Z",
-      "targetCategory": "Textile",
-      "type": "OFFER",
-      "isSent": true
-    },
-    {
-      "id": "notif-post-test",
-      "title": "Live Broadcast Test",
-      "message": "Testing broadcast from node",
-      "timestamp": "2026-10-15T09:35:07.982Z",
-      "targetCategory": "All",
-      "type": "OFFER",
-      "isSent": true
-    },
-    {
-      "id": "notif-1",
-      "title": "Diwali Mill Sale is Live! 🎉",
-      "message": "Direct factory rates now active across all 300 TC Combed Cotton Double Bedsheets and Towels.",
-      "timestamp": "2026-10-15T09:05:00.000Z",
-      "targetCategory": "Textile",
-      "type": "OFFER",
-      "isSent": true
-    }
-  ],
+  "notifications": [],
   "coupons": [
     {
       "id": "coup-milldirect10",

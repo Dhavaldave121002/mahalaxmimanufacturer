@@ -2,7 +2,7 @@ const { getDbPool, testDbConnection } = require('../database/db.js');
 
 async function testBothOrdersEndToEnd() {
   console.log('================================================================');
-  console.log('🛍️  MAHALAXMI ENTERPRISES - END-TO-END ORDERS VERIFICATION TEST');
+  console.log('🛍️  MAHALAXMI ENTERPRISE - END-TO-END ORDERS VERIFICATION TEST');
   console.log('================================================================\n');
 
   // Verify DB

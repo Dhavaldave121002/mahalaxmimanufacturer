@@ -42,6 +42,22 @@ import {
 } from 'lucide-react';
 
 const HOME_PRIMARY_CATEGORY_IDS = ['home-kitchen', 'household', 'textile', 'cotton-products', 'roti-covers'];
+const HERO_BANNER_IMAGES: Record<string, string> = {
+  'banner-roti-cover-pro': '/banner-designs/banner-roti-cover.jpg',
+  'banner-veg-bag-pro': '/banner-designs/banner-veg-bag.jpg',
+  'banner-tote-bag-pro': '/banner-designs/banner-tote-bag.jpg',
+  'banner-saree-cover-pro': '/banner-designs/banner-saree-cover.jpg'
+};
+
+const getHeroArtwork = (banner: AppBanner) => {
+  const image = HERO_BANNER_IMAGES[banner.id];
+
+  return {
+    image: image || banner.image || '/assets/images/banner_cotton.jpg',
+    mobileImage: image || banner.mobileImage || banner.image || '',
+    showTextOverlay: image ? true : banner.showTextOverlay !== false
+  };
+};
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -97,11 +113,9 @@ export const HomePage: React.FC = () => {
         highlight: (b.tag || '').trim(),
         ctaText: (b.cta || '').trim(),
         ctaLink: b.ctaLink || (b.category ? `/category/${b.category.toLowerCase().replace(/[^a-z0-9]/g, '-')}` : '/catalog'),
-        image: b.image || '/assets/images/banner_cotton.jpg',
-        mobileImage: b.mobileImage || b.image || '',
+        ...getHeroArtwork(b),
         badge: (b.badge || '').trim(),
         tagline: (b.tagline || '').trim(),
-        showTextOverlay: b.showTextOverlay !== false
       }))
     : [
         {
@@ -218,22 +232,33 @@ export const HomePage: React.FC = () => {
       <section className="relative w-full overflow-hidden text-white bg-navy-950">
         {(() => {
           const currentHero = heroSlides[currentSlide] || heroSlides[0];
+          const heroPicture = (
+            <picture className="absolute inset-0 block h-full w-full">
+              {currentHero.mobileImage && (
+                <source media="(max-width: 640px)" srcSet={normalizeImageUrl(currentHero.mobileImage)} />
+              )}
+              <img
+                src={normalizeImageUrl(currentHero.image)}
+                alt={`${currentHero.title || 'Mahalaxmi Enterprise'} banner`}
+                fetchPriority="high"
+                decoding="async"
+                className="h-full w-full object-contain object-center"
+              />
+            </picture>
+          );
 
           return (
             <>
-            <div className="relative mx-auto aspect-[6/5] h-auto min-h-0 w-full overflow-hidden bg-slate-900 shadow-premium sm:mx-5 sm:aspect-[16/5] sm:max-w-[1600px] sm:rounded-3xl lg:mx-auto">
-              <picture className="absolute inset-0 block h-full w-full">
-                {currentHero.mobileImage && (
-                  <source media="(max-width: 640px)" srcSet={normalizeImageUrl(currentHero.mobileImage)} />
-                )}
-                <img
-                  src={normalizeImageUrl(currentHero.image)}
-                  alt={`${currentHero.title || 'Mahalaxmi Enterprises'} banner`}
-                  fetchPriority="high"
-                  decoding="async"
-                  className="h-full w-full object-cover object-center"
-                />
-              </picture>
+            <div className="relative mx-auto aspect-video h-auto min-h-0 w-full overflow-hidden bg-slate-900 shadow-premium sm:mx-5 sm:max-w-[1600px] sm:rounded-3xl lg:mx-auto">
+              {currentHero.showTextOverlay ? heroPicture : (
+                <Link
+                  to={currentHero.ctaLink}
+                  aria-label={currentHero.ctaText || `Explore ${currentHero.title}`}
+                  className="absolute inset-0 block"
+                >
+                  {heroPicture}
+                </Link>
+              )}
 
               {/* Overlay: Text and CTAs */}
               {currentHero.showTextOverlay ? (
@@ -245,34 +270,44 @@ export const HomePage: React.FC = () => {
                   />
 
                   {/* Desktop & Mobile Content Overlay */}
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col justify-end px-3 pb-12 text-left sm:inset-y-0 sm:left-0 sm:right-auto sm:max-w-xl sm:justify-center sm:px-12 sm:pb-0 md:px-16">
-                    <div className="pointer-events-auto rounded-2xl border border-stone-200/50 bg-white/90 p-4 shadow-lg backdrop-blur-md sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-[48%] items-center px-2 py-2 text-left sm:w-2/5 sm:px-8 md:px-12 lg:max-w-xl">
+                    <div className="pointer-events-auto w-full rounded-xl border border-white/60 bg-white/80 p-2 shadow-lg backdrop-blur-sm sm:rounded-2xl sm:p-5 md:p-6">
                       {currentHero.highlight && (
-                        <span className="inline-block rounded-full border border-amber-300/50 bg-amber-100/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-900 sm:text-xs">
+                        <span className="inline-block rounded-full border border-amber-300/50 bg-amber-100/90 px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wide text-amber-900 sm:px-3 sm:py-1 sm:text-xs sm:tracking-wider">
                           {currentHero.highlight}
                         </span>
                       )}
-                      <h1 className="mt-1.5 text-xl font-black leading-tight tracking-tight text-slate-900 sm:mt-2.5 sm:text-4xl lg:text-5xl">
+                      <h1 className="mt-1 text-[13px] font-black leading-[1.05] tracking-tight text-slate-900 sm:mt-2.5 sm:text-4xl sm:leading-tight lg:text-5xl">
                         {currentHero.title}
                       </h1>
                       {currentHero.subtitle && (
-                        <p className="mt-1 max-w-md text-xs font-medium text-slate-700 line-clamp-2 sm:mt-2 sm:text-base sm:line-clamp-none lg:text-lg">
+                        <p className="mt-1 text-[9px] font-medium leading-tight text-slate-700 line-clamp-2 sm:mt-2 sm:max-w-md sm:text-base sm:leading-normal sm:line-clamp-none lg:text-lg">
                           {currentHero.subtitle}
                         </p>
                       )}
-                      <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-5 sm:gap-3">
+                      {currentHero.tagline && (
+                        <p className="mt-1 text-[8px] font-bold leading-tight text-slate-800 line-clamp-1 sm:mt-2 sm:text-sm sm:line-clamp-none">
+                          {currentHero.tagline}
+                        </p>
+                      )}
+                      {currentHero.badge && (
+                        <p className="mt-0.5 text-[7px] font-semibold uppercase leading-tight tracking-wide text-slate-600 line-clamp-1 sm:mt-1 sm:text-xs sm:line-clamp-none">
+                          {currentHero.badge}
+                        </p>
+                      )}
+                      <div className="mt-2 flex flex-wrap items-center gap-1 sm:mt-5 sm:gap-3">
                         {currentHero.ctaText && (
                           <Link
                             to={currentHero.ctaLink}
-                            className="group inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-md transition hover:bg-slate-800 sm:px-6 sm:py-3 sm:text-sm"
+                            className="group inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-1 text-[8px] font-bold leading-tight text-white shadow-md transition hover:bg-slate-800 sm:gap-2 sm:px-6 sm:py-3 sm:text-sm"
                           >
                             <span>{currentHero.ctaText}</span>
-                            <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
+                            <ArrowRight className="h-3 w-3 shrink-0 transition-transform group-hover:translate-x-1 sm:h-4 sm:w-4" />
                           </Link>
                         )}
                         <Link
                           to="/wholesale"
-                          className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white/80 px-4 py-2 text-xs font-bold text-slate-800 backdrop-blur-sm transition hover:bg-white sm:px-5 sm:py-3 sm:text-sm"
+                          className="hidden items-center gap-2 rounded-full border border-slate-300 bg-white/80 px-4 py-2 text-xs font-bold text-slate-800 backdrop-blur-sm transition hover:bg-white sm:inline-flex sm:px-5 sm:py-3 sm:text-sm"
                         >
                           <Building2 className="h-4 w-4 shrink-0 text-slate-600" />
                           <span>Mill RFQ</span>
@@ -281,35 +316,7 @@ export const HomePage: React.FC = () => {
                     </div>
                   </div>
                 </>
-              ) : (
-                <>
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950/75 via-slate-950/20 to-transparent sm:h-40"
-                  />
-
-                  <div className="absolute inset-x-0 bottom-0 z-10 px-3 pb-16 sm:hidden">
-                    <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-                      {currentHero.ctaText && (
-                        <Link
-                          to={currentHero.ctaLink}
-                          className="group inline-flex min-h-10 items-center gap-2 rounded-full border border-white/30 bg-indigo-600 px-4 py-2 text-[11px] font-bold text-white shadow-lg shadow-black/20 transition hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:min-h-12 sm:px-6 sm:text-sm"
-                        >
-                          <span>{currentHero.ctaText}</span>
-                          <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
-                        </Link>
-                      )}
-                      <Link
-                        to="/wholesale"
-                        className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/60 bg-slate-950/25 px-4 py-2 text-[11px] font-bold text-white shadow-lg shadow-black/15 backdrop-blur-sm transition hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:min-h-12 sm:px-6 sm:text-sm"
-                      >
-                        <Building2 className="h-4 w-4 shrink-0 text-champagne" />
-                        <span>Request Mill RFQ</span>
-                      </Link>
-                    </div>
-                  </div>
-                </>
-              )}
+              ) : null}
 
               {heroSlides.length > 1 && (
                 <>
@@ -431,7 +438,7 @@ export const HomePage: React.FC = () => {
         <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-subtle space-y-6">
           <div className="text-center max-w-2xl mx-auto space-y-2">
             <Badge variant="champagne" size="sm" className="font-bold">
-              THE MAHALAXMI ENTERPRISES ADVANTAGE
+              THE MAHALAXMI ENTERPRISE ADVANTAGE
             </Badge>
             <h2 className="text-2xl sm:text-3xl font-black text-navy tracking-tight">
               Why Our Prices Beat Amazon, Flipkart & Traditional Traders
@@ -463,7 +470,7 @@ export const HomePage: React.FC = () => {
             <div className="p-6 rounded-2xl bg-emerald-50/70 border border-emerald-300 space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-emerald-300">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm text-emerald-950">Mahalaxmi Enterprises Direct Mill Model</span>
+                  <span className="font-bold text-sm text-emerald-950">Mahalaxmi Enterprise Direct Mill Model</span>
                   <Badge variant="success" size="sm">Factory Rate</Badge>
                 </div>
                 <span className="text-xs font-black text-emerald-800 bg-emerald-200 px-2.5 py-0.5 rounded-full">Save 50%+</span>
@@ -1070,7 +1077,7 @@ export const HomePage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-5 space-y-4">
               <span className="badge-mill text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                MAHALAXMI ENTERPRISES · DIRECT MILL SALES
+                MAHALAXMI ENTERPRISE · DIRECT MILL SALES
               </span>
               <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight">
                 Submit a Bulk Order Enquiry or Commercial RFQ
@@ -1080,7 +1087,7 @@ export const HomePage: React.FC = () => {
               </p>
 
               <div className="pt-2 text-xs text-slate-300 space-y-2">
-                <p>• Mahalaxmi Enterprises Sales: <a href={`tel:${BUSINESS_SUPPORT_PHONE_LINK}`} className="text-champagne font-bold hover:underline">{BUSINESS_SUPPORT_PHONE}</a></p>
+                <p>• Mahalaxmi Enterprise Sales: <a href={`tel:${BUSINESS_SUPPORT_PHONE_LINK}`} className="text-champagne font-bold hover:underline">{BUSINESS_SUPPORT_PHONE}</a></p>
                 <p className="break-words">• Official Email: <a href={`mailto:${BUSINESS_SUPPORT_EMAIL}`} className="text-champagne font-bold hover:underline">{BUSINESS_SUPPORT_EMAIL}</a></p>
                 <p>• Address: {BUSINESS_ADDRESS}</p>
               </div>

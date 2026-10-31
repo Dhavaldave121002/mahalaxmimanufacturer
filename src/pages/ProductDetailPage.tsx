@@ -5,6 +5,8 @@ import { ProductVariant, ProductCustomization } from '../types';
 import { INITIAL_PRODUCTS } from '../data/mockProducts';
 import { Badge } from '../components/common/Badge';
 import { ProductCard } from '../components/common/ProductCard';
+import { useDeliveryLocationPage } from '../hooks/useDeliveryLocationPage';
+import { getDispatchLabel } from '../utils/deliveryDisplay';
 import {
   BUSINESS_SUPPORT_PHONE,
   BUSINESS_WHATSAPP_NUMBER
@@ -168,6 +170,7 @@ export const ProductDetailPage: React.FC = () => {
   } = useApp();
 
   const product = products.find(p => p.slug === slug);
+  const deliveryLocationPage = useDeliveryLocationPage(deliveryInfo);
   const productImages = useMemo(
     () => orderProductImagesByResolution(product?.images ?? []),
     [product?.images]
@@ -1996,7 +1999,7 @@ export const ProductDetailPage: React.FC = () => {
 
               <a
                 href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
-                  `Namaste Mahalaxmi Enterprises, please confirm the current price, tax, product details, stock and dispatch availability for ${product.name} (SKU: ${product.sku}), quantity ${quantity}, delivery to ${deliveryInfo?.city || 'my city'}.`
+                  `Namaste Mahalaxmi Enterprise, please confirm the current price, tax, product details, stock and dispatch availability for ${product.name} (SKU: ${product.sku}), quantity ${quantity}, delivery to ${deliveryInfo?.city || 'my city'}.`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -2089,8 +2092,16 @@ export const ProductDetailPage: React.FC = () => {
                       <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-semibold">
                         ⚡ Est. Delivery: {deliveryInfo.estimatedDays} Days
                       </span>
-                      <span className="text-slate-400">Direct Surat Mill Dispatch</span>
+                      <span className="text-slate-400">{getDispatchLabel(deliveryInfo.city, deliveryInfo.state)}</span>
                     </div>
+                    {deliveryLocationPage && (
+                      <Link
+                        to={deliveryLocationPage.to}
+                        className="inline-flex text-[11px] font-bold text-indigo underline underline-offset-2 hover:text-indigo-dark"
+                      >
+                        View {deliveryLocationPage.city} location details and products
+                      </Link>
+                    )}
                   </>
                 ) : (
                   <p className="text-rose-600 text-xs font-semibold flex items-center gap-1.5">

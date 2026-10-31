@@ -28,7 +28,7 @@ async function sendRestockEmail({ email, productName, productUrl }) {
       to_name: 'Valued Customer',
       user_email: email,
       user_name: 'Valued Customer',
-      subject: `${productName} is back in stock - Mahalaxmi Enterprises`,
+      subject: `${productName} is back in stock - Mahalaxmi Enterprise`,
       headline: 'Good news! It is back in stock',
       code_box: '',
       subtext: 'You asked us to let you know when this product was available.',

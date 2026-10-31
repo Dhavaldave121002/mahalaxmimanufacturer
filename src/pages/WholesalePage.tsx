@@ -1110,7 +1110,7 @@ export const WholesalePage: React.FC = () => {
               <p>
                 <strong>Certification:</strong> Rates are Ex-Factory Ahmedabad Loom Gate. Valid for verified GST registered buyers. Freight computed per weight slab via SafeXpress or V-Trans.
               </p>
-              <span className="text-slate-400 shrink-0 font-mono">Mahalaxmi Enterprises © Ahmedabad, Gujarat</span>
+              <span className="text-slate-400 shrink-0 font-mono">Mahalaxmi Enterprise © Ahmedabad, Gujarat</span>
             </div>
           </div>
         </div>
@@ -1169,7 +1169,7 @@ export const WholesalePage: React.FC = () => {
                 <p className="text-xs text-slate-500">Harmonized System codes for fast overseas customs clearance at major international ports.</p>
               </div>
               <a
-                href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Hello Mahalaxmi Enterprises, I am an international buyer requesting a FOB/CIF quotation.')}`}
+                href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Hello Mahalaxmi Enterprise, I am an international buyer requesting a FOB/CIF quotation.')}`}
                 target="_blank"
                 rel="noreferrer"
                 className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition shadow-sm w-fit"
@@ -1272,7 +1272,7 @@ export const WholesalePage: React.FC = () => {
             {/* Letterhead Header */}
             <div className="border-b-2 border-navy pb-4 flex justify-between items-start">
               <div>
-                <h3 className="text-xl font-black text-navy tracking-tight">MAHALAXMI ENTERPRISES</h3>
+                <h3 className="text-xl font-black text-navy tracking-tight">MAHALAXMI ENTERPRISE</h3>
                 <p className="text-[11px] text-slate-500">
                   {BUSINESS_ADDRESS} • GSTIN: {BUSINESS_GSTIN}
                 </p>
@@ -1330,7 +1330,7 @@ export const WholesalePage: React.FC = () => {
             <div className="flex justify-between items-center text-xs pt-2">
               <div className="text-[11px] text-slate-500 space-y-1">
                 <p>E. & O.E. Subject to Ahmedabad jurisdiction.</p>
-                <p>Authorized Signatory: <strong>Mahalaxmi Enterprises Loom Merchandising</strong></p>
+                <p>Authorized Signatory: <strong>Mahalaxmi Enterprise Loom Merchandising</strong></p>
               </div>
               <div className="space-y-1 text-right min-w-[200px]">
                 <div className="flex justify-between text-slate-600">

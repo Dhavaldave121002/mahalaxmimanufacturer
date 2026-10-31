@@ -127,7 +127,7 @@ async function run() {
       if (newDesc && (newDesc.includes('Product image is not included') || newDesc.includes('Product image pending'))) {
         newDesc = cleanDescription(newDesc, p.name, p.subcategory);
         if (!newDesc || newDesc.length < 20) {
-          newDesc = `${p.name}. Category: ${p.subcategory}. Manufactured by Mahalaxmi Enterprises with premium materials, reinforced stitching, and export-grade finishing. Available for direct mill wholesale and bulk dispatch.`;
+          newDesc = `${p.name}. Category: ${p.subcategory}. Manufactured by Mahalaxmi Enterprise with premium materials, reinforced stitching, and export-grade finishing. Available for direct mill wholesale and bulk dispatch.`;
         }
         needsUpdate = true;
       }

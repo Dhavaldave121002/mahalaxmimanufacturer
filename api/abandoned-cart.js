@@ -455,7 +455,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
   const rawPhone = (customerPhone || '').replace(/\D/g, '');
   const cleanPhone = rawPhone.length === 10 ? `91${rawPhone}` : rawPhone;
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
-    `Namaste ${customerName}, aapke Mahalaxmi Enterprises cart me kuch items pending hain (₹${Number(cartTotal).toLocaleString('en-IN')}). Kya aapko order complete karne me koi discount ya help chahiye?`
+    `Namaste ${customerName}, aapke Mahalaxmi Enterprise cart me kuch items pending hain (₹${Number(cartTotal).toLocaleString('en-IN')}). Kya aapko order complete karne me koi discount ya help chahiye?`
   )}`;
 
   // 1. Admin Alert Email (Abandoned Cart Lead)
@@ -477,7 +477,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
                     🛒 Abandoned Cart Recovery Alert
                   </div>
                   <div style="color: #FFFFFF; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;">
-                    MAHALAXMI ENTERPRISES
+                    MAHALAXMI ENTERPRISE
                   </div>
                   <div style="color: #C6AA80; font-size: 11px; font-weight: 700; margin-top: 4px;">
                     SOURCE: ${source === 'FLUTTER_APP' ? '📱 Mobile App' : '🌐 Web Store'}
@@ -545,7 +545,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
     <html lang="en">
     <head>
       <meta charset="utf-8">
-      <title>Complete Your Order - Mahalaxmi Enterprises</title>
+      <title>Complete Your Order - Mahalaxmi Enterprise</title>
     </head>
     <body style="margin: 0; padding: 16px 8px; background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0" align="center" style="max-width: 580px; margin: 0 auto;">
@@ -560,7 +560,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
                     M
                   </div>
                   <div style="color: #FFFFFF; font-size: 18px; font-weight: 900; letter-spacing: 0.5px;">
-                    MAHALAXMI ENTERPRISES
+                    MAHALAXMI ENTERPRISE
                   </div>
                   <div style="color: #C6AA80; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">
                     DIRECT FROM SURAT TEXTILE MILLS
@@ -632,7 +632,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
                   <table width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
                       <td align="center">
-                        <a href="https://wa.me/919033598639?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprises, I have items in my cart worth ₹${cartTotal}. Need help placing order.`)}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background-color: #25D366; color: #FFFFFF; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; padding: 12px; border-radius: 12px;">
+                        <a href="https://wa.me/919033598639?text=${encodeURIComponent(`Namaste Mahalaxmi Enterprise, I have items in my cart worth ₹${cartTotal}. Need help placing order.`)}" target="_blank" style="display: block; width: 100%; box-sizing: border-box; background-color: #25D366; color: #FFFFFF; font-weight: 800; font-size: 13px; text-align: center; text-decoration: none; padding: 12px; border-radius: 12px;">
                           💬 Order via WhatsApp Mill Desk
                         </a>
                       </td>
@@ -644,7 +644,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
               <!-- Footer -->
               <tr>
                 <td style="background-color: #F8FAFC; padding: 16px 20px; text-align: center; border-top: 1px solid #E2E8F0; font-size: 11px; color: #94A3B8;">
-                  Mahalaxmi Enterprises • Direct Mill Rates &amp; Wholesale Essentials<br>
+                  Mahalaxmi Enterprise • Direct Mill Rates &amp; Wholesale Essentials<br>
                   WhatsApp: +91 90335 98639 • Email: mahalaxmienterprise881@gmail.com
                 </td>
               </tr>
@@ -683,8 +683,8 @@ async function sendAbandonedCartRecoveryEmails(data) {
     ? `Active Store Offer: ${recoveryOffer.code}`
     : 'Your Cart Reminder';
   const offerSubject = recoveryOffer
-    ? `A current store offer is available for your cart | Mahalaxmi Enterprises`
-    : `Your cart is waiting for you | Mahalaxmi Enterprises`;
+    ? `A current store offer is available for your cart | Mahalaxmi Enterprise`
+    : `Your cart is waiting for you | Mahalaxmi Enterprise`;
   const offerMessage = recoveryOffer
     ? `Your cart is waiting. Use the active coupon code ${recoveryOffer.code} to save ₹${Number(recoveryOffer.discount).toLocaleString('en-IN')} on this cart.`
     : `Your cart is waiting. There is no active coupon offer for this cart right now, but you can still complete your order.`;

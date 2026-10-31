@@ -9,7 +9,7 @@ async function run() {
       name: 'Dhaval Dave',
       email: 'dhavaldave121002@gmail.com',
       phone: '+91 85111 72099',
-      companyName: 'Mahalaxmi Enterprises'
+      companyName: 'Mahalaxmi Enterprise'
     },
     subtotal: 44500,
     totalAmount: 44500,

@@ -245,7 +245,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             {/* 1-Click WhatsApp Direct Quick Buy */}
             <a
               href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
-                `Hello Mahalaxmi Enterprises, I want to order "${product.name}" (SKU: ${product.sku}) at ₹${product.retailPrice}. Please confirm stock & dispatch.`
+                `Hello Mahalaxmi Enterprise, I want to order "${product.name}" (SKU: ${product.sku}) at ₹${product.retailPrice}. Please confirm stock & dispatch.`
               )}`}
               target="_blank"
               rel="noreferrer"

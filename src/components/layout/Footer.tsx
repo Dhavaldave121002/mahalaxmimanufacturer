@@ -97,18 +97,18 @@ export const Footer: React.FC = () => {
             <div className="flex items-center gap-2.5">
               <img
                 src="/logo.png"
-                alt="Mahalaxmi Enterprises Logo"
+                alt="Mahalaxmi Enterprise Logo"
                 className="w-10 h-10 rounded-full object-cover shadow-sm border border-navy-700 shrink-0"
               />
               <span className="font-black text-xl text-white tracking-tight">
-                MAHALAXMI ENTERPRISES<span className="text-champagne">.</span>
+                MAHALAXMI ENTERPRISE<span className="text-champagne">.</span>
               </span>
             </div>
             <p className="text-xs font-semibold text-champagne tracking-wider uppercase">
               {BUSINESS_TAGLINE}
             </p>
             <p className="text-xs text-slate-300 leading-relaxed max-w-sm">
-              Mahalaxmi Enterprises is India's dedicated manufacturing marketplace for combed cotton bedsheets, 600 GSM bath towels, heavy canvas bags, and commercial hygiene textiles. Serving retail households and verified hospitality chains nationwide.
+              Mahalaxmi Enterprise is India's dedicated manufacturing marketplace for combed cotton bedsheets, 600 GSM bath towels, heavy canvas bags, and commercial hygiene textiles. Serving retail households and verified hospitality chains nationwide.
             </p>
 
             <div className="pt-2 text-xs text-slate-300 space-y-1.5">
@@ -204,7 +204,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Namaste Mahalaxmi Enterprises, I need help with an order or return.')}`}
+                  href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent('Namaste Mahalaxmi Enterprise, I need help with an order or return.')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-champagne transition text-emerald-400 flex items-center gap-1.5 font-semibold whitespace-nowrap"
@@ -255,7 +255,7 @@ export const Footer: React.FC = () => {
 
       {/* 3. Bottom Legal & Copyright Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-6 border-t border-navy-800 text-xs text-slate-300 flex flex-col md:flex-row items-center justify-between gap-4">
-        <p>&copy; {new Date().getFullYear()} Mahalaxmi Enterprises. All rights reserved. Direct Mill Rates & Wholesale Essentials.</p>
+        <p>&copy; {new Date().getFullYear()} Mahalaxmi Enterprise. All rights reserved. Direct Mill Rates & Wholesale Essentials.</p>
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <button onClick={() => setLegalModal('RETURN')} className="text-emerald-400 font-bold hover:text-emerald-300 transition text-left cursor-pointer flex items-center gap-1">
             <RotateCcw className="w-3.5 h-3.5" />
@@ -294,7 +294,7 @@ export const Footer: React.FC = () => {
                     <span>Hassle-Free Doorstep Reverse Pickup & 100% Refund</span>
                   </div>
                   <p className="leading-relaxed">
-                    At Mahalaxmi Enterprises, we stand firmly behind every piece of fabric produced in our Ahmedabad & Tirupur looms. If you are not completely satisfied with your order, we offer a straightforward 7-Day return, exchange, or refund with zero hidden deductions.
+                    At Mahalaxmi Enterprise, we stand firmly behind every piece of fabric produced in our Ahmedabad & Tirupur looms. If you are not completely satisfied with your order, we offer a straightforward 7-Day return, exchange, or refund with zero hidden deductions.
                   </p>
                 </div>
 
@@ -342,7 +342,7 @@ export const Footer: React.FC = () => {
                   <h3 className="text-lg font-black">Terms of Commercial Supply</h3>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  All commercial textile purchases from Mahalaxmi Enterprises are executed under standard Ahmedabad Mill trade covenants. Minimum Order Quantities (MOQ) apply per SKU. Goods are dispatched ex-mill upon receipt of payment or under approved B2B 30-day revolving credit line.
+                  All commercial textile purchases from Mahalaxmi Enterprise are executed under standard Ahmedabad Mill trade covenants. Minimum Order Quantities (MOQ) apply per SKU. Goods are dispatched ex-mill upon receipt of payment or under approved B2B 30-day revolving credit line.
                 </p>
                 <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
                   <li>Direct mill billing with legal GST compliance.</li>
@@ -376,7 +376,7 @@ export const Footer: React.FC = () => {
                   <h3 className="text-lg font-black">Security & Privacy Protocol</h3>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Mahalaxmi Enterprises implements 256-bit SSL encryption across all order transactions, RFQ submissions, and business registrations.
+                  Mahalaxmi Enterprise implements 256-bit SSL encryption across all order transactions, RFQ submissions, and business registrations.
                 </p>
                 <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
                   <li>Commercial customer data is never shared with third-party marketing brokers.</li>

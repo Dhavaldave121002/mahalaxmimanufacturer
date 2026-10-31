@@ -22,6 +22,7 @@ import {
 import { Badge } from '../components/common/Badge';
 import { BuyNowPaymentIcons } from '../components/common/BuyNowPaymentIcons';
 import { BUSINESS_WHATSAPP_NUMBER } from '../constants/businessContact';
+import { getDispatchLabel } from '../utils/deliveryDisplay';
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
@@ -464,7 +465,7 @@ export const CheckoutPage: React.FC = () => {
         order_id: paymentOrder.orderId,
         amount: paymentOrder.amount,
         currency: paymentOrder.currency,
-        name: 'Mahalaxmi Enterprises',
+        name: 'Mahalaxmi Enterprise',
         description: pointsRedeemed > 0
           ? `Consignment Payment - ₹${remainingPayable.toLocaleString('en-IN')} (🪙 ${pointsRedeemed.toLocaleString('en-IN')} Points Redeemed)`
           : `Consignment Payment - ${cart.length} items (Ahmedabad Direct Mill)`,
@@ -544,7 +545,7 @@ export const CheckoutPage: React.FC = () => {
             Secure Commercial Checkout
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Order Reference: {cart.length} items • Direct Ahmedabad Mill Dispatch • 100% Legal GST Invoice
+            Order Reference: {cart.length} items • {getDispatchLabel(deliveryInfo?.city, deliveryInfo?.state)} • 100% Legal GST Invoice
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 font-semibold">
@@ -967,7 +968,7 @@ export const CheckoutPage: React.FC = () => {
                   </div>
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs font-extrabold text-navy">Mahalaxmi Enterprises Points Wallet</p>
+                      <p className="text-xs font-extrabold text-navy">Mahalaxmi Enterprise Points Wallet</p>
                       {isLoggedIn ? (
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                           userWalletBalance > 0
@@ -1238,7 +1239,7 @@ export const CheckoutPage: React.FC = () => {
             {/* 1-Click WhatsApp Checkout Fallback */}
             <a
               href={`https://wa.me/${BUSINESS_WHATSAPP_NUMBER}?text=${encodeURIComponent(
-                `Hello Mahalaxmi Enterprises, please verify pricing and availability for this cart:\n` +
+                `Hello Mahalaxmi Enterprise, please verify pricing and availability for this cart:\n` +
                 `Name: ${activeAddress.fullName} (${activeAddress.phone})\n` +
                 `Delivery Address: ${activeAddress.street}, ${activeAddress.city}, ${activeAddress.state} - ${activeAddress.pincode}\n` +
                 (isB2B && gstNumber ? `Company: ${companyName} | GSTIN: ${gstNumber}\n` : '') +
@@ -1261,7 +1262,7 @@ export const CheckoutPage: React.FC = () => {
                 <span>⚡ 24h Mill Gate Loading</span>
               </div>
               <p className="text-[10px] text-slate-400 leading-tight">
-                By confirming, you agree to Mahalaxmi Enterprises Direct Mill Terms of Commercial Supply.
+                By confirming, you agree to Mahalaxmi Enterprise Direct Mill Terms of Commercial Supply.
               </p>
             </div>
           </div>

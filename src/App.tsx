@@ -20,6 +20,8 @@ const WholesalePage = lazy(() => import('./pages/WholesalePage').then(m => ({ de
 const AccountPage = lazy(() => import('./pages/AccountPage').then(m => ({ default: m.AccountPage })));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));
 const LoginPage = lazy(() => import('./pages/LoginPage').then(m => ({ default: m.LoginPage })));
+const LocationPage = lazy(() => import('./pages/LocationPage').then(m => ({ default: m.LocationPage })));
+const LocationDirectoryPage = lazy(() => import('./pages/LocationDirectoryPage').then(m => ({ default: m.LocationDirectoryPage })));
 
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 
@@ -74,6 +76,10 @@ export const App: React.FC = () => {
                 <Route path="/login" element={<LoginPage defaultTab="login" />} />
                 <Route path="/register" element={<LoginPage defaultTab="register" />} />
                 <Route path="/forgot-password" element={<LoginPage defaultTab="forgot" />} />
+                <Route path="/locations" element={<LocationDirectoryPage />} />
+                <Route path="/locations/:stateSlug/districts/:districtSlug" element={<LocationDirectoryPage />} />
+                <Route path="/locations/:stateSlug" element={<LocationDirectoryPage />} />
+                <Route path="/locations/:stateSlug/:citySlug" element={<LocationPage />} />
                 {/* Fallback */}
                 <Route path="*" element={<HomePage />} />
               </Routes>

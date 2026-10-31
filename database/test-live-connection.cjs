@@ -3,7 +3,7 @@ const http = require('http');
 
 async function runLiveVerification() {
   console.log('====================================================');
-  console.log('🏭 MAHALAXMI ENTERPRISES - LIVE SYSTEM HEALTH CHECK');
+  console.log('🏭 MAHALAXMI ENTERPRISE - LIVE SYSTEM HEALTH CHECK');
   console.log('====================================================\n');
 
   // STEP 1: Test MySQL Database Connection

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:mobile": "vite --host 0.0.0.0",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/generate-location-pages.mjs && tsc -b && vite build && node scripts/generate-location-pages.mjs --prerender",
     "lint": "oxlint",
     "preview": "vite preview",
     "admin:create": "node scripts/create-admin.js",

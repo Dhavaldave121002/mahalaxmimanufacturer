@@ -32,7 +32,7 @@ app.get('/api/health', async (_req, res) => {
   const database = await testDbConnection();
   res.status(database.connected ? 200 : 503).json({
     status: database.connected ? 'ONLINE' : 'DEGRADED',
-    service: 'Mahalaxmi Enterprises Central Backend',
+    service: 'Mahalaxmi Enterprise Central Backend',
     version: '1.0.3',
     database: { connected: database.connected },
     timestamp: new Date().toISOString()
@@ -54,5 +54,5 @@ for (const [route, modulePath] of Object.entries(apiHandlers)) {
 }
 
 app.listen(PORT, () => {
-  console.log(`Mahalaxmi Enterprises backend listening on port ${PORT}`);
+  console.log(`Mahalaxmi Enterprise backend listening on port ${PORT}`);
 });

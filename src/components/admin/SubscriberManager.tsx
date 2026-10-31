@@ -356,7 +356,7 @@ export const SubscriberManager: React.FC = () => {
                   const cleanPhone = (lead.customerPhone || '').replace(/[^0-9]/g, '');
                   const waPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
                   const waMessage = encodeURIComponent(
-                    `Hello ${lead.customerName || 'Valued Customer'}, greetings from Mahalaxmi Enterprises Ahmedabad!\n\n` +
+                    `Hello ${lead.customerName || 'Valued Customer'}, greetings from Mahalaxmi Enterprise Ahmedabad!\n\n` +
                     `We noticed you saved items worth ₹${lead.cartTotal || 0} (${lead.itemsSummary || 'Textile order'}) in your cart.\n\n` +
                     `No coupon code is included in this follow-up. Please confirm current offers in the admin coupon settings before promising a discount.\n\n` +
                     `Would you like assistance with delivery or placing your wholesale order?`

@@ -47,7 +47,7 @@ if (fs.existsSync(orderDetailsFile)) {
         .replaceAll('â‚¹', '₹')
         .replaceAll(r'$', '₹');
     final String title = item['title'] as String? ?? 'Product';
-    final String brand = item['brand'] as String? ?? 'Mahalaxmi Enterprises';
+    final String brand = item['brand'] as String? ?? 'Mahalaxmi Enterprise';
     final String color = item['color'] as String? ?? 'No Customization';
     final String size = item['size'] as String? ?? 'Standard';
     final int units = item['units'] as int? ?? 1;

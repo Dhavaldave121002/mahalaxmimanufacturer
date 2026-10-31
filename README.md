@@ -1,9 +1,9 @@
 # mahalaxmimanufacturer
-# Mahalaxmi Enterprises — B2B Wholesale Marketplace & B2C E-Commerce Platform
+# Mahalaxmi Enterprise — B2B Wholesale Marketplace & B2C E-Commerce Platform
 
 > **Direct Mill Rates & Wholesale Essentials**
 
-Mahalaxmi Enterprises is an India-focused B2B wholesale marketplace and B2C direct mill commerce platform for textiles, double bedsheets, 600 GSM bath towels, heavy canvas bags, and commercial kitchen & household goods.
+Mahalaxmi Enterprise is an India-focused B2B wholesale marketplace and B2C direct mill commerce platform for textiles, double bedsheets, 600 GSM bath towels, heavy canvas bags, and commercial kitchen & household goods.
 
 > **Production readiness:** The catalog and site build are available, but customer sign-in, checkout/order placement, and returns are intentionally disabled in production until server-side customer authentication, authoritative pricing/inventory, payment verification, and order-ownership checks are implemented. Do not use this deployment to accept live orders.
 
@@ -48,6 +48,15 @@ Production product listings require a live MySQL connection. If the database can
    - Order fulfillment control and consignment dispatch assignment.
    - RFQ review desk for merchandisers.
    - Catalog CSV import and export tools.
+
+7. **All-India Location Pages**
+   - Direct state, district, city and town URLs are generated from `src/data/indiaLocationDirectory.json`; location pages are intentionally not added to the main navigation.
+   - Each production build syncs published product URLs and location URLs into `public/sitemap.xml`, removes account/login/tracking URLs from the sitemap, and prerenders product and location pages as static HTML.
+   - `vercel.json` routes generated product and location URLs to their prerendered HTML before applying the SPA fallback.
+   - Responsive home hero banners use dedicated desktop/mobile assets; mobile campaign artwork is displayed without duplicate overlaid text.
+   - The directory includes 36 states/union territories, 763 GeoNames administrative districts and 7,351 place records, retaining the previously configured city names. The GeoNames `cities500` extract covers places with population over 500 or administrative seats down to PPLA4; it is not a complete list of every village or settlement.
+   - Place names use GeoNames data under CC BY 4.0; see the source credit on location pages. Verify delivery serviceability and current product availability by PIN code; a location page does not imply a local branch or reserved stock.
+   - Sitemap inclusion and SEO metadata help search engines discover pages, but cannot guarantee indexing or search rankings. Pages must provide useful, accurate information to rank.
 
 ---
 
@@ -121,5 +130,5 @@ Local MySQL connectivity was verified in the development environment. The Vercel
 
 ## License
 
-All rights reserved © Mahalaxmi Enterprises.
+All rights reserved © Mahalaxmi Enterprise.
 Direct Mill Rates & Wholesale Essentials.
