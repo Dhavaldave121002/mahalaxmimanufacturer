@@ -67,14 +67,10 @@ function fetchAllReviews(): Promise<Record<string, RatingData>> {
 export function useRealRating(
   productId: string,
   productSlug?: string
-): RatingData | null {
+): { rating: RatingData | null; loading: boolean } {
   const [map, setMap] = useState<Record<string, RatingData> | null>(cachedMap);
 
   useEffect(() => {
-    if (cachedMap) {
-      setMap(cachedMap);
-      return;
-    }
     let cancelled = false;
     fetchAllReviews().then(result => {
       if (!cancelled) setMap(result);
@@ -82,10 +78,13 @@ export function useRealRating(
     return () => { cancelled = true; };
   }, []);
 
-  if (!map) return null;
+  if (!map) return { rating: null, loading: true };
 
   // Try product ID first, then slug, then common mapping aliases
-  return map[productId]
-    || (productSlug ? map[productSlug] : null)
-    || null;
+  return {
+    rating: map[productId]
+      || (productSlug ? map[productSlug] : null)
+      || null,
+    loading: false
+  };
 }

@@ -16,7 +16,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart, isInWishlist, toggleWishlist } = useApp();
   const [added, setAdded] = useState(false);
   const isSaved = isInWishlist(product.id);
-  const realRating = useRealRating(product.id, product.slug);
+  const { rating: realRating, loading: ratingLoading } = useRealRating(product.id, product.slug);
   const approximatePrice = product.specifications?.['Source Price Status'] === 'Approximate - verify before sale';
   const outOfStock = product.stock <= 0;
   const availabilityNeedsConfirmation = product.specifications?.['Source Availability'] === 'Needs confirmation';
@@ -131,7 +131,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
           {/* Rating Pill — uses real reviews from API/DB, not hardcoded mock data */}
           <div className="mt-2 flex min-w-0 items-center gap-2">
-            {realRating && realRating.count > 0 ? (
+            {ratingLoading ? (
+              <div className="h-5 w-28 animate-pulse rounded-md bg-slate-200" aria-label="Loading ratings" />
+            ) : realRating && realRating.count > 0 ? (
               <>
                 <div className="flex items-center bg-emerald-700 text-white text-[11px] font-black px-2 py-0.5 rounded-md">
                   <span>{realRating.rating}</span>

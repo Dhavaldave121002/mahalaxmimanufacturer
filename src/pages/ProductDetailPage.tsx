@@ -5,7 +5,7 @@ import { ProductVariant, ProductCustomization } from '../types';
 import { INITIAL_PRODUCTS } from '../data/mockProducts';
 import { Badge } from '../components/common/Badge';
 import { ProductCard } from '../components/common/ProductCard';
-import { ProductDetailSkeleton } from '../components/common/SkeletonLoader';
+import { ListSkeleton, ProductDetailSkeleton } from '../components/common/SkeletonLoader';
 import { useDeliveryLocationPage } from '../hooks/useDeliveryLocationPage';
 import { getDispatchLabel } from '../utils/deliveryDisplay';
 import {
@@ -296,7 +296,9 @@ export const ProductDetailPage: React.FC = () => {
   };
   
   // Live Reviews State
-  const [reviewsList, setReviewsList] = useState<any[]>([]);
+  const [reviewResult, setReviewResult] = useState<{ productId: string; reviews: any[] } | null>(null);
+  const reviewsLoading = Boolean(product?.id && reviewResult?.productId !== product.id);
+  const reviewsList = reviewResult?.productId === product?.id ? reviewResult.reviews : [];
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState(false);
@@ -353,31 +355,36 @@ export const ProductDetailPage: React.FC = () => {
 
   const fetchLiveReviews = useCallback(async () => {
     if (!product?.id) return;
+    let loadedReviews: any[] = [];
     try {
-      const res = await fetch(`/api/products?action=reviews&productId=${encodeURIComponent(product.id)}&slug=${encodeURIComponent(product.slug || '')}`);
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && Array.isArray(json.reviews)) {
-          setReviewsList(json.reviews);
-          return;
+      try {
+        const res = await fetch(`/api/products?action=reviews&productId=${encodeURIComponent(product.id)}&slug=${encodeURIComponent(product.slug || '')}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.reviews)) {
+            loadedReviews = json.reviews;
+            return;
+          }
         }
-      }
-    } catch (_) {}
+      } catch (_) {}
 
-    // Static fallback from reviews.json for local/offline dev
-    try {
-      const res = await fetch('/reviews.json');
-      if (res.ok) {
-        const all: any[] = await res.json();
-        const filtered = all.filter(f =>
-          (product.id && (f.product_id === product.id || f.productId === product.id)) ||
-          (product.slug && (f.slug === product.slug || f.product_id === product.slug)) ||
-          (product.id === 'prod-bedsheet-01' && (f.product_id === 'cotton-double-bedsheet' || f.slug === 'glance-300-tc-cotton-double-bedsheet')) ||
-          (product.id === 'prod-cotton-towel-01' && f.product_id === 'cotton-bath-towels')
-        );
-        setReviewsList(filtered);
-      }
-    } catch (_) {}
+      // Static fallback from reviews.json for local/offline dev
+      try {
+        const res = await fetch('/reviews.json');
+        if (res.ok) {
+          const all: any[] = await res.json();
+          const filtered = all.filter(f =>
+            (product.id && (f.product_id === product.id || f.productId === product.id)) ||
+            (product.slug && (f.slug === product.slug || f.product_id === product.slug)) ||
+            (product.id === 'prod-bedsheet-01' && (f.product_id === 'cotton-double-bedsheet' || f.slug === 'glance-300-tc-cotton-double-bedsheet')) ||
+            (product.id === 'prod-cotton-towel-01' && f.product_id === 'cotton-bath-towels')
+          );
+          loadedReviews = filtered;
+        }
+      } catch (_) {}
+    } finally {
+      setReviewResult({ productId: product.id, reviews: loadedReviews });
+    }
   }, [product?.id, product?.slug]);
 
   useEffect(() => {
@@ -2246,7 +2253,11 @@ export const ProductDetailPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-gradient-to-br from-slate-50 to-white rounded-2xl border border-slate-200 shadow-sm">
               <div className="flex items-center gap-4">
                 <div className="text-center pr-6 border-r border-slate-200">
-                  <span className="text-3xl font-black text-navy">{actualReviewCount > 0 ? actualAverageRating : '—'}</span>
+                  {reviewsLoading ? (
+                    <div className="mx-auto h-9 w-14 animate-pulse rounded-md bg-slate-200" aria-label="Loading review rating" />
+                  ) : (
+                    <span className="text-3xl font-black text-navy">{actualReviewCount > 0 ? actualAverageRating : '—'}</span>
+                  )}
                   <div className="flex text-amber-500 justify-center mt-1">
                     {[1, 2, 3, 4, 5].map(st => (
                       <Star
@@ -2260,7 +2271,7 @@ export const ProductDetailPage: React.FC = () => {
                     ))}
                   </div>
                   <span className="text-[11px] text-slate-500 mt-0.5 block font-medium">
-                    {actualReviewCount} Verified {actualReviewCount === 1 ? 'Review' : 'Reviews'}
+                    {reviewsLoading ? 'Loading verified reviews…' : `${actualReviewCount} Verified ${actualReviewCount === 1 ? 'Review' : 'Reviews'}`}
                   </span>
                 </div>
                 <div className="text-xs text-slate-600 space-y-1">
@@ -2421,6 +2432,10 @@ export const ProductDetailPage: React.FC = () => {
               const displayed = photosOnlyFilter
                 ? baseList.filter(r => !!(r.image_url || r.imageUrl || r.image))
                 : baseList;
+
+              if (reviewsLoading) {
+                return <ListSkeleton count={3} />;
+              }
 
               if (baseList.length === 0) {
                 return (
