@@ -5,6 +5,7 @@ import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
 import { WhatsAppWidget } from './components/common/WhatsAppWidget';
 import { MobileBottomNav } from './components/layout/MobileBottomNav';
+import { PageLoadingSkeleton } from './components/common/SkeletonLoader';
 
 // Eager load HomePage for instant LCP & FCP
 import { HomePage } from './pages/HomePage';
@@ -24,13 +25,6 @@ const LocationPage = lazy(() => import('./pages/LocationPage').then(m => ({ defa
 const LocationDirectoryPage = lazy(() => import('./pages/LocationDirectoryPage').then(m => ({ default: m.LocationDirectoryPage })));
 
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-
-// Lightweight loading placeholder
-const PageLoadingFallback = () => (
-  <div className="min-h-[50vh] flex items-center justify-center p-8">
-    <div className="w-8 h-8 border-3 border-indigo border-t-transparent rounded-full animate-spin"></div>
-  </div>
-);
 
 // Scroll to top component on route changes
 const ScrollToTop = () => {
@@ -60,7 +54,7 @@ export const App: React.FC = () => {
           <div className="min-h-screen flex flex-col bg-ivory text-navy selection:bg-indigo selection:text-white w-full max-w-full">
             <Header />
             <main className="flex-1">
-              <Suspense fallback={<PageLoadingFallback />}>
+              <Suspense fallback={<PageLoadingSkeleton />}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/catalog" element={<CatalogPage />} />

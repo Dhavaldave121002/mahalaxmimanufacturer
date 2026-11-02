@@ -3,6 +3,7 @@ import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { ProductCard } from '../components/common/ProductCard';
+import { ProductGridSkeleton } from '../components/common/SkeletonLoader';
 import { SlidersHorizontal } from 'lucide-react';
 import { toSubcategorySlug, matchesSubcategorySlug, productBelongsToCollection } from '../utils/productCategories';
 
@@ -10,7 +11,7 @@ export const CategoryPage: React.FC = () => {
   const { categoryId, subcategorySlug } = useParams<{ categoryId: string; subcategorySlug?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { products, categories } = useApp();
+  const { products, productsLoading, categories } = useApp();
 
   const selectedSubcategory = subcategorySlug || searchParams.get('subcategory') || '';
   const [sortBy, setSortBy] = useState<string>('relevance');
@@ -258,7 +259,9 @@ export const CategoryPage: React.FC = () => {
 
         {/* Product Grid */}
         <div className="mt-8">
-          {categoryProducts.length > 0 ? (
+          {productsLoading ? (
+            <ProductGridSkeleton count={8} />
+          ) : categoryProducts.length > 0 ? (
             <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
               {categoryProducts.map(product => (
                 <ProductCard key={product.id} product={product} />

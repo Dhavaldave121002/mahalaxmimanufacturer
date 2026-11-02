@@ -24,12 +24,13 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
+import { ListSkeleton } from '../components/common/SkeletonLoader';
 
 export const OrderTrackingPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const successOrderId = searchParams.get('success');
 
-  const { orders, addToCart, products, currentUser, isLoggedIn, cancelOrder, requestReturnOrExchange } = useApp();
+  const { orders, ordersLoading, addToCart, products, currentUser, isLoggedIn, cancelOrder, requestReturnOrExchange } = useApp();
   const isAdmin = currentUser?.role === 'admin';
 
   // 1. Filter orders strictly for the current logged-in user (unless admin)
@@ -396,7 +397,11 @@ export const OrderTrackingPage: React.FC = () => {
       </div>
 
       {/* Main Order Tracker Layout or Empty State */}
-      {displayedOrders.length === 0 ? (
+      {ordersLoading && isAdmin ? (
+        <div className="mx-auto max-w-2xl">
+          <ListSkeleton count={4} />
+        </div>
+      ) : displayedOrders.length === 0 ? (
         <div className="bg-white rounded-3xl p-8 sm:p-14 border border-slate-200 text-center max-w-2xl mx-auto space-y-6 shadow-subtle">
           <div className="w-16 h-16 bg-indigo-50 text-indigo rounded-2xl flex items-center justify-center mx-auto shadow-sm">
             <Package className="w-8 h-8" />

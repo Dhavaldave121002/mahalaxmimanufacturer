@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { useLocationDirectory } from '../hooks/useLocationDirectory';
+import { PageLoadingSkeleton } from '../components/common/SkeletonLoader';
 
 export const LocationDirectoryPage: React.FC = () => {
   const { stateSlug, districtSlug } = useParams<{ stateSlug?: string; districtSlug?: string }>();
@@ -69,7 +70,7 @@ export const LocationDirectoryPage: React.FC = () => {
   }, [canonicalUrl, description, title]);
 
   if (error) return <p role="alert" className="mx-auto my-12 max-w-3xl rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">{error}</p>;
-  if (!directory) return <div className="min-h-48" aria-label="Loading location directory" />;
+  if (!directory) return <PageLoadingSkeleton />;
   if (stateSlug && !state) return <Navigate to="/locations" replace />;
   if (districtSlug && !district) return <Navigate to={state ? `/locations/${state.slug}` : '/locations'} replace />;
 

@@ -6,6 +6,7 @@ import { useApp } from '../context/AppContext';
 import locationData from '../data/locationPages.json';
 import { useLocationDirectory } from '../hooks/useLocationDirectory';
 import { productBelongsToCollection } from '../utils/productCategories';
+import { PageLoadingSkeleton, ProductGridSkeleton } from '../components/common/SkeletonLoader';
 
 const { services: serviceTypes } = locationData;
 
@@ -15,7 +16,7 @@ export const LocationPage: React.FC = () => {
   const state = directory?.states.find(item => item.slug === stateSlug);
   const place = state?.cities.find(item => item.slug === citySlug);
   const city = place?.name;
-  const { products } = useApp();
+  const { products, productsLoading } = useApp();
 
   const featuredProducts = useMemo(() => {
     const categoryIds = new Set(serviceTypes.map(service => service.collection));
@@ -76,7 +77,7 @@ export const LocationPage: React.FC = () => {
   }, [city, place, state]);
 
   if (error) return <p role="alert" className="mx-auto my-12 max-w-3xl rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">{error}</p>;
-  if (!directory) return <div className="min-h-48" aria-label="Loading location details" />;
+  if (!directory) return <PageLoadingSkeleton />;
   if (!state || !place || !city) return <Navigate to="/" replace />;
 
   return (
@@ -155,7 +156,9 @@ export const LocationPage: React.FC = () => {
             </div>
             <Link to="/catalog" className="text-sm font-bold text-indigo hover:underline">View full catalogue</Link>
           </div>
-          {featuredProducts.length ? (
+          {productsLoading ? (
+            <ProductGridSkeleton count={8} />
+          ) : featuredProducts.length ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-5">
               {featuredProducts.map(product => <ProductCard key={product.id} product={product} />)}
             </div>

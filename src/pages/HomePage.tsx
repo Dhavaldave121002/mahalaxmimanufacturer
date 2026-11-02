@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { ProductCard } from '../components/common/ProductCard';
+import { ProductGridSkeleton } from '../components/common/SkeletonLoader';
 import { Badge } from '../components/common/Badge';
 import { productBelongsToCollection } from '../utils/productCategories';
 import type { AppBanner } from '../types';
@@ -61,7 +62,7 @@ const getHeroArtwork = (banner: AppBanner) => {
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { products, submitBusinessEnquiry, addToCart, categories, mobileAppConfig } = useApp();
+  const { products, productsLoading, submitBusinessEnquiry, addToCart, categories, mobileAppConfig } = useApp();
   const availableCategories = categories.length > 0 ? categories : CATEGORIES_CONFIG;
   const homeCollections = [
     ...HOME_PRIMARY_CATEGORY_IDS.flatMap(id => {
@@ -806,7 +807,7 @@ export const HomePage: React.FC = () => {
       {/* ========================================================
           5. ADMIN-SELECTED HOMEPAGE PRODUCTS
           ======================================================== */}
-      {bestSellers.length > 0 && (
+      {(bestSellers.length > 0 || productsLoading) && (
       <section className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -827,11 +828,15 @@ export const HomePage: React.FC = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
-          {bestSellers.map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        {productsLoading ? (
+          <ProductGridSkeleton count={4} />
+        ) : (
+          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
+            {bestSellers.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
       </section>
       )}
 

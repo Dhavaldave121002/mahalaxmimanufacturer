@@ -30,6 +30,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { Badge } from '../components/common/Badge';
+import { ListSkeleton } from '../components/common/SkeletonLoader';
 
 export const AccountPage: React.FC = () => {
   const { currentUser, isLoggedIn, logout, deleteAccount, updateUserProfile, addSavedAddress, orders, quotations, submitBusinessEnquiry, checkPincode } = useApp();
@@ -71,7 +72,7 @@ export const AccountPage: React.FC = () => {
   // User's Submitted Reviews State
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [myReviews, setMyReviews] = useState<any[]>([]);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsLoading, setReviewsLoading] = useState(() => Boolean(currentUser?.email));
 
   const fetchMyReviews = async () => {
     if (!currentUser?.email) return;
@@ -802,9 +803,7 @@ export const AccountPage: React.FC = () => {
 
             <div className="overflow-y-auto space-y-3 pr-1 grow">
               {reviewsLoading ? (
-                <div className="py-12 text-center text-slate-400 text-xs">
-                  Loading your verified reviews from central database...
-                </div>
+                <ListSkeleton count={3} />
               ) : myReviews.length === 0 ? (
                 <div className="py-12 text-center space-y-2">
                   <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">

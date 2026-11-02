@@ -5,6 +5,7 @@ import { ProductVariant, ProductCustomization } from '../types';
 import { INITIAL_PRODUCTS } from '../data/mockProducts';
 import { Badge } from '../components/common/Badge';
 import { ProductCard } from '../components/common/ProductCard';
+import { ProductDetailSkeleton } from '../components/common/SkeletonLoader';
 import { useDeliveryLocationPage } from '../hooks/useDeliveryLocationPage';
 import { getDispatchLabel } from '../utils/deliveryDisplay';
 import {
@@ -160,6 +161,7 @@ export const ProductDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const {
     products,
+    productsLoading,
     addToCart,
     deliveryPincode,
     deliveryInfo,
@@ -446,6 +448,8 @@ export const ProductDetailPage: React.FC = () => {
   }, [product, quantity]);
 
   if (!product) {
+    if (productsLoading) return <ProductDetailSkeleton />;
+
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center space-y-4">
         <h2 className="text-2xl font-bold text-navy">Product Not Found</h2>

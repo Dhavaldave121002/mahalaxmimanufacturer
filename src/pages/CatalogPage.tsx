@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { ProductCard } from '../components/common/ProductCard';
+import { ProductGridSkeleton } from '../components/common/SkeletonLoader';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { matchesProductSearch } from '../utils/searchProducts';
 import { toSubcategorySlug, matchesSubcategorySlug, productBelongsToCollection } from '../utils/productCategories';
@@ -18,7 +19,7 @@ import {
 } from 'lucide-react';
 
 export const CatalogPage: React.FC = () => {
-  const { products } = useApp();
+  const { products, productsLoading } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const queryParam = searchParams.get('q') || '';
@@ -416,7 +417,9 @@ export const CatalogPage: React.FC = () => {
           )}
 
           {/* Products Grid */}
-          {filteredProducts.length > 0 ? (
+          {productsLoading ? (
+            <ProductGridSkeleton count={8} className="xl:grid-cols-3" />
+          ) : filteredProducts.length > 0 ? (
             <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
               {filteredProducts.map(product => (
                 <ProductCard key={product.id} product={product} />

@@ -50,6 +50,7 @@ import { MobileAppManager } from '../components/admin/MobileAppManager';
 import { CouponOfferManager } from '../components/admin/CouponOfferManager';
 import { CategoryManager } from '../components/admin/CategoryManager';
 import { SubscriberManager } from '../components/admin/SubscriberManager';
+import { ListSkeleton, PageLoadingSkeleton } from '../components/common/SkeletonLoader';
 
 type AdminProductReview = {
   id: string;
@@ -549,11 +550,7 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   if (isCheckingSession) {
-    return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4 py-16 bg-slate-50">
-        <p className="text-sm text-slate-500">Verifying secure admin session...</p>
-      </div>
-    );
+    return <PageLoadingSkeleton />;
   }
 
   // Render Staff Auth Gate if locked
@@ -1850,7 +1847,7 @@ export const AdminDashboardPage: React.FC = () => {
           )}
 
           {isLoadingReviews && adminReviews.length === 0 ? (
-            <p className="py-8 text-center text-sm text-slate-500">Loading reviews from the database…</p>
+            <ListSkeleton count={4} />
           ) : adminReviews.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-500">No customer reviews have been submitted yet.</p>
           ) : (

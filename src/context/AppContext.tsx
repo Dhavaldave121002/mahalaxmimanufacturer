@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import {
   Product,
   CartItem,
@@ -81,6 +81,7 @@ const PINCODE_DATABASE: Record<string, { city: string; state: string; days: numb
 
 interface AppContextType {
   products: Product[];
+  productsLoading: boolean;
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   categories: CollectionCategory[];
   addCategory: (category: Omit<CollectionCategory, 'id'>) => Promise<void>;
@@ -145,6 +146,7 @@ interface AppContextType {
 
   // Orders
   orders: Order[];
+  ordersLoading: boolean;
   ordersSyncError: string | null;
   createOrder: (orderData: {
     paymentMethod: PaymentMethod;
@@ -271,6 +273,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (import.meta.env.PROD) return [];
     return safeLoadArray<Product>('mle_products', INITIAL_PRODUCTS).map(normalizeProductCategory);
   });
+  const [productsLoading, setProductsLoading] = useState(import.meta.env.PROD);
 
   const [categories, setCategories] = useState<CollectionCategory[]>(() => {
     return safeLoadArray<CollectionCategory>('mle_categories', CATEGORIES_CONFIG);
@@ -648,6 +651,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (error) {
       console.error('Failed to load products from the API:', error);
+    } finally {
+      setProductsLoading(false);
     }
   }, []);
 
@@ -923,6 +928,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ]
     )
   );
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const ordersInitialSyncStarted = useRef(false);
   const [ordersSyncError, setOrdersSyncError] = useState<string | null>(null);
 
   // Mobile App Configuration State
@@ -989,6 +996,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Synchronize orders live from MySQL / Central API
   const syncOrdersFromBackend = useCallback(async () => {
+    const isInitialSync = !ordersInitialSyncStarted.current;
+    if (isInitialSync) {
+      ordersInitialSyncStarted.current = true;
+      setOrdersLoading(true);
+    }
+
     try {
       const res = await fetch('/api/orders');
       const json = await res.json().catch(() => null);
@@ -1062,6 +1075,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const message = err instanceof Error ? err.message : 'Order sync is unavailable.';
       setOrdersSyncError(`Could not load orders: ${message}`);
       console.error('Order sync failed:', err);
+    } finally {
+      if (isInitialSync) setOrdersLoading(false);
     }
   }, []);
 
@@ -2875,6 +2890,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider
       value={{
         products,
+        productsLoading,
         setProducts,
         cart,
         addToCart,
@@ -2922,6 +2938,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         redeemWalletPoints,
 
         orders,
+        ordersLoading,
         ordersSyncError,
         createOrder,
         updateOrderStatus,
