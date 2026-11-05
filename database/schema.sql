@@ -167,7 +167,8 @@ CREATE TABLE IF NOT EXISTS `users` (
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_user_email` (`email`),
-  INDEX `idx_user_phone` (`phone`)
+  INDEX `idx_user_phone` (`phone`),
+  INDEX `idx_users_created_id` (`created_at`, `id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 7. ORDERS TABLE (Both Web and Mobile App Orders)

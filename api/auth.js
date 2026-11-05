@@ -69,6 +69,26 @@ function sanitizeUser(u) {
   };
 }
 
+function encodeUserCursor(cursor) {
+  return Buffer.from(JSON.stringify(cursor)).toString('base64url');
+}
+
+function decodeUserCursor(value) {
+  if (!value) return null;
+  try {
+    const cursor = JSON.parse(Buffer.from(value, 'base64url').toString('utf8'));
+    if (Number.isInteger(cursor.offset) && cursor.offset >= 0) return cursor;
+    if (
+      typeof cursor.createdAt === 'string' &&
+      /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,6})?$/.test(cursor.createdAt) &&
+      typeof cursor.id === 'string'
+    ) return cursor;
+  } catch {
+    // Invalid cursors are rejected below.
+  }
+  return undefined;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -95,33 +115,90 @@ export default async function handler(req, res) {
     const admin = await requireAdminSession(req, res);
     if (!admin) return;
 
+    const hasPagination = req.query?.limit !== undefined || req.query?.cursor !== undefined;
+    let limit;
+    let cursor = null;
+    if (hasPagination) {
+      const requestedLimit = req.query.limit === undefined ? 50 : Number(req.query.limit);
+      if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 100) {
+        return res.status(400).json({
+          success: false,
+          message: 'User page limit must be an integer between 1 and 100.'
+        });
+      }
+      limit = requestedLimit;
+      cursor = decodeUserCursor(req.query.cursor);
+      if (cursor === undefined) {
+        return res.status(400).json({ success: false, message: 'Invalid user pagination cursor.' });
+      }
+    }
+
     if (!pool) {
-      const fallback = loadFallbackUsers().map(sanitizeUser);
+      const allFallback = loadFallbackUsers();
+      const offset = cursor?.offset || 0;
+      const fallback = (hasPagination ? allFallback.slice(offset, offset + limit + 1) : allFallback)
+        .map(sanitizeUser);
+      const hasMore = hasPagination && fallback.length > limit;
+      const users = hasMore ? fallback.slice(0, limit) : fallback;
       return res.status(200).json({
         success: true,
         source: 'LOCAL_FALLBACK',
-        count: fallback.length,
-        users: fallback
+        count: users.length,
+        users,
+        ...(hasPagination ? {
+          hasMore,
+          nextCursor: hasMore ? encodeUserCursor({ offset: offset + limit }) : null
+        } : {})
       });
     }
 
     try {
-      const [rows] = await pool.query('SELECT * FROM users ORDER BY created_at DESC');
-      const sanitized = rows.map(sanitizeUser);
+      const [rows] = hasPagination
+        ? await pool.query(
+          cursor?.createdAt
+            ? 'SELECT *, DATE_FORMAT(created_at, \'%Y-%m-%d %H:%i:%s.%f\') AS _cursor_created_at FROM users WHERE created_at < ? OR (created_at = ? AND id < ?) ORDER BY created_at DESC, id DESC LIMIT ?'
+            : 'SELECT *, DATE_FORMAT(created_at, \'%Y-%m-%d %H:%i:%s.%f\') AS _cursor_created_at FROM users ORDER BY created_at DESC, id DESC LIMIT ?',
+          cursor?.createdAt
+            ? [cursor.createdAt, cursor.createdAt, cursor.id, limit + 1]
+            : [limit + 1]
+        )
+        : await pool.query('SELECT * FROM users ORDER BY created_at DESC');
+      const hasMore = hasPagination && rows.length > limit;
+      const pageRows = hasMore ? rows.slice(0, limit) : rows;
+      const sanitized = pageRows.map(sanitizeUser);
+      const lastRow = pageRows[pageRows.length - 1];
       return res.status(200).json({
         success: true,
         source: 'MYSQL_DATABASE',
         count: sanitized.length,
-        users: sanitized
+        users: sanitized,
+        ...(hasPagination ? {
+          hasMore,
+          nextCursor: hasMore && lastRow
+            ? encodeUserCursor({
+              createdAt: lastRow._cursor_created_at,
+              id: lastRow.id
+            })
+            : null
+        } : {})
       });
     } catch (err) {
       console.warn('MySQL users fetch error, using fallback:', err.message);
-      const fallback = loadFallbackUsers().map(sanitizeUser);
+      const allFallback = loadFallbackUsers();
+      const offset = cursor?.offset || 0;
+      const fallback = (hasPagination ? allFallback.slice(offset, offset + limit + 1) : allFallback)
+        .map(sanitizeUser);
+      const hasMore = hasPagination && fallback.length > limit;
+      const users = hasMore ? fallback.slice(0, limit) : fallback;
       return res.status(200).json({
         success: true,
         source: 'LOCAL_FALLBACK_ON_ERROR',
-        count: fallback.length,
-        users: fallback
+        count: users.length,
+        users,
+        ...(hasPagination ? {
+          hasMore,
+          nextCursor: hasMore ? encodeUserCursor({ offset: offset + limit }) : null
+        } : {})
       });
     }
   }

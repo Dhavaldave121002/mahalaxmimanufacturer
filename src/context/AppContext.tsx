@@ -428,6 +428,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (import.meta.env.PROD) return [];
     return safeLoadArray<User>('mle_users', []);
   });
+  const usersSyncInProgress = useRef(false);
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     if (import.meta.env.PROD) return false;
@@ -671,37 +672,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Synchronize users live from MySQL / Central API
   const syncUsersFromBackend = useCallback(async () => {
-    if (!isLoggedIn || currentUser.role !== 'admin') return;
+    if (!isLoggedIn || currentUser.role !== 'admin' || usersSyncInProgress.current) return;
+    usersSyncInProgress.current = true;
     try {
-      const res = await fetch('/api/auth');
-      if (!res.ok) return;
-      const json = await res.json();
-      if (json && json.success && Array.isArray(json.users) && json.users.length > 0) {
+      const users: User[] = [];
+      let cursor: string | null = null;
+      do {
+        const query = new URLSearchParams({ limit: '100' });
+        if (cursor) query.set('cursor', cursor);
+        const res = await fetch(`/api/auth?${query.toString()}`);
+        if (!res.ok) throw new Error(`User sync failed (HTTP ${res.status}).`);
+        const json = await res.json();
+        if (!json?.success || !Array.isArray(json.users)) {
+          throw new Error('User sync returned an invalid response.');
+        }
+        users.push(...json.users);
+        if (json.hasMore) {
+          if (typeof json.nextCursor !== 'string' || !json.nextCursor || json.nextCursor === cursor) {
+            throw new Error('User sync returned an invalid pagination cursor.');
+          }
+          cursor = json.nextCursor;
+        } else {
+          cursor = null;
+        }
+      } while (cursor);
+
+      if (users.length > 0) {
         setRegisteredUsers(prev => {
           const map = new Map<string, User>();
-          for (const u of json.users) {
+          for (const u of users) {
             const key = (u.email || '').trim().toLowerCase();
             if (key) map.set(key, u);
           }
           for (const u of prev) {
             const key = (u.email || '').trim().toLowerCase();
-            if (key && !map.has(key)) {
-              map.set(key, u);
-            }
+            if (key && !map.has(key)) map.set(key, u);
           }
           return Array.from(map.values());
         });
       }
     } catch {
       // quiet offline fallback
+    } finally {
+      usersSyncInProgress.current = false;
     }
   }, [currentUser.role, isLoggedIn, setRegisteredUsers]);
 
   useEffect(() => {
     if (!isLoggedIn || currentUser.role !== 'admin') return;
     syncUsersFromBackend();
-    const interval = setInterval(syncUsersFromBackend, 12000);
-    return () => clearInterval(interval);
+    const syncWhenVisible = () => {
+      if (document.visibilityState === 'visible') syncUsersFromBackend();
+    };
+    const interval = setInterval(syncWhenVisible, 60000);
+    document.addEventListener('visibilitychange', syncWhenVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', syncWhenVisible);
+    };
   }, [currentUser.role, isLoggedIn, syncUsersFromBackend]);
 
   const addCoupon = (coupon: Omit<CouponOffer, 'id' | 'usedCount' | 'createdAt'>) => {

@@ -7,6 +7,11 @@ let pool = null;
 export function getDbPool() {
   if (pool) return pool;
 
+  const connectionLimit = Number(process.env.MYSQL_CONNECTION_LIMIT || 10);
+  if (!Number.isInteger(connectionLimit) || connectionLimit < 1) {
+    throw new Error('MYSQL_CONNECTION_LIMIT must be a positive integer.');
+  }
+
   const dbHost = process.env.MYSQL_HOST || process.env.DB_HOST;
   const dbUser = process.env.MYSQL_USER || process.env.DB_USER;
   const dbPassword = process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD;
@@ -20,7 +25,7 @@ export function getDbPool() {
     pool = mysql.createPool({
       uri: connectionUri,
       waitForConnections: true,
-      connectionLimit: 10,
+      connectionLimit,
       queueLimit: 0,
       connectTimeout: 2000,
       enableKeepAlive: true,
@@ -39,7 +44,7 @@ export function getDbPool() {
       password: dbPassword || '',
       database: dbName,
       waitForConnections: true,
-      connectionLimit: 10,
+      connectionLimit,
       queueLimit: 0,
       connectTimeout: 2000,
       enableKeepAlive: true,
