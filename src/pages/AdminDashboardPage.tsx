@@ -543,7 +543,7 @@ export const AdminDashboardPage: React.FC = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Mahalaxmi_Enterprises_Catalog_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `Mahalaxmi_Enterprise_Catalog_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
