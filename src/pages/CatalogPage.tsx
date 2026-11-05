@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { ProductCard } from '../components/common/ProductCard';
+import { InfiniteProductGrid } from '../components/common/InfiniteProductGrid';
 import { ProductGridSkeleton } from '../components/common/SkeletonLoader';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { matchesProductSearch } from '../utils/searchProducts';
@@ -420,11 +420,23 @@ export const CatalogPage: React.FC = () => {
           {productsLoading ? (
             <ProductGridSkeleton count={8} className="xl:grid-cols-3" />
           ) : filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3">
-              {filteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <InfiniteProductGrid
+              key={[
+                queryParam,
+                categoryParam,
+                subcategoryParam,
+                filterParam,
+                selectedCategory,
+                selectedSubcategory,
+                maxPrice,
+                inStockOnly,
+                directMillOnly,
+                minRating,
+                sortBy
+              ].join('|')}
+              products={filteredProducts}
+              className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3"
+            />
           ) : (
             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 space-y-4">
               <div className="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">

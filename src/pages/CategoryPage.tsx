@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
-import { ProductCard } from '../components/common/ProductCard';
+import { InfiniteProductGrid } from '../components/common/InfiniteProductGrid';
 import { ProductGridSkeleton } from '../components/common/SkeletonLoader';
 import { SlidersHorizontal } from 'lucide-react';
 import { toSubcategorySlug, matchesSubcategorySlug, productBelongsToCollection } from '../utils/productCategories';
@@ -36,7 +36,7 @@ export const CategoryPage: React.FC = () => {
     : null;
 
   // Filter products for this category using multi-collection and slug-tolerant matching
-  const categoryProducts = products
+  const categoryProducts = useMemo(() => products
     .filter(p => {
       if (!productBelongsToCollection(p, categoryId)) return false;
       if (selectedSubcategory && !matchesSubcategorySlug(p.subcategory, selectedSubcategory)) return false;
@@ -48,7 +48,7 @@ export const CategoryPage: React.FC = () => {
       if (sortBy === 'discount') return (b.mrp - b.retailPrice) / b.mrp - (a.mrp - a.retailPrice) / a.mrp;
       if (sortBy === 'rating') return b.rating - a.rating;
       return 0;
-    });
+    }), [products, categoryId, selectedSubcategory, sortBy]);
   const availableSubcategories = Array.from(new Set(
     products.filter(product => productBelongsToCollection(product, categoryId)).map(product => product.subcategory)
   ));
@@ -262,11 +262,11 @@ export const CategoryPage: React.FC = () => {
           {productsLoading ? (
             <ProductGridSkeleton count={8} />
           ) : categoryProducts.length > 0 ? (
-            <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
-              {categoryProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <InfiniteProductGrid
+              key={`${categoryId}|${selectedSubcategory}|${sortBy}`}
+              products={categoryProducts}
+              className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4"
+            />
           ) : (
             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 space-y-4">
               <h3 className="font-bold text-lg text-navy">No items in this subcategory</h3>
