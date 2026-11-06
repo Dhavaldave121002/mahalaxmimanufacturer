@@ -181,6 +181,7 @@ export const ProductDetailPage: React.FC = () => {
   } = useApp();
 
   const product = products.find(p => p.slug === slug);
+  const careInstructions = product?.careInstructions?.filter(instruction => instruction.trim()) ?? [];
   const deliveryLocationPage = useDeliveryLocationPage(deliveryInfo);
   const productImages = useMemo(
     () => orderProductImagesByResolution(product?.images ?? []),
@@ -455,6 +456,12 @@ export const ProductDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'specs' | 'care' | 'reviews'>('specs');
   const [activeProductFeatureTab, setActiveProductFeatureTab] = useState<'samples' | 'customization' | 'bundle'>('samples');
   const [showReturnModal, setShowReturnModal] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'care' && careInstructions.length === 0) {
+      setActiveTab('specs');
+    }
+  }, [activeTab, careInstructions.length, product?.id]);
 
   const activeWholesaleTier = useMemo(() => {
     if (!product?.wholesaleTiers || product.wholesaleTiers.length === 0) return null;
@@ -2216,7 +2223,7 @@ export const ProductDetailPage: React.FC = () => {
 
       {/* Product information tabs are populated from this listing and its reviews. */}
       <div className="min-w-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-3 shadow-subtle space-y-5 sm:space-y-6 sm:p-8">
-        <div className="grid min-w-0 grid-cols-3 gap-1 border-b border-slate-200 sm:flex sm:gap-8">
+        <div className={`grid min-w-0 ${careInstructions.length > 0 ? 'grid-cols-3' : 'grid-cols-2'} gap-1 border-b border-slate-200 sm:flex sm:gap-8`}>
           <button
             onClick={() => setActiveTab('specs')}
             className={`min-w-0 px-1 pb-3 text-center text-xs leading-tight font-bold border-b-2 transition sm:px-0 sm:text-sm sm:whitespace-nowrap ${
@@ -2227,16 +2234,18 @@ export const ProductDetailPage: React.FC = () => {
           >
             Technical Specifications
           </button>
-          <button
-            onClick={() => setActiveTab('care')}
-            className={`min-w-0 px-1 pb-3 text-center text-xs leading-tight font-bold border-b-2 transition sm:px-0 sm:text-sm sm:whitespace-nowrap ${
-              activeTab === 'care'
-                ? 'border-indigo text-indigo'
-                : 'border-transparent text-slate-500 hover:text-navy'
-            }`}
-          >
-            Care Instructions
-          </button>
+          {careInstructions.length > 0 && (
+            <button
+              onClick={() => setActiveTab('care')}
+              className={`min-w-0 px-1 pb-3 text-center text-xs leading-tight font-bold border-b-2 transition sm:px-0 sm:text-sm sm:whitespace-nowrap ${
+                activeTab === 'care'
+                  ? 'border-indigo text-indigo'
+                  : 'border-transparent text-slate-500 hover:text-navy'
+              }`}
+            >
+              Care Instructions
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('reviews')}
             className={`min-w-0 px-1 pb-3 text-center text-xs leading-tight font-bold border-b-2 transition sm:px-0 sm:text-sm sm:whitespace-nowrap ${
@@ -2253,76 +2262,71 @@ export const ProductDetailPage: React.FC = () => {
         {activeTab === 'specs' && (
           <ExpandableTabContent>
             <div className="space-y-4">
-              {product.description ? (
+              {product.description && (
                 <div className="space-y-1">
                   <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     Source product description — confirm details before ordering
                   </p>
                   <ExpandableDescription text={product.description} />
                 </div>
-              ) : (
-                <p className="text-xs text-slate-500">
-                  A product description has not been provided for this listing.
-                </p>
               )}
-              <div className="w-full min-w-0 overflow-hidden rounded-xl border border-slate-200">
-                <table className="w-full min-w-0 table-fixed border-collapse text-left text-[10px] sm:text-xs">
-                  <colgroup>
-                    <col className="w-[38%] sm:w-1/3" />
-                    <col className="w-[62%] sm:w-2/3" />
-                  </colgroup>
-                  <tbody className="divide-y divide-slate-100">
-                    <tr className="bg-slate-50">
-                      <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">HSN Code</td>
-                      <td className="break-words px-2 py-2.5 align-top font-mono font-semibold text-navy sm:px-4">{product.hsnCode || 'Not provided'}</td>
-                    </tr>
-                    <tr>
-                      <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">GST Rate</td>
-                      <td className="break-words px-2 py-2.5 align-top font-semibold text-navy sm:px-4">
-                        {product.gstRate > 0 ? `${product.gstRate}%` : 'Not provided — verify before ordering'}
-                      </td>
-                    </tr>
-                    {Object.entries(product.specifications)
-                      .filter(([key, value]) =>
-                        !isInternalProductSpecification(key) && hasProductSpecificationValue(value)
-                      )
-                      .map(([key, val], i) => (
-                      <tr key={i} className={i % 2 === 0 ? 'bg-slate-50/60' : ''}>
-                        <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">{key}</td>
-                        <td className="break-all px-2 py-2.5 align-top leading-relaxed text-slate-800 sm:px-4">{String(val)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              {(product.hsnCode?.trim() || product.gstRate > 0 || Object.entries(product.specifications)
+                .some(([key, value]) =>
+                  !isInternalProductSpecification(key) && hasProductSpecificationValue(value)
+                )) && (
+                <div className="w-full min-w-0 overflow-hidden rounded-xl border border-slate-200">
+                  <table className="w-full min-w-0 table-fixed border-collapse text-left text-[10px] sm:text-xs">
+                    <colgroup>
+                      <col className="w-[38%] sm:w-1/3" />
+                      <col className="w-[62%] sm:w-2/3" />
+                    </colgroup>
+                    <tbody className="divide-y divide-slate-100">
+                      {product.hsnCode?.trim() && (
+                        <tr className="bg-slate-50">
+                          <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">HSN Code</td>
+                          <td className="break-words px-2 py-2.5 align-top font-mono font-semibold text-navy sm:px-4">{product.hsnCode}</td>
+                        </tr>
+                      )}
+                      {product.gstRate > 0 && (
+                        <tr>
+                          <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">GST Rate</td>
+                          <td className="break-words px-2 py-2.5 align-top font-semibold text-navy sm:px-4">{product.gstRate}%</td>
+                        </tr>
+                      )}
+                      {Object.entries(product.specifications)
+                        .filter(([key, value]) =>
+                          !isInternalProductSpecification(key) && hasProductSpecificationValue(value)
+                        )
+                        .map(([key, val], i) => (
+                        <tr key={key} className={i % 2 === 0 ? 'bg-slate-50/60' : ''}>
+                          <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">{key}</td>
+                          <td className="break-all px-2 py-2.5 align-top leading-relaxed text-slate-800 sm:px-4">{String(val)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </ExpandableTabContent>
         )}
 
         {/* Care Instructions */}
-        {activeTab === 'care' && (
+        {activeTab === 'care' && careInstructions.length > 0 && (
           <ExpandableTabContent>
             <div className="space-y-3 text-xs text-slate-700">
               <h4 className="font-bold text-sm text-navy">Product Care</h4>
-              {product.careInstructions?.length ? (
-                <>
-                  <p className="text-[11px] leading-relaxed text-slate-500">
-                    General material-based guidance. Follow the product label if it gives different care instructions.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {product.careInstructions.map((instruction, index) => (
-                      <div key={index} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-indigo shrink-0" />
-                        <span>{instruction}</span>
-                      </div>
-                    ))}
+              <p className="text-[11px] leading-relaxed text-slate-500">
+                General material-based guidance. Follow the product label if it gives different care instructions.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {careInstructions.map((instruction, index) => (
+                  <div key={index} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-indigo shrink-0" />
+                    <span>{instruction}</span>
                   </div>
-                </>
-              ) : (
-                <p className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-900">
-                  Care instructions were not provided for this product. Please confirm the correct care method with us.
-                </p>
-              )}
+                ))}
+              </div>
             </div>
           </ExpandableTabContent>
         )}
