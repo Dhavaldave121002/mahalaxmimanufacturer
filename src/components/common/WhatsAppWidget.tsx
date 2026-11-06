@@ -9,7 +9,6 @@ export const WhatsAppWidget: React.FC = () => {
   const [message, setMessage] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const isProductPage = location.pathname.startsWith('/product/');
   const isAdminPage = location.pathname.startsWith('/admin');
 
   useEffect(() => {
@@ -20,7 +19,7 @@ export const WhatsAppWidget: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  if (isAdminPage || isProductPage) {
+  if (isAdminPage) {
     return null;
   }
 

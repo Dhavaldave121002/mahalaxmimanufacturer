@@ -171,6 +171,7 @@ export const ProductDetailPage: React.FC = () => {
     products,
     productsLoading,
     addToCart,
+    bundleOffer,
     deliveryPincode,
     deliveryInfo,
     checkPincode,
@@ -452,6 +453,7 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const [activeTab, setActiveTab] = useState<'specs' | 'care' | 'reviews'>('specs');
+  const [activeProductFeatureTab, setActiveProductFeatureTab] = useState<'samples' | 'customization' | 'bundle'>('samples');
   const [showReturnModal, setShowReturnModal] = useState(false);
 
   const activeWholesaleTier = useMemo(() => {
@@ -660,6 +662,7 @@ export const ProductDetailPage: React.FC = () => {
   const bundleProducts = relatedProducts.filter(p =>
     p.stock > 0 && p.specifications?.['Source Price Status'] !== 'Approximate - verify before sale'
   ).slice(0, 2);
+  const hasBundleOffer = !inquiryOnly && bundleOffer.enabled !== false && bundleProducts.length > 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-12 pb-20">
@@ -1191,7 +1194,43 @@ export const ProductDetailPage: React.FC = () => {
 
           {/* Commercial Sample & Purchase Buttons Section */}
           <div className="space-y-4 pt-2 border-t border-slate-100">
+            <div
+              role="tablist"
+              aria-label="Product options"
+              className={`grid ${hasBundleOffer ? 'grid-cols-3' : 'grid-cols-2'} gap-1 rounded-xl bg-slate-100 p-1`}
+            >
+              {([
+                { id: 'samples', label: 'Samples', mobileLabel: 'Sample' },
+                { id: 'customization', label: 'Customize', mobileLabel: 'Custom' },
+                ...(hasBundleOffer ? [{ id: 'bundle' as const, label: 'Save with bundle', mobileLabel: 'Bundle' }] : [])
+              ] as const).map(tab => (
+                <button
+                  key={tab.id}
+                  id={`product-option-tab-${tab.id}`}
+                  type="button"
+                  role="tab"
+                  aria-controls={`product-option-panel-${tab.id}`}
+                  aria-selected={activeProductFeatureTab === tab.id}
+                  onClick={() => setActiveProductFeatureTab(tab.id)}
+                  className={`min-h-10 min-w-0 rounded-lg px-1.5 text-[10px] font-bold transition sm:px-2 sm:text-xs ${
+                    activeProductFeatureTab === tab.id
+                      ? 'bg-white text-indigo shadow-sm'
+                      : 'text-slate-600 hover:bg-white/70 hover:text-navy'
+                  }`}
+                >
+                  <span className="sm:hidden">{tab.mobileLabel}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </button>
+              ))}
+            </div>
+
             {/* Commercial Sample & Sample Bundle Procurement Suite */}
+            <div
+              id="product-option-panel-samples"
+              role="tabpanel"
+              aria-labelledby="product-option-tab-samples"
+              hidden={activeProductFeatureTab !== 'samples'}
+            >
               <div className="p-4 bg-gradient-to-r from-amber-50/90 via-orange-50/60 to-amber-50/90 border border-amber-200/90 rounded-2xl space-y-3 shadow-sm">
               <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-1.5">
                 <span className="min-w-0 text-xs font-black text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
@@ -1262,8 +1301,15 @@ export const ProductDetailPage: React.FC = () => {
                 </Link>
               </div>
             </div>
+            </div>
 
             {/* INTERACTIVE CUSTOMIZATION STUDIO (Matching App 1-to-1) */}
+            <div
+              id="product-option-panel-customization"
+              role="tabpanel"
+              aria-labelledby="product-option-tab-customization"
+              hidden={activeProductFeatureTab !== 'customization'}
+            >
             <div className="p-4 sm:p-5 bg-gradient-to-br from-purple-50/80 via-white to-indigo-50/60 border-2 border-purple-200/90 rounded-2xl shadow-sm space-y-4">
               {/* Studio Header */}
               <div className="flex items-center justify-between pb-3 border-b border-purple-100">
@@ -1905,6 +1951,21 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               )}
               </div>
+            </div>
+
+            {hasBundleOffer && (
+              <div
+                id="product-option-panel-bundle"
+                role="tabpanel"
+                aria-labelledby="product-option-tab-bundle"
+                hidden={activeProductFeatureTab !== 'bundle'}
+              >
+              <FrequentlyBoughtTogether
+                currentProduct={product}
+                bundleProducts={bundleProducts}
+              />
+              </div>
+            )}
 
             {/* Purchase Action Row: Quantity + Add to Cart + Buy Now */}
             <div id="main-product-actions" className="space-y-2 sm:space-y-3">
@@ -2156,14 +2217,6 @@ export const ProductDetailPage: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* Frequently Bought Together Bundle Cross-Sell */}
-      {!inquiryOnly && bundleProducts.length > 0 && (
-        <FrequentlyBoughtTogether
-          currentProduct={product}
-          bundleProducts={bundleProducts}
-        />
-      )}
 
       {/* Product information tabs are populated from this listing and its reviews. */}
       <div className="min-w-0 overflow-hidden rounded-3xl border border-slate-200 bg-white p-3 shadow-subtle space-y-5 sm:space-y-6 sm:p-8">

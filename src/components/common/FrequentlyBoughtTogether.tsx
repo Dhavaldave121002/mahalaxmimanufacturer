@@ -46,17 +46,17 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50/50 via-white to-amber-50/30 rounded-3xl p-6 sm:p-7 border border-indigo-100 shadow-subtle space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-indigo text-white flex items-center justify-center">
+    <div className="bg-gradient-to-br from-indigo-50/50 via-white to-amber-50/30 rounded-2xl p-4 sm:rounded-3xl sm:p-7 border border-indigo-100 shadow-subtle space-y-4 sm:space-y-5">
+      <div className="flex items-start justify-between">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-indigo text-white flex shrink-0 items-center justify-center">
             <Sparkles className="w-4 h-4 text-champagne" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h3 className="font-black text-sm sm:text-base text-navy">
               {bundleOffer?.title || 'Frequently Bought Together • Mill Saver Bundle'}
             </h3>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[10px] leading-snug text-slate-500 sm:text-[11px]">
               {bundleOffer?.subtitle || 'Customers frequently combine these complementary mill-grade essentials'}
             </p>
           </div>
@@ -64,18 +64,18 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
 
       </div>
 
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center md:gap-6">
         {/* Products Visual Strip */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:flex-wrap md:items-center md:gap-3">
           {allAvailable.map((prod, idx) => {
             const isSelected = selectedItems.includes(prod.id);
             const isMain = prod.id === currentProduct.id;
             return (
               <React.Fragment key={prod.id}>
-                {idx > 0 && <Plus className="w-4 h-4 text-slate-400 shrink-0" />}
+                {idx > 0 && <Plus className="h-4 w-4 rotate-90 self-center text-slate-400 md:rotate-0" />}
                 <div
                   onClick={() => toggleItem(prod.id)}
-                  className={`flex items-center gap-3 p-2.5 rounded-2xl border transition cursor-pointer select-none ${
+                  className={`flex w-full min-w-0 items-center gap-2.5 rounded-xl border p-2.5 transition cursor-pointer select-none md:w-auto md:gap-3 md:rounded-2xl ${
                     isSelected
                       ? 'border-indigo/50 bg-white shadow-sm'
                       : 'border-slate-200 bg-slate-50/60 opacity-60'
@@ -84,9 +84,9 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
                   <img
                     src={prod.images[0]}
                     alt={prod.name}
-                    className="w-14 h-14 object-cover rounded-xl border border-slate-100"
+                    className="h-12 w-12 shrink-0 rounded-lg border border-slate-100 object-cover sm:h-14 sm:w-14 sm:rounded-xl"
                   />
-                  <div className="text-xs max-w-[150px]">
+                  <div className="min-w-0 flex-1 text-xs md:max-w-[150px]">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <input
                         type="checkbox"
@@ -99,7 +99,7 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
                         {isMain ? 'Current Item' : 'Add On'}
                       </span>
                     </div>
-                    <p className="font-bold text-navy text-[11px] line-clamp-1">{prod.name}</p>
+                    <p className="line-clamp-2 break-words text-[11px] font-bold text-navy">{prod.name}</p>
                     <p className="font-extrabold text-navy text-xs">
                       ₹{prod.retailPrice.toLocaleString('en-IN')} each
                     </p>
@@ -111,7 +111,7 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
         </div>
 
         {/* Bundle Summary & CTA */}
-        <div className="w-full md:w-auto p-4 bg-white rounded-2xl border border-slate-200 shadow-sm shrink-0 flex flex-col justify-between gap-3 min-w-[240px]">
+        <div className="flex w-full min-w-0 shrink-0 flex-col justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4 md:w-auto md:min-w-[240px]">
           <div>
             <span className="text-[11px] text-slate-500 block">
               {activeProducts.length} selected items
@@ -123,7 +123,7 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
 
           <button
             onClick={handleAddBundle}
-            className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm ${
+            className={`min-h-11 w-full rounded-xl px-4 py-2.5 text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm ${
               addedAnimation
                 ? 'bg-emerald-600 text-white'
                 : 'bg-indigo hover:bg-indigo-dark text-white'
