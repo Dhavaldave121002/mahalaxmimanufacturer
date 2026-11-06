@@ -809,16 +809,17 @@ export const ProductDetailPage: React.FC = () => {
 
             {/* Thumbnails Row */}
             {productImages.length > 1 && (
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
+              <div className="flex snap-x snap-mandatory items-center gap-2.5 overflow-x-auto px-1 py-1.5 hide-scrollbar">
                 {productImages.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImageIndex(idx)}
                     aria-label={`View photo ${idx + 1} of ${product.name}`}
-                    className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition shrink-0 p-1 bg-white ${
+                    aria-pressed={activeImageIndex === idx}
+                    className={`h-[72px] w-[72px] shrink-0 snap-start overflow-hidden rounded-xl border-2 bg-white p-0.5 shadow-sm transition sm:h-20 sm:w-20 sm:rounded-2xl sm:p-1 ${
                       activeImageIndex === idx
-                        ? 'border-indigo ring-2 ring-indigo/20 scale-105 shadow-sm'
-                        : 'border-slate-200 hover:border-slate-300'
+                        ? 'border-indigo ring-2 ring-indigo/20'
+                        : 'border-slate-200 hover:border-indigo/50'
                     }`}
                   >
                     <img
