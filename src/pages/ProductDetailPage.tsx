@@ -704,12 +704,12 @@ export const ProductDetailPage: React.FC = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-6">
         {/* Left Column: Image Gallery (Sticky on desktop until right column finishes) */}
         <div className="min-w-0">
-          <div className="w-full lg:sticky lg:top-20 space-y-3 z-10">
+          <div id="product-image-gallery" className="w-full lg:sticky lg:top-20 space-y-3 z-10">
             {/* Hero Main Image with Auto-Slide, Cross-fade & Zoom container */}
             <div 
               onMouseEnter={() => setIsHoveredGallery(true)}
               onMouseLeave={() => setIsHoveredGallery(false)}
-              className="relative mx-auto w-full aspect-square rounded-2xl sm:rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-subtle group select-none flex items-center justify-center"
+              className="relative mx-auto w-full aspect-square lg:w-[min(100%,calc(100dvh-12rem))] rounded-2xl sm:rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-subtle group select-none flex items-center justify-center"
             >
               {/* Layered Cross-fade Slide Images */}
               {productImages.length === 0 ? (
@@ -1138,7 +1138,7 @@ export const ProductDetailPage: React.FC = () => {
               <p className="text-xs font-bold text-navy">
                 Color: <span className="text-indigo">{selectedColor?.name || 'Choose a color'}</span>
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-4 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
                 {getProductColorOptions(product).map(color => {
                   const isSelected = selectedColor?.id === color.id;
                   return (
@@ -1148,17 +1148,17 @@ export const ProductDetailPage: React.FC = () => {
                       onClick={() => setSelectedColor(color)}
                       aria-label={`Choose ${color.name}`}
                       aria-pressed={isSelected}
-                      className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                      className={`inline-flex w-full min-w-0 items-center justify-center gap-1 rounded-xl border px-1.5 py-2 text-[10px] font-semibold transition sm:w-auto sm:gap-2 sm:px-3 sm:text-xs ${
                         isSelected
                           ? 'border-navy bg-navy text-white shadow-subtle'
                           : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                       }`}
                     >
                       <span
-                        className="h-4 w-4 shrink-0 rounded-full border border-black/20"
+                        className="h-3 w-3 shrink-0 rounded-full border border-black/20 sm:h-4 sm:w-4"
                         style={{ backgroundColor: color.colorHex }}
                       />
-                      {color.name}
+                      <span className="truncate">{color.name}</span>
                     </button>
                   );
                 })}
@@ -2261,55 +2261,53 @@ export const ProductDetailPage: React.FC = () => {
 
         {/* Tab 1: Technical Specifications Table */}
         {activeTab === 'specs' && (
-          <ExpandableTabContent>
-            <div className="space-y-4">
-              {product.description && (
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                    Source product description — confirm details before ordering
-                  </p>
-                  <ExpandableDescription text={product.description} />
-                </div>
-              )}
-              {(product.hsnCode?.trim() || product.gstRate > 0 || Object.entries(product.specifications)
-                .some(([key, value]) =>
-                  !isInternalProductSpecification(key) && hasProductSpecificationValue(value)
-                )) && (
-                <div className="w-full min-w-0 overflow-hidden rounded-xl border border-slate-200">
-                  <table className="w-full min-w-0 table-fixed border-collapse text-left text-[10px] sm:text-xs">
-                    <colgroup>
-                      <col className="w-[38%] sm:w-1/3" />
-                      <col className="w-[62%] sm:w-2/3" />
-                    </colgroup>
-                    <tbody className="divide-y divide-slate-100">
-                      {product.hsnCode?.trim() && (
-                        <tr className="bg-slate-50">
-                          <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">HSN Code</td>
-                          <td className="break-words px-2 py-2.5 align-top font-mono font-semibold text-navy sm:px-4">{product.hsnCode}</td>
-                        </tr>
-                      )}
-                      {product.gstRate > 0 && (
-                        <tr>
-                          <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">GST Rate</td>
-                          <td className="break-words px-2 py-2.5 align-top font-semibold text-navy sm:px-4">{product.gstRate}%</td>
-                        </tr>
-                      )}
-                      {Object.entries(product.specifications)
-                        .filter(([key, value]) =>
-                          !isInternalProductSpecification(key) && hasProductSpecificationValue(value)
-                        )
-                        .map(([key, val], i) => (
-                        <tr key={key} className={i % 2 === 0 ? 'bg-slate-50/60' : ''}>
-                          <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">{key}</td>
-                          <td className="break-all px-2 py-2.5 align-top leading-relaxed text-slate-800 sm:px-4">{String(val)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </ExpandableTabContent>
+          <div className="space-y-4">
+            {product.description && (
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                  Source product description — confirm details before ordering
+                </p>
+                <ExpandableDescription text={product.description} />
+              </div>
+            )}
+            {(product.hsnCode?.trim() || product.gstRate > 0 || Object.entries(product.specifications)
+              .some(([key, value]) =>
+                !isInternalProductSpecification(key) && hasProductSpecificationValue(value)
+              )) && (
+              <div className="w-full min-w-0 overflow-hidden rounded-xl border border-slate-200">
+                <table className="w-full min-w-0 table-fixed border-collapse text-left text-[10px] sm:text-xs">
+                  <colgroup>
+                    <col className="w-[38%] sm:w-1/3" />
+                    <col className="w-[62%] sm:w-2/3" />
+                  </colgroup>
+                  <tbody className="divide-y divide-slate-100">
+                    {product.hsnCode?.trim() && (
+                      <tr className="bg-slate-50">
+                        <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">HSN Code</td>
+                        <td className="break-words px-2 py-2.5 align-top font-mono font-semibold text-navy sm:px-4">{product.hsnCode}</td>
+                      </tr>
+                    )}
+                    {product.gstRate > 0 && (
+                      <tr>
+                        <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">GST Rate</td>
+                        <td className="break-words px-2 py-2.5 align-top font-semibold text-navy sm:px-4">{product.gstRate}%</td>
+                      </tr>
+                    )}
+                    {Object.entries(product.specifications)
+                      .filter(([key, value]) =>
+                        !isInternalProductSpecification(key) && hasProductSpecificationValue(value)
+                      )
+                      .map(([key, val], i) => (
+                      <tr key={key} className={i % 2 === 0 ? 'bg-slate-50/60' : ''}>
+                        <td className="break-words px-2 py-2.5 align-top font-bold text-slate-700 sm:px-4">{key}</td>
+                        <td className="break-all px-2 py-2.5 align-top leading-relaxed text-slate-800 sm:px-4">{String(val)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Care Instructions */}

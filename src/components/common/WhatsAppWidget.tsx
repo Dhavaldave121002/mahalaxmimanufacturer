@@ -10,6 +10,7 @@ export const WhatsAppWidget: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   const isAdminPage = location.pathname.startsWith('/admin');
+  const isProductPage = location.pathname.startsWith('/product/');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,9 +41,7 @@ export const WhatsAppWidget: React.FC = () => {
         isScrolled
           ? 'opacity-100 translate-y-0 pointer-events-auto'
           : 'opacity-0 translate-y-3 pointer-events-none md:opacity-100 md:translate-y-0 md:pointer-events-auto'
-      } ${
-        'bottom-20 md:bottom-6'
-      }`}
+      } ${isProductPage ? 'bottom-[7.5rem] md:bottom-24' : 'bottom-20 md:bottom-6'}`}
     >
       {/* Pop-up chat card */}
       {isOpen && (
@@ -135,13 +134,17 @@ export const WhatsAppWidget: React.FC = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Chat on WhatsApp with direct mill sales desk"
-        className="group flex items-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full shadow-premium transition-all duration-300 hover:scale-105"
+        className={`group flex items-center justify-center bg-emerald-600 text-white shadow-premium transition-all duration-300 hover:scale-105 hover:bg-emerald-700 ${
+          isProductPage ? 'h-12 w-12 rounded-full p-0' : 'gap-2 rounded-full px-4 py-3'
+        }`}
         title="Chat on WhatsApp with Mill Merchandiser"
       >
-        <MessageCircle className="w-6 h-6 fill-current text-white animate-bounce" />
-        <span className="text-xs font-bold hidden sm:inline">
-          WhatsApp Customer Care
-        </span>
+        <MessageCircle className="h-6 w-6 fill-current text-white" />
+        {!isProductPage && (
+          <span className="text-xs font-bold hidden sm:inline">
+            WhatsApp Customer Care
+          </span>
+        )}
       </button>
     </div>
   );

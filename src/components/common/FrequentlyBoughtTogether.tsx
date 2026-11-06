@@ -46,7 +46,7 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50/50 via-white to-amber-50/30 rounded-2xl p-4 sm:rounded-3xl sm:p-7 border border-indigo-100 shadow-subtle space-y-4 sm:space-y-5">
+    <div className="w-full min-w-0 bg-gradient-to-br from-indigo-50/50 via-white to-amber-50/30 rounded-2xl p-4 sm:rounded-3xl sm:p-7 border border-indigo-100 shadow-subtle space-y-4 sm:space-y-5">
       <div className="flex items-start justify-between">
         <div className="flex min-w-0 items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-indigo text-white flex shrink-0 items-center justify-center">
@@ -64,9 +64,9 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
 
       </div>
 
-      <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center md:gap-6">
+      <div className="flex min-w-0 flex-col items-stretch gap-4">
         {/* Products Visual Strip */}
-        <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row md:flex-wrap md:items-center md:gap-3">
+        <div className="flex w-full min-w-0 flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-3">
           {allAvailable.map((prod, idx) => {
             const isSelected = selectedItems.includes(prod.id);
             const isMain = prod.id === currentProduct.id;
@@ -111,12 +111,12 @@ export const FrequentlyBoughtTogether: React.FC<FrequentlyBoughtTogetherProps> =
         </div>
 
         {/* Bundle Summary & CTA */}
-        <div className="flex w-full min-w-0 shrink-0 flex-col justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4 md:w-auto md:min-w-[240px]">
+        <div className="flex w-full min-w-0 flex-col justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
           <div>
             <span className="text-[11px] text-slate-500 block">
               {activeProducts.length} selected items
             </span>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="mt-1 break-words text-xs text-slate-500">
               Cart prices use each item&apos;s quantity tier. No bundle discount is applied.
             </p>
           </div>

@@ -29,9 +29,15 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
 
   useEffect(() => {
     const handleScroll = () => {
-      // 1. Mobile Experience: Always visible so mobile buyers always have instant 1-tap checkout
+      // Keep the mobile purchase bar clear of the product image and thumbnails.
       if (window.innerWidth < 768) {
-        setIsVisible(true);
+        const gallery = document.getElementById('product-image-gallery');
+        if (gallery) {
+          const rect = gallery.getBoundingClientRect();
+          setIsVisible(rect.bottom <= 0 || rect.top >= window.innerHeight);
+        } else {
+          setIsVisible(true);
+        }
         return;
       }
 
