@@ -793,13 +793,9 @@ export const ProductDetailPage: React.FC = () => {
                 )}
               </div>
 
-              {product.hsnCode ? (
+              {product.hsnCode && (
                   <div className="absolute bottom-3.5 right-3.5 bg-navy/80 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full font-mono z-10 pointer-events-none">
                     HSN {product.hsnCode} • GST {product.gstRate}%
-                  </div>
-                ) : (
-                  <div className="absolute bottom-3.5 right-3.5 bg-navy/80 backdrop-blur-md text-white text-[10px] px-3 py-1 rounded-full z-10 pointer-events-none">
-                    Tax details pending verification
                   </div>
               )}
             </div>
