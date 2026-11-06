@@ -691,10 +691,10 @@ export const ProductDetailPage: React.FC = () => {
       </nav>
 
       {/* Main Product Layout: Gallery (Left) + Details & Tiers (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-6">
         {/* Left Column: Image Gallery (Sticky on desktop until right column finishes) */}
-        <div className="lg:col-span-6">
-          <div className="lg:sticky lg:top-20 space-y-3 z-10 max-w-[560px] mx-auto lg:mx-0">
+        <div className="min-w-0">
+          <div className="w-full lg:sticky lg:top-20 space-y-3 z-10">
             {/* Hero Main Image with Auto-Slide, Cross-fade & Zoom container */}
             <div 
               onMouseEnter={() => setIsHoveredGallery(true)}
@@ -847,7 +847,7 @@ export const ProductDetailPage: React.FC = () => {
         </div>
 
         {/* Right Column: Pricing, Tiers, Variants, and Action Controls */}
-        <div id="product-right-column" className="lg:col-span-6 space-y-6">
+        <div id="product-right-column" className="min-w-0 space-y-6">
           {/* Header & Title */}
           <div>
             <div className="flex items-center gap-2 mb-2">
