@@ -952,8 +952,8 @@ export const ProductDetailPage: React.FC = () => {
           </div>
 
           {/* Dynamic Pricing Engine Box */}
-          <div className="bg-slate-50 rounded-2xl p-3.5 sm:p-5 border border-slate-200 space-y-3 overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2.5">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-3 sm:p-5 space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               <div>
                 <span className="text-xs text-slate-500 block mb-0.5">
                   {priceNeedsConfirmation ? 'Approximate source-listed price — confirm before ordering:' : `Effective Rate for ${quantity} Units:`}
@@ -963,7 +963,7 @@ export const ProductDetailPage: React.FC = () => {
                     Temporary catalogue pricing
                   </span>
                 )}
-                <div className="flex items-baseline gap-2 sm:gap-3 flex-wrap">
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 sm:gap-x-3">
                   <span className="text-2xl sm:text-3xl font-black text-navy">
                     {priceNeedsConfirmation ? 'Approx. ' : ''}₹{currentUnitPrice.toLocaleString('en-IN')}
                   </span>
@@ -985,9 +985,9 @@ export const ProductDetailPage: React.FC = () => {
               {priceNeedsConfirmation
                 ? <p className="text-xs text-amber-800">Final price and order total are not confirmed.</p>
                 : (
-                  <div className="text-left sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/80">
-                    <span className="text-[11px] text-slate-500 block">Total Batch Value:</span>
-                    <span className="text-lg sm:text-xl font-bold text-indigo">
+                  <div className="flex items-center justify-between gap-3 border-t border-slate-200/80 pt-2 sm:block sm:border-t-0 sm:pt-0 sm:text-right">
+                    <span className="text-[11px] font-medium text-slate-500">Total Batch Value</span>
+                    <span className="text-lg font-black text-indigo sm:text-xl">
                       ₹{currentLineTotal.toLocaleString('en-IN')}
                     </span>
                   </div>
@@ -995,8 +995,8 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {!priceNeedsConfirmation && wholesaleSavings > 0 && (
-              <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center justify-between">
-                <span className="font-semibold">Wholesale Volume Savings:</span>
+              <div className="flex flex-col gap-0.5 rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs text-emerald-800 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                <span className="font-semibold">Wholesale Volume Savings</span>
                 <span className="font-bold">You save ₹{wholesaleSavings.toLocaleString('en-IN')} vs retail</span>
               </div>
             )}
