@@ -123,6 +123,7 @@ export default async function handler(req, res) {
             const type = parts[0] || 'Customized';
             let logoText = '';
             let selectedSize = '';
+            let selectedColor = '';
             let customGsm = '';
             let designNote = '';
             let logoFileName = '';
@@ -134,6 +135,8 @@ export default async function handler(req, res) {
                 logoText = p.slice(7, -1);
               } else if (p.startsWith('Size: ')) {
                 selectedSize = p.slice(6);
+              } else if (p.startsWith('Color: ')) {
+                selectedColor = p.slice(7);
               } else if (p.startsWith('GSM: ')) {
                 customGsm = p.slice(5);
               } else if (p.startsWith('📎 Logo: ')) {
@@ -172,6 +175,10 @@ export default async function handler(req, res) {
           unitPrice: Number(item.unit_price),
           totalPrice: Number(item.total_price),
           variantDescription: item.variant_description,
+          selectedColor:
+            customization?.selectedColor ||
+            item.variant_description?.match(/(?:^| • )Color: ([^•\]]+)/)?.[1]?.trim() ||
+            '',
           image: item.image,
           gstRate: Number(item.gst_rate),
           customization
@@ -653,6 +660,21 @@ export default async function handler(req, res) {
           const unitPrice = Number(item.unitPrice || item.price || 0);
           const quantity = Number(item.quantity || 1);
           const totalPrice = Number(item.totalPrice || unitPrice * quantity);
+          const selectedColor = typeof item.selectedColor === 'string'
+            ? item.selectedColor.trim()
+            : typeof item.selectedColor?.name === 'string'
+              ? item.selectedColor.name.trim()
+              : '';
+          let variantDescription =
+            item.variantDescription || item.selectedVariant?.name || 'Standard Pack';
+          if (
+            selectedColor &&
+            !new RegExp(`(?:^| • )Color: ${selectedColor.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:$| • |\\])`).test(variantDescription)
+          ) {
+            variantDescription = variantDescription === 'Standard Pack'
+              ? `Color: ${selectedColor}`
+              : `${variantDescription} • Color: ${selectedColor}`;
+          }
 
           await connection.query(
             `INSERT INTO order_items (
@@ -668,10 +690,10 @@ export default async function handler(req, res) {
               quantity,
               unitPrice,
               totalPrice,
-              item.variantDescription || item.selectedVariant?.name || 'Standard Pack',
+              variantDescription,
               item.customization ? JSON.stringify(item.customization) : null,
               item.image || '',
-              item.gstRate || 5.0
+              item.gstRate ?? 5.0
             ]
           );
         }

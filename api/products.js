@@ -12,6 +12,53 @@ const CATEGORY_NAMES = {
   'cotton-products': 'Cotton Products'
 };
 
+const STANDARD_PRODUCT_COLORS = [
+  { id: 'pink', name: 'Pink', colorHex: '#EC4899' },
+  { id: 'green', name: 'Green', colorHex: '#22C55E' },
+  { id: 'blue', name: 'Blue', colorHex: '#3B82F6' },
+  { id: 'orange', name: 'Orange', colorHex: '#F97316' }
+];
+const TOTE_BAG_COLORS = [
+  { id: 'off-white-bright', name: 'Off-white', colorHex: '#F8F3E8' },
+  { id: 'black', name: 'Black', colorHex: '#171717' }
+];
+const PRODUCE_BAG_COLORS = [
+  { id: 'off-white-bright', name: 'Off-white', colorHex: '#F8F3E8' }
+];
+const SAREE_COVER_COLORS = [
+  { id: 'off-white', name: 'Off-white', colorHex: '#F8F3E8' }
+];
+
+function getDefaultProductColors(name, productContext = '') {
+  const productName = `${String(name || '')} ${String(productContext || '')}`;
+  const isProduceBag = /\b(?:vegetable|fruit|produce)\b/i.test(productName) &&
+    /\bbags?\b/i.test(productName) &&
+    !/\b(?:kit|bundle)\b/i.test(productName);
+  const isSareeCover = /\bsaree\b/i.test(productName) &&
+    /\bcovers?\b/i.test(productName) &&
+    !/\b(?:kit|bundle)\b/i.test(productName);
+  const isCottonDryingCloth = /\bcotton\b/i.test(productName) &&
+    /\bdrying\s+cloth\b/i.test(productName) &&
+    !/\b(?:kit|bundle)\b/i.test(productName);
+  const isToteBag = /\btote\b/i.test(productName) &&
+    /\bbags?\b/i.test(productName) &&
+    !/\b(?:kit|bundle)\b/i.test(productName);
+  const defaults = isProduceBag
+    ? PRODUCE_BAG_COLORS
+    : isCottonDryingCloth
+      ? PRODUCE_BAG_COLORS
+      : isSareeCover
+      ? SAREE_COVER_COLORS
+      : isToteBag
+        ? TOTE_BAG_COLORS
+        : STANDARD_PRODUCT_COLORS;
+  return defaults.map(color => ({ ...color }));
+}
+
+function isPaperProduct(product) {
+  return /\bpaper\b/i.test(`${product.name || ''} ${product.category_name || product.categoryName || ''} ${product.subcategory || ''}`);
+}
+
 function readFallbackProducts() {
   try {
     const filePath = path.join(process.cwd(), 'public', 'products.json');
@@ -148,6 +195,7 @@ async function ensureProductsTable(pool) {
         b2b_policy JSON,
         wholesale_tiers JSON,
         variants JSON,
+        color_options JSON,
         collections JSON,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -169,6 +217,69 @@ async function ensureProductsTable(pool) {
     if (!columnNames.has('b2b_policy')) {
       await pool.query('ALTER TABLE products ADD COLUMN b2b_policy JSON NULL');
     }
+    if (!columnNames.has('color_options')) {
+      await pool.query('ALTER TABLE products ADD COLUMN color_options JSON NULL');
+    }
+    await pool.query(
+      `UPDATE products
+       SET color_options = CASE
+         WHEN LOWER(CONCAT(name, ' ', subcategory, ' ', category_name)) REGEXP 'vegetable|fruit|produce'
+           AND LOWER(CONCAT(name, ' ', subcategory, ' ', category_name)) REGEXP 'bag'
+           AND LOWER(name) NOT REGEXP 'kit|bundle' THEN ?
+         WHEN LOWER(CONCAT(name, ' ', subcategory, ' ', category_name)) REGEXP 'cotton.*drying.*cloth'
+           AND LOWER(name) NOT REGEXP 'kit|bundle' THEN ?
+         WHEN LOWER(CONCAT(name, ' ', subcategory, ' ', category_name)) REGEXP 'saree'
+           AND LOWER(CONCAT(name, ' ', subcategory, ' ', category_name)) REGEXP 'cover'
+           AND LOWER(name) NOT REGEXP 'kit|bundle' THEN ?
+         WHEN LOWER(name) LIKE '%tote%' AND LOWER(name) REGEXP 'bag' AND LOWER(name) NOT REGEXP 'kit|bundle' THEN ?
+         ELSE ?
+       END
+       WHERE color_options IS NULL
+          OR (
+            LOWER(CONCAT(name, ' ', subcategory, ' ', category_name)) REGEXP 'vegetable|fruit|produce'
+            AND LOWER(CONCAT(name, ' ', subcategory, ' ', category_name)) REGEXP 'bag'
+            AND LOWER(name) NOT REGEXP 'kit|bundle'
+            AND JSON_LENGTH(color_options) = 4
+            AND JSON_UNQUOTE(JSON_EXTRACT(color_options, '$[0].id')) = 'pink'
+          )
+          OR (
+            LOWER(CONCAT(name, ' ', subcategory, ' ', category_name)) REGEXP 'saree'
+            AND LOWER(CONCAT(name, ' ', subcategory, ' ', category_name)) REGEXP 'cover'
+            AND LOWER(name) NOT REGEXP 'kit|bundle'
+            AND JSON_LENGTH(color_options) = 4
+            AND JSON_UNQUOTE(JSON_EXTRACT(color_options, '$[0].id')) = 'pink'
+          )
+          OR (
+            LOWER(CONCAT(name, ' ', subcategory, ' ', category_name)) REGEXP 'cotton.*drying.*cloth'
+            AND LOWER(name) NOT REGEXP 'kit|bundle'
+            AND JSON_LENGTH(color_options) = 4
+            AND JSON_UNQUOTE(JSON_EXTRACT(color_options, '$[0].id')) = 'pink'
+          )
+          OR (
+            LOWER(name) LIKE '%tote%'
+            AND LOWER(name) REGEXP 'bag'
+            AND LOWER(name) NOT REGEXP 'kit|bundle'
+            AND JSON_LENGTH(color_options) = 4
+            AND JSON_UNQUOTE(JSON_EXTRACT(color_options, '$[0].id')) = 'pink'
+          )`,
+      [
+        JSON.stringify(PRODUCE_BAG_COLORS),
+        JSON.stringify(PRODUCE_BAG_COLORS),
+        JSON.stringify(SAREE_COVER_COLORS),
+        JSON.stringify(TOTE_BAG_COLORS),
+        JSON.stringify(STANDARD_PRODUCT_COLORS)
+      ]
+    );
+    await pool.query(
+      `UPDATE products
+       SET color_options = JSON_SET(
+         color_options,
+         JSON_UNQUOTE(JSON_SEARCH(color_options, 'one', ?, NULL, '$[*].name')),
+         ?
+       )
+       WHERE JSON_SEARCH(color_options, 'one', ?, NULL, '$[*].name') IS NOT NULL`,
+      ['Off-white / Bright print', 'Off-white', 'Off-white / Bright print']
+    );
     if (columnNames.has('category') && !columnNames.has('category_id')) {
       await pool.query('ALTER TABLE products CHANGE COLUMN category category_id VARCHAR(64) NOT NULL');
     }
@@ -309,11 +420,14 @@ export default async function handler(req, res) {
                 : (r.b2b_policy || []),
               wholesaleTiers: typeof r.wholesale_tiers === 'string' ? JSON.parse(r.wholesale_tiers) : (r.wholesale_tiers || []),
               variants: typeof r.variants === 'string' ? JSON.parse(r.variants) : (r.variants || []),
+              colorOptions: typeof r.color_options === 'string'
+                ? JSON.parse(r.color_options)
+                : (r.color_options || getDefaultProductColors(r.name, `${r.subcategory} ${r.category_name}`)),
               collections: typeof r.collections === 'string'
                 ? JSON.parse(r.collections)
                 : (Array.isArray(r.collections) && r.collections.length > 0 ? r.collections : (r.category_id ? [r.category_id] : []))
             };
-          });
+          }).filter(product => !isPaperProduct(product));
           res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=60');
           return res.status(200).json({ success: true, source: 'MYSQL_DATABASE', count: formatted.length, data: formatted });
         }
@@ -335,7 +449,7 @@ export default async function handler(req, res) {
       success: true,
       source: 'VERIFIED_STORAGE',
       count: fallback.length,
-      data: fallback.map(product => {
+      data: fallback.filter(product => !isPaperProduct(product)).map(product => {
         const cat = product.category || product.category_id;
         const rawColls = product.collections;
         const collections = Array.isArray(rawColls) && rawColls.length > 0 ? rawColls : (cat ? [cat] : []);
@@ -343,6 +457,12 @@ export default async function handler(req, res) {
           ...product,
           category: cat,
           categoryName: CATEGORY_NAMES[cat] || product.categoryName || cat,
+          colorOptions: Array.isArray(product.colorOptions)
+            ? product.colorOptions
+            : getDefaultProductColors(
+              product.name,
+              `${product.categoryName || product.category_name || ''} ${product.subcategory || ''}`
+            ),
           collections
         };
       })
@@ -520,6 +640,16 @@ export default async function handler(req, res) {
     const b2bPolicy = Array.isArray(p.b2bPolicy) ? p.b2bPolicy : [];
     const wholesaleTiers = p.wholesaleTiers || [];
     const variants = p.variants || [];
+    const colorOptions = Array.isArray(p.colorOptions)
+      ? p.colorOptions
+      : getDefaultProductColors(p.name, `${p.categoryName || ''} ${p.subcategory || ''}`);
+    if (colorOptions.length > 20 || colorOptions.some(color =>
+      !color || typeof color.name !== 'string' || !color.name.trim() ||
+      typeof color.colorHex !== 'string' || !/^#[0-9a-f]{6}$/i.test(color.colorHex) ||
+      typeof color.id !== 'string' || !color.id.trim()
+    )) {
+      return res.status(400).json({ success: false, error: 'Product colors must include a name, ID, and six-digit hex color.' });
+    }
 
     let dbSaved = false;
     let previousStock = null;
@@ -541,8 +671,8 @@ export default async function handler(req, res) {
             id, name, slug, sku, category_id, category_name, subcategory,
             mrp, retail_price, stock, moq, rating, review_count,
             is_bestseller, hsn_code, gst_rate, short_description, description,
-            images, tags, specifications, care_instructions, b2b_policy, wholesale_tiers, variants, collections
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            images, tags, specifications, care_instructions, b2b_policy, wholesale_tiers, variants, color_options, collections
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON DUPLICATE KEY UPDATE
             name=VALUES(name), slug=VALUES(slug), category_id=VALUES(category_id), category_name=VALUES(category_name),
             subcategory=VALUES(subcategory), mrp=VALUES(mrp), retail_price=VALUES(retail_price),
@@ -551,14 +681,16 @@ export default async function handler(req, res) {
             short_description=VALUES(short_description), description=VALUES(description),
             images=VALUES(images), tags=VALUES(tags), specifications=VALUES(specifications),
             care_instructions=VALUES(care_instructions), b2b_policy=VALUES(b2b_policy),
-            wholesale_tiers=VALUES(wholesale_tiers), variants=VALUES(variants), collections=VALUES(collections)`,
+            wholesale_tiers=VALUES(wholesale_tiers), variants=VALUES(variants),
+            color_options=VALUES(color_options), collections=VALUES(collections)`,
           [
             id, p.name, slug, p.sku, category, categoryName, subcategory,
             mrp, retailPrice, stock, moq, rating, p.reviewCount ?? 0, isBestSeller,
             hsnCode, gstRate, shortDescription, description,
             JSON.stringify(images), JSON.stringify(tags), JSON.stringify(specifications),
             JSON.stringify(careInstructions), JSON.stringify(b2bPolicy),
-            JSON.stringify(wholesaleTiers), JSON.stringify(variants), JSON.stringify(collections)
+            JSON.stringify(wholesaleTiers), JSON.stringify(variants),
+            JSON.stringify(colorOptions), JSON.stringify(collections)
           ]
         );
         dbSaved = true;
@@ -610,6 +742,7 @@ export default async function handler(req, res) {
       b2bPolicy,
       wholesaleTiers,
       variants,
+      colorOptions,
       collections
     };
 

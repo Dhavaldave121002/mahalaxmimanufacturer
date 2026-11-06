@@ -9,6 +9,7 @@ import {
   Address,
   WholesaleTier,
   ProductVariant,
+  ProductColorOption,
   AppBanner,
   AppCategoryConfig,
   AppNotification,
@@ -23,6 +24,7 @@ import {
 } from '../types';
 import { INITIAL_PRODUCTS, CATEGORIES_CONFIG } from '../data/mockProducts';
 import { normalizeProductCategory } from '../utils/productCategories';
+import { getDefaultProductColors, isPaperProduct } from '../utils/productColors';
 import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
 import { INITIAL_COUPONS } from '../data/initialCoupons';
 import { getCustomizationCharge, getSizeCharge, updateCustomizationPricing } from '../constants/customizationPricing';
@@ -88,7 +90,13 @@ interface AppContextType {
   updateCategory: (id: string, updates: Partial<CollectionCategory>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number, variant?: ProductVariant, customization?: ProductCustomization) => boolean;
+  addToCart: (
+    product: Product,
+    quantity?: number,
+    variant?: ProductVariant,
+    customization?: ProductCustomization,
+    color?: ProductColorOption
+  ) => boolean;
   removeFromCart: (itemId: string) => void;
   updateCartQuantity: (itemId: string, newQty: number) => void;
   clearCart: () => void;
@@ -252,6 +260,19 @@ function safeLoadArray<T>(key: string, fallback: T[]): T[] {
   return Array.isArray(data) && data.length > 0 ? data : fallback;
 }
 
+function normalizeProductRecord(product: Product): Product {
+  return {
+    ...normalizeProductCategory(product),
+    colorOptions: Array.isArray(product.colorOptions)
+      ? product.colorOptions
+      : getDefaultProductColors(product.name, `${product.categoryName} ${product.subcategory}`)
+  };
+}
+
+function normalizeCatalogProducts(items: Product[]): Product[] {
+  return items.filter(product => !isPaperProduct(product)).map(normalizeProductRecord);
+}
+
 function uniqueOrders(orders: Order[]): Order[] {
   const unique = new Map<string, Order>();
   const unkeyed: Order[] = [];
@@ -271,7 +292,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(() => {
     if (import.meta.env.PROD) return [];
-    return safeLoadArray<Product>('mle_products', INITIAL_PRODUCTS).map(normalizeProductCategory);
+    return normalizeCatalogProducts(safeLoadArray<Product>('mle_products', INITIAL_PRODUCTS));
   });
   const [productsLoading, setProductsLoading] = useState(import.meta.env.PROD);
 
@@ -646,7 +667,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       const json = await res.json();
       if (json?.success && Array.isArray(json.data)) {
-        setProducts((json.data as Product[]).map(normalizeProductCategory));
+        setProducts(normalizeCatalogProducts(json.data as Product[]));
       } else {
         console.error('Product API returned an invalid response.');
       }
@@ -1197,7 +1218,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     // Find matching tier
     const sortedTiers = [...product.wholesaleTiers].sort((a, b) => b.minQty - a.minQty);
-    const matched = sortedTiers.find(tier => quantity >= tier.minQty);
+    const matched = sortedTiers.find(
+      tier => quantity >= tier.minQty && (tier.maxQty == null || quantity <= tier.maxQty)
+    );
     if (matched) {
       const base = matched.pricePerUnit + variantAdjustment;
       return {
@@ -1219,7 +1242,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     product: Product,
     quantity: number = 1,
     variant?: ProductVariant,
-    customization?: ProductCustomization
+    customization?: ProductCustomization,
+    color?: ProductColorOption
   ): boolean => {
     const minimumQuantity = variant?.id.startsWith('sample-') ? 1 : Math.max(1, product.moq || 1);
     const requestedQuantity = Number.isFinite(quantity) ? Math.floor(quantity) : minimumQuantity;
@@ -1242,12 +1266,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const existingIndex = prev.findIndex(item => {
         const matchesProduct = item.productId === product.id;
         const matchesVariant = item.selectedVariant?.id === variant?.id;
+        const matchesColor = item.selectedColor?.id === color?.id;
         const matchesCustom =
           (!item.customization && !customization) ||
           (item.customization?.type === customization?.type &&
             item.customization?.logoText === customization?.logoText &&
             item.customization?.selectedSize === customization?.selectedSize);
-        return matchesProduct && matchesVariant && matchesCustom;
+        return matchesProduct && matchesVariant && matchesColor && matchesCustom;
       });
 
       if (existingIndex > -1) {
@@ -1268,7 +1293,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           unitPrice,
           totalPrice: unitPrice * newTotalQty,
           appliedTier,
-          customization: activeCustomization
+          customization: activeCustomization,
+          selectedColor: color || currentItem.selectedColor
         };
         return updated;
       } else {
@@ -1284,6 +1310,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           product,
           quantity: normalizedQuantity,
           selectedVariant: variant,
+          selectedColor: color,
           unitPrice,
           totalPrice: unitPrice * normalizedQuantity,
           appliedTier,
@@ -1364,26 +1391,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const cartSubtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
   const cartTotalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  // Accurate GST breakdown
-  const cartTax = cart.reduce(
-    (acc, item) => {
-      const itemTaxRate = (item.product?.gstRate || 5) / 100;
-      const lineTax = item.totalPrice * itemTaxRate;
-      acc.totalTax += lineTax;
-      // If buyer is in Gujarat (same state as mill 24), CGST + SGST; otherwise IGST
-      if (currentUser?.addresses?.[0]?.state?.toLowerCase() === 'gujarat') {
-        acc.cgst += lineTax / 2;
-        acc.sgst += lineTax / 2;
-      } else {
-        acc.igst += lineTax;
-      }
-      return acc;
-    },
-    { cgst: 0, sgst: 0, igst: 0, totalTax: 0 }
-  );
+  const totalTax = Number(cart.reduce(
+    (tax, item) => tax + item.totalPrice * Number(item.product?.gstRate ?? 0) / 100,
+    0
+  ).toFixed(2));
+  const isGujarat = currentUser?.addresses?.[0]?.state?.toLowerCase() === 'gujarat';
+  const cartTax = {
+    cgst: isGujarat ? totalTax / 2 : 0,
+    sgst: isGujarat ? totalTax / 2 : 0,
+    igst: isGujarat ? 0 : totalTax,
+    totalTax
+  };
 
-  // Free shipping above ₹1499 for retail; ₹99 flat otherwise. If bulk > ₹15000 free freight
-  const cartShipping = cartSubtotal >= 1499 || cartSubtotal === 0 ? 0 : 99;
+  // Delivery for orders below ₹10,000 is arranged and paid for separately after packing.
+  const cartShipping = 0;
   const cartTotal = Math.max(0, Math.round(cartSubtotal - couponDiscount + cartTax.totalTax + cartShipping));
 
   // Local cart recovery tracking; durable production tracking is not configured.
@@ -1404,7 +1425,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           customerType: currentUser.role === 'consumer' ? 'B2C' : 'B2B',
           items: cart.map(i => ({
             productName: i.product?.name || 'Textile Item',
-            variantDescription: i.selectedVariant?.size || (i.selectedVariant as any)?.color || 'Standard',
+            variantDescription:
+              [i.selectedVariant?.name, i.selectedColor?.name].filter(Boolean).join(' • ') || 'Standard',
             quantity: i.quantity,
             totalPrice: i.totalPrice
           })),
@@ -1895,9 +1917,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const orderNum = `MLE-ORD-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
 
     const orderItems = cart.map(item => {
-      let desc = item.selectedVariant?.name || `${item.quantity} standard pack`;
+      let desc =
+        [item.selectedVariant?.name, item.selectedColor?.name].filter(Boolean).join(' • ') ||
+        `${item.quantity} standard pack`;
       if (item.customization && item.customization.type && item.customization.type !== 'No Customization') {
         const parts = [item.customization.type];
+        if (item.selectedColor?.name) parts.push(`Color: ${item.selectedColor.name}`);
         if (item.customization.logoText) parts.push(`Logo: "${item.customization.logoText}"`);
         if (item.customization.selectedSize) parts.push(`Size: ${item.customization.selectedSize}`);
         if (item.customization.customGsm) parts.push(`GSM: ${item.customization.customGsm}`);
@@ -1918,6 +1943,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         unitPrice: item.unitPrice,
         totalPrice: item.totalPrice,
         variantDescription: desc,
+        selectedColor: item.selectedColor?.name,
         image: item.product.images[0],
         gstRate: item.product.gstRate,
         customization: item.customization
@@ -2382,7 +2408,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           cartTotal: cartTotal,
           items: cart.map(i => ({
             productName: i.product.name,
-            variantDescription: i.selectedVariant?.name || 'Standard Mill Quality',
+            variantDescription:
+              [i.selectedVariant?.name, i.selectedColor?.name].filter(Boolean).join(' • ') ||
+              'Standard Mill Quality',
             quantity: i.quantity,
             totalPrice: i.totalPrice
           })),
@@ -2516,7 +2544,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         totalPrice: it.totalPrice,
         variantDescription: 'Custom Wholesale Quotation Batch',
         image: prod?.images[0] || 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop',
-        gstRate: prod?.gstRate || 5
+        gstRate: prod?.gstRate ?? 5
       };
     });
 
@@ -2601,7 +2629,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Product CRUD
   const addProduct = async (productData: Omit<Product, 'id'>) => {
-    const newProduct = normalizeProductCategory({
+    const newProduct = normalizeProductRecord({
       ...productData,
       id: `prod-${Date.now()}`
     });
@@ -2614,13 +2642,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!response.ok || result?.success !== true || result?.dbSaved !== true) {
       throw new Error(result?.error || 'Product and images were not saved to the shared database.');
     }
-    setProducts(prev => [normalizeProductCategory(result.data as Product), ...prev]);
+    const savedProduct = normalizeProductRecord(result.data as Product);
+    if (!isPaperProduct(savedProduct)) setProducts(prev => [savedProduct, ...prev]);
   };
 
   const updateProduct = async (id: string, updatedFields: Partial<Product>) => {
     const existingProduct = products.find(product => product.id === id);
     if (!existingProduct) throw new Error('Product is no longer available to edit.');
-    const targetProduct = normalizeProductCategory({ ...existingProduct, ...updatedFields });
+    const targetProduct = normalizeProductRecord({ ...existingProduct, ...updatedFields });
 
     const response = await fetch('/api/products', {
       method: 'PUT',
@@ -2631,10 +2660,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!response.ok || result?.success !== true || result?.dbSaved !== true) {
       throw new Error(result?.error || 'Product changes and images were not saved to the shared database.');
     }
-    const savedProduct = normalizeProductCategory(result.data as Product);
-    setProducts(prev =>
-      prev.map(product => product.id === id ? savedProduct : product)
-    );
+    const savedProduct = normalizeProductRecord(result.data as Product);
+    setProducts(prev => isPaperProduct(savedProduct)
+      ? prev.filter(product => product.id !== id)
+      : prev.map(product => product.id === id ? savedProduct : product));
   };
 
   const deleteProduct = (id: string) => {

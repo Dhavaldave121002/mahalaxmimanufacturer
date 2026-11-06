@@ -456,9 +456,13 @@ export default async function handler(req, res) {
   if (pool) {
     try {
       const requestUrl = new URL(req.url || '/', 'http://localhost');
-      if (requestUrl.searchParams.get('platform') === 'website') {
+      const platform = requestUrl.searchParams.get('platform');
+      if (platform === 'website' || platform === 'shared') {
+        const visibilityFilter = platform === 'shared'
+          ? "(visibility = 'ALL' OR visibility IS NULL)"
+          : "(visibility = 'WEB_ONLY' OR visibility = 'ALL' OR visibility IS NULL)";
         const [websiteBanners] = await pool.query(
-          "SELECT * FROM app_banners WHERE is_active = 1 AND (visibility = 'WEB_ONLY' OR visibility = 'ALL' OR visibility IS NULL) ORDER BY display_order ASC"
+          `SELECT * FROM app_banners WHERE is_active = 1 AND ${visibilityFilter} ORDER BY display_order ASC`
         );
         return res.status(200).json({
           success: true,
@@ -581,7 +585,6 @@ export default async function handler(req, res) {
         c => c.isActive && c.isFeatured !== false && c.suggestionMode !== 'SECRET_MANUAL_ONLY' && (c.code || '').toUpperCase() !== 'LAUNCH150' && c.targetPlatform !== 'WEB_ONLY'
       );
 
-      fallback.notifications = getUnexpiredNotifications(fallback.notifications);
       return res.status(200).json({
         success: true,
         source: 'MYSQL_DATABASE',
@@ -649,6 +652,18 @@ export default async function handler(req, res) {
       bundleMaxProducts: 3
     }
   };
+
+  if (new URL(req.url || '/', 'http://localhost').searchParams.get('platform') === 'shared') {
+    fallback.banners = (fallback.banners || []).filter(
+      banner => banner.isActive !== false &&
+        (!banner.visibility || banner.visibility.toUpperCase() === 'ALL')
+    );
+    return res.status(200).json({
+      success: true,
+      source: 'CACHED_STORE',
+      data: { banners: fallback.banners }
+    });
+  }
 
   return res.status(200).json({
     success: true,

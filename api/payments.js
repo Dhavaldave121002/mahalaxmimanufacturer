@@ -37,6 +37,17 @@ export default async function handler(req, res) {
       });
     }
     const quote = await calculateCheckoutQuote(pool, req.body || {});
+    if (req.body?.source === 'FLUTTER_APP' && req.body.expectedAmount !== undefined) {
+      const expectedAmount = Number(req.body.expectedAmount);
+      if (!Number.isFinite(expectedAmount) || expectedAmount < 0 ||
+          Math.round(expectedAmount * 100) !== Math.round(quote.totalAmount * 100)) {
+        return res.status(409).json({
+          success: false,
+          error: `Cart total ₹${Number.isFinite(expectedAmount) ? expectedAmount.toLocaleString('en-IN') : 'unknown'} does not match the current server total ₹${quote.totalAmount.toLocaleString('en-IN')}. Refresh product prices and retry.`,
+          quote
+        });
+      }
+    }
     if (process.env.NODE_ENV === 'production' &&
         process.env.RAZORPAY_KEY_ID?.startsWith('rzp_test_')) {
       return res.status(503).json({

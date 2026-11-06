@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Product, Order, OrderStatus, Quotation, CategoryId } from '../types';
+import { Product, ProductColorOption, Order, OrderStatus, Quotation, CategoryId } from '../types';
 import { InvoiceModal } from '../components/common/InvoiceModal';
 import {
   TrendingUp,
@@ -51,6 +51,7 @@ import { CouponOfferManager } from '../components/admin/CouponOfferManager';
 import { CategoryManager } from '../components/admin/CategoryManager';
 import { SubscriberManager } from '../components/admin/SubscriberManager';
 import { ListSkeleton, PageLoadingSkeleton } from '../components/common/SkeletonLoader';
+import { getDefaultProductColors } from '../utils/productColors';
 
 type AdminProductReview = {
   id: string;
@@ -173,6 +174,7 @@ export const AdminDashboardPage: React.FC = () => {
     shortDescription: string;
     description: string;
     images: string[];
+    colorOptions: ProductColorOption[];
     collections: string[];
     threadCount: string;
     fabric: string;
@@ -201,6 +203,7 @@ export const AdminDashboardPage: React.FC = () => {
     shortDescription: 'Direct mill combed cotton fabric.',
     description: 'High-durability weaving from Ahmedabad looms.',
     images: ['https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop'],
+    colorOptions: getDefaultProductColors(''),
     threadCount: '400 TC Percale Weave',
     fabric: '100% Long Staple Cotton',
     closure: 'Concealed high-tensile nylon zipper',
@@ -365,6 +368,7 @@ export const AdminDashboardPage: React.FC = () => {
       shortDescription: p.shortDescription,
       description: p.description,
       images: p.images.length > 0 ? [...p.images] : [''],
+      colorOptions: p.colorOptions ?? getDefaultProductColors(p.name, `${p.categoryName} ${p.subcategory}`),
       threadCount: p.specifications?.['Thread Count'] || '400 TC Percale Weave',
       fabric: p.specifications?.['Fabric'] || '100% Long Staple Cotton',
       closure: p.specifications?.['Closure'] || 'Concealed high-tensile nylon zipper',
@@ -399,6 +403,15 @@ export const AdminDashboardPage: React.FC = () => {
         window.alert('Product images must use an HTTP or HTTPS URL.');
         return;
       }
+    }
+    const colorOptions = productForm.colorOptions.map(color => ({
+      ...color,
+      name: color.name.trim(),
+      colorHex: color.colorHex.trim()
+    }));
+    if (colorOptions.some(color => !color.name || !/^#[0-9a-f]{6}$/i.test(color.colorHex))) {
+      window.alert('Each color option needs a name and a valid hex color.');
+      return;
     }
     const savings1 = Math.max(0, Math.round(((productForm.retailPrice - productForm.tier1Price) / (productForm.retailPrice || 1)) * 100));
     const savings2 = Math.max(0, Math.round(((productForm.retailPrice - productForm.tier2Price) / (productForm.retailPrice || 1)) * 100));
@@ -455,6 +468,7 @@ export const AdminDashboardPage: React.FC = () => {
         shortDescription: productForm.shortDescription,
         description: productForm.description,
         images,
+        colorOptions,
         wholesaleTiers: computedTiers,
         specifications: computedSpecs,
         careInstructions: computedCare,
@@ -482,6 +496,7 @@ export const AdminDashboardPage: React.FC = () => {
         shortDescription: productForm.shortDescription,
         description: productForm.description,
         images,
+        colorOptions,
         tags: [productForm.category, productForm.subcategory.toLowerCase()],
         specifications: computedSpecs,
         careInstructions: computedCare,
@@ -731,6 +746,7 @@ export const AdminDashboardPage: React.FC = () => {
                 shortDescription: '100% Combed Indian Cotton product.',
                 description: 'Direct mill woven fabric with high thread density.',
                 images: ['https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop'],
+                colorOptions: getDefaultProductColors(''),
                 threadCount: '400 TC Percale Weave',
                 fabric: '100% Long Staple Cotton',
                 closure: 'Concealed high-tensile nylon zipper',
@@ -1431,6 +1447,8 @@ export const AdminDashboardPage: React.FC = () => {
                               const cust = it.customization;
                               const hasCustom = !!(cust && cust.type && cust.type !== 'No Customization') ||
                                                 (it.variantDescription && (it.variantDescription.includes('[') || it.variantDescription.toLowerCase().includes('custom')));
+                              const selectedColor = it.selectedColor ||
+                                it.variantDescription?.match(/(?:^| • )Color: ([^•\]]+)/)?.[1]?.trim();
                               const logoName = cust?.logoFileName || (cust?.logoText ? `${cust.logoText}_logo.png` : undefined);
                               const designName = cust?.designFileName;
 
@@ -1486,6 +1504,12 @@ export const AdminDashboardPage: React.FC = () => {
                                         </button>
                                       )}
                                     </div>
+                                  )}
+                                  {selectedColor && (
+                                    <span className="mt-1 inline-flex items-center gap-1 rounded border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[9px] font-bold text-sky-800">
+                                      <span className="h-2 w-2 rounded-full border border-slate-300 bg-sky-500" />
+                                      Color: {selectedColor}
+                                    </span>
                                   )}
                                 </div>
                               );
@@ -2016,7 +2040,18 @@ export const AdminDashboardPage: React.FC = () => {
                     type="text"
                     required
                     value={productForm.name}
-                    onChange={e => setProductForm({ ...productForm, name: e.target.value })}
+                    onChange={e => setProductForm(current => {
+                      const productContext = `${current.categoryName} ${current.subcategory}`;
+                      const suggestedColorsAreActive =
+                        JSON.stringify(current.colorOptions) === JSON.stringify(getDefaultProductColors(current.name, productContext));
+                      return {
+                        ...current,
+                        name: e.target.value,
+                        colorOptions: suggestedColorsAreActive
+                          ? getDefaultProductColors(e.target.value, productContext)
+                          : current.colorOptions
+                      };
+                    })}
                     className="w-full p-2 border border-slate-300 rounded-lg outline-none"
                   />
                 </div>
@@ -2040,10 +2075,18 @@ export const AdminDashboardPage: React.FC = () => {
                     onChange={e => {
                       const selectedCategory = categories.find(category => category.id === e.target.value);
                       if (!selectedCategory) return;
+                      const productContext = `${selectedCategory.name} ${productForm.subcategory}`;
+                      const suggestedColorsAreActive =
+                        JSON.stringify(productForm.colorOptions) === JSON.stringify(
+                          getDefaultProductColors(productForm.name, `${productForm.categoryName} ${productForm.subcategory}`)
+                        );
                       setProductForm({
                         ...productForm,
                         category: selectedCategory.id,
                         categoryName: selectedCategory.name,
+                        colorOptions: suggestedColorsAreActive
+                          ? getDefaultProductColors(productForm.name, productContext)
+                          : productForm.colorOptions,
                         collections: Array.from(new Set([...productForm.collections, selectedCategory.id]))
                       });
                     }}
@@ -2060,7 +2103,19 @@ export const AdminDashboardPage: React.FC = () => {
                     type="text"
                     required
                     value={productForm.subcategory}
-                    onChange={e => setProductForm({ ...productForm, subcategory: e.target.value })}
+                    onChange={e => {
+                      const suggestedColorsAreActive =
+                        JSON.stringify(productForm.colorOptions) === JSON.stringify(
+                          getDefaultProductColors(productForm.name, `${productForm.categoryName} ${productForm.subcategory}`)
+                        );
+                      setProductForm({
+                        ...productForm,
+                        subcategory: e.target.value,
+                        colorOptions: suggestedColorsAreActive
+                          ? getDefaultProductColors(productForm.name, `${productForm.categoryName} ${e.target.value}`)
+                          : productForm.colorOptions
+                      });
+                    }}
                     className="w-full p-2 border border-slate-300 rounded-lg outline-none"
                   />
                 </div>
@@ -2246,6 +2301,89 @@ export const AdminDashboardPage: React.FC = () => {
                   </select>
                 </div>
               </div>
+
+              <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3" aria-labelledby="product-colors-heading">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h4 id="product-colors-heading" className="text-[11px] font-bold text-slate-700">Product Color Options</h4>
+                    <p className="text-[9px] text-slate-500">These colors appear as selectable swatches on the product page.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setProductForm(current => ({
+                        ...current,
+                        colorOptions: getDefaultProductColors(current.name, `${current.categoryName} ${current.subcategory}`)
+                      }))}
+                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-700 hover:bg-slate-100"
+                    >
+                      Use suggested colors
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProductForm(current => ({
+                        ...current,
+                        colorOptions: [
+                          ...current.colorOptions,
+                          { id: `color-${Date.now()}`, name: '', colorHex: '#EC4899' }
+                        ]
+                      }))}
+                      className="rounded-lg bg-indigo px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-indigo-dark"
+                    >
+                      + Add Color
+                    </button>
+                  </div>
+                </div>
+                {productForm.colorOptions.length === 0 ? (
+                  <p className="rounded-lg border border-dashed border-slate-300 bg-white p-3 text-center text-[10px] text-slate-500">
+                    No colors configured for this product.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {productForm.colorOptions.map((color, index) => (
+                      <div key={color.id || index} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-2">
+                        <input
+                          type="color"
+                          value={/^#[0-9a-f]{6}$/i.test(color.colorHex) ? color.colorHex : '#EC4899'}
+                          onChange={event => setProductForm(current => ({
+                            ...current,
+                            colorOptions: current.colorOptions.map((item, itemIndex) =>
+                              itemIndex === index ? { ...item, colorHex: event.target.value } : item
+                            )
+                          }))}
+                          aria-label={`Color swatch ${index + 1}`}
+                          className="h-9 w-10 shrink-0 cursor-pointer rounded border border-slate-200 bg-white p-1"
+                        />
+                        <input
+                          type="text"
+                          value={color.name}
+                          onChange={event => setProductForm(current => ({
+                            ...current,
+                            colorOptions: current.colorOptions.map((item, itemIndex) =>
+                              itemIndex === index ? { ...item, name: event.target.value } : item
+                            )
+                          }))}
+                          placeholder="Color name"
+                          aria-label={`Color name ${index + 1}`}
+                          className="min-w-0 flex-1 rounded-lg border border-slate-300 p-2 text-xs outline-none focus:border-indigo"
+                        />
+                        <span className="hidden text-[10px] font-mono text-slate-500 sm:block">{color.colorHex}</span>
+                        <button
+                          type="button"
+                          onClick={() => setProductForm(current => ({
+                            ...current,
+                            colorOptions: current.colorOptions.filter((_, itemIndex) => itemIndex !== index)
+                          }))}
+                          aria-label={`Remove ${color.name || `color ${index + 1}`}`}
+                          className="rounded-lg p-2 text-rose-600 hover:bg-rose-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
 
               <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
                 <div className="flex items-center justify-between gap-2">

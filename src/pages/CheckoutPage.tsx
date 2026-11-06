@@ -30,7 +30,6 @@ export const CheckoutPage: React.FC = () => {
     cart,
     cartSubtotal,
     cartTax,
-    cartShipping,
     cartTotal,
     appliedCoupon,
     couponDiscount,
@@ -1112,8 +1111,8 @@ export const CheckoutPage: React.FC = () => {
         </div>
 
         {/* Right Column: Order Review, Calculations & Action Button */}
-        <div className="lg:col-span-4 space-y-5">
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-subtle space-y-4 sticky top-36">
+        <div className="lg:col-span-4 lg:sticky lg:top-24 lg:self-start space-y-5">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-subtle space-y-4">
             <h3 className="font-bold text-sm text-navy pb-3 border-b border-slate-100">
               Order Items Review ({cart.length})
             </h3>
@@ -1160,16 +1159,26 @@ export const CheckoutPage: React.FC = () => {
               )}
 
               <div className="flex justify-between">
-                <span>Tax Levy (CGST + SGST / IGST):</span>
+                <span>GST (CGST + SGST / IGST):</span>
                 <span className="font-semibold text-navy">₹{Math.round(cartTax.totalTax).toLocaleString('en-IN')}</span>
               </div>
 
               <div className="flex justify-between">
-                <span>Freight Logistics:</span>
+                <span>Delivery:</span>
                 <span className="font-semibold text-navy">
-                  {cartShipping === 0 ? 'FREE' : `₹${cartShipping}`}
+                  {cartSubtotal >= 10000 ? 'FREE' : 'Paid separately'}
                 </span>
               </div>
+              {cartSubtotal < 10000 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-900">
+                  Free delivery requires a product subtotal of ₹10,000 before GST. Delivery charges below that amount are not included in the online payment; our team will contact you after packing to confirm the charge and arrange courier booking.
+                </div>
+              )}
+              {cartSubtotal >= 10000 && (
+                <p className="text-[11px] text-slate-500">
+                  Free delivery is based on the ₹10,000 product subtotal before GST.
+                </p>
+              )}
 
               <div className="pt-2 border-t border-slate-100 flex justify-between items-baseline text-slate-700">
                 <span className="text-xs font-bold">Total Order Value:</span>

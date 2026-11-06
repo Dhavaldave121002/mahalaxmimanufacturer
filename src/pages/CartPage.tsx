@@ -36,7 +36,6 @@ export const CartPage: React.FC = () => {
     clearCart,
     cartSubtotal,
     cartTax,
-    cartShipping,
     cartTotal,
     appliedCoupon,
     couponDiscount,
@@ -312,22 +311,24 @@ export const CartPage: React.FC = () => {
           {/* Free Shipping Status */}
           <div className="flex items-center gap-3 text-xs">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-              cartSubtotal >= 1499 ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo/10 text-indigo'
+              cartSubtotal >= 10000 ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo/10 text-indigo'
             }`}>
               <Truck className="w-5 h-5" />
             </div>
             <div>
-              {cartSubtotal >= 1499 ? (
+              {cartSubtotal >= 10000 ? (
                 <div className="font-extrabold text-emerald-800 flex items-center gap-1.5 text-xs sm:text-sm">
-                  <span>🎉 FREE Direct Mill Delivery Unlocked!</span>
+                  <span>🎉 Free Direct Delivery Included!</span>
                 </div>
               ) : (
                 <div className="font-extrabold text-navy text-xs sm:text-sm">
-                  Add <span className="text-indigo">₹{(1499 - cartSubtotal).toLocaleString('en-IN')}</span> more for <span className="text-emerald-700">FREE Direct Mill Delivery</span>
+                  Add <span className="text-indigo">₹{(10000 - cartSubtotal).toLocaleString('en-IN')}</span> more for <span className="text-emerald-700">free delivery</span>
                 </div>
               )}
               <p className="text-[11px] text-slate-500">
-                Direct mill dispatch with 4-point fabric inspection guarantee.
+                {cartSubtotal >= 10000
+                  ? 'Free delivery applies when the product subtotal reaches ₹10,000, before GST.'
+                  : 'The ₹10,000 free-delivery threshold is based on product subtotal before GST. Below that, delivery charges are paid separately after packing; our team will contact you to arrange delivery.'}
               </p>
             </div>
           </div>
@@ -356,20 +357,20 @@ export const CartPage: React.FC = () => {
           <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden p-0.5 border border-slate-200/50">
             <div
               className={`h-full transition-all duration-700 rounded-full ${
-                cartSubtotal >= 1499
+                cartSubtotal >= 10000
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
                   : 'bg-gradient-to-r from-indigo via-indigo-500 to-indigo-600'
               }`}
-              style={{ width: `${Math.min(100, Math.round((cartSubtotal / 1499) * 100))}%` }}
+              style={{ width: `${Math.min(100, Math.round((cartSubtotal / 10000) * 100))}%` }}
             />
           </div>
 
           <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
             <span>₹0 (Standard Rate)</span>
             <span className="font-bold text-indigo font-mono">
-              {Math.min(100, Math.round((cartSubtotal / 1499) * 100))}% Reached
+              {Math.min(100, Math.round((cartSubtotal / 10000) * 100))}% Reached
             </span>
-            <span className="font-bold text-emerald-700">₹1,499 (FREE Delivery)</span>
+            <span className="font-bold text-emerald-700">₹10,000 (FREE Delivery)</span>
           </div>
         </div>
       </div>
@@ -377,7 +378,7 @@ export const CartPage: React.FC = () => {
       {/* Main Grid: Item List (Left) + Pricing Summary (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Cart Items List */}
-        <div className="lg:col-span-8 space-y-4">
+        <div className="lg:col-span-8 lg:sticky lg:top-24 lg:self-start space-y-4">
           {cart.map(item => (
             <div
               key={item.id}
@@ -410,6 +411,11 @@ export const CartPage: React.FC = () => {
                   {item.selectedVariant && (
                     <p className="text-xs text-slate-500">
                       Variant: <span className="font-semibold text-slate-700">{item.selectedVariant.name}</span>
+                    </p>
+                  )}
+                  {item.selectedColor && (
+                    <p className="text-xs text-slate-500">
+                      Color: <span className="font-semibold text-slate-700">{item.selectedColor.name}</span>
                     </p>
                   )}
 
@@ -534,19 +540,19 @@ export const CartPage: React.FC = () => {
             <div className="flex items-center gap-2 text-slate-700">
               <Truck className="w-4 h-4 text-indigo" />
               <span>
-                {cartSubtotal >= 1499
-                  ? 'Congratulations! You qualify for Free Direct Mill Shipping.'
-                  : `Add ₹${1499 - cartSubtotal} more to qualify for Free Shipping.`}
+                {cartSubtotal >= 10000
+                  ? 'Free Direct Delivery qualified (GST excluded from threshold).'
+                  : `Add ₹${(10000 - cartSubtotal).toLocaleString('en-IN')} in products before GST to qualify for Free Delivery.`}
               </span>
             </div>
             <span className="font-bold text-emerald-700">
-              {cartSubtotal >= 1499 ? 'FREE FREIGHT' : '₹99 STANDARD'}
+              {cartSubtotal >= 10000 ? 'FREE DELIVERY' : 'PAID SEPARATELY'}
             </span>
           </div>
         </div>
 
         {/* Right Column: Order Summary & Checkout Trigger */}
-        <div className="lg:col-span-4 space-y-5">
+        <div className="lg:col-span-4 lg:sticky lg:top-24 lg:self-start space-y-5">
           {/* Coupon Code Section */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-subtle space-y-3">
             <div className="flex items-center gap-2 text-xs font-bold text-navy">
@@ -690,7 +696,7 @@ export const CartPage: React.FC = () => {
 
               <div className="flex justify-between">
                 <span className="flex items-center gap-1">
-                  <span>Goods & Services Tax (GST):</span>
+                  <span>GST (CGST + SGST / IGST):</span>
                 </span>
                 <span className="font-semibold text-navy">₹{Math.round(cartTax.totalTax).toLocaleString('en-IN')}</span>
               </div>
@@ -698,7 +704,7 @@ export const CartPage: React.FC = () => {
               <div className="flex justify-between">
                 <span>Freight & Handling:</span>
                 <span className="font-semibold text-navy">
-                  {cartShipping === 0 ? 'FREE' : `₹${cartShipping}`}
+                  {cartSubtotal >= 10000 ? 'FREE' : 'Paid separately'}
                 </span>
               </div>
 
@@ -708,7 +714,10 @@ export const CartPage: React.FC = () => {
                   ₹{cartTotal.toLocaleString('en-IN')}
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 text-right">Inclusive of all taxes & shipping</p>
+              <p className="text-[10px] text-slate-400 text-right">
+                GST is calculated separately; the ₹10,000 free-delivery threshold uses product subtotal before GST.
+                Delivery charges below that threshold are paid separately after packing.
+              </p>
             </div>
 
             {/* Checkout Button */}

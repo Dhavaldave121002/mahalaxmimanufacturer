@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `specifications` JSON,
   `wholesale_tiers` JSON,
   `variants` JSON,
+  `color_options` JSON,
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX `idx_prod_cat` (`category_id`),

@@ -51,12 +51,12 @@ const HERO_BANNER_IMAGES: Record<string, string> = {
 };
 
 const getHeroArtwork = (banner: AppBanner) => {
-  const image = HERO_BANNER_IMAGES[banner.id];
+  const image = banner.image || HERO_BANNER_IMAGES[banner.id];
 
   return {
-    image: image || banner.image || '/assets/images/banner_cotton.jpg',
-    mobileImage: image || banner.mobileImage || banner.image || '',
-    showTextOverlay: image ? true : banner.showTextOverlay !== false
+    image: image || '/assets/images/banner_cotton.jpg',
+    mobileImage: banner.mobileImage || image || '',
+    showTextOverlay: banner.showTextOverlay !== false
   };
 };
 
@@ -78,7 +78,7 @@ export const HomePage: React.FC = () => {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/app-config?platform=website')
+    fetch('/api/app-config?platform=shared')
       .then(async res => {
         const data = await res.json();
         if (!res.ok || !data?.success || !Array.isArray(data?.data?.banners)) {
@@ -95,7 +95,7 @@ export const HomePage: React.FC = () => {
   }, []);
 
   const activeBanners = (websiteBanners?.length ? websiteBanners : mobileAppConfig?.banners || []).filter(
-    b => b.isActive && (b.visibility === 'WEB_ONLY' || b.visibility === 'ALL' || !b.visibility)
+    b => b.isActive && (b.visibility === 'ALL' || !b.visibility)
   );
 
   const normalizeImageUrl = (url?: string) => {
@@ -243,14 +243,14 @@ export const HomePage: React.FC = () => {
                 alt={`${currentHero.title || 'Mahalaxmi Enterprise'} banner`}
                 fetchPriority="high"
                 decoding="async"
-                className="h-full w-full object-contain object-center"
+                className="h-full w-full object-cover object-center"
               />
             </picture>
           );
 
           return (
             <>
-            <div className="relative mx-auto aspect-video h-auto min-h-0 w-full overflow-hidden bg-slate-900 shadow-premium sm:mx-5 sm:max-w-[1600px] sm:rounded-3xl lg:mx-auto">
+            <div className="relative mx-auto aspect-[2.1/1] h-auto min-h-0 w-full overflow-hidden bg-slate-900 shadow-premium sm:mx-5 sm:aspect-[2.2/1] sm:max-w-[1600px] sm:rounded-3xl lg:mx-auto">
               {currentHero.showTextOverlay ? heroPicture : (
                 <Link
                   to={currentHero.ctaLink}
@@ -271,36 +271,36 @@ export const HomePage: React.FC = () => {
                   />
 
                   {/* Desktop & Mobile Content Overlay */}
-                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-[48%] items-center px-2 py-2 text-left sm:w-2/5 sm:px-8 md:px-12 lg:max-w-xl">
-                    <div className="pointer-events-auto w-full rounded-xl border border-white/60 bg-white/80 p-2 shadow-lg backdrop-blur-sm sm:rounded-2xl sm:p-5 md:p-6">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-[72%] max-w-[20rem] items-center px-3 py-3 text-left sm:w-2/5 sm:max-w-none sm:px-8 sm:py-2 md:px-12 lg:max-w-xl">
+                    <div className="pointer-events-auto w-full rounded-xl border border-white/60 bg-white/85 p-3 shadow-lg backdrop-blur-sm sm:rounded-2xl sm:p-5 md:p-6">
                       {currentHero.highlight && (
                         <span className="inline-block rounded-full border border-amber-300/50 bg-amber-100/90 px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wide text-amber-900 sm:px-3 sm:py-1 sm:text-xs sm:tracking-wider">
                           {currentHero.highlight}
                         </span>
                       )}
-                      <h1 className="mt-1 text-[13px] font-black leading-[1.05] tracking-tight text-slate-900 sm:mt-2.5 sm:text-4xl sm:leading-tight lg:text-5xl">
+                      <h1 className="mt-1 text-[clamp(1.125rem,5vw,1.75rem)] font-black leading-[1.05] tracking-tight text-slate-900 sm:mt-2.5 sm:text-4xl sm:leading-tight lg:text-5xl">
                         {currentHero.title}
                       </h1>
                       {currentHero.subtitle && (
-                        <p className="mt-1 text-[9px] font-medium leading-tight text-slate-700 line-clamp-2 sm:mt-2 sm:max-w-md sm:text-base sm:leading-normal sm:line-clamp-none lg:text-lg">
+                        <p className="mt-1 text-[11px] font-medium leading-snug text-slate-700 line-clamp-3 sm:mt-2 sm:max-w-md sm:text-base sm:leading-normal sm:line-clamp-none lg:text-lg">
                           {currentHero.subtitle}
                         </p>
                       )}
                       {currentHero.tagline && (
-                        <p className="mt-1 text-[8px] font-bold leading-tight text-slate-800 line-clamp-1 sm:mt-2 sm:text-sm sm:line-clamp-none">
+                        <p className="mt-1 text-[10px] font-bold leading-snug text-slate-800 line-clamp-2 sm:mt-2 sm:text-sm sm:line-clamp-none">
                           {currentHero.tagline}
                         </p>
                       )}
                       {currentHero.badge && (
-                        <p className="mt-0.5 text-[7px] font-semibold uppercase leading-tight tracking-wide text-slate-600 line-clamp-1 sm:mt-1 sm:text-xs sm:line-clamp-none">
+                        <p className="mt-0.5 text-[9px] font-semibold uppercase leading-tight tracking-wide text-slate-600 line-clamp-2 sm:mt-1 sm:text-xs sm:line-clamp-none">
                           {currentHero.badge}
                         </p>
                       )}
-                      <div className="mt-2 flex flex-wrap items-center gap-1 sm:mt-5 sm:gap-3">
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5 sm:mt-5 sm:gap-3">
                         {currentHero.ctaText && (
                           <Link
                             to={currentHero.ctaLink}
-                            className="group inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-1 text-[8px] font-bold leading-tight text-white shadow-md transition hover:bg-slate-800 sm:gap-2 sm:px-6 sm:py-3 sm:text-sm"
+                            className="group inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1.5 text-[9px] font-bold leading-tight text-white shadow-md transition hover:bg-slate-800 sm:gap-2 sm:px-6 sm:py-3 sm:text-sm"
                           >
                             <span>{currentHero.ctaText}</span>
                             <ArrowRight className="h-3 w-3 shrink-0 transition-transform group-hover:translate-x-1 sm:h-4 sm:w-4" />

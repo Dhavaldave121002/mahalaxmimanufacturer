@@ -20,6 +20,12 @@ export interface ProductVariant {
   inStock: boolean;
 }
 
+export interface ProductColorOption {
+  id: string;
+  name: string;
+  colorHex: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -46,6 +52,7 @@ export interface Product {
   careInstructions?: string[];
   b2bPolicy?: string[];
   variants?: ProductVariant[];
+  colorOptions?: ProductColorOption[];
   tags: string[];
   hsnCode: string;
   gstRate: number; // e.g. 5 for 5% or 12 for 12%
@@ -75,6 +82,7 @@ export interface CartItem {
   product: Product;
   quantity: number;
   selectedVariant?: ProductVariant;
+  selectedColor?: ProductColorOption;
   unitPrice: number;
   totalPrice: number;
   appliedTier?: WholesaleTier;
@@ -155,6 +163,7 @@ export interface OrderItem {
   unitPrice: number;
   totalPrice: number;
   variantDescription?: string;
+  selectedColor?: string;
   image: string;
   gstRate: number;
   customization?: ProductCustomization;

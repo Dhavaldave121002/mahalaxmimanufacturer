@@ -67,7 +67,10 @@ export async function calculateCheckoutQuote(pool, {
     const tiers = parseJson(product.wholesale_tiers, []);
     const tier = Array.isArray(tiers)
       ? tiers
-          .filter(candidate => item.quantity >= Number(candidate.minQty || 1))
+          .filter(candidate =>
+            item.quantity >= Number(candidate.minQty || 1) &&
+            (candidate.maxQty == null || item.quantity <= Number(candidate.maxQty))
+          )
           .sort((a, b) => Number(b.minQty || 1) - Number(a.minQty || 1))[0]
       : null;
     let unitPrice = Number(tier?.pricePerUnit ?? product.retail_price);
@@ -85,13 +88,17 @@ export async function calculateCheckoutQuote(pool, {
     unitPrice = Number(unitPrice.toFixed(2));
     const lineTotal = Number((unitPrice * item.quantity).toFixed(2));
     subtotal += lineTotal;
-    totalTax += lineTotal * Number(product.gst_rate || 0) / 100;
+    const gstRate = Number(product.gst_rate ?? 0);
+    if (!Number.isFinite(gstRate) || gstRate < 0) {
+      throw new Error(`The GST rate for ${product.name} is invalid.`);
+    }
+    totalTax += lineTotal * gstRate / 100;
     lineItems.push({
       productId: item.productId,
       quantity: item.quantity,
       unitPrice,
       totalPrice: lineTotal,
-      gstRate: Number(product.gst_rate || 0),
+      gstRate,
       hsnCode: product.hsn_code || '',
       productName: product.name
     });
@@ -115,7 +122,7 @@ export async function calculateCheckoutQuote(pool, {
     if (!validation.valid) throw new Error(validation.message);
     discount = validation.discount;
   }
-  const shippingCharge = subtotal >= 1499 ? 0 : 99;
+  const shippingCharge = 0;
   const totalAmount = Math.max(
     0,
     Math.round(subtotal + totalTax + shippingCharge - discount)

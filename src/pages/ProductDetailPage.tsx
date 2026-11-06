@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { ProductVariant, ProductCustomization } from '../types';
+import { Product, ProductColorOption, ProductVariant, ProductCustomization } from '../types';
 import { INITIAL_PRODUCTS } from '../data/mockProducts';
 import { Badge } from '../components/common/Badge';
 import { ProductCard } from '../components/common/ProductCard';
@@ -57,6 +57,7 @@ import { SEOProductHead } from '../components/common/SEOProductHead';
 import { orderProductImagesByResolution } from '../utils/productImages';
 import { BuyNowPaymentIcons } from '../components/common/BuyNowPaymentIcons';
 import { toSubcategorySlug } from '../utils/productCategories';
+import { getProductColorOptions, isProduceBagProduct } from '../utils/productColors';
 
 const TAB_CONTENT_COLLAPSED_HEIGHT = 200;
 const isInternalProductSpecification = (key: string) =>
@@ -68,6 +69,13 @@ const hasProductSpecificationValue = (value: unknown) => {
   if (!text) return false;
   return !/^(?:not\s+(?:provided|available|specified|listed|known)|n\/?a|none|unknown|tbd|[-—])\.?$/i.test(text);
 };
+const isPackVariant = (variant: ProductVariant) =>
+  Number.isSafeInteger(variant.packSize) ||
+  /^\d+$/.test(String(variant.size || variant.colorName || variant.name || '').trim());
+const getSelectableProductVariants = (product?: Product) =>
+  product?.variants?.filter(isPackVariant).filter(
+    variant => !product || !isProduceBagProduct(product)
+  ) ?? [];
 
 const ExpandableTabContent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const contentRef = React.useRef<HTMLDivElement>(null);
@@ -209,7 +217,10 @@ export const ProductDetailPage: React.FC = () => {
   }, [productImages, isHoveredGallery]);
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
-    product?.variants?.[0]
+    getSelectableProductVariants(product)[0]
+  );
+  const [selectedColor, setSelectedColor] = useState<ProductColorOption | undefined>(
+    product ? getProductColorOptions(product)[0] : undefined
   );
   const [quantity, setQuantity] = useState<number>(product?.moq || 1);
   const [pinInput, setPinInput] = useState(deliveryPincode);
@@ -220,7 +231,8 @@ export const ProductDetailPage: React.FC = () => {
   const [restockAlertMessage, setRestockAlertMessage] = useState<{ text: string; success: boolean } | null>(null);
 
   useEffect(() => {
-    setSelectedVariant(product?.variants?.[0]);
+    setSelectedVariant(getSelectableProductVariants(product)[0]);
+    setSelectedColor(product ? getProductColorOptions(product)[0] : undefined);
     setQuantity(product?.moq || 1);
     setSelectedImageIndex(0);
   }, [product]);
@@ -469,6 +481,7 @@ export const ProductDetailPage: React.FC = () => {
   }
 
   const priceNeedsConfirmation = product.specifications?.['Source Price Status'] === 'Approximate - verify before sale';
+  const selectableProductVariants = getSelectableProductVariants(product);
   const adminApprovedPrice = product.specifications?.['Source Price Status'] === 'Admin-approved current price';
   const isImportedCatalogProduct = product.id.startsWith('catalog-');
   const outOfStock = product.stock <= 0;
@@ -537,7 +550,7 @@ export const ProductDetailPage: React.FC = () => {
       setCartActionMessage('Confirm current price and availability before ordering.');
       return;
     }
-    const added = addToCart(product, quantity, selectedVariant, getCustomizationPayload());
+    const added = addToCart(product, quantity, selectedVariant, getCustomizationPayload(), selectedColor);
     if (!added) {
       setCartActionMessage(outOfStock ? 'This product is out of stock.' : 'There is not enough stock for that quantity.');
       return;
@@ -552,7 +565,7 @@ export const ProductDetailPage: React.FC = () => {
       setCartActionMessage('Confirm current price and availability before ordering.');
       return;
     }
-    if (addToCart(product, quantity, selectedVariant, getCustomizationPayload())) {
+    if (addToCart(product, quantity, selectedVariant, getCustomizationPayload(), selectedColor)) {
       setCartActionMessage('');
       navigate('/checkout');
       return;
@@ -570,7 +583,7 @@ export const ProductDetailPage: React.FC = () => {
     const added = addToCart(product, 1, sampleVariant, {
       type: 'Sample Request (1 Pc)',
       designNote: `1-Piece Evaluation Sample for ${product.name}`
-    });
+    }, selectedColor);
     if (added) {
       navigate('/cart');
     } else {
@@ -678,10 +691,10 @@ export const ProductDetailPage: React.FC = () => {
       </nav>
 
       {/* Main Product Layout: Gallery (Left) + Details & Tiers (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8">
         {/* Left Column: Image Gallery (Sticky on desktop until right column finishes) */}
-        <div className="lg:col-span-5 lg:self-start">
-          <div className="lg:sticky lg:top-20 space-y-3 z-10 max-w-[480px] mx-auto lg:mx-0">
+        <div className="lg:col-span-6">
+          <div className="lg:sticky lg:top-20 space-y-3 z-10 max-w-[560px] mx-auto lg:mx-0">
             {/* Hero Main Image with Auto-Slide, Cross-fade & Zoom container */}
             <div 
               onMouseEnter={() => setIsHoveredGallery(true)}
@@ -834,7 +847,7 @@ export const ProductDetailPage: React.FC = () => {
         </div>
 
         {/* Right Column: Pricing, Tiers, Variants, and Action Controls */}
-        <div id="product-right-column" className="lg:col-span-7 space-y-6">
+        <div id="product-right-column" className="lg:col-span-6 space-y-6">
           {/* Header & Title */}
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -1113,52 +1126,68 @@ export const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* Variant Picker (Color / Shade) */}
-          {product.variants && product.variants.length > 0 && (
+          {getProductColorOptions(product).length > 0 && (
             <div className="space-y-2 pt-2 border-t border-slate-100">
-              <label className="text-xs font-bold text-navy flex items-center gap-1.5">
-                <span>Select Color / Shade:</span>
-                <span className="text-indigo font-black">
-                  {(selectedVariant?.colorName || selectedVariant?.name || '').replace(/\s*\/\s*\d+$/i, '').replace(/\s*\(?\s*pack\s+of\s+\d+\s*\)?/i, '').trim()}
-                </span>
-              </label>
+              <p className="text-xs font-bold text-navy">
+                Color: <span className="text-indigo">{selectedColor?.name || 'Choose a color'}</span>
+              </p>
               <div className="flex flex-wrap gap-2">
-                {product.variants.map(v => {
-                  const displayName = (v.colorName || v.name || '')
-                    .replace(/\s*\/\s*\d+$/i, '')
-                    .replace(/\s*\(?\s*pack\s+of\s+\d+\s*\)?/i, '')
-                    .trim();
-                  const isSelected = selectedVariant?.id === v.id || 
-                    (selectedVariant?.name || '').toLowerCase().includes(displayName.toLowerCase());
-                  const dotColor = v.colorHex || (displayName.toLowerCase().includes('pink') ? '#EC4899' :
-                    displayName.toLowerCase().includes('blue') ? '#3B82F6' :
-                    displayName.toLowerCase().includes('orange') ? '#F97316' :
-                    displayName.toLowerCase().includes('green') ? '#10B981' :
-                    displayName.toLowerCase().includes('beige') ? '#D2B48C' :
-                    displayName.toLowerCase().includes('white') ? '#FFFFFF' :
-                    displayName.toLowerCase().includes('black') ? '#1E293B' : '#94A3B8');
-
+                {getProductColorOptions(product).map(color => {
+                  const isSelected = selectedColor?.id === color.id;
                   return (
                     <button
-                      key={v.id}
-                      onClick={() => setSelectedVariant(v)}
-                      className={`px-3 py-2 rounded-xl text-xs font-medium border transition flex items-center gap-2 ${
+                      key={color.id}
+                      type="button"
+                      onClick={() => setSelectedColor(color)}
+                      aria-label={`Choose ${color.name}`}
+                      aria-pressed={isSelected}
+                      className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
                         isSelected
                           ? 'border-navy bg-navy text-white shadow-subtle'
-                          : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                       }`}
                     >
                       <span
-                        className="w-3.5 h-3.5 rounded-full border border-black/15 shrink-0 shadow-2xs"
-                        style={{ backgroundColor: dotColor }}
-                      ></span>
-                      <span>{displayName}</span>
+                        className="h-4 w-4 shrink-0 rounded-full border border-black/20"
+                        style={{ backgroundColor: color.colorHex }}
+                      />
+                      {color.name}
                     </button>
                   );
                 })}
               </div>
             </div>
           )}
+
+          {selectableProductVariants.some(isPackVariant) && (
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <p className="text-xs font-bold text-navy">
+                Pack size: <span className="text-indigo">{selectedVariant?.name || 'Choose a pack size'}</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {selectableProductVariants.filter(isPackVariant).map(variant => {
+                  const packSize = variant.packSize || Number(variant.size || variant.colorName || variant.name);
+                  const isSelected = selectedVariant?.id === variant.id;
+                  return (
+                    <button
+                      key={variant.id}
+                      type="button"
+                      onClick={() => setSelectedVariant(variant)}
+                      aria-pressed={isSelected}
+                      className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                        isSelected
+                          ? 'border-navy bg-navy text-white shadow-subtle'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      {packSize} pcs
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
 
           {/* Commercial Sample & Purchase Buttons Section */}
           <div className="space-y-4 pt-2 border-t border-slate-100">
