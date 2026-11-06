@@ -230,10 +230,10 @@ export const Header: React.FC = () => {
               DIRECT MILL RATE
             </span>
             <span className="hidden text-[11px] text-slate-200 sm:inline">
-              🚚 Free Delivery above ₹1,499 • ⚡ Instant Mill Discount Vouchers • 🏢 GST Invoices Available
+              🚚 Free Delivery on ₹10,000+ Product Subtotal (Before GST) • ⚡ Instant Mill Discount Vouchers • 🏢 GST Invoices Available
             </span>
             <span className="text-[11px] font-medium text-slate-100 sm:hidden">
-              🚚 Free Delivery ₹1,499+
+              🚚 Free Delivery ₹10,000+
             </span>
           </div>
 
