@@ -2066,7 +2066,7 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* High-Conversion Trust Signals Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center text-xs pt-1">
+            <div className="grid grid-cols-2 gap-2 text-center text-xs pt-1">
               <button
                 type="button"
                 onClick={() => setShowReturnModal(true)}
