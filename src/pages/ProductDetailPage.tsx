@@ -2080,8 +2080,8 @@ export const ProductDetailPage: React.FC = () => {
               <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-col items-center justify-center">
                 <Truck className="w-4 h-4 text-indigo mb-1" />
                 <span className="font-bold text-navy text-[11px]">Delivery &amp; Freight</span>
-                <span className="text-[10px] leading-relaxed text-slate-600">
-                  Free on ₹10,000+ product subtotal (before GST). Below that, charges are confirmed after packing; our team will contact you to arrange delivery.
+                <span className="text-[10px] leading-snug text-slate-600">
+                  Free delivery on ₹10,000+ orders (before GST). Freight below this is confirmed after packing.
                 </span>
               </div>
             </div>
