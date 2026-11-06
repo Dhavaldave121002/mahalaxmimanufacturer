@@ -114,17 +114,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </Link>
 
       {/* Product Information */}
-      <div className="flex flex-1 flex-col justify-between p-3 sm:p-4">
+      <div className="flex flex-1 flex-col justify-between p-2.5 sm:p-4">
         <div>
           {/* Category & SKU */}
           <div className="mb-1 flex min-w-0 flex-col items-start gap-0.5 text-[9px] text-slate-400 sm:flex-row sm:items-center sm:justify-between sm:gap-1 sm:text-[11px]">
             <span className="max-w-full truncate font-bold text-indigo">{product.categoryName}</span>
-            <span className="max-w-full truncate font-mono text-[9px] sm:text-[10px]">SKU: {product.sku.slice(-6)}</span>
+            <span className="hidden max-w-full truncate font-mono text-[9px] sm:inline sm:text-[10px]">SKU: {product.sku.slice(-6)}</span>
           </div>
 
           {/* Product Title */}
           <Link to={`/product/${product.slug}`} className="block group-hover:text-indigo transition">
-            <h3 className="line-clamp-3 min-h-[3.15rem] text-[13px] font-bold leading-[1.05rem] text-navy sm:line-clamp-2 sm:min-h-0 sm:text-sm sm:leading-snug">
+            <h3 className="line-clamp-2 min-h-8 text-xs font-bold leading-4 text-navy sm:min-h-0 sm:text-sm sm:leading-snug">
               {product.name}
             </h3>
           </Link>
@@ -159,16 +159,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Pricing & Actions */}
         <div className="mt-2.5 border-t border-slate-100 pt-2 sm:mt-4 sm:pt-3">
-          <div className="flex items-baseline gap-2">
-            <span className="text-base font-black text-navy sm:text-xl">
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 sm:gap-x-2">
+            <span className="text-[15px] font-black text-navy sm:text-xl">
               {approximatePrice ? 'Approx. ' : ''}₹{product.retailPrice.toLocaleString('en-IN')}
             </span>
             {!approximatePrice && (
               <>
-                <span className="text-xs text-slate-400 line-through">
+                <span className="text-[10px] text-slate-400 line-through sm:text-xs">
                   ₹{product.mrp.toLocaleString('en-IN')}
                 </span>
-                <span className="text-[10px] text-emerald-700 font-bold ml-auto">
+                <span className="text-[9px] font-bold text-emerald-700 sm:ml-auto sm:text-[10px]">
                   Save ₹{product.mrp - product.retailPrice}
                 </span>
               </>
