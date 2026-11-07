@@ -203,20 +203,23 @@ export const ProductDetailPage: React.FC = () => {
 
   // States
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isHoveredGallery, setIsHoveredGallery] = useState(false);
   const activeImageIndex = Math.min(
     selectedImageIndex,
     Math.max(productImages.length - 1, 0)
   );
 
-  // Auto-slide / fade product image every 3.5 seconds (pauses on hover)
   useEffect(() => {
-    if (productImages.length <= 1 || isHoveredGallery) return;
+    setSelectedImageIndex(0);
+  }, [product?.id]);
+
+  // Keep the gallery advancing in order, even while the pointer is over the image.
+  useEffect(() => {
+    if (productImages.length <= 1) return;
     const timer = setInterval(() => {
       setSelectedImageIndex(prev => (prev + 1) % productImages.length);
-    }, 3500);
+    }, 4000);
     return () => clearInterval(timer);
-  }, [productImages, isHoveredGallery]);
+  }, [product?.id, productImages.length]);
 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(
     getSelectableProductVariants(product)[0]
@@ -701,15 +704,13 @@ export const ProductDetailPage: React.FC = () => {
       </nav>
 
       {/* Main Product Layout: Gallery (Left) + Details & Tiers (Right) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-6">
         {/* Left Column: Image Gallery (Sticky on desktop until right column finishes) */}
         <div className="min-w-0">
-          <div id="product-image-gallery" className="w-full lg:sticky lg:top-20 space-y-3 z-10">
+          <div id="product-image-gallery" className="grid w-full grid-cols-1 items-start gap-3 lg:sticky lg:top-20 lg:grid-cols-[76px_minmax(0,1fr)] lg:gap-3 lg:z-10">
             {/* Hero Main Image with Auto-Slide, Cross-fade & Zoom container */}
             <div 
-              onMouseEnter={() => setIsHoveredGallery(true)}
-              onMouseLeave={() => setIsHoveredGallery(false)}
-              className="relative mx-auto w-full aspect-square lg:w-[min(100%,calc(100dvh-12rem))] rounded-2xl sm:rounded-3xl overflow-hidden bg-white border border-slate-200 shadow-subtle group select-none flex items-center justify-center"
+              className="relative mx-auto aspect-square w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-subtle group select-none flex items-center justify-center sm:rounded-3xl lg:col-start-2 lg:row-start-1"
             >
               {/* Layered Cross-fade Slide Images */}
               {productImages.length === 0 ? (
@@ -722,8 +723,8 @@ export const ProductDetailPage: React.FC = () => {
                   key={idx}
                   className={`absolute inset-0 w-full h-full p-3 sm:p-5 flex items-center justify-center transition-all duration-500 ease-in-out transform ${
                     activeImageIndex === idx
-                      ? 'opacity-100 scale-100 pointer-events-auto z-0'
-                      : 'opacity-0 scale-95 pointer-events-none -z-10'
+                      ? 'opacity-100 scale-100 pointer-events-auto z-10'
+                      : 'opacity-0 scale-[0.98] pointer-events-none z-0'
                   }`}
                 >
                   <img
@@ -807,16 +808,16 @@ export const ProductDetailPage: React.FC = () => {
               )}
             </div>
 
-            {/* Thumbnails Row */}
+            {/* Thumbnail rail: horizontal on mobile, vertical beside the image on desktop */}
             {productImages.length > 1 && (
-              <div className="flex snap-x snap-mandatory items-center gap-2.5 overflow-x-auto px-1 py-1.5 hide-scrollbar">
+              <div className="flex snap-x snap-mandatory items-center gap-2.5 overflow-x-auto px-1 py-1.5 hide-scrollbar lg:col-start-1 lg:row-start-1 lg:max-h-[calc(100dvh-10rem)] lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto lg:px-0 lg:py-0">
                 {productImages.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImageIndex(idx)}
                     aria-label={`View photo ${idx + 1} of ${product.name}`}
                     aria-pressed={activeImageIndex === idx}
-                    className={`h-[72px] w-[72px] shrink-0 snap-start overflow-hidden rounded-xl border-2 bg-white p-0.5 shadow-sm transition sm:h-20 sm:w-20 sm:rounded-2xl sm:p-1 ${
+                    className={`h-[72px] w-[72px] shrink-0 snap-start overflow-hidden rounded-xl border-2 bg-white p-0.5 shadow-sm transition sm:h-20 sm:w-20 sm:rounded-2xl sm:p-1 lg:h-[72px] lg:w-[72px] lg:rounded-xl lg:p-0.5 ${
                       activeImageIndex === idx
                         ? 'border-indigo ring-2 ring-indigo/20'
                         : 'border-slate-200 hover:border-indigo/50'
@@ -837,7 +838,7 @@ export const ProductDetailPage: React.FC = () => {
             )}
 
             {/* Product verification notice */}
-            <div className="p-3 bg-ivory rounded-2xl border border-slate-200 text-xs text-slate-700 flex items-start gap-2.5">
+            <div className="p-3 bg-ivory rounded-2xl border border-slate-200 text-xs text-slate-700 flex items-start gap-2.5 lg:col-span-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
                 <div className="text-navy font-bold text-xs">
