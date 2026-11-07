@@ -231,7 +231,7 @@ export const WholesalePage: React.FC = () => {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-4 border-t border-slate-700 text-xs">
             <div>
               <p className="text-champagne font-black text-sm sm:text-base">Ahmedabad & Tirupur</p>
-              <p className="text-[11px] text-slate-300">Direct Mill Dispatch</p>
+              <p className="text-[11px] text-slate-300">Direct Ahmedabad Mill Dispatch</p>
             </div>
             <div>
               <p className="text-champagne font-black text-sm sm:text-base">Up to 46% Off</p>

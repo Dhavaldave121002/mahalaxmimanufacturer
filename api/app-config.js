@@ -112,9 +112,8 @@ export default async function handler(req, res) {
             state = 'GJ';
           }
 
-          // Calculate estimated delivery: Surat to Gujarat = 1-2 days, Rest of India = 3-4 days
-          const isGujarat = state === 'GJ' || district.toLowerCase().includes('surat') || district.toLowerCase().includes('ahmedabad');
-          const estDays = isGujarat ? '1-2 Days (Surat Fast Direct Dispatch)' : '3-4 Business Days';
+          const isAhmedabad = /ahmedabad|ahmadabad/i.test(city);
+          const estDays = isAhmedabad ? '2-3 calendar days' : '5-7 calendar days';
 
           return res.status(200).json({
             success: true,

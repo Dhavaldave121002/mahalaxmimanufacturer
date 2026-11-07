@@ -32,6 +32,7 @@ import { Badge } from '../common/Badge';
 import { WishlistDrawer } from '../common/WishlistDrawer';
 import { matchesProductSearch } from '../../utils/searchProducts';
 import { toSubcategorySlug } from '../../utils/productCategories';
+import { getDeliveryEstimate } from '../../utils/deliveryDisplay';
 import { useDeliveryLocationPage } from '../../hooks/useDeliveryLocationPage';
 import {
   BUSINESS_SUPPORT_PHONE,
@@ -61,6 +62,7 @@ export const Header: React.FC = () => {
   } = useApp();
 
   const topPromo = coupons.find(c => c.isActive && c.isFeatured);
+  const deliveryEstimate = getDeliveryEstimate(deliveryInfo?.city);
   const deliveryLocationPage = useDeliveryLocationPage(deliveryInfo);
 
   const [wishlistOpen, setWishlistOpen] = useState(false);
@@ -770,7 +772,7 @@ export const Header: React.FC = () => {
                 <p className={`${deliveryInfo.serviceable ? 'text-emerald-700' : 'text-amber-700'} mt-1 flex items-center gap-1 font-semibold`}>
                   {deliveryInfo.serviceable && <CheckCircle2 className="w-4 h-4" />}
                   {deliveryInfo.serviceable
-                    ? `Serviceable • Estimated Delivery: ${deliveryInfo.estimatedDays} ${deliveryInfo.estimatedDays === 1 ? 'day' : 'days'}`
+                    ? `Serviceable • Estimated Delivery: ${deliveryEstimate.minDays}-${deliveryEstimate.maxDays} calendar days (${deliveryEstimate.dateRange})`
                     : 'Delivery serviceability is not confirmed yet.'}
                 </p>
                 {deliveryInfo.serviceable && deliveryLocationPage && (

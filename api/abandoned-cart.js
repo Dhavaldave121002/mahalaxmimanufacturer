@@ -563,7 +563,7 @@ async function sendAbandonedCartRecoveryEmails(data) {
                     MAHALAXMI ENTERPRISE
                   </div>
                   <div style="color: #C6AA80; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">
-                    DIRECT FROM SURAT TEXTILE MILLS
+                    DIRECT FROM AHMEDABAD TEXTILE MILLS
                   </div>
                 </td>
               </tr>

@@ -1,16 +1,22 @@
-const normalizeCity = (city: string) => city
-  .normalize('NFKD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .trim()
-  .toLowerCase();
+export const getDeliveryEstimate = (city: string | null | undefined, today = new Date()) => {
+  const isAhmedabad = /ahmedabad|ahmadabad/i.test(city || '');
+  const minDays = isAhmedabad ? 2 : 5;
+  const maxDays = isAhmedabad ? 3 : 7;
+  const formatDate = (days: number) => {
+    const date = new Date(today);
+    date.setDate(date.getDate() + days);
+    return new Intl.DateTimeFormat('en-IN', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    }).format(date);
+  };
 
-export const getDispatchLabel = (city: string | null | undefined, state: string | null | undefined) => {
-  const destination = city?.trim();
-  if (!destination) return 'Direct Mill Dispatch';
-
-  const normalizedCity = normalizeCity(destination);
-  if (normalizedCity === 'ahmedabad' || normalizedCity === 'ahmadabad') return 'Direct Ahmedabad Mill Dispatch';
-  if (normalizedCity === 'surat') return 'Direct Surat Mill Dispatch';
-
-  return `Direct Mill Dispatch to ${destination}${state ? `, ${state}` : ''}`;
+  return {
+    minDays,
+    maxDays,
+    dateRange: `${formatDate(minDays)} - ${formatDate(maxDays)}`
+  };
 };
+
+export const getDispatchLabel = () => 'Direct Ahmedabad Mill Dispatch';

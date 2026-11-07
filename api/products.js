@@ -455,6 +455,8 @@ export default async function handler(req, res) {
         const collections = Array.isArray(rawColls) && rawColls.length > 0 ? rawColls : (cat ? [cat] : []);
         return {
           ...product,
+          mrp: Number(product.mrp),
+          retailPrice: Number(product.retailPrice ?? product.retail_price),
           category: cat,
           categoryName: CATEGORY_NAMES[cat] || product.categoryName || cat,
           colorOptions: Array.isArray(product.colorOptions)

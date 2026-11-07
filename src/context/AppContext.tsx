@@ -25,6 +25,7 @@ import {
 import { INITIAL_PRODUCTS, CATEGORIES_CONFIG } from '../data/mockProducts';
 import { normalizeProductCategory } from '../utils/productCategories';
 import { getDefaultProductColors, isPaperProduct } from '../utils/productColors';
+import { getDeliveryEstimate } from '../utils/deliveryDisplay';
 import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
 import { INITIAL_COUPONS } from '../data/initialCoupons';
 import { getCustomizationCharge, getSizeCharge, updateCustomizationPricing } from '../constants/customizationPricing';
@@ -39,7 +40,7 @@ interface PinCodeInfo {
 }
 
 const PINCODE_DATABASE: Record<string, { city: string; state: string; days: number }> = {
-  // Surat & South Gujarat Direct Dispatch Hub
+  // Surat and South Gujarat postal code lookup
   '395001': { city: 'Surat', state: 'Gujarat', days: 1 },
   '395002': { city: 'Surat', state: 'Gujarat', days: 1 },
   '395003': { city: 'Surat', state: 'Gujarat', days: 1 },
@@ -854,7 +855,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     city: 'Surat',
     state: 'Gujarat',
     serviceable: true,
-    estimatedDays: 1
+    estimatedDays: 7
   });
 
   // Mill Saver Bundle Config (Admin & Database Controllable)
@@ -2738,15 +2739,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         .then(res => res.json())
         .then(data => {
           if (data && data.success && data.serviceable) {
-            const verifiedState = String(data.state || '').trim().toLowerCase();
-            const isGujarat = verifiedState === 'gj' || verifiedState === 'gujarat'
-              || cleanPin.startsWith('395') || cleanPin.startsWith('394');
+            const city = cleanPin.startsWith('395') || cleanPin.startsWith('394')
+              ? 'Surat'
+              : data.city || initialInfo.city;
+            const deliveryEstimate = getDeliveryEstimate(city);
             setDeliveryInfo({
               pincode: cleanPin,
-              city: cleanPin.startsWith('395') || cleanPin.startsWith('394') ? 'Surat' : (data.city || initialInfo.city),
+              city,
               state: cleanPin.startsWith('395') || cleanPin.startsWith('394') ? 'Gujarat' : (data.state || initialInfo.state),
               serviceable: true,
-              estimatedDays: isGujarat ? 1 : 3,
+              estimatedDays: deliveryEstimate.maxDays,
               verified: true
             });
           } else if (data && data.serviceable === false) {

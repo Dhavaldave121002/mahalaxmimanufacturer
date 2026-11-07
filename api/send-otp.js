@@ -68,6 +68,7 @@ export default async function handler(req, res) {
             user_name: customerName,
             subject: 'Your verification code | Mahalaxmi Enterprise',
             headline: 'Verify your account',
+            reference_label: 'Verification code',
             code_box: otp,
             subtext: 'Valid for 5 minutes only',
             brand_name: 'Mahalaxmi Enterprise',

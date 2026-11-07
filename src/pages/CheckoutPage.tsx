@@ -544,7 +544,7 @@ export const CheckoutPage: React.FC = () => {
             Secure Commercial Checkout
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Order Reference: {cart.length} items • {getDispatchLabel(deliveryInfo?.city, deliveryInfo?.state)} • 100% Legal GST Invoice
+            Order Reference: {cart.length} items • {getDispatchLabel()} • 100% Legal GST Invoice
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 font-semibold">

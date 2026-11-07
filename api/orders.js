@@ -843,7 +843,7 @@ async function sendOrderNotificationEmails(data) {
       </tr>
     `;
 
-  let addressText = 'Direct Surat Mill Central Dispatch';
+  let addressText = 'Ahmedabad Central Mill Dispatch';
   if (typeof shippingAddress === 'object' && shippingAddress !== null) {
     const parts = [
       shippingAddress.fullAddress || shippingAddress.addressLine1,
@@ -851,7 +851,7 @@ async function sendOrderNotificationEmails(data) {
       shippingAddress.state,
       shippingAddress.postalCode || shippingAddress.pincode
     ].filter(Boolean);
-    addressText = parts.length > 0 ? parts.join(', ') : 'Direct Surat Mill Dispatch';
+    addressText = parts.length > 0 ? parts.join(', ') : 'Ahmedabad Central Mill Dispatch';
   } else if (typeof shippingAddress === 'string' && shippingAddress.trim()) {
     addressText = shippingAddress;
   }
@@ -917,7 +917,7 @@ async function sendOrderNotificationEmails(data) {
                           MAHALAXMI ENTERPRISE
                         </div>
                         <div style="color: #C6AA80; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 3px;">
-                          SURAT DIRECT MILL DISPATCH DESK
+                          AHMEDABAD DIRECT MILL DISPATCH DESK
                         </div>
 
                         <!-- Source Badge -->
@@ -1070,7 +1070,7 @@ async function sendOrderNotificationEmails(data) {
   // Concurrent EmailJS Dispatch Engine (Customer Confirmation + Store Admin Alert)
   try {
     const EMAILJS_SERVICE_ID = process.env.EMAILJS_SERVICE_ID || process.env.VITE_EMAILJS_SERVICE_ID || 'service_935pxzz';
-    let EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_ORDER_TEMPLATE_ID || process.env.EMAILJS_TEMPLATE_ID || 'template_rxzob8r';
+    let EMAILJS_ORDER_TEMPLATE_ID = process.env.EMAILJS_TEMPLATE_ID || process.env.VITE_EMAILJS_TEMPLATE_ID || process.env.EMAILJS_ORDER_TEMPLATE_ID || 'template_rxzob8r';
     if (EMAILJS_ORDER_TEMPLATE_ID === 'rn6jeir' || !EMAILJS_ORDER_TEMPLATE_ID) {
       EMAILJS_ORDER_TEMPLATE_ID = 'template_rxzob8r';
     }
@@ -1130,6 +1130,7 @@ async function sendOrderNotificationEmails(data) {
             to_name: customerName,
             subject: `Order Confirmed: #${orderNumber} | Mahalaxmi Enterprise`,
             headline: 'Order Confirmed!',
+            reference_label: 'Order reference',
             code_box: `#${orderNumber}`,
             subtext: `Order #${orderNumber} • Total ₹${Number(totalAmount).toLocaleString('en-IN')}`,
             brand_name: 'Mahalaxmi Enterprise',
@@ -1158,6 +1159,7 @@ async function sendOrderNotificationEmails(data) {
             to_name: 'Mahalaxmi Mill Admin',
             subject: `🚨 New Order Alert: #${orderNumber} (₹${Number(totalAmount).toLocaleString('en-IN')}) | Mahalaxmi Admin`,
             headline: 'New Order Received!',
+            reference_label: 'Order reference',
             code_box: `#${orderNumber}`,
             subtext: `Customer: ${customerName} (${customerPhone}) • ₹${Number(totalAmount).toLocaleString('en-IN')}`,
             brand_name: 'Mahalaxmi Enterprise',

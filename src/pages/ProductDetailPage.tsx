@@ -7,7 +7,7 @@ import { Badge } from '../components/common/Badge';
 import { ProductCard } from '../components/common/ProductCard';
 import { ListSkeleton, ProductDetailSkeleton } from '../components/common/SkeletonLoader';
 import { useDeliveryLocationPage } from '../hooks/useDeliveryLocationPage';
-import { getDispatchLabel } from '../utils/deliveryDisplay';
+import { getDeliveryEstimate, getDispatchLabel } from '../utils/deliveryDisplay';
 import {
   BUSINESS_SUPPORT_PHONE,
   BUSINESS_WHATSAPP_NUMBER
@@ -183,6 +183,7 @@ export const ProductDetailPage: React.FC = () => {
   const product = products.find(p => p.slug === slug);
   const careInstructions = product?.careInstructions?.filter(instruction => instruction.trim()) ?? [];
   const deliveryLocationPage = useDeliveryLocationPage(deliveryInfo);
+  const deliveryEstimate = getDeliveryEstimate(deliveryInfo?.city);
   const productImages = useMemo(
     () => orderProductImagesByResolution(product?.images ?? []),
     [product?.images]
@@ -2123,7 +2124,7 @@ export const ProductDetailPage: React.FC = () => {
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600 font-medium">
               <span className="flex items-center gap-1.5 text-navy font-bold">
                 <MapPin className="w-3.5 h-3.5 text-indigo shrink-0" />
-                <span>Direct Mill Dispatch to {deliveryInfo?.city || 'Ahmedabad'}, {deliveryInfo?.state || 'Gujarat'} & All India</span>
+                <span>{getDispatchLabel()} & All India</span>
               </span>
               <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-200 shrink-0 flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -2198,9 +2199,10 @@ export const ProductDetailPage: React.FC = () => {
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 pt-0.5">
                       <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-semibold">
-                        ⚡ Est. Delivery: {deliveryInfo.estimatedDays} Days
+                        ⚡ Est. Delivery: {deliveryEstimate.minDays}-{deliveryEstimate.maxDays} calendar days
                       </span>
-                      <span className="text-slate-400">{getDispatchLabel(deliveryInfo.city, deliveryInfo.state)}</span>
+                      <span>Arrives around {deliveryEstimate.dateRange}</span>
+                      <span className="text-slate-400">{getDispatchLabel()}</span>
                     </div>
                     {deliveryLocationPage && (
                       <Link
