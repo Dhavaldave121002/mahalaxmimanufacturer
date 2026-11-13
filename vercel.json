@@ -1,7 +1,18 @@
 {
-  "framework": null,
-  "buildCommand": "vite build",
-  "outputDirectory": "dist",
+  "builds": [
+    {
+      "src": "api/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist",
+        "buildCommand": "vite build"
+      }
+    }
+  ],
   "rewrites": [
     {
       "source": "/product/:slug",
