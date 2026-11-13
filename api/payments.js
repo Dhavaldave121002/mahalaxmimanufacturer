@@ -4,9 +4,25 @@ import { calculateCheckoutQuote } from './_lib/checkout-pricing.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method === 'GET') {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isLiveCheckoutEnabled =
+      !isProduction ||
+      (process.env.RAZORPAY_CHECKOUT_ENABLED === 'true' &&
+        Boolean(keyId) &&
+        !keyId.startsWith('rzp_test_'));
+    const isConfigured =
+      isLiveCheckoutEnabled &&
+      Boolean(keyId && process.env.RAZORPAY_KEY_SECRET);
+    return res.status(isConfigured ? 200 : 503).json({
+      success: isConfigured,
+      error: isConfigured ? undefined : 'Online payment is not configured.'
+    });
+  }
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method Not Allowed' });
   }
