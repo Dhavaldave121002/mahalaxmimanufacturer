@@ -40,7 +40,6 @@ async function seedSamplesIntoMySQL() {
         'Contents': '12 Fabric Swatches (15x15 cm each)',
         'Included Materials': '300 TC Combed Sateen, 210 TC Percale, 600 GSM Combed Terry, 380 GSM Canvas, 350 GSM Microfiber',
         'Documentation': 'Mill Technical Test Report & Fabric Weight (GSM) Certificate',
-        'Rebate Policy': '₹199 Cash Coupon included for your next order > ₹5,000'
       }),
       wholesale_tiers: JSON.stringify([
         { minQty: 1, maxQty: 5, pricePerUnit: 199, savingsPercent: 60, label: 'Standard Sample Box' },
@@ -70,8 +69,8 @@ async function seedSamplesIntoMySQL() {
       is_app_exclusive: 0,
       hsn_code: '630790',
       gst_rate: 5.00,
-      short_description: 'The ultimate commercial evaluation box: 12 fabric swatches + 4 actual product minis across Home, Textile, Cotton & Household with ₹300 Rebate Voucher.',
-      description: 'Procurement-grade sample bundle designed for corporate clients, hospitality chains, and garment retailers. Includes: (1) Full set of 12 luxury fabric swatches, (2) One 600 GSM Cotton Hand Towel, (3) One Heavy-Duty Microfiber Cloth, (4) One Chef-Grade Kitchen Wipe, and (5) Mill Technical Report & Lab Certification. Fully refundable via an included ₹300 coupon code on your first wholesale order.',
+      short_description: 'The ultimate commercial evaluation box: 12 fabric swatches + 4 actual product minis across Home, Textile, Cotton & Household.',
+      description: 'Procurement-grade sample bundle designed for corporate clients, hospitality chains, and garment retailers. Includes: (1) Full set of 12 luxury fabric swatches, (2) One 600 GSM Cotton Hand Towel, (3) One Heavy-Duty Microfiber Cloth, (4) One Chef-Grade Kitchen Wipe, and (5) Mill Technical Report & Lab Certification.',
       images: JSON.stringify([
         'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1000&auto=format&fit=crop',
         'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?q=80&w=1000&auto=format&fit=crop'
@@ -80,7 +79,6 @@ async function seedSamplesIntoMySQL() {
       specifications: JSON.stringify({
         'Bundle Contents': '12 Swatches (15x15cm) + 1 Cotton Towel + 1 Microfiber + 1 Kitchen Wipe',
         'Quality Standard': 'ISO 9001:2015 & Oeko-Tex Standard 100 Certified',
-        'Rebate Guarantee': '100% Refundable via ₹300 Instant Voucher on next bulk order',
         'Dispatch Speed': 'Same-Day Air Express Dispatch from Surat Mill'
       }),
       wholesale_tiers: JSON.stringify([

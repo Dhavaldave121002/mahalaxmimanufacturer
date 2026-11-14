@@ -7,9 +7,10 @@ const SkeletonBlock: React.FC<{ className: string }> = ({ className }) => (
 export const ProductGridSkeleton: React.FC<{
   count?: number;
   className?: string;
-}> = ({ count = 8, className = '' }) => (
+  columnsClassName?: string;
+}> = ({ count = 8, className = '', columnsClassName }) => (
   <div
-    className={`grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4 ${className}`}
+    className={`${columnsClassName || 'grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4'} ${className}`}
     role="status"
     aria-label="Loading products"
     aria-busy="true"

@@ -29,15 +29,17 @@ export const StickyPurchaseBar: React.FC<StickyPurchaseBarProps> = ({
 
   useEffect(() => {
     const handleScroll = () => {
-      // Keep the mobile purchase bar clear of the product image and thumbnails.
-      if (window.innerWidth < 768) {
-        const gallery = document.getElementById('product-image-gallery');
-        if (gallery) {
-          const rect = gallery.getBoundingClientRect();
-          setIsVisible(rect.bottom <= 0 || rect.top >= window.innerHeight);
-        } else {
-          setIsVisible(true);
+      const footer = document.querySelector('footer');
+      if (footer) {
+        const footerRect = footer.getBoundingClientRect();
+        if (footerRect.top < window.innerHeight && footerRect.bottom > 0) {
+          setIsVisible(false);
+          return;
         }
+      }
+
+      if (window.innerWidth < 768) {
+        setIsVisible(true);
         return;
       }
 

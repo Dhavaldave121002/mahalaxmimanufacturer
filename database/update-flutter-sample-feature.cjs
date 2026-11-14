@@ -24,7 +24,7 @@ if (fs.existsSync(productModelPath)) {
       inStockCount: 200,
       material: '12 Swatches + 4 Product Minis + Lab Certificate',
       moq: '1 Kit (MOQ Bypassed)',
-      description: 'The ultimate procurement-grade sample bundle: 12 physical fabric swatches across Bedsheets, Towels, Canvas & Microfiber + 4 actual product minis + Mill Lab GSM Certificate + 100% Refund Voucher code (SAMPLE100) credited back on your first wholesale order.',
+      description: 'The ultimate procurement-grade sample bundle: 12 physical fabric swatches across Bedsheets, Towels, Canvas & Microfiber + 4 actual product minis + Mill Lab GSM Certificate.',
     ),
     const ProductModel(
       id: 'prod-swatch-box-01',
@@ -68,7 +68,7 @@ if (fs.existsSync(productModelPath)) {
       inStockCount: 200,
       material: '12 Swatches + 4 Product Minis + Lab Certificate',
       moq: '1 Kit (MOQ Bypassed)',
-      description: 'The ultimate procurement-grade sample bundle: 12 physical fabric swatches across Bedsheets, Towels, Canvas & Microfiber + 4 actual product minis + Mill Lab GSM Certificate + 100% Refund Voucher code (SAMPLE100) credited back on your first wholesale order.',
+      description: 'The ultimate procurement-grade sample bundle: 12 physical fabric swatches across Bedsheets, Towels, Canvas & Microfiber + 4 actual product minis + Mill Lab GSM Certificate.',
     ),
     const ProductModel(
       id: 'prod-swatch-box-01',
@@ -95,56 +95,6 @@ if (fs.existsSync(productModelPath)) {
     }
   } else {
     console.log('Sample products already present in product_model.dart');
-  }
-}
-
-// 2. Update cart_screen.dart (SAMPLE100 coupon code & promo sheet card)
-const cartScreenPath = path.join(flutterRoot, 'lib', 'screens', 'cart', 'cart_screen.dart');
-if (fs.existsSync(cartScreenPath)) {
-  let content = fs.readFileSync(cartScreenPath, 'utf8');
-
-  if (!content.includes('SAMPLE100')) {
-    // A. Update _applyCoupon
-    const couponTarget = "if (code == 'MAHALAXMI10' || code == 'B2B10') {";
-    const couponReplacement = `if (code == 'SAMPLE100' || code == 'SAMPLEKIT' || code == 'SAMPLEREBATE') {
-      setState(() {
-        _isCouponApplied = true;
-        _discountAmount = 300.0;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎉 100% Sample Rebate Applied! ₹300.00 credited back to your order.'),
-          backgroundColor: AppTheme.success,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    if (code == 'MAHALAXMI10' || code == 'B2B10') {`;
-
-    if (content.includes(couponTarget)) {
-      content = content.replace(couponTarget, couponReplacement);
-    }
-
-    // B. Add promo card in _showPromoCodesBottomSheet
-    const promoListTarget = 'final List<Map<String, dynamic>> promoList = [';
-    const promoListReplacement = `final List<Map<String, dynamic>> promoList = [
-      {
-        'discount': '₹300 OFF',
-        'title': '100% Sample Rebate Credit',
-        'code': 'SAMPLE100',
-        'saved': 300.0,
-        'validity': 'Valid on wholesale bulk orders (100% Rebate)',
-        'color': const Color(0xFF7C3AED),
-      },`;
-
-    if (content.includes(promoListTarget)) {
-      content = content.replace(promoListTarget, promoListReplacement);
-    }
-
-    fs.writeFileSync(cartScreenPath, content, 'utf8');
-    console.log('✓ Successfully updated cart_screen.dart with SAMPLE100 coupon');
   }
 }
 

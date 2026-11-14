@@ -4,7 +4,10 @@ import { useApp } from '../context/AppContext';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
 import { InfiniteProductGrid } from '../components/common/InfiniteProductGrid';
 import { ProductGridSkeleton } from '../components/common/SkeletonLoader';
-import { SlidersHorizontal } from 'lucide-react';
+import { ProductGridLayoutControls } from '../components/common/ProductGridLayoutControls';
+import { getProductGridColumnsClassName } from '../components/common/productGridLayout';
+import { FilterAccordion } from '../components/common/FilterAccordion';
+import { Check, SlidersHorizontal, X } from 'lucide-react';
 import { toSubcategorySlug, matchesSubcategorySlug, productBelongsToCollection } from '../utils/productCategories';
 
 export const CategoryPage: React.FC = () => {
@@ -15,6 +18,25 @@ export const CategoryPage: React.FC = () => {
 
   const selectedSubcategory = subcategorySlug || searchParams.get('subcategory') || '';
   const [sortBy, setSortBy] = useState<string>('relevance');
+  const [desktopGridColumns, setDesktopGridColumns] = useState<2 | 3>(3);
+  const [mobileGridColumns, setMobileGridColumns] = useState<1 | 2>(2);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mobileFilterOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileFilterOpen(false);
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [mobileFilterOpen]);
 
   // Auto-clean any percent-encoded (%20) or uppercase query param in the URL address bar to a sleek SEO slug
   useEffect(() => {
@@ -192,10 +214,10 @@ export const CategoryPage: React.FC = () => {
 
       {/* Subcategory Filter Tabs & Sorting */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4 md:flex md:items-center md:justify-between md:gap-6 md:rounded-none md:border-0 md:border-b md:bg-transparent md:px-0 md:pb-4 md:shadow-none">
+        <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4 md:flex md:items-center md:gap-4 md:rounded-none md:border-0 md:border-b md:bg-transparent md:px-0 md:pb-4 md:shadow-none">
           {/* Subcategory Pills */}
-          <div className="min-w-0">
-            <div className="mb-2 flex items-center justify-between gap-2 md:mb-3">
+          <div className="min-w-0 md:flex md:flex-1 md:items-center md:gap-4">
+            <div className="mb-2 flex items-center justify-between gap-2 md:mb-0 md:w-28 md:shrink-0 md:flex-col md:items-start md:gap-0">
               <span className="text-xs font-bold text-navy sm:text-sm">Shop by type</span>
               <span className="text-[10px] font-medium text-slate-500 sm:text-xs">
                 {categoryProducts.length} {categoryProducts.length === 1 ? 'product' : 'products'}
@@ -203,7 +225,7 @@ export const CategoryPage: React.FC = () => {
             </div>
             <div
               aria-label="Filter by subcategory"
-              className="flex snap-x snap-mandatory items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex-wrap md:overflow-visible md:pb-0"
+              className="hidden snap-x snap-mandatory items-center gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:flex md:flex-1 md:flex-nowrap"
             >
             <button
               onClick={() => handleSelectSubcategory()}
@@ -238,34 +260,67 @@ export const CategoryPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Sort Dropdown */}
-          <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3 md:mt-0 md:shrink-0 md:border-0 md:pt-0">
-            <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-500" />
-            <label htmlFor="category-sort" className="shrink-0 text-xs font-medium text-slate-500">Sort:</label>
-            <select
-              id="category-sort"
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-navy outline-none focus:border-indigo md:flex-none"
-            >
-              <option value="relevance">Featured & Relevance</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="discount">Highest Savings %</option>
-              <option value="rating">Top Rated</option>
-            </select>
-          </div>
         </div>
 
         {/* Product Grid */}
         <div className="mt-8">
+          <div className="mb-4 flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
+            <button
+              type="button"
+              onClick={() => setMobileFilterOpen(true)}
+              className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-navy shadow-sm transition hover:border-indigo/40 md:hidden"
+              aria-haspopup="dialog"
+              aria-expanded={mobileFilterOpen}
+            >
+              <SlidersHorizontal className="h-4 w-4 text-indigo" />
+              <span>Filter &amp; Sort</span>
+              {selectedSubcategory && <span className="h-1.5 w-1.5 rounded-full bg-indigo" aria-label="Filter active" />}
+            </button>
+            <div className="hidden min-w-0 items-center gap-2 md:flex">
+              <SlidersHorizontal className="h-4 w-4 shrink-0 text-slate-500" />
+              <label htmlFor="category-sort" className="shrink-0 text-xs font-medium text-slate-500">Sort:</label>
+              <select
+                id="category-sort"
+                value={sortBy}
+                onChange={e => setSortBy(e.target.value)}
+                className="min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-navy outline-none focus:border-indigo"
+              >
+                <option value="relevance">Featured & Relevance</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="discount">Highest Savings %</option>
+                <option value="rating">Top Rated</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="md:hidden">
+                <ProductGridLayoutControls
+                  desktopColumns={desktopGridColumns}
+                  mobileColumns={mobileGridColumns}
+                  onDesktopColumnsChange={setDesktopGridColumns}
+                  onMobileColumnsChange={setMobileGridColumns}
+                />
+              </div>
+              <div className="hidden md:block">
+                <ProductGridLayoutControls
+                  desktopColumns={desktopGridColumns}
+                  mobileColumns={mobileGridColumns}
+                  onDesktopColumnsChange={setDesktopGridColumns}
+                  onMobileColumnsChange={setMobileGridColumns}
+                />
+              </div>
+            </div>
+          </div>
           {productsLoading ? (
-            <ProductGridSkeleton count={8} />
+            <ProductGridSkeleton
+              count={8}
+              columnsClassName={getProductGridColumnsClassName(mobileGridColumns, desktopGridColumns)}
+            />
           ) : categoryProducts.length > 0 ? (
             <InfiniteProductGrid
               key={`${categoryId}|${selectedSubcategory}|${sortBy}`}
               products={categoryProducts}
-              className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4"
+              className={getProductGridColumnsClassName(mobileGridColumns, desktopGridColumns)}
             />
           ) : (
             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 space-y-4">
@@ -281,6 +336,119 @@ export const CategoryPage: React.FC = () => {
           )}
         </div>
       </section>
+
+      {mobileFilterOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-end bg-navy/60 backdrop-blur-sm md:hidden"
+          onClick={() => setMobileFilterOpen(false)}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="category-filter-title"
+            className="flex max-h-[85vh] w-full flex-col rounded-t-3xl bg-white shadow-2xl animate-in slide-in-from-bottom duration-300"
+            onClick={event => event.stopPropagation()}
+          >
+            <header className="flex items-center justify-between border-b border-slate-200 p-4">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4 text-indigo" />
+                <h2 id="category-filter-title" className="text-sm font-extrabold text-navy">Filter &amp; Sort</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileFilterOpen(false)}
+                className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-navy"
+                aria-label="Close filters"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </header>
+
+            <div className="flex-1 space-y-5 overflow-y-auto p-4">
+              <FilterAccordion
+                title="Sort products"
+                summaryValue={{
+                  relevance: 'Featured',
+                  'price-low': 'Price: Low to High',
+                  'price-high': 'Price: High to Low',
+                  discount: 'Highest Savings',
+                  rating: 'Top Rated'
+                }[sortBy]}
+              >
+                <div className="space-y-1" role="group" aria-label="Sort products">
+                  {[
+                    ['relevance', 'Featured & Relevance'],
+                    ['price-low', 'Price: Low to High'],
+                    ['price-high', 'Price: High to Low'],
+                    ['discount', 'Highest Savings %'],
+                    ['rating', 'Top Rated']
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setSortBy(value)}
+                      aria-pressed={sortBy === value}
+                      className={`flex w-full min-w-0 items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${
+                        sortBy === value ? 'bg-indigo-light font-bold text-indigo' : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="min-w-0 break-words">{label}</span>
+                      {sortBy === value && <Check className="h-4 w-4 shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              </FilterAccordion>
+
+              <FilterAccordion
+                title="Shop by type"
+                defaultOpen
+                summaryValue={matchedSubcategoryName || `All ${categoryConfig.name}`}
+              >
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectSubcategory()}
+                    aria-pressed={!selectedSubcategory}
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm ${
+                      !selectedSubcategory ? 'bg-indigo-light font-bold text-indigo' : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>All {categoryConfig.name}</span>
+                    {!selectedSubcategory && <Check className="h-4 w-4" />}
+                  </button>
+                  {availableSubcategories.map((sub, index) => {
+                    const isSelected = matchesSubcategorySlug(sub, selectedSubcategory);
+                    return (
+                      <button
+                        key={`${sub}-${index}`}
+                        type="button"
+                        onClick={() => handleSelectSubcategory(sub)}
+                        aria-pressed={isSelected}
+                        className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-left text-sm ${
+                          isSelected ? 'bg-indigo-light font-bold text-indigo' : 'text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span>{sub}</span>
+                        {isSelected && <Check className="h-4 w-4" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </FilterAccordion>
+            </div>
+
+            <footer className="border-t border-slate-200 bg-slate-50 p-4">
+              <button
+                type="button"
+                onClick={() => setMobileFilterOpen(false)}
+                className="w-full rounded-xl bg-indigo px-4 py-3 text-sm font-bold text-white transition hover:bg-indigo-dark"
+              >
+                Show {categoryProducts.length} {categoryProducts.length === 1 ? 'product' : 'products'}
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
     </div>
   );
 };

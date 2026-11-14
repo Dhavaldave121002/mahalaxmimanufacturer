@@ -14,7 +14,9 @@ import {
   Lock,
   Building2,
   X,
-  MessageSquare
+  MessageSquare,
+  Plus,
+  Minus
 } from 'lucide-react';
 import {
   BUSINESS_SUPPORT_EMAIL,
@@ -26,9 +28,51 @@ import {
   BUSINESS_WHATSAPP_NUMBER
 } from '../../constants/businessContact';
 
+interface FooterLinkSectionProps {
+  id: string;
+  title: string;
+  className: string;
+  expanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}
+
+const FooterLinkSection: React.FC<FooterLinkSectionProps> = ({
+  id,
+  title,
+  className,
+  expanded,
+  onToggle,
+  children
+}) => (
+  <section className={className}>
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={expanded}
+      aria-controls={id}
+      className="flex min-h-11 w-full items-center justify-between gap-3 border-b border-navy-800/80 py-3 text-left lg:hidden"
+    >
+      <span className="font-bold text-xs uppercase tracking-wider text-slate-200">{title}</span>
+      {expanded
+        ? <Minus className="h-4 w-4 shrink-0 text-champagne" aria-hidden="true" />
+        : <Plus className="h-4 w-4 shrink-0 text-champagne" aria-hidden="true" />}
+    </button>
+    <h4 className="hidden font-bold text-xs uppercase tracking-wider text-slate-200 lg:block">{title}</h4>
+    <div id={id} className={`${expanded ? 'block' : 'hidden'} lg:block`}>
+      {children}
+    </div>
+  </section>
+);
+
 export const Footer: React.FC = () => {
   const location = useLocation();
   const [legalModal, setLegalModal] = useState<string | null>(null);
+  const [expandedFooterSections, setExpandedFooterSections] = useState<Record<string, boolean>>({});
+
+  const toggleFooterSection = (section: string) => {
+    setExpandedFooterSections(current => ({ ...current, [section]: !current[section] }));
+  };
 
   // Hide storefront footer on admin dashboard
   if (location.pathname.startsWith('/admin')) {
@@ -132,8 +176,13 @@ export const Footer: React.FC = () => {
           </div>
 
           {/* Catalog Categories */}
-          <div className="lg:col-span-2 space-y-3">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Catalog Collections</h4>
+          <FooterLinkSection
+            id="footer-catalog-collections"
+            title="Catalog Collections"
+            className="space-y-3 lg:col-span-2"
+            expanded={!!expandedFooterSections.collections}
+            onToggle={() => toggleFooterSection('collections')}
+          >
             <ul className="text-xs text-slate-300 space-y-2">
               <li>
                 <Link to="/category/textile" className="hover:text-champagne transition">
@@ -166,11 +215,16 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </FooterLinkSection>
 
           {/* Customer Service & Return Policies */}
-          <div className="lg:col-span-3 space-y-3">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Customer Care & Support</h4>
+          <FooterLinkSection
+            id="footer-customer-support"
+            title="Customer Care & Support"
+            className="space-y-3 lg:col-span-3"
+            expanded={!!expandedFooterSections.support}
+            onToggle={() => toggleFooterSection('support')}
+          >
             <ul className="text-xs text-slate-300 space-y-2">
               <li>
                 <button
@@ -219,11 +273,16 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </FooterLinkSection>
 
           {/* Compliance & Administration */}
-          <div className="lg:col-span-3 space-y-3">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-slate-200">Governance & Trust</h4>
+          <FooterLinkSection
+            id="footer-governance-trust"
+            title="Governance & Trust"
+            className="space-y-3 lg:col-span-3"
+            expanded={!!expandedFooterSections.trust}
+            onToggle={() => toggleFooterSection('trust')}
+          >
             <ul className="text-xs text-slate-300 space-y-2">
               <li className="flex items-center gap-1.5 text-slate-300">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -248,7 +307,7 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
             </ul>
-          </div>
+          </FooterLinkSection>
         </div>
 
       </div>
@@ -319,7 +378,7 @@ export const Footer: React.FC = () => {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="font-bold text-emerald-600 shrink-0">5.</span>
-                      <span><strong>B2B & Wholesale Bales:</strong> Commercial consignments with weaving flaws or GSM deviation exceeding ±3% are 100% replaced with zero hassle. Sample kit costs (₹199 / ₹299) are 100% credited back on your first wholesale order.</span>
+                      <span><strong>B2B & Wholesale Bales:</strong> Commercial consignments with weaving flaws or GSM deviation exceeding ±3% are 100% replaced with zero hassle.</span>
                     </li>
                   </ul>
                 </div>

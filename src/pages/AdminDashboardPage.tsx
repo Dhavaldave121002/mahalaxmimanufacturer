@@ -210,7 +210,7 @@ export const AdminDashboardPage: React.FC = () => {
     certification: 'OEKO-TEX Standard 100',
     dimensions: 'Double (90" x 108")',
     careInstructions: 'Wash before first use in cold water\nMachine wash gentle cycle with mild liquid detergent\nDo not use harsh chlorine bleach\nTumble dry low heat or line dry in shade',
-    b2bPolicy: 'All bulk consignments include GST tax invoice details based on the information provided at checkout.\nConsignments above ₹50,000 may require an E-Way bill as applicable under current regulations.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
+    b2bPolicy: 'All bulk consignments include GST tax invoice details based on the information provided at checkout.\nConsignments above ₹50,000 may require an E-Way bill as applicable under current regulations.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.'
   });
 
   // Quotation Editor Modal state
@@ -379,7 +379,7 @@ export const AdminDashboardPage: React.FC = () => {
         : 'Wash before first use in cold water\nMachine wash gentle cycle with mild liquid detergent\nDo not use harsh chlorine bleach\nTumble dry low heat or line dry in shade',
       b2bPolicy: (p.b2bPolicy && p.b2bPolicy.length > 0)
         ? p.b2bPolicy.join('\n')
-        : 'All bulk consignments include GST tax invoice details based on the information provided at checkout.\nConsignments above ₹50,000 may require an E-Way bill as applicable under current regulations.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
+        : 'All bulk consignments include GST tax invoice details based on the information provided at checkout.\nConsignments above ₹50,000 may require an E-Way bill as applicable under current regulations.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.'
     });
     setProductModalOpen(true);
   };
@@ -753,7 +753,7 @@ export const AdminDashboardPage: React.FC = () => {
                 certification: 'OEKO-TEX Standard 100',
                 dimensions: 'Double (90" x 108")',
                 careInstructions: 'Wash before first use in cold water\nMachine wash gentle cycle with mild liquid detergent\nDo not use harsh chlorine bleach\nTumble dry low heat or line dry in shade',
-                b2bPolicy: 'All bulk consignments include GST tax invoice details based on the information provided at checkout.\nConsignments above ₹50,000 may require an E-Way bill as applicable under current regulations.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.\nCommercial sample cost credited back 100% on subsequent wholesale consignment booking.'
+                b2bPolicy: 'All bulk consignments include GST tax invoice details based on the information provided at checkout.\nConsignments above ₹50,000 may require an E-Way bill as applicable under current regulations.\nEarn direct Mill Points on every bulk order, redeemable anytime towards new purchases on Web & Mobile App.'
               });
               setProductModalOpen(true);
             }}

@@ -605,7 +605,7 @@ export const HomePage: React.FC = () => {
               <div className="space-y-2 max-w-2xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-champagne/20 border border-champagne/30 text-champagne text-xs font-black tracking-wide uppercase">
                   <PackageCheck className="w-4 h-4 text-champagne" />
-                  <span>B2B Quality Assurance • 100% Rebate Voucher</span>
+                  <span>B2B Quality Assurance • Commercial Sample Kits</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
                   Evaluate Mill Quality Before Bulk Placement
@@ -618,8 +618,8 @@ export const HomePage: React.FC = () => {
               <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 px-4 py-2.5 rounded-2xl shrink-0">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                 <div className="text-left">
-                  <p className="text-xs font-black text-emerald-300">100% Refund Guarantee</p>
-                  <p className="text-[11px] text-slate-300">Sample kit cost credited back on 1st bulk order</p>
+                  <p className="text-xs font-black text-emerald-300">Mill Quality Assurance</p>
+                  <p className="text-[11px] text-slate-300">Evaluate materials before placing a bulk order</p>
                 </div>
               </div>
             </div>
@@ -639,7 +639,7 @@ export const HomePage: React.FC = () => {
                     Complete Commercial Sample Bundle
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-200 mt-1.5 leading-relaxed">
-                    All-in-one testing box: 12 fabric swatches, 4 towel cuts, canvas tote sample, GSM specs & ₹300 coupon.
+                    All-in-one testing box: 12 fabric swatches, 4 towel cuts, canvas tote sample, and GSM specs.
                   </p>
 
                   <div className="mt-4 pt-3 border-t border-white/10 flex items-baseline gap-2">
@@ -659,7 +659,7 @@ export const HomePage: React.FC = () => {
                     </li>
                     <li className="flex items-center gap-1.5">
                       <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                      Includes 100% Refund Voucher Code
+                      Covered by our 7-day return policy
                     </li>
                   </ul>
                 </div>
@@ -794,10 +794,6 @@ export const HomePage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 <span>Verified Mill Quality Test Certificate Enclosed in Box</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-400" />
-                <span>Use coupon code <strong>SAMPLE100</strong> on your bulk order</span>
               </div>
             </div>
           </div>

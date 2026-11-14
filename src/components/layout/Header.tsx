@@ -26,20 +26,48 @@ import {
   Download,
   Truck,
   ChevronRight,
-  Heart
+  Heart,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { Badge } from '../common/Badge';
 import { WishlistDrawer } from '../common/WishlistDrawer';
-import { matchesProductSearch } from '../../utils/searchProducts';
+import { getProductSearchScore } from '../../utils/searchProducts';
 import { toSubcategorySlug } from '../../utils/productCategories';
 import { getDeliveryEstimate } from '../../utils/deliveryDisplay';
-import { useDeliveryLocationPage } from '../../hooks/useDeliveryLocationPage';
 import {
   BUSINESS_SUPPORT_PHONE,
   BUSINESS_SUPPORT_PHONE_LINK,
   BUSINESS_GSTIN,
   BUSINESS_WHATSAPP_NUMBER
 } from '../../constants/businessContact';
+
+interface VoiceRecognitionResultEvent extends Event {
+  results: ArrayLike<ArrayLike<{ transcript: string }>>;
+}
+
+interface VoiceRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface VoiceRecognitionLike {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onstart: (() => void) | null;
+  onresult: ((event: VoiceRecognitionResultEvent) => void) | null;
+  onerror: ((event: VoiceRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+type VoiceRecognitionConstructor = new () => VoiceRecognitionLike;
+
+type VoiceSearchWindow = Window & {
+  SpeechRecognition?: VoiceRecognitionConstructor;
+  webkitSpeechRecognition?: VoiceRecognitionConstructor;
+};
 
 export const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -61,21 +89,36 @@ export const Header: React.FC = () => {
     categories
   } = useApp();
 
-  const topPromo = coupons.find(c => c.isActive && c.isFeatured);
+  const topPromo = coupons.find(
+    c => c.isActive && c.isFeatured && c.suggestionMode !== 'SECRET_MANUAL_ONLY' && c.targetPlatform !== 'APP_ONLY'
+  );
   const deliveryEstimate = getDeliveryEstimate(deliveryInfo?.city);
-  const deliveryLocationPage = useDeliveryLocationPage(deliveryInfo);
 
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [searchCategory, setSearchCategory] = useState('all');
+  const [isVoiceSearchListening, setIsVoiceSearchListening] = useState(false);
+  const [voiceSearchMessage, setVoiceSearchMessage] = useState('');
   const [pinModalOpen, setPinModalOpen] = useState(false);
-  const [pinInput, setPinInput] = useState(deliveryPincode);
+  const [pinInputDraft, setPinInputDraft] = useState({ pincode: deliveryPincode, value: deliveryPincode });
+  const pinInput = pinInputDraft.pincode === deliveryPincode ? pinInputDraft.value : deliveryPincode;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const mobileSearchContainerRef = useRef<HTMLDivElement>(null);
+  const voiceRecognitionRef = useRef<VoiceRecognitionLike | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => () => {
+    const recognition = voiceRecognitionRef.current;
+    if (!recognition) return;
+    recognition.onend = null;
+    recognition.onerror = null;
+    recognition.onresult = null;
+    recognition.stop();
+    voiceRecognitionRef.current = null;
+  }, []);
 
   // Track scroll position to enhance sticky header appearance
   useEffect(() => {
@@ -140,23 +183,106 @@ export const Header: React.FC = () => {
     };
   }, []);
 
+  const submitSearch = (query: string) => {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return;
+    addRecentSearch(trimmedQuery);
+    setSearchInput(trimmedQuery);
+    setSearchOpen(false);
+    setVoiceSearchMessage('');
+    const catQuery = searchCategory !== 'all' ? `&category=${searchCategory}` : '';
+    navigate(`/catalog?q=${encodeURIComponent(trimmedQuery)}${catQuery}`);
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchInput.trim()) {
-      addRecentSearch(searchInput.trim());
-      setSearchOpen(false);
-      const catQuery = searchCategory !== 'all' ? `&category=${searchCategory}` : '';
-      navigate(`/catalog?q=${encodeURIComponent(searchInput.trim())}${catQuery}`);
+    submitSearch(searchInput);
+  };
+
+  const startVoiceSearch = () => {
+    const speechWindow = window as VoiceSearchWindow;
+    const Recognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+
+    if (!Recognition) {
+      setVoiceSearchMessage('Voice search is not supported in this browser. Try typing your search.');
+      setSearchOpen(true);
+      return;
+    }
+
+    const activeRecognition = voiceRecognitionRef.current;
+    if (activeRecognition) {
+      activeRecognition.onend = null;
+      activeRecognition.stop();
+      voiceRecognitionRef.current = null;
+      setIsVoiceSearchListening(false);
+      setVoiceSearchMessage('Voice search stopped.');
+      return;
+    }
+
+    const recognition = new Recognition();
+    voiceRecognitionRef.current = recognition;
+    recognition.lang = navigator.language.toLowerCase().startsWith('gu')
+      ? 'gu-IN'
+      : navigator.language.toLowerCase().startsWith('hi') ? 'hi-IN' : 'en-IN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => {
+      setIsVoiceSearchListening(true);
+      setVoiceSearchMessage('Listening… Speak your product search.');
+      setSearchOpen(true);
+    };
+    recognition.onresult = event => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0]?.transcript || '')
+        .join(' ')
+        .trim();
+
+      voiceRecognitionRef.current = null;
+      setIsVoiceSearchListening(false);
+      if (!transcript) {
+        setVoiceSearchMessage('No speech detected. Tap the microphone and try again.');
+        return;
+      }
+
+      submitSearch(transcript);
+      recognition.stop();
+    };
+    recognition.onerror = event => {
+      console.warn('Voice search failed:', event.error);
+      voiceRecognitionRef.current = null;
+      setIsVoiceSearchListening(false);
+      setVoiceSearchMessage(event.error === 'not-allowed' || event.error === 'service-not-allowed'
+        ? 'Allow microphone access in your browser to use voice search.'
+        : event.error === 'no-speech'
+          ? 'No speech detected. Tap the microphone and try again.'
+          : 'Voice search could not start. Please try again.');
+    };
+    recognition.onend = () => {
+      if (voiceRecognitionRef.current !== recognition) return;
+      voiceRecognitionRef.current = null;
+      setIsVoiceSearchListening(false);
+    };
+
+    setVoiceSearchMessage('Starting voice search…');
+    setSearchOpen(true);
+    try {
+      recognition.start();
+    } catch (error) {
+      voiceRecognitionRef.current = null;
+      setIsVoiceSearchListening(false);
+      console.warn('Voice search could not start:', error);
+      setVoiceSearchMessage('Voice search could not start. Please try again.');
     }
   };
 
   const filteredSuggestions = searchInput.trim()
     ? products
-      .filter(p => {
-        if (searchCategory !== 'all' && p.category !== searchCategory) return false;
-        return matchesProductSearch(p, searchInput);
-      })
+      .filter(product => searchCategory === 'all' || product.category === searchCategory)
+      .map(product => ({ product, score: getProductSearchScore(product, searchInput) }))
+      .filter(result => result.score > 0)
+      .sort((a, b) => b.score - a.score)
       .slice(0, 5)
+      .map(result => result.product)
     : [];
 
   const handlePincodeSubmit = (e: React.FormEvent) => {
@@ -232,7 +358,9 @@ export const Header: React.FC = () => {
               DIRECT MILL RATE
             </span>
             <span className="hidden text-[11px] text-slate-200 sm:inline">
-              🚚 Free Delivery on ₹10,000+ Product Subtotal (Before GST) • ⚡ Instant Mill Discount Vouchers • 🏢 GST Invoices Available
+              🚚 Free Delivery on ₹10,000+ Product Subtotal (Before GST)
+              {topPromo && <> • ⚡ {topPromo.code} Coupon Available</>}
+              {' • 🏢 GST Invoices Available'}
             </span>
             <span className="text-[11px] font-medium text-slate-100 sm:hidden">
               🚚 Free Delivery ₹10,000+
@@ -361,6 +489,16 @@ export const Header: React.FC = () => {
                     placeholder="Search products, SKU or HSN..."
                     className="w-full text-navy text-xs sm:text-sm px-2 py-1.5 outline-none bg-transparent placeholder:text-slate-400"
                   />
+                  <button
+                    type="button"
+                    onClick={startVoiceSearch}
+                    aria-label={isVoiceSearchListening ? 'Stop voice search' : 'Search by voice'}
+                    aria-pressed={isVoiceSearchListening}
+                    title={isVoiceSearchListening ? 'Stop voice search' : 'Search by voice'}
+                    className={`rounded-full p-1.5 transition ${isVoiceSearchListening ? 'bg-rose-50 text-rose-600' : 'text-slate-500 hover:bg-indigo-50 hover:text-indigo'}`}
+                  >
+                    {isVoiceSearchListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  </button>
                   {searchInput && (
                     <button
                       type="button"
@@ -390,6 +528,11 @@ export const Header: React.FC = () => {
               {/* Desktop Autocomplete Dropdown */}
               {searchOpen && (
                 <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-float border border-slate-200/90 py-3.5 z-50 overflow-hidden animate-in fade-in ring-1 ring-black/5">
+                  {voiceSearchMessage && (
+                    <p role="status" aria-live="polite" className="px-4 pb-2 text-xs font-semibold text-indigo">
+                      {voiceSearchMessage}
+                    </p>
+                  )}
                   {searchInput.trim() ? (
                     <div>
                       <div className="px-4 py-1 text-xs font-bold text-slate-600 uppercase tracking-wider">
@@ -425,7 +568,7 @@ export const Header: React.FC = () => {
                         ))
                       ) : (
                         <div className="px-4 py-6 text-center text-xs text-slate-600">
-                          No direct matches found. Press Enter to view all results.
+                          No related products found. Try a shorter or different search.
                         </div>
                       )}
                     </div>
@@ -598,6 +741,16 @@ export const Header: React.FC = () => {
                   placeholder="Search products..."
                   className="w-full min-w-0 bg-transparent py-2 pl-1.5 pr-1 text-[10px] text-navy outline-none placeholder:text-slate-400 sm:pl-2 sm:text-xs"
                 />
+                <button
+                  type="button"
+                  onClick={startVoiceSearch}
+                  aria-label={isVoiceSearchListening ? 'Stop voice search' : 'Search by voice'}
+                  aria-pressed={isVoiceSearchListening}
+                  title={isVoiceSearchListening ? 'Stop voice search' : 'Search by voice'}
+                  className={`shrink-0 rounded-full p-1.5 transition ${isVoiceSearchListening ? 'bg-rose-50 text-rose-600' : 'text-slate-500 hover:bg-indigo-50 hover:text-indigo'}`}
+                >
+                  {isVoiceSearchListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </button>
                 {searchInput && (
                   <button
                     type="button"
@@ -626,6 +779,11 @@ export const Header: React.FC = () => {
             {/* Mobile Autocomplete Dropdown */}
             {searchOpen && (
               <div className="absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl shadow-float border border-slate-200/90 py-3 z-50 overflow-hidden animate-in fade-in ring-1 ring-black/5 w-full">
+                {voiceSearchMessage && (
+                  <p role="status" aria-live="polite" className="px-3.5 pb-2 text-xs font-semibold text-indigo">
+                    {voiceSearchMessage}
+                  </p>
+                )}
                 {searchInput.trim() ? (
                   <div>
                     <div className="px-3.5 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -658,7 +816,7 @@ export const Header: React.FC = () => {
                       ))
                     ) : (
                       <div className="px-3 py-4 text-center text-xs text-slate-500">
-                        No matches. Tap Search to view all results.
+                        No related products found. Try a shorter or different search.
                       </div>
                     )}
                   </div>
@@ -749,8 +907,14 @@ export const Header: React.FC = () => {
                 aria-label="Enter 6-digit Indian postal pincode"
                 type="text"
                 maxLength={6}
+                pattern="[1-9][0-9]{5}"
+                required
+                inputMode="numeric"
                 value={pinInput}
-                onChange={e => setPinInput(e.target.value.replace(/\D/g, ''))}
+                onChange={e => setPinInputDraft({
+                  pincode: deliveryPincode,
+                  value: e.target.value.replace(/\D/g, '')
+                })}
                 placeholder="e.g. 395002, 110001, 560001"
                 className="w-full text-center text-lg font-mono tracking-widest px-4 py-2 border border-slate-300 rounded-xl focus:border-indigo outline-none"
                 autoFocus
@@ -769,20 +933,20 @@ export const Header: React.FC = () => {
                 <p className="font-bold text-navy">
                   {deliveryInfo.city}, {deliveryInfo.state} ({deliveryInfo.pincode})
                 </p>
-                <p className={`${deliveryInfo.serviceable ? 'text-emerald-700' : 'text-amber-700'} mt-1 flex items-center gap-1 font-semibold`}>
+                <p className={`${deliveryInfo.serviceable ? 'text-emerald-700' : deliveryInfo.verified ? 'text-rose-700' : 'text-amber-700'} mt-1 flex items-center gap-1 font-semibold`}>
                   {deliveryInfo.serviceable && <CheckCircle2 className="w-4 h-4" />}
                   {deliveryInfo.serviceable
-                    ? `Serviceable • Estimated Delivery: ${deliveryEstimate.minDays}-${deliveryEstimate.maxDays} calendar days (${deliveryEstimate.dateRange})`
-                    : 'Delivery serviceability is not confirmed yet.'}
+                    ? 'Delivery is serviceable.'
+                    : deliveryInfo.verified
+                      ? 'Delivery is not serviceable to this pincode.'
+                      : deliveryInfo.verificationUnavailable
+                        ? 'Courier serviceability could not be confirmed right now.'
+                        : 'Checking courier serviceability...'}
                 </p>
-                {deliveryInfo.serviceable && deliveryLocationPage && (
-                  <Link
-                    to={deliveryLocationPage.to}
-                    onClick={() => setPinModalOpen(false)}
-                    className="mt-2 inline-flex font-bold text-indigo underline underline-offset-2 hover:text-indigo-dark"
-                  >
-                    View {deliveryLocationPage.city} location details and products
-                  </Link>
+                {(!deliveryInfo.verified || deliveryInfo.serviceable) && deliveryInfo.estimatedWorkingDays > 0 && (
+                  <p className="mt-1 font-semibold text-slate-600">
+                    Estimated delivery: {deliveryEstimate.minWorkingDays}-{deliveryEstimate.maxWorkingDays} working days ({deliveryEstimate.dateRange})
+                  </p>
                 )}
               </div>
             )}

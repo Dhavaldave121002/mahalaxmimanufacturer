@@ -41,9 +41,9 @@ async function testBothOrdersEndToEnd() {
       totalTax: 449.50
     },
     shippingCharge: 0.00,
-    discount: 500.00,
-    couponCode: 'BULK500',
-    totalAmount: 8939.50,
+    discount: 0.00,
+    couponCode: null,
+    totalAmount: 9439.50,
     paymentMethod: 'UPI',
     paymentStatus: 'PAID',
     status: 'PLACED',

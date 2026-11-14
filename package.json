@@ -10,7 +10,6 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "admin:create": "node scripts/create-admin.js",
-    "db:seed-default-coupons": "node scripts/seed-default-coupons.js",
     "db:migrate-user-pagination": "node scripts/migrate-user-pagination-index.js",
     "db:seed-product-care": "node database/seed-product-care.cjs",
     "db:set-product-stock": "node database/set-product-stock.cjs",

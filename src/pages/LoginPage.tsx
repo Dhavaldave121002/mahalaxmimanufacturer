@@ -463,14 +463,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
           
           <div>
             {/* Top Navigation Tabs */}
-            <div className="flex border-b border-slate-200 gap-6 mb-6">
+            <div className="flex items-center justify-between gap-2 border-b border-slate-200 mb-6 sm:justify-start sm:gap-6">
               <button
                 type="button"
                 onClick={() => {
                   setActiveTab('login');
                   clearMessages();
                 }}
-                className={`pb-3 font-bold text-sm transition relative cursor-pointer ${
+                className={`shrink-0 whitespace-nowrap px-0.5 pb-3 text-center text-[10px] font-bold transition relative cursor-pointer sm:px-0 sm:text-sm ${
                   activeTab === 'login'
                     ? 'text-navy border-b-2 border-indigo'
                     : 'text-slate-400 hover:text-slate-700'
@@ -484,7 +484,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                   setActiveTab('register');
                   clearMessages();
                 }}
-                className={`pb-3 font-bold text-sm transition relative cursor-pointer ${
+                className={`shrink-0 whitespace-nowrap px-0.5 pb-3 text-center text-[10px] font-bold transition relative cursor-pointer sm:px-0 sm:text-sm ${
                   activeTab === 'register'
                     ? 'text-navy border-b-2 border-indigo'
                     : 'text-slate-400 hover:text-slate-700'
@@ -498,7 +498,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                   setActiveTab('forgot');
                   clearMessages();
                 }}
-                className={`pb-3 font-bold text-sm transition relative cursor-pointer ${
+                className={`shrink-0 whitespace-nowrap px-0.5 pb-3 text-center text-[10px] font-bold transition relative cursor-pointer sm:px-0 sm:text-sm ${
                   activeTab === 'forgot'
                     ? 'text-navy border-b-2 border-indigo'
                     : 'text-slate-400 hover:text-slate-700'
@@ -637,7 +637,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                                 window.setTimeout(() => loginFormRef.current?.requestSubmit(), 0);
                               }
                             }}
-                            placeholder="Enter 4-digit code sent to email"
+                            placeholder="4-digit code"
                             className="w-full text-center font-mono tracking-widest text-sm py-2.5 rounded-xl border border-slate-300 focus:border-indigo focus:ring-2 focus:ring-indigo/20 outline-none"
                           />
                         </div>
@@ -925,7 +925,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                         type="email"
                         value={forgotIdentifier}
                         onChange={e => setForgotIdentifier(e.target.value)}
-                        placeholder="Enter your registered email address"
+                        placeholder="Registered email"
                         className="w-full text-xs sm:text-sm pl-10 pr-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo outline-none"
                         required
                       />
@@ -933,7 +933,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                     <button
                       type="button"
                       onClick={handleSendForgotOtp}
-                      className="px-4 py-2.5 bg-indigo hover:bg-indigo-dark text-white font-bold text-xs rounded-xl transition shrink-0 cursor-pointer"
+                      className="px-3 py-2.5 bg-indigo hover:bg-indigo-dark text-white font-bold text-xs rounded-xl transition shrink-0 cursor-pointer sm:px-4"
                     >
                       {forgotOtpSent ? 'Resend' : 'Send Code'}
                     </button>
@@ -947,7 +947,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
                     maxLength={4}
                     value={forgotOtp}
                     onChange={e => setForgotOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="Enter 4-digit code sent to email"
+                    placeholder="4-digit code"
                     className="w-full text-center font-mono tracking-widest text-sm py-2.5 rounded-xl border border-slate-300 focus:border-indigo outline-none"
                     required
                   />
@@ -1001,12 +1001,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ defaultTab = 'login' }) =>
           </div>
 
           {/* Secure Footer Info */}
-          <div className="pt-6 mt-6 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-            <span className="flex items-center gap-1.5">
+          <div className="pt-6 mt-6 border-t border-slate-100 flex flex-col items-start gap-2 text-[11px] text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+            <span className="flex items-center gap-1.5 whitespace-nowrap">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               256-bit SSL Direct Mill Encryption
             </span>
-            <a href={`tel:${BUSINESS_SUPPORT_PHONE_LINK}`} className="hover:underline">
+            <a href={`tel:${BUSINESS_SUPPORT_PHONE_LINK}`} className="whitespace-nowrap hover:underline">
               Support: {BUSINESS_SUPPORT_PHONE}
             </a>
           </div>

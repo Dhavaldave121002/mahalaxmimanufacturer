@@ -543,7 +543,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     categoryName: 'Textile',
     subcategory: 'Fabrics',
     shortDescription: '12 curated fabric swatches including 300 TC Combed Cotton, 600 GSM Terry, Canvas & Microfiber with Mill Quality Certificate.',
-    description: 'Designed specifically for B2B procurement managers, hotel executives, and retail shop owners. Feel the hand-touch, inspect GSM weights, test bleach tolerance, and verify weave density before committing to large commercial orders. Includes ₹199 discount code applicable on your first wholesale order.',
+    description: 'Designed specifically for B2B procurement managers, hotel executives, and retail shop owners. Feel the hand-touch, inspect GSM weights, test bleach tolerance, and verify weave density before committing to large commercial orders.',
     images: [
       'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?q=80&w=1000&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=1000&auto=format&fit=crop'
@@ -567,7 +567,6 @@ export const INITIAL_PRODUCTS: Product[] = [
       'Contents': '12 Fabric Swatches (15x15 cm each)',
       'Included Materials': '300 TC Combed Sateen, 210 TC Percale, 600 GSM Combed Terry, 380 GSM Canvas, 350 GSM Microfiber',
       'Documentation': 'Mill Technical Test Report & Fabric Weight (GSM) Certificate',
-      'Rebate Policy': '₹199 Cash Coupon included for your next order > ₹5,000'
     },
     tags: ['swatch', 'sample', 'fabric sample', 'mill kit', 'b2b testing']
   },
@@ -579,8 +578,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'textile',
     categoryName: 'Textile',
     subcategory: 'Sample Bundles',
-    shortDescription: 'The ultimate commercial evaluation box: 12 fabric swatches + 4 actual product minis across Home, Textile, Cotton & Household with ₹300 Rebate Voucher.',
-    description: 'Procurement-grade sample bundle designed for corporate clients, hospitality chains, and garment retailers. Includes: (1) Full set of 12 luxury fabric swatches, (2) One 600 GSM Cotton Hand Towel, (3) One Heavy-Duty Microfiber Cloth, (4) One Chef-Grade Kitchen Wipe, and (5) Mill Technical Report & Lab Certification. Fully refundable via an included ₹300 coupon code on your first wholesale order.',
+    shortDescription: 'The ultimate commercial evaluation box: 12 fabric swatches + 4 actual product minis across Home, Textile, Cotton & Household.',
+    description: 'Procurement-grade sample bundle designed for corporate clients, hospitality chains, and garment retailers. Includes: (1) Full set of 12 luxury fabric swatches, (2) One 600 GSM Cotton Hand Towel, (3) One Heavy-Duty Microfiber Cloth, (4) One Chef-Grade Kitchen Wipe, and (5) Mill Technical Report & Lab Certification.',
     images: [
       'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1000&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?q=80&w=1000&auto=format&fit=crop'
@@ -603,7 +602,6 @@ export const INITIAL_PRODUCTS: Product[] = [
     specifications: {
       'Bundle Contents': '12 Swatches (15x15cm) + 1 Cotton Towel + 1 Microfiber + 1 Kitchen Wipe',
       'Quality Standard': 'ISO 9001:2015 & Oeko-Tex Standard 100 Certified',
-      'Rebate Guarantee': '100% Refundable via ₹300 Instant Voucher on next bulk order',
       'Dispatch Speed': 'Same-Day Air Express Dispatch from Ahmedabad Mill'
     },
     tags: ['sample bundle', 'sample pack', 'swatch kit', 'commercial sample', 'b2b testing', 'bundle']

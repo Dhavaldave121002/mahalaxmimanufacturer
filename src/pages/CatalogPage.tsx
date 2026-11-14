@@ -3,23 +3,24 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { InfiniteProductGrid } from '../components/common/InfiniteProductGrid';
 import { ProductGridSkeleton } from '../components/common/SkeletonLoader';
+import { ProductGridLayoutControls } from '../components/common/ProductGridLayoutControls';
+import { getProductGridColumnsClassName } from '../components/common/productGridLayout';
+import { FilterAccordion } from '../components/common/FilterAccordion';
 import { CATEGORIES_CONFIG } from '../data/mockProducts';
-import { matchesProductSearch } from '../utils/searchProducts';
+import { getProductSearchScore } from '../utils/searchProducts';
 import { toSubcategorySlug, matchesSubcategorySlug, productBelongsToCollection } from '../utils/productCategories';
 import {
   SlidersHorizontal,
-  ChevronDown,
   X,
   Search,
-  ArrowUpDown,
   Check,
   Star,
-  Layers,
-  Sparkles
+  Plus,
+  Minus
 } from 'lucide-react';
 
 export const CatalogPage: React.FC = () => {
-  const { products, productsLoading } = useApp();
+  const { products, productsLoading, categories } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const queryParam = searchParams.get('q') || '';
@@ -36,6 +37,9 @@ export const CatalogPage: React.FC = () => {
   const [minRating, setMinRating] = useState<number>(0);
   const [sortBy, setSortBy] = useState<string>('relevance');
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+  const [expandedCategory, setExpandedCategory] = useState(categoryParam);
+  const [desktopGridColumns, setDesktopGridColumns] = useState<2 | 3>(3);
+  const [mobileGridColumns, setMobileGridColumns] = useState<1 | 2>(2);
 
   // Auto-clean any percent-encoded (%20) or uppercase query param in the URL address bar to a sleek SEO slug
   useEffect(() => {
@@ -71,18 +75,69 @@ export const CatalogPage: React.FC = () => {
     if (!selectedCategory) {
       return Array.from(new Set(products.map(p => p.subcategory)));
     }
-    const cat = CATEGORIES_CONFIG.find(c => c.id === selectedCategory);
-    return cat
-      ? Array.from(new Set(products.filter(product => productBelongsToCollection(product, selectedCategory)).map(product => product.subcategory)))
-      : [];
+    return Array.from(new Set(
+      products
+        .filter(product => productBelongsToCollection(product, selectedCategory))
+        .map(product => product.subcategory)
+    ));
   }, [selectedCategory, products]);
+
+  const categoryFilterOptions = useMemo(() => {
+    const sourceCategories = categories.length > 0 ? categories : CATEGORIES_CONFIG;
+    return sourceCategories.map(category => {
+      const categoryProducts = products.filter(product => productBelongsToCollection(product, category.id));
+      const productSubcategories = Array.from(new Set(
+        categoryProducts.map(product => product.subcategory.trim()).filter(Boolean)
+      ));
+
+      return {
+        ...category,
+        productCount: categoryProducts.length,
+        subcategories: productSubcategories.length > 0
+          ? productSubcategories
+          : Array.isArray(category.subcategories) ? category.subcategories : []
+      };
+    });
+  }, [categories, products]);
+
+  const selectCategory = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    if (selectedCategory !== categoryId) setSelectedSubcategory('');
+    const next = new URLSearchParams(searchParams);
+    next.set('category', categoryId);
+    if (selectedCategory !== categoryId) next.delete('subcategory');
+    setSearchParams(next, { replace: true });
+  };
+
+  const selectCategorySubcategory = (categoryId: string, subcategory: string) => {
+    setSelectedCategory(categoryId);
+    setSelectedSubcategory(toSubcategorySlug(subcategory));
+    const next = new URLSearchParams(searchParams);
+    next.set('category', categoryId);
+    next.set('subcategory', toSubcategorySlug(subcategory));
+    setSearchParams(next, { replace: true });
+  };
+
+  const clearCatalogCategory = () => {
+    setSelectedCategory('');
+    setSelectedSubcategory('');
+    setExpandedCategory('');
+    const next = new URLSearchParams(searchParams);
+    next.delete('category');
+    next.delete('subcategory');
+    setSearchParams(next, { replace: true });
+  };
 
   // Filter & Sort Logic
   const filteredProducts = useMemo(() => {
     return products
-      .filter(product => {
+      .map(product => ({
+        product,
+        searchScore: getProductSearchScore(product, queryParam)
+      }))
+      .filter(({ product, searchScore }) => {
         // Search query filter
-        if (!matchesProductSearch(product, queryParam)) return false;
+        if (queryParam.trim() && searchScore === 0) return false;
 
         // Category / Collection filter
         if (selectedCategory && !productBelongsToCollection(product, selectedCategory)) {
@@ -121,7 +176,9 @@ export const CatalogPage: React.FC = () => {
 
         return true;
       })
-      .sort((a, b) => {
+      .sort((left, right) => {
+        const a = left.product;
+        const b = right.product;
         if (sortBy === 'price-low') return a.retailPrice - b.retailPrice;
         if (sortBy === 'price-high') return b.retailPrice - a.retailPrice;
         if (sortBy === 'discount') {
@@ -130,8 +187,9 @@ export const CatalogPage: React.FC = () => {
           return discB - discA;
         }
         if (sortBy === 'rating') return b.rating - a.rating;
-        return 0; // relevance
-      });
+        return right.searchScore - left.searchScore;
+      })
+      .map(({ product }) => product);
   }, [
     products,
     queryParam,
@@ -148,6 +206,7 @@ export const CatalogPage: React.FC = () => {
   const clearAllFilters = () => {
     setSelectedCategory('');
     setSelectedSubcategory('');
+    setExpandedCategory('');
     setMaxPrice(3000);
     setInStockOnly(false);
     setDirectMillOnly(false);
@@ -190,37 +249,12 @@ export const CatalogPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Sort Dropdown */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setMobileFilterOpen(true)}
-            className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl transition"
-          >
-            <SlidersHorizontal className="w-4 h-4 text-indigo" />
-            <span>Filters ({hasActiveFilters ? 'Active' : 'All'})</span>
-          </button>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 font-medium whitespace-nowrap">Sort By:</span>
-            <select
-              value={sortBy}
-              onChange={e => setSortBy(e.target.value)}
-              className="text-xs font-semibold bg-white border border-slate-300 rounded-xl px-3 py-2 focus:border-indigo outline-none text-navy"
-            >
-              <option value="relevance">Relevance & Best Match</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="discount">Highest Discount %</option>
-              <option value="rating">Highest Customer Rating</option>
-            </select>
-          </div>
-        </div>
       </div>
 
       {/* Main Catalog Layout: Sidebar + Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
         {/* Desktop Sidebar Filters */}
-        <aside className="hidden lg:block bg-white p-6 rounded-2xl border border-slate-200 shadow-subtle space-y-6 sticky top-36">
+        <aside className="hidden space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-subtle lg:sticky lg:top-36 lg:block">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <h3 className="font-extrabold text-sm text-navy flex items-center gap-2">
               <SlidersHorizontal className="w-4 h-4 text-indigo" />
@@ -236,123 +270,160 @@ export const CatalogPage: React.FC = () => {
             )}
           </div>
 
-          {/* Category Filter */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-800 block">Category</label>
+          <FilterAccordion
+            title="Category"
+            defaultOpen
+            summaryValue={selectedCategory
+              ? categoryFilterOptions.find(category => category.id === selectedCategory)?.name
+              : 'All Categories'}
+          >
             <div className="space-y-1">
               <button
-                onClick={() => {
-                  setSelectedCategory('');
-                  setSelectedSubcategory('');
-                  const next = new URLSearchParams(searchParams);
-                  next.delete('category');
-                  next.delete('subcategory');
-                  setSearchParams(next, { replace: true });
-                }}
-                className={`w-full text-left text-xs px-2.5 py-1.5 rounded-lg transition ${
+                type="button"
+                onClick={clearCatalogCategory}
+                className={`flex min-h-9 w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs transition ${
                   selectedCategory === ''
-                    ? 'bg-indigo-light text-indigo font-bold'
+                    ? 'bg-indigo-light font-bold text-indigo'
                     : 'text-slate-600 hover:bg-slate-50'
                 }`}
               >
                 All Categories
+                {selectedCategory === '' && <Check className="h-3.5 w-3.5" />}
               </button>
-              {CATEGORIES_CONFIG.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => {
-                    setSelectedCategory(cat.id);
-                    setSelectedSubcategory('');
-                    const next = new URLSearchParams(searchParams);
-                    next.set('category', cat.id);
-                    next.delete('subcategory');
-                    setSearchParams(next, { replace: true });
-                  }}
-                  className={`w-full text-left text-xs px-2.5 py-1.5 rounded-lg transition flex items-center justify-between ${
-                    selectedCategory === cat.id
-                      ? 'bg-indigo-light text-indigo font-bold'
-                      : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <span>{cat.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+              {categoryFilterOptions.map(category => {
+                const isExpanded = expandedCategory === category.id;
+                const isSelectedCategory = selectedCategory === category.id;
+                const selectedSubcategoryName = category.subcategories.find(sub =>
+                  matchesSubcategorySlug(sub, selectedSubcategory)
+                );
 
-          {/* Subcategory Pills */}
-          {availableSubcategories.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <label className="text-xs font-bold text-slate-800 block">Subcategory</label>
-              <div className="flex flex-wrap gap-1.5">
-                {availableSubcategories.map((sub, i) => {
-                  const isSelected = matchesSubcategorySlug(sub, selectedSubcategory);
-                  return (
+                return (
+                  <div key={category.id} className="overflow-hidden rounded-lg border border-slate-100">
                     <button
-                      key={i}
-                      onClick={() => toggleSubcategory(sub)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-medium transition ${
-                        isSelected
-                          ? 'bg-navy text-white'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      type="button"
+                      onClick={() => {
+                        if (isExpanded) {
+                          setExpandedCategory('');
+                          return;
+                        }
+                        setExpandedCategory(category.id);
+                        selectCategory(category.id);
+                      }}
+                      aria-expanded={isExpanded}
+                      className={`flex min-h-9 w-full items-center gap-1.5 px-2.5 py-2 text-left text-xs ${
+                        isSelectedCategory ? 'bg-indigo-light font-bold text-indigo' : 'text-slate-700 hover:bg-slate-50'
                       }`}
                     >
-                      {sub}
+                      <span className="min-w-0 flex-1 truncate">{category.name}</span>
+                      {selectedSubcategoryName && isSelectedCategory && (
+                        <span className="max-w-[35%] truncate text-[10px] font-medium text-indigo">{selectedSubcategoryName}</span>
+                      )}
+                      <span className="text-[10px] text-slate-400">{category.productCount}</span>
+                      {isExpanded
+                        ? <Minus className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                        : <Plus className="h-3.5 w-3.5 shrink-0 text-slate-500" />}
                     </button>
-                  );
-                })}
+                    {isExpanded && (
+                      <div className="hide-scrollbar max-h-40 space-y-0.5 overflow-y-auto overscroll-contain border-t border-slate-100 bg-slate-50/70 p-1.5">
+                        <button
+                          type="button"
+                          onClick={() => selectCategory(category.id)}
+                          aria-pressed={isSelectedCategory && !selectedSubcategory}
+                          className={`flex min-h-8 w-full items-center justify-between rounded-md px-2 text-left text-[11px] ${
+                            isSelectedCategory && !selectedSubcategory
+                              ? 'bg-white font-bold text-indigo shadow-sm'
+                              : 'text-slate-600 hover:bg-white'
+                          }`}
+                        >
+                          <span>All {category.name}</span>
+                          <span className="flex items-center gap-1.5">
+                            {category.productCount}
+                            {isSelectedCategory && !selectedSubcategory && <Check className="h-3 w-3" />}
+                          </span>
+                        </button>
+                        {category.subcategories.map(subcategory => {
+                          const subcategoryCount = products.filter(product =>
+                            productBelongsToCollection(product, category.id) &&
+                            product.subcategory.trim() === subcategory
+                          ).length;
+                          const isSelected = isSelectedCategory && matchesSubcategorySlug(subcategory, selectedSubcategory);
+                          return (
+                            <button
+                              key={subcategory}
+                              type="button"
+                              onClick={() => selectCategorySubcategory(category.id, subcategory)}
+                              aria-pressed={isSelected}
+                              className={`flex min-h-8 w-full items-center justify-between gap-1.5 rounded-md px-2 text-left text-[11px] ${
+                                isSelected ? 'bg-white font-bold text-indigo shadow-sm' : 'text-slate-600 hover:bg-white'
+                              }`}
+                            >
+                              <span className="min-w-0 truncate">{subcategory}</span>
+                              <span className="flex shrink-0 items-center gap-1.5">
+                                {subcategoryCount}
+                                {isSelected && <Check className="h-3 w-3" />}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </FilterAccordion>
+
+          <FilterAccordion title="Price" summaryValue={`Up to ₹${maxPrice.toLocaleString('en-IN')}`}>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-800">Maximum retail price</span>
+                <span className="font-bold text-indigo">₹{maxPrice.toLocaleString('en-IN')}</span>
+              </div>
+              <input
+                type="range"
+                min="100"
+                max="3000"
+                step="50"
+                value={maxPrice}
+                onChange={e => setMaxPrice(Number(e.target.value))}
+                className="w-full cursor-pointer accent-indigo"
+              />
+              <div className="flex justify-between text-[10px] text-slate-400">
+                <span>₹100</span>
+                <span>₹1,500</span>
+                <span>₹3,000+</span>
               </div>
             </div>
-          )}
+          </FilterAccordion>
 
-          {/* Price Range Slider */}
-          <div className="space-y-2 pt-2 border-t border-slate-100">
-            <div className="flex justify-between items-center text-xs">
-              <span className="font-bold text-slate-800">Max Retail Price:</span>
-              <span className="font-bold text-indigo">₹{maxPrice.toLocaleString('en-IN')}</span>
+          <FilterAccordion
+            title="Availability & Deals"
+            summaryValue={[inStockOnly && 'In stock', directMillOnly && 'Direct mill'].filter(Boolean).join(', ') || 'Any'}
+          >
+            <div className="space-y-3 text-xs text-slate-700">
+              <label className="flex cursor-pointer select-none items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={e => setInStockOnly(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded accent-indigo focus:ring-indigo/20"
+                />
+                <span className="font-medium">In Stock Only (Immediate Dispatch)</span>
+              </label>
+
+              <label className="flex cursor-pointer select-none items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={directMillOnly}
+                  onChange={e => setDirectMillOnly(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded accent-indigo focus:ring-indigo/20"
+                />
+                <span className="font-medium">Direct Mill Factory Runs</span>
+              </label>
             </div>
-            <input
-              type="range"
-              min="100"
-              max="3000"
-              step="50"
-              value={maxPrice}
-              onChange={e => setMaxPrice(Number(e.target.value))}
-              className="w-full accent-indigo cursor-pointer"
-            />
-            <div className="flex justify-between text-[10px] text-slate-400">
-              <span>₹100</span>
-              <span>₹1,500</span>
-              <span>₹3,000+</span>
-            </div>
-          </div>
+          </FilterAccordion>
 
-          {/* Checkbox Toggles */}
-          <div className="space-y-3 pt-2 border-t border-slate-100 text-xs text-slate-700">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={inStockOnly}
-                onChange={e => setInStockOnly(e.target.checked)}
-                className="w-4 h-4 rounded text-indigo focus:ring-indigo/20 accent-indigo"
-              />
-              <span className="font-medium">In Stock Only (Immediate Dispatch)</span>
-            </label>
-
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={directMillOnly}
-                onChange={e => setDirectMillOnly(e.target.checked)}
-                className="w-4 h-4 rounded text-indigo focus:ring-indigo/20 accent-indigo"
-              />
-              <span className="font-medium">Direct Mill Factory Runs</span>
-            </label>
-          </div>
-
-          {/* Customer Rating Filter */}
-          <div className="space-y-2 pt-2 border-t border-slate-100">
-            <label className="text-xs font-bold text-slate-800 block">Customer Rating</label>
+          <FilterAccordion title="Customer Rating" summaryValue={minRating ? `${minRating}★ & above` : 'Any'}>
             <div className="space-y-1 text-xs">
               {[4, 3, 0].map(rating => (
                 <button
@@ -369,7 +440,7 @@ export const CatalogPage: React.FC = () => {
                 </button>
               ))}
             </div>
-          </div>
+          </FilterAccordion>
         </aside>
 
         {/* Product Grid Area */}
@@ -381,7 +452,7 @@ export const CatalogPage: React.FC = () => {
 
               {selectedCategory && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-slate-800 font-medium">
-                  Category: {CATEGORIES_CONFIG.find(c => c.id === selectedCategory)?.name}
+                  Category: {categoryFilterOptions.find(category => category.id === selectedCategory)?.name}
                   <button onClick={() => setSelectedCategory('')}><X className="w-3 h-3 text-slate-400 hover:text-navy" /></button>
                 </span>
               )}
@@ -416,9 +487,83 @@ export const CatalogPage: React.FC = () => {
             </div>
           )}
 
+          <div className="flex flex-col gap-3 border-b border-slate-200 pb-3 lg:flex-row lg:items-center lg:justify-between">
+            <form
+              role="search"
+              onSubmit={event => event.preventDefault()}
+              className="relative min-w-0 w-full lg:flex-1"
+            >
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={queryParam}
+                onChange={event => {
+                  const next = new URLSearchParams(searchParams);
+                  const query = event.currentTarget.value;
+                  if (query.trim()) next.set('q', query);
+                  else next.delete('q');
+                  setSearchParams(next, { replace: true });
+                }}
+                placeholder="Search products by name, SKU, or category"
+                aria-label="Search catalog products"
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-10 text-sm text-navy outline-none transition placeholder:text-slate-400 focus:border-indigo focus:ring-2 focus:ring-indigo/10"
+              />
+              {queryParam && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = new URLSearchParams(searchParams);
+                    next.delete('q');
+                    setSearchParams(next, { replace: true });
+                  }}
+                  aria-label="Clear catalog search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-navy"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </form>
+            <div className="flex items-center justify-between gap-3 lg:justify-end">
+              <button
+                type="button"
+                onClick={() => setMobileFilterOpen(true)}
+                className="flex h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-navy shadow-sm transition hover:border-indigo/40 lg:hidden"
+                aria-haspopup="dialog"
+                aria-expanded={mobileFilterOpen}
+              >
+                <SlidersHorizontal className="h-4 w-4 text-indigo" />
+                <span>Filter &amp; Sort</span>
+                {hasActiveFilters && <span className="h-1.5 w-1.5 rounded-full bg-indigo" aria-label="Filters active" />}
+              </button>
+              <div className="hidden min-w-0 items-center gap-2 lg:flex">
+                <span className="text-xs font-medium text-slate-500 whitespace-nowrap">Sort By:</span>
+                <select
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value)}
+                  className="min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-navy outline-none focus:border-indigo"
+                >
+                  <option value="relevance">Relevance & Best Match</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="discount">Highest Discount %</option>
+                  <option value="rating">Highest Customer Rating</option>
+                </select>
+              </div>
+              <ProductGridLayoutControls
+                desktopColumns={desktopGridColumns}
+                mobileColumns={mobileGridColumns}
+                onDesktopColumnsChange={setDesktopGridColumns}
+                onMobileColumnsChange={setMobileGridColumns}
+              />
+            </div>
+          </div>
+
           {/* Products Grid */}
           {productsLoading ? (
-            <ProductGridSkeleton count={8} className="xl:grid-cols-3" />
+            <ProductGridSkeleton
+              count={8}
+              columnsClassName={getProductGridColumnsClassName(mobileGridColumns, desktopGridColumns)}
+            />
           ) : filteredProducts.length > 0 ? (
             <InfiniteProductGrid
               key={[
@@ -435,7 +580,7 @@ export const CatalogPage: React.FC = () => {
                 sortBy
               ].join('|')}
               products={filteredProducts}
-              className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-3 sm:gap-6 xl:grid-cols-3"
+              className={getProductGridColumnsClassName(mobileGridColumns, desktopGridColumns)}
             />
           ) : (
             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 space-y-4">
@@ -465,7 +610,7 @@ export const CatalogPage: React.FC = () => {
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4 text-indigo" />
-                <h3 className="font-extrabold text-sm text-navy">Filter Products</h3>
+                <h3 className="font-extrabold text-sm text-navy">Filter &amp; Sort</h3>
               </div>
               <button
                 onClick={() => setMobileFilterOpen(false)}
@@ -477,114 +622,208 @@ export const CatalogPage: React.FC = () => {
 
             {/* Modal Body (Scrollable) */}
             <div className="p-4 overflow-y-auto space-y-5 text-xs flex-1">
-              {/* Category Filter */}
-              <div className="space-y-2">
-                <label className="font-bold text-slate-800 block">Category</label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <button
-                    onClick={() => {
-                      setSelectedCategory('');
-                      setSelectedSubcategory('');
-                      const next = new URLSearchParams(searchParams);
-                      next.delete('category');
-                      next.delete('subcategory');
-                      setSearchParams(next, { replace: true });
-                    }}
-                    className={`text-left p-2 rounded-xl border text-xs transition ${
-                      selectedCategory === ''
-                        ? 'bg-indigo-light text-indigo font-bold border-indigo'
-                        : 'border-slate-200 text-slate-600'
-                    }`}
-                  >
-                    All Categories
-                  </button>
-                  {CATEGORIES_CONFIG.map(cat => (
+              <FilterAccordion title="Sort products" summaryValue={{
+                relevance: 'Relevance',
+                'price-low': 'Price: Low to High',
+                'price-high': 'Price: High to Low',
+                discount: 'Highest Discount',
+                rating: 'Top Rated'
+              }[sortBy]}>
+                <div className="space-y-1" role="group" aria-label="Sort products">
+                  {[
+                    ['relevance', 'Relevance & Best Match'],
+                    ['price-low', 'Price: Low to High'],
+                    ['price-high', 'Price: High to Low'],
+                    ['discount', 'Highest Discount %'],
+                    ['rating', 'Highest Customer Rating']
+                  ].map(([value, label]) => (
                     <button
-                      key={cat.id}
-                      onClick={() => {
-                        setSelectedCategory(cat.id);
-                        setSelectedSubcategory('');
-                        const next = new URLSearchParams(searchParams);
-                        next.set('category', cat.id);
-                        next.delete('subcategory');
-                        setSearchParams(next, { replace: true });
-                      }}
-                      className={`text-left p-2 rounded-xl border text-xs transition truncate ${
-                        selectedCategory === cat.id
-                          ? 'bg-indigo-light text-indigo font-bold border-indigo'
-                          : 'border-slate-200 text-slate-600'
+                      key={value}
+                      type="button"
+                      onClick={() => setSortBy(value)}
+                      aria-pressed={sortBy === value}
+                      className={`flex w-full min-w-0 items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${
+                        sortBy === value ? 'bg-indigo-light font-bold text-indigo' : 'text-slate-700 hover:bg-slate-50'
                       }`}
                     >
-                      {cat.name}
+                      <span className="min-w-0 break-words">{label}</span>
+                      {sortBy === value && <Check className="h-4 w-4 shrink-0" />}
                     </button>
                   ))}
                 </div>
-              </div>
+              </FilterAccordion>
 
-              {/* Subcategories */}
-              {availableSubcategories.length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-slate-100">
-                  <label className="font-bold text-slate-800 block">Subcategory</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {availableSubcategories.map((sub, i) => {
-                      const isSelected = matchesSubcategorySlug(sub, selectedSubcategory);
-                      return (
+              {/* Category Filter */}
+              {categoryFilterOptions.length > 0 && (
+                <FilterAccordion
+                  title="Category"
+                  defaultOpen
+                  summaryValue={selectedCategory
+                    ? categoryFilterOptions.find(category => category.id === selectedCategory)?.name
+                    : 'All Categories'}
+                >
+                <div className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={clearCatalogCategory}
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition ${
+                      selectedCategory === ''
+                        ? 'bg-indigo-light text-indigo font-bold border-indigo'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    All Categories
+                    {selectedCategory === '' && <Check className="h-4 w-4 shrink-0" />}
+                  </button>
+                  {categoryFilterOptions.map(category => {
+                    const isExpanded = expandedCategory === category.id;
+                    const isSelectedCategory = selectedCategory === category.id;
+                    const selectedSubcategoryName = category.subcategories.find(sub =>
+                      matchesSubcategorySlug(sub, selectedSubcategory)
+                    );
+
+                    return (
+                      <div key={category.id} className="overflow-hidden rounded-xl border border-slate-100">
                         <button
-                          key={i}
-                          onClick={() => toggleSubcategory(sub)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-medium transition ${
-                            isSelected
-                              ? 'bg-navy text-white font-bold'
-                              : 'bg-slate-100 text-slate-700'
+                          type="button"
+                          onClick={() => {
+                            if (isExpanded) {
+                              setExpandedCategory('');
+                              return;
+                            }
+                            setExpandedCategory(category.id);
+                            selectCategory(category.id);
+                          }}
+                          aria-expanded={isExpanded}
+                          className={`flex min-h-11 w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition ${
+                            isSelectedCategory ? 'bg-indigo-light font-bold text-indigo' : 'text-slate-700 hover:bg-slate-50'
                           }`}
                         >
-                          {sub}
+                          <span className="min-w-0 flex-1 truncate">{category.name}</span>
+                          {selectedSubcategoryName && isSelectedCategory && (
+                            <span className="max-w-[38%] truncate text-xs font-medium text-indigo">{selectedSubcategoryName}</span>
+                          )}
+                          <span className="text-[11px] text-slate-400">{category.productCount}</span>
+                          {isExpanded
+                            ? <Minus className="h-4 w-4 shrink-0 text-slate-500" />
+                            : <Plus className="h-4 w-4 shrink-0 text-slate-500" />}
                         </button>
-                      );
-                    })}
-                  </div>
+                        {isExpanded && (
+                          <div className="hide-scrollbar max-h-44 space-y-1 overflow-y-auto overscroll-contain border-t border-slate-100 bg-slate-50/70 p-2">
+                            <button
+                              type="button"
+                              onClick={() => selectCategory(category.id)}
+                              aria-pressed={isSelectedCategory && !selectedSubcategory}
+                              className={`flex min-h-9 w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-xs ${
+                                isSelectedCategory && !selectedSubcategory
+                                  ? 'bg-white font-bold text-indigo shadow-sm'
+                                  : 'text-slate-600 hover:bg-white'
+                              }`}
+                            >
+                              <span>All {category.name}</span>
+                              <span className="flex items-center gap-2">
+                                {category.productCount}
+                                {isSelectedCategory && !selectedSubcategory && <Check className="h-3.5 w-3.5" />}
+                              </span>
+                            </button>
+                            {category.subcategories.map(subcategory => {
+                              const subcategoryCount = products.filter(product =>
+                                productBelongsToCollection(product, category.id) &&
+                                product.subcategory.trim() === subcategory
+                              ).length;
+                              const isSelected = isSelectedCategory && matchesSubcategorySlug(subcategory, selectedSubcategory);
+                              return (
+                                <button
+                                  key={subcategory}
+                                  type="button"
+                                  onClick={() => selectCategorySubcategory(category.id, subcategory)}
+                                  aria-pressed={isSelected}
+                                  className={`flex min-h-9 w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-xs ${
+                                    isSelected ? 'bg-white font-bold text-indigo shadow-sm' : 'text-slate-600 hover:bg-white'
+                                  }`}
+                                >
+                                  <span className="min-w-0 truncate">{subcategory}</span>
+                                  <span className="flex shrink-0 items-center gap-2">
+                                    {subcategoryCount}
+                                    {isSelected && <Check className="h-3.5 w-3.5" />}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
+                </FilterAccordion>
               )}
 
               {/* Price Filter */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex justify-between font-bold text-slate-800">
-                  <span>Max Price</span>
-                  <span className="text-indigo">₹{maxPrice.toLocaleString('en-IN')}</span>
+              <FilterAccordion title="Price" summaryValue={`Up to ₹${maxPrice.toLocaleString('en-IN')}`}>
+                <div className="space-y-2">
+                  <div className="flex justify-between font-bold text-slate-800">
+                    <span>Maximum retail price</span>
+                    <span className="text-indigo">₹{maxPrice.toLocaleString('en-IN')}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="200"
+                    max="3000"
+                    step="50"
+                    value={maxPrice}
+                    onChange={e => setMaxPrice(Number(e.target.value))}
+                    className="h-2 w-full cursor-pointer rounded-lg bg-slate-200 accent-indigo"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min="200"
-                  max="3000"
-                  step="50"
-                  value={maxPrice}
-                  onChange={e => setMaxPrice(Number(e.target.value))}
-                  className="w-full accent-indigo cursor-pointer h-2 bg-slate-200 rounded-lg"
-                />
-              </div>
+              </FilterAccordion>
 
-              {/* Fast Filters (Checkboxes) */}
-              <div className="space-y-2.5 pt-2 border-t border-slate-100">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={inStockOnly}
-                    onChange={e => setInStockOnly(e.target.checked)}
-                    className="w-4 h-4 rounded text-indigo focus:ring-indigo/20 accent-indigo"
-                  />
-                  <span className="font-medium text-slate-800">In-Stock Only (Ahmedabad Mill Ready)</span>
-                </label>
+              <FilterAccordion
+                title="Availability & Deals"
+                summaryValue={[inStockOnly && 'In stock', directMillOnly && 'Direct mill'].filter(Boolean).join(', ') || 'Any'}
+              >
+                <div className="space-y-3">
+                  <label className="flex cursor-pointer select-none items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={inStockOnly}
+                      onChange={e => setInStockOnly(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded accent-indigo focus:ring-indigo/20"
+                    />
+                    <span className="font-medium text-slate-800">In-Stock Only (Ahmedabad Mill Ready)</span>
+                  </label>
 
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={directMillOnly}
-                    onChange={e => setDirectMillOnly(e.target.checked)}
-                    className="w-4 h-4 rounded text-indigo focus:ring-indigo/20 accent-indigo"
-                  />
-                  <span className="font-medium text-slate-800">Direct Mill Factory Runs Only</span>
-                </label>
-              </div>
+                  <label className="flex cursor-pointer select-none items-start gap-2">
+                    <input
+                      type="checkbox"
+                      checked={directMillOnly}
+                      onChange={e => setDirectMillOnly(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded accent-indigo focus:ring-indigo/20"
+                    />
+                    <span className="font-medium text-slate-800">Direct Mill Factory Runs Only</span>
+                  </label>
+                </div>
+              </FilterAccordion>
+
+              <FilterAccordion title="Customer Rating" summaryValue={minRating ? `${minRating}★ & above` : 'Any'}>
+                <div className="space-y-1 text-xs">
+                  {[4, 3, 0].map(rating => (
+                    <button
+                      key={rating}
+                      type="button"
+                      onClick={() => setMinRating(rating)}
+                      aria-pressed={minRating === rating}
+                      className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left ${
+                        minRating === rating ? 'bg-amber-50 font-bold text-amber-900' : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Star className="h-4 w-4 shrink-0 fill-amber-400 text-amber-400" />
+                      <span>{rating === 0 ? 'All Ratings' : `${rating}★ and above`}</span>
+                      {minRating === rating && <Check className="ml-auto h-4 w-4 shrink-0" />}
+                    </button>
+                  ))}
+                </div>
+              </FilterAccordion>
             </div>
 
             {/* Modal Footer */}

@@ -4,7 +4,7 @@ import path from 'path';
 import { requireAdminSession } from './_lib/admin-session.js';
 import { validateCouponRecord } from './_lib/coupon-validation.js';
 
-// Helper to read fallback coupons from public/coupons.json
+// Read coupons created by an administrator when the database is unavailable.
 export function readFallbackCoupons() {
   try {
     const filePath = path.join(process.cwd(), 'public', 'coupons.json');
@@ -16,67 +16,7 @@ export function readFallbackCoupons() {
   } catch (e) {
     console.warn('Fallback coupons read warning:', e.message);
   }
-  return [
-    {
-      id: 'coup-launch150',
-      code: 'LAUNCH150',
-      title: 'Subscriber Welcome Email Voucher',
-      description: 'Exclusive ₹150 OFF voucher sent via email for new subscribers & signups',
-      discountType: 'FLAT',
-      discountValue: 150,
-      minOrderValue: 0,
-      isActive: true,
-      isFeatured: false,
-      suggestionMode: 'SECRET_MANUAL_ONLY',
-      applicableFor: 'ALL',
-      usedCount: 42,
-      createdAt: '2026-10-01T00:00:00.000Z'
-    },
-    {
-      id: 'coup-milldirect10',
-      code: 'MILLDIRECT10',
-      title: 'Direct Loom 10% Discount',
-      description: 'Get instant 10% OFF across all fabric and linen collections',
-      discountType: 'PERCENTAGE',
-      discountValue: 10,
-      minOrderValue: 1000,
-      maxDiscountAmount: 1500,
-      isActive: true,
-      isFeatured: true,
-      applicableFor: 'ALL',
-      usedCount: 78,
-      createdAt: '2026-10-02T00:00:00.000Z'
-    },
-    {
-      id: 'coup-bulk500',
-      code: 'BULK500',
-      title: 'Wholesale Commercial Rebate',
-      description: 'Flat ₹500 instant discount on commercial orders above ₹3,000',
-      discountType: 'FLAT',
-      discountValue: 500,
-      minOrderValue: 3000,
-      isActive: true,
-      isFeatured: true,
-      applicableFor: 'ALL',
-      usedCount: 29,
-      createdAt: '2026-10-05T00:00:00.000Z'
-    },
-    {
-      id: 'coup-mahalaxmi20',
-      code: 'MAHALAXMI20',
-      title: 'Festival Mill Master Offer',
-      description: 'Exclusive 20% OFF for bulk and wholesale trade consignments',
-      discountType: 'PERCENTAGE',
-      discountValue: 20,
-      minOrderValue: 10000,
-      maxDiscountAmount: 5000,
-      isActive: true,
-      isFeatured: true,
-      applicableFor: 'B2B',
-      usedCount: 15,
-      createdAt: '2026-10-08T00:00:00.000Z'
-    }
-  ];
+  return [];
 }
 
 // Helper to save to public/coupons.json and sync with app-config.json
@@ -94,10 +34,9 @@ function saveFallbackCoupons(couponsList) {
       try {
         const rawConfig = fs.readFileSync(appConfigPath, 'utf8');
         const config = JSON.parse(rawConfig);
-        // Only public 1-click coupons should be published to Flutter App's live coupon list
-        // Secret vouchers like LAUNCH150 sent via email are hidden from 1-click lists
+        // Only public 1-click coupons should be published to the mobile app.
         config.coupons = couponsList.filter(
-          c => c.isActive && c.isFeatured && c.suggestionMode !== 'SECRET_MANUAL_ONLY' && (c.code || '').toUpperCase() !== 'LAUNCH150'
+          c => c.isActive && c.isFeatured && c.suggestionMode !== 'SECRET_MANUAL_ONLY'
         );
         config.lastSyncedAt = new Date().toISOString();
         fs.writeFileSync(appConfigPath, JSON.stringify(config, null, 2), 'utf8');
@@ -150,14 +89,35 @@ export async function ensureCouponsTable(pool) {
       await pool.query("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS target_platform VARCHAR(32) DEFAULT 'ALL'");
     } catch {}
 
-    // Enforce that LAUNCH150 is always a secret, subscriber-only email voucher in MySQL
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS coupon_data_migrations (
+        migration_key VARCHAR(100) PRIMARY KEY,
+        applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    const connection = await pool.getConnection();
     try {
-      await pool.query("UPDATE coupons SET is_featured = 0, suggestion_mode = 'SECRET_MANUAL_ONLY' WHERE UPPER(code) = 'LAUNCH150'");
-    } catch {}
+      await connection.beginTransaction();
+      const [migrationResult] = await connection.query(
+        'INSERT IGNORE INTO coupon_data_migrations (migration_key) VALUES (?)',
+        ['clear-existing-coupons-v1']
+      );
+      if (migrationResult.affectedRows === 1) {
+        await connection.query('DELETE FROM coupons');
+      }
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
 
     tableEnsured = true;
   } catch (err) {
     console.warn('MySQL ensureCouponsTable error:', err.message);
+    throw err;
   }
 }
 
@@ -173,8 +133,8 @@ function mapCouponRow(row) {
     maxDiscountAmount: row.max_discount_amount == null ? undefined : Number(row.max_discount_amount),
     validUntil: row.valid_until ? new Date(row.valid_until).toISOString() : undefined,
     isActive: Boolean(row.is_active),
-    isFeatured: Boolean(row.is_featured) && row.code !== 'LAUNCH150' && row.suggestion_mode !== 'SECRET_MANUAL_ONLY',
-    suggestionMode: row.suggestion_mode || (row.code === 'LAUNCH150' || !row.is_featured ? 'SECRET_MANUAL_ONLY' : 'PUBLIC_1CLICK'),
+    isFeatured: Boolean(row.is_featured) && row.suggestion_mode !== 'SECRET_MANUAL_ONLY',
+    suggestionMode: row.suggestion_mode || (!row.is_featured ? 'SECRET_MANUAL_ONLY' : 'PUBLIC_1CLICK'),
     targetPlatform: row.target_platform || 'ALL',
     applicableFor: row.applicable_for || 'ALL',
     usageLimit: row.usage_limit == null ? undefined : Number(row.usage_limit),
@@ -226,7 +186,7 @@ export default async function handler(req, res) {
         const [rows] = await pool.query('SELECT * FROM coupons ORDER BY created_at DESC');
 
         const formatted = (Array.isArray(rows) ? rows : [])
-          .filter(r => isAdmin || (couponIsAvailable(r) && r.suggestion_mode !== 'SECRET_MANUAL_ONLY' && r.code !== 'LAUNCH150'))
+          .filter(r => isAdmin || (couponIsAvailable(r) && r.suggestion_mode !== 'SECRET_MANUAL_ONLY'))
           .map(mapCouponRow);
         return res.status(200).json({
           success: true,
@@ -248,7 +208,7 @@ export default async function handler(req, res) {
     }
 
     const fallback = readFallbackCoupons().filter(
-      coupon => coupon.isActive && coupon.suggestionMode !== 'SECRET_MANUAL_ONLY' && coupon.code !== 'LAUNCH150'
+      coupon => coupon.isActive && coupon.suggestionMode !== 'SECRET_MANUAL_ONLY'
     );
     return res.status(200).json({
       success: true,
@@ -345,7 +305,7 @@ export default async function handler(req, res) {
     const validUntil = body.validUntil ? new Date(body.validUntil) : null;
     const isActive = body.isActive !== false ? 1 : 0;
     const rawSuggestionMode = body.suggestionMode || (body.isFeatured ? 'PUBLIC_1CLICK' : 'SECRET_MANUAL_ONLY');
-    const isSecret = rawSuggestionMode === 'SECRET_MANUAL_ONLY' || rawCode === 'LAUNCH150';
+    const isSecret = rawSuggestionMode === 'SECRET_MANUAL_ONLY';
     const suggestionMode = isSecret ? 'SECRET_MANUAL_ONLY' : 'PUBLIC_1CLICK';
     const isFeatured = isSecret ? 0 : (body.isFeatured !== false ? 1 : 0);
     const applicableFor = ['ALL', 'B2B', 'B2C'].includes(body.applicableFor) ? body.applicableFor : 'ALL';

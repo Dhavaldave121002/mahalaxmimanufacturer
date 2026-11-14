@@ -23,6 +23,44 @@ import { Badge } from '../components/common/Badge';
 import { BuyNowPaymentIcons } from '../components/common/BuyNowPaymentIcons';
 import { BUSINESS_WHATSAPP_NUMBER } from '../constants/businessContact';
 import { getDispatchLabel } from '../utils/deliveryDisplay';
+import { DispatchAssurance } from '../components/common/DispatchAssurance';
+
+const GUEST_ADDRESS_DRAFT_KEY = 'mle_guest_address_draft';
+
+function isGuestAddressDraft(value: unknown): value is Omit<Address, 'id'> {
+  if (typeof value !== 'object' || value === null) return false;
+  const draft = value as Record<string, unknown>;
+  return typeof draft.fullName === 'string' &&
+    typeof draft.phone === 'string' &&
+    typeof draft.street === 'string' &&
+    typeof draft.city === 'string' &&
+    typeof draft.state === 'string' &&
+    typeof draft.pincode === 'string' &&
+    (draft.addressType === 'HOME' || draft.addressType === 'COMMERCIAL' || draft.addressType === 'WAREHOUSE') &&
+    (draft.landmark === undefined || typeof draft.landmark === 'string') &&
+    (draft.companyName === undefined || typeof draft.companyName === 'string');
+}
+
+function readGuestAddressDraft(): Omit<Address, 'id'> | null {
+  try {
+    const storedDraft = localStorage.getItem(GUEST_ADDRESS_DRAFT_KEY);
+    if (!storedDraft) return null;
+    const parsedDraft: unknown = JSON.parse(storedDraft);
+    if (isGuestAddressDraft(parsedDraft)) return parsedDraft;
+    console.warn('Saved guest checkout address draft is invalid and was ignored.');
+  } catch (error) {
+    console.warn('Saved guest checkout address draft could not be loaded:', error);
+  }
+  return null;
+}
+
+function clearGuestAddressDraft() {
+  try {
+    localStorage.removeItem(GUEST_ADDRESS_DRAFT_KEY);
+  } catch (error) {
+    console.warn('Guest checkout address draft could not be cleared:', error);
+  }
+}
 
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
@@ -67,6 +105,8 @@ export const CheckoutPage: React.FC = () => {
     }
     return [];
   });
+  const [guestAddressDraft] = useState(readGuestAddressDraft);
+  const restoredGuestAddressDraft = !isLoggedIn ? guestAddressDraft : null;
 
   const effectiveAddresses: Address[] = isLoggedIn
     ? (currentUser?.addresses || [])
@@ -78,6 +118,7 @@ export const CheckoutPage: React.FC = () => {
   // If there are no saved addresses (e.g. brand new guest), open form directly
   const [showAddressForm, setShowAddressForm] = useState<boolean>(() => {
     if (!isLoggedIn) {
+      if (guestAddressDraft) return true;
       try {
         const stored = localStorage.getItem('mle_guest_addresses');
         if (stored) {
@@ -94,16 +135,43 @@ export const CheckoutPage: React.FC = () => {
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
 
   // Address Form State
-  const [newAddress, setNewAddress] = useState<Omit<Address, 'id'>>({
-    fullName: isLoggedIn ? currentUser.name : '',
-    phone: isLoggedIn ? currentUser.phone : '',
-    street: '',
-    landmark: '',
-    city: deliveryInfo?.city || '',
-    state: deliveryInfo?.state || '',
-    pincode: deliveryInfo?.pincode || '',
-    addressType: isB2B ? 'COMMERCIAL' : 'HOME'
-  });
+  const [newAddress, setNewAddress] = useState<Omit<Address, 'id'>>(() => ({
+    fullName: restoredGuestAddressDraft?.fullName || (isLoggedIn ? currentUser.name : ''),
+    phone: restoredGuestAddressDraft?.phone || (isLoggedIn ? currentUser.phone : ''),
+    street: restoredGuestAddressDraft?.street || '',
+    landmark: restoredGuestAddressDraft?.landmark || '',
+    city: restoredGuestAddressDraft?.city || deliveryInfo?.city || '',
+    state: restoredGuestAddressDraft?.state || deliveryInfo?.state || '',
+    pincode: restoredGuestAddressDraft?.pincode || deliveryInfo?.pincode || '',
+    addressType: restoredGuestAddressDraft?.addressType || (isB2B ? 'COMMERCIAL' : 'HOME'),
+    companyName: restoredGuestAddressDraft?.companyName
+  }));
+
+  useEffect(() => {
+    if (isLoggedIn || !showAddressForm) return;
+
+    const hasDraftContent = [
+      newAddress.fullName,
+      newAddress.phone,
+      newAddress.street,
+      newAddress.landmark || '',
+      newAddress.companyName || ''
+    ].some(value => value.trim()) ||
+      newAddress.pincode !== (deliveryInfo?.pincode || '') ||
+      newAddress.city !== (deliveryInfo?.city || '') ||
+      newAddress.state !== (deliveryInfo?.state || '') ||
+      newAddress.addressType !== (isB2B ? 'COMMERCIAL' : 'HOME');
+
+    try {
+      if (hasDraftContent) {
+        localStorage.setItem(GUEST_ADDRESS_DRAFT_KEY, JSON.stringify(newAddress));
+      } else {
+        localStorage.removeItem(GUEST_ADDRESS_DRAFT_KEY);
+      }
+    } catch (error) {
+      console.warn('Guest checkout address draft could not be saved:', error);
+    }
+  }, [deliveryInfo?.city, deliveryInfo?.pincode, deliveryInfo?.state, isB2B, isLoggedIn, newAddress, showAddressForm]);
 
   // Payment Method & Mill Points State
   // Only show/use wallet balance if user is actually logged in — guests get 0
@@ -118,12 +186,14 @@ export const CheckoutPage: React.FC = () => {
   const isFullyCoveredByPoints = pointsRedeemed > 0 && remainingPayable === 0;
 
   // Save guest addresses to localStorage
-  const saveGuestAddresses = (list: Address[]) => {
+  const saveGuestAddresses = (list: Address[]): boolean => {
     setGuestAddresses(list);
     try {
       localStorage.setItem('mle_guest_addresses', JSON.stringify(list));
+      return true;
     } catch (e) {
       console.warn('Failed to save guest address to localStorage:', e);
+      return false;
     }
   };
 
@@ -233,6 +303,7 @@ export const CheckoutPage: React.FC = () => {
 
   const handleCancelAddressForm = () => {
     if (effectiveAddresses.length > 0) {
+      if (!isLoggedIn) clearGuestAddressDraft();
       setShowAddressForm(false);
       setEditingAddressId(null);
     } else {
@@ -260,6 +331,7 @@ export const CheckoutPage: React.FC = () => {
       return false;
     }
 
+    let guestAddressSaved = true;
     if (isLoggedIn) {
       if (editingAddressId) {
         const updated = (currentUser.addresses || []).map(a =>
@@ -278,7 +350,7 @@ export const CheckoutPage: React.FC = () => {
         const updated = guestAddresses.map(a =>
           a.id === editingAddressId ? { ...newAddress, id: editingAddressId } : a
         );
-        saveGuestAddresses(updated);
+        guestAddressSaved = saveGuestAddresses(updated);
         const idx = updated.findIndex(a => a.id === editingAddressId);
         if (idx !== -1) setSelectedAddressIndex(idx);
       } else {
@@ -287,11 +359,12 @@ export const CheckoutPage: React.FC = () => {
           id: `guest-addr-${Date.now()}`
         };
         const updated = [fresh, ...guestAddresses];
-        saveGuestAddresses(updated);
+        guestAddressSaved = saveGuestAddresses(updated);
         setSelectedAddressIndex(0);
       }
     }
 
+    if (!isLoggedIn && guestAddressSaved) clearGuestAddressDraft();
     setShowAddressForm(false);
     setEditingAddressId(null);
     return true;
@@ -552,6 +625,8 @@ export const CheckoutPage: React.FC = () => {
           <span>256-Bit SSL Encrypted</span>
         </div>
       </div>
+
+      <DispatchAssurance />
 
       <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Checkout Steps (B2B/GST, Shipping Address, Payment Method) */}
@@ -895,13 +970,14 @@ export const CheckoutPage: React.FC = () => {
                     <label className="text-[11px] font-bold text-slate-700 block mb-1">
                       Address Type
                     </label>
-                    <div className="flex gap-2">
+                    <div className="flex min-w-0 flex-wrap gap-2">
                       {(['HOME', 'COMMERCIAL', 'WAREHOUSE'] as const).map(type => (
                         <button
                           key={type}
                           type="button"
                           onClick={() => setNewAddress({ ...newAddress, addressType: type })}
-                          className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition ${
+                          aria-pressed={newAddress.addressType === type}
+                          className={`max-w-full whitespace-nowrap rounded-lg border px-2.5 py-1.5 text-[10px] font-bold transition sm:px-3 sm:text-xs ${
                             newAddress.addressType === type
                               ? 'border-indigo bg-indigo text-white'
                               : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
@@ -1072,27 +1148,27 @@ export const CheckoutPage: React.FC = () => {
 
                 {/* Razorpay Live Gateway (Cards, UPI, NetBanking, Wallets) */}
                 <label
-                  className="p-4 rounded-xl border border-indigo bg-indigo-light/50 ring-2 ring-indigo shadow-sm flex items-center justify-between cursor-pointer transition"
+                  className="flex cursor-pointer items-start justify-between gap-2.5 rounded-xl border border-indigo bg-indigo-light/50 p-3 shadow-sm ring-2 ring-indigo transition sm:items-center sm:gap-3 sm:p-4"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-indigo text-white rounded-xl shadow-sm">
-                      <ShieldCheck className="w-5 h-5 text-white" />
+                  <div className="flex min-w-0 flex-1 items-start gap-2.5 sm:items-center sm:gap-3">
+                    <div className="shrink-0 rounded-lg bg-indigo p-2 text-white shadow-sm sm:rounded-xl sm:p-2.5">
+                      <ShieldCheck className="h-5 w-5 text-white" />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs font-black text-navy">
-                          Pay ₹{remainingPayable.toLocaleString('en-IN')} via Razorpay Secure (Live)
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p className="text-[11px] font-black leading-tight text-navy sm:text-xs">
+                          Pay ₹{remainingPayable.toLocaleString('en-IN')} with Razorpay
                         </p>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                          INSTANT UPI / CARDS
+                        <span className="whitespace-nowrap rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-bold text-emerald-800 sm:text-[10px]">
+                          UPI / CARDS
                         </span>
                       </div>
-                      <p className="text-[10px] text-slate-500 mt-0.5">
-                        Credit/Debit Cards, Google Pay, PhonePe, Paytm, NetBanking & Corporate Credit Lines
+                      <p className="mt-1 text-[10px] leading-snug text-slate-500">
+                        Cards, UPI, wallets, NetBanking &amp; corporate credit
                       </p>
-                      <div className="mt-2 flex items-center gap-2">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
                         <BuyNowPaymentIcons />
-                        <span className="text-[10px] font-semibold text-slate-500">Secure payment via Razorpay</span>
+                        <span className="text-[10px] font-semibold text-slate-500">Secure checkout</span>
                       </div>
                     </div>
                   </div>
@@ -1101,7 +1177,7 @@ export const CheckoutPage: React.FC = () => {
                     name="secondaryPayment"
                     checked
                     readOnly
-                    className="accent-indigo w-4 h-4"
+                    className="mt-1 h-4 w-4 shrink-0 accent-indigo sm:mt-0"
                   />
                 </label>
 

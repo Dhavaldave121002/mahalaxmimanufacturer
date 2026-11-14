@@ -15,7 +15,6 @@ import {
   Zap,
   Building2,
   ShoppingBag,
-  RotateCcw,
   Search,
   Calendar,
   Layers,
@@ -24,7 +23,6 @@ import {
   Smartphone,
   Globe
 } from 'lucide-react';
-import { INITIAL_COUPONS } from '../../data/initialCoupons';
 
 export const CouponOfferManager: React.FC = () => {
   const {
@@ -202,31 +200,6 @@ export const CouponOfferManager: React.FC = () => {
     setModalOpen(false);
   };
 
-  const handleResetDefaults = () => {
-    if (confirm('Restore factory mill default coupons (LAUNCH150, MILLDIRECT10, BULK500, MAHALAXMI20)? Custom coupons will remain intact.')) {
-      INITIAL_COUPONS.forEach(ic => {
-        const found = coupons.find(c => c.code === ic.code);
-        if (!found) {
-          addCoupon({
-            code: ic.code,
-            title: ic.title,
-            description: ic.description,
-            discountType: ic.discountType,
-            discountValue: ic.discountValue,
-            minOrderValue: ic.minOrderValue,
-            maxDiscountAmount: ic.maxDiscountAmount,
-            applicableFor: ic.applicableFor,
-            isActive: ic.isActive,
-            isFeatured: ic.isFeatured,
-            suggestionMode: ic.suggestionMode,
-            targetPlatform: ic.targetPlatform
-          });
-        }
-      });
-      alert('Factory mill coupons verified & restored.');
-    }
-  };
-
   // Filtered List
   const filteredCoupons = coupons.filter(c => {
     const matchesSearch =
@@ -272,14 +245,6 @@ export const CouponOfferManager: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            <button
-              onClick={handleResetDefaults}
-              className="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-white/10"
-              title="Reset default mill launch promo codes"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Restore Factory Defaults</span>
-            </button>
             <button
               onClick={handleOpenCreate}
               className="px-5 py-2.5 bg-champagne hover:bg-champagne-light text-navy rounded-xl text-xs font-black transition flex items-center gap-2 shadow-lg shadow-champagne/20"

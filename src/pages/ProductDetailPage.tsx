@@ -5,8 +5,8 @@ import { Product, ProductColorOption, ProductVariant, ProductCustomization } fro
 import { INITIAL_PRODUCTS } from '../data/mockProducts';
 import { Badge } from '../components/common/Badge';
 import { ProductCard } from '../components/common/ProductCard';
+import { DispatchAssurance } from '../components/common/DispatchAssurance';
 import { ListSkeleton, ProductDetailSkeleton } from '../components/common/SkeletonLoader';
-import { useDeliveryLocationPage } from '../hooks/useDeliveryLocationPage';
 import { getDeliveryEstimate, getDispatchLabel } from '../utils/deliveryDisplay';
 import {
   BUSINESS_SUPPORT_PHONE,
@@ -182,7 +182,6 @@ export const ProductDetailPage: React.FC = () => {
 
   const product = products.find(p => p.slug === slug);
   const careInstructions = product?.careInstructions?.filter(instruction => instruction.trim()) ?? [];
-  const deliveryLocationPage = useDeliveryLocationPage(deliveryInfo);
   const deliveryEstimate = getDeliveryEstimate(deliveryInfo?.city);
   const productImages = useMemo(
     () => orderProductImagesByResolution(product?.images ?? []),
@@ -229,7 +228,8 @@ export const ProductDetailPage: React.FC = () => {
     product ? getProductColorOptions(product)[0] : undefined
   );
   const [quantity, setQuantity] = useState<number>(product?.moq || 1);
-  const [pinInput, setPinInput] = useState(deliveryPincode);
+  const [pinInputDraft, setPinInputDraft] = useState({ pincode: deliveryPincode, value: deliveryPincode });
+  const pinInput = pinInputDraft.pincode === deliveryPincode ? pinInputDraft.value : deliveryPincode;
   const [addedAnimation, setAddedAnimation] = useState(false);
   const [cartActionMessage, setCartActionMessage] = useState('');
   const [restockEmail, setRestockEmail] = useState(currentUser?.email || '');
@@ -1244,11 +1244,11 @@ export const ProductDetailPage: React.FC = () => {
                   B2B Quality Testing & Sample Evaluation
                 </span>
                 <span className="text-[10px] bg-amber-200 text-amber-900 font-extrabold px-2 py-0.5 rounded-full self-start xl:self-auto">
-                  100% Rebate Guaranteed
+                  Sample Kit
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 leading-relaxed">
-                Test fabric hand-feel, GSM weave weight, and wash durability before booking wholesale consignments. Sample costs are credited back 100% on your next bulk order:
+                Test fabric hand-feel, GSM weave weight, and wash durability before booking wholesale consignments.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
                 <button
@@ -2132,6 +2132,8 @@ export const ProductDetailPage: React.FC = () => {
               </span>
             </div>
 
+            <DispatchAssurance />
+
             {/* High-Conversion Trust Signals Grid */}
             <div className="grid grid-cols-2 gap-2 text-center text-xs pt-1">
               <button
@@ -2173,12 +2175,16 @@ export const ProductDetailPage: React.FC = () => {
               <input
                 type="text"
                 maxLength={6}
+                required
                 value={pinInput}
-                onChange={e => setPinInput(e.target.value.replace(/\D/g, ''))}
+                onChange={e => setPinInputDraft({
+                  pincode: deliveryPincode,
+                  value: e.target.value.replace(/\D/g, '')
+                })}
                 placeholder="Enter 6-digit Pincode (e.g. 395002)"
                 aria-label="6-digit delivery pincode"
                 inputMode="numeric"
-                pattern="[0-9]{6}"
+                pattern="[1-9][0-9]{5}"
                 className="w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono shadow-sm outline-none focus:border-indigo focus:ring-1 focus:ring-indigo sm:px-3.5"
               />
               <button
@@ -2192,31 +2198,29 @@ export const ProductDetailPage: React.FC = () => {
             {deliveryInfo && (
               <div className="pt-1.5 space-y-1.5">
                 {deliveryInfo.serviceable ? (
-                  <>
-                    <div className="flex items-center gap-1.5 text-emerald-800 text-xs font-bold">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Deliverable to {deliveryInfo.city}, {deliveryInfo.state} ({deliveryInfo.pincode})</span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 pt-0.5">
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-semibold">
-                        ⚡ Est. Delivery: {deliveryEstimate.minDays}-{deliveryEstimate.maxDays} calendar days
-                      </span>
-                      <span>Arrives around {deliveryEstimate.dateRange}</span>
-                      <span className="text-slate-400">{getDispatchLabel()}</span>
-                    </div>
-                    {deliveryLocationPage && (
-                      <Link
-                        to={deliveryLocationPage.to}
-                        className="inline-flex text-[11px] font-bold text-indigo underline underline-offset-2 hover:text-indigo-dark"
-                      >
-                        View {deliveryLocationPage.city} location details and products
-                      </Link>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-rose-600 text-xs font-semibold flex items-center gap-1.5">
-                    <span>✕ Delivery is currently not serviceable to pincode {deliveryInfo.pincode}.</span>
+                  <div className="flex items-center gap-1.5 text-emerald-800 text-xs font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>Deliverable to {deliveryInfo.city}, {deliveryInfo.state} ({deliveryInfo.pincode})</span>
+                  </div>
+                ) : deliveryInfo.verified ? (
+                  <p className="text-rose-600 text-xs font-semibold">
+                    Delivery is currently not serviceable to pincode {deliveryInfo.pincode}.
                   </p>
+                ) : (
+                  <p className="text-amber-700 text-xs font-semibold">
+                    {deliveryInfo.verificationUnavailable
+                      ? `Courier serviceability could not be confirmed for ${deliveryInfo.pincode}.`
+                      : `Checking courier serviceability for ${deliveryInfo.pincode}...`}
+                  </p>
+                )}
+                {(!deliveryInfo.verified || deliveryInfo.serviceable) && deliveryInfo.estimatedWorkingDays > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-600 pt-0.5">
+                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-800 rounded-md font-semibold">
+                      ⚡ Est. Delivery: {deliveryEstimate.minWorkingDays}-{deliveryEstimate.maxWorkingDays} working days
+                    </span>
+                    <span>Arrives around {deliveryEstimate.dateRange}</span>
+                    <span className="text-slate-400">{getDispatchLabel()}</span>
+                  </div>
                 )}
               </div>
             )}

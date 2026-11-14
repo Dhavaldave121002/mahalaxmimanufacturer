@@ -32,7 +32,7 @@ Production product listings require a live MySQL connection. If the database can
 
 4. **Conversion-Focused Cart & Checkout (`/cart`, `/checkout`)**
    - Indian PIN Code delivery checker with instant delivery speed calculation.
-   - Commercial discount coupon engine (`MILLDIRECT10`, `BULK500`, `MAHALAXMI20`).
+   - Admin-managed commercial discount coupons.
    - Automated GST calculation (CGST + SGST or IGST based on buyer state).
    - Dual checkout personas (Individual Consumer vs Registered Business with GSTIN details for invoicing).
    - Payment methods: UPI QR, Bank Transfer / NEFT Escrow, Cash on Delivery (COD), and 30-Day B2B Trade Credit.
@@ -115,7 +115,7 @@ Or connect your GitHub repository directly to Vercel with default Vite build set
 1. Create a MySQL database that is reachable from Vercel and run `database/schema.sql` against it.
 2. Add the database connection to Vercel Project Settings → Environment Variables using either `DATABASE_URL` or `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, and `MYSQL_DATABASE`. Set `MYSQL_SSL=true` when required by the provider. Never commit real credentials.
 3. Configure local `.env` for the intended database. Set `MYSQL_CONNECTION_LIMIT` to the per-instance connection cap allowed by your provider (defaults to `10`), then run `npm run db:migrate-user-pagination` to add the users-list pagination index to an existing database. New databases get this index from `database/schema.sql`.
-4. Set `.env` to the intended database and run `npm run db:seed-default-coupons` to add any missing factory coupons. The operation is additive and does not overwrite existing coupon settings or usage counts.
+4. Coupons start empty. Create and publish coupons from the admin dashboard when offers are ready.
 5. To create a first administrator locally, run `npm run admin:create` in an interactive terminal. The script displays the selected database, requires the exact confirmation `CREATE ADMIN`, asks for the password without echoing it, stores only a scrypt hash, and refuses to modify existing users. Never share the password or commit `.env`. For a hosted database, run the same command in a trusted environment configured for that database, or provision the user through a secure database administrator workflow.
 6. To set every product's stock to 10,000 once, first run `npm run db:set-product-stock` to preview the affected database and then `npm run db:set-product-stock -- --apply` to update it. The apply command backs up existing stock values to a timestamped table and verifies the result.
 7. To add material-based care guidance only to products without existing care instructions, run `npm run db:seed-product-care` to preview, then `npm run db:seed-product-care -- --apply`. The apply command backs up current care fields and verifies every product; customers are advised to follow the item's care label if it differs.

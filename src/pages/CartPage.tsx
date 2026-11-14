@@ -112,14 +112,12 @@ export const CartPage: React.FC = () => {
     prevAppliedCouponRef.current = appliedCoupon;
   }, [appliedCoupon]);
 
-  // Active & Public 1-Click coupons configured by Admin for Storefront
-  // (Excludes secret/email-only voucher codes like LAUNCH150 and APP_ONLY coupons)
+  // Active public 1-click coupons configured by Admin for the storefront.
   const featuredCoupons = coupons.filter(
     c =>
       c.isActive &&
       c.isFeatured &&
       c.suggestionMode !== 'SECRET_MANUAL_ONLY' &&
-      (c.code || '').trim().toUpperCase() !== 'LAUNCH150' &&
       c.targetPlatform !== 'APP_ONLY'
   );
   const cartStockIssues = cart.reduce<{ productId: string; name: string; reason: string }[]>((issues, item) => {
@@ -579,7 +577,7 @@ export const CartPage: React.FC = () => {
                   type="text"
                   value={couponInput}
                   onChange={e => setCouponInput(e.target.value)}
-                  placeholder="MILLDIRECT10 or BULK500"
+                  placeholder="Enter coupon code"
                   className="flex-1 uppercase text-xs px-3 py-2 border border-slate-300 rounded-xl focus:border-indigo outline-none"
                 />
                 <button
@@ -593,7 +591,7 @@ export const CartPage: React.FC = () => {
             )}
 
             <p className="text-[10.5px] text-slate-400">
-              💡 Received a subscriber voucher via email? Enter your secret promo code above and tap Apply.
+              Enter a coupon code provided by our team and tap Apply.
             </p>
 
             {couponMsg && (

@@ -204,8 +204,8 @@ async function migrate() {
     ) VALUES (
       'ord-app-77102', 'MLE-APP-2026-77102', 'usr-flutter-dhaval', 'FLUTTER_APP',
       'Android 14 (Mahalaxmi Flutter App v1.0.3)', 'Dhaval Dave', 'dhavaldave121002@gmail.com', '8511172099',
-      'Mahalaxmi Enterprise Client Hub', 0, 3194.00, 79.85, 79.85, 0.00, 159.70, 0.00, 150.00, 'LAUNCH150',
-      3203.70, 'UPI', 'PAID', 'MILL_PROCESSING',
+      'Mahalaxmi Enterprise Client Hub', 0, 3194.00, 79.85, 79.85, 0.00, 159.70, 0.00, 0.00, NULL,
+      3353.70, 'UPI', 'PAID', 'MILL_PROCESSING',
       '{"fullName":"Dhaval Dave","phone":"8511172099","street":"102, Shivalik Plaza, Near C.G. Road","city":"Ahmedabad","state":"Gujarat","pincode":"380009"}',
       '{"fullName":"Dhaval Dave","phone":"8511172099","street":"102, Shivalik Plaza, Near C.G. Road","city":"Ahmedabad","state":"Gujarat","pincode":"380009"}',
       '[{"status":"PLACED","description":"Order placed from Android Flutter App v1.0.3 via UPI GPay."},{"status":"MILL_PROCESSING","description":"Surat Central Dispatch Unit 1 allocated."}]'

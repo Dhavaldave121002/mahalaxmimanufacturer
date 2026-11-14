@@ -25,9 +25,8 @@ import {
 import { INITIAL_PRODUCTS, CATEGORIES_CONFIG } from '../data/mockProducts';
 import { normalizeProductCategory } from '../utils/productCategories';
 import { getDefaultProductColors, isPaperProduct } from '../utils/productColors';
-import { getDeliveryEstimate } from '../utils/deliveryDisplay';
+import { AUTHENTICITY_CHECK_TEXT, DELIVERY_ESTIMATE_TEXT, getDeliveryEstimate } from '../utils/deliveryDisplay';
 import { INITIAL_MOBILE_APP_CONFIG } from '../data/initialAppConfig';
-import { INITIAL_COUPONS } from '../data/initialCoupons';
 import { getCustomizationCharge, getSizeCharge, updateCustomizationPricing } from '../constants/customizationPricing';
 
 interface PinCodeInfo {
@@ -35,8 +34,9 @@ interface PinCodeInfo {
   city: string;
   state: string;
   serviceable: boolean;
-  estimatedDays: number;
+  estimatedWorkingDays: number;
   verified?: boolean;
+  verificationUnavailable?: boolean;
 }
 
 const PINCODE_DATABASE: Record<string, { city: string; state: string; days: number }> = {
@@ -81,6 +81,42 @@ const PINCODE_DATABASE: Record<string, { city: string; state: string; days: numb
   '201301': { city: 'Noida', state: 'Uttar Pradesh', days: 3 },
   '122001': { city: 'Gurugram', state: 'Haryana', days: 3 }
 };
+
+const DEFAULT_DELIVERY_PINCODE = '395002';
+const DELIVERY_PINCODE_STORAGE_KEY = 'mle_delivery_pincode';
+
+function getSavedDeliveryPincode() {
+  try {
+    const savedPin = localStorage.getItem(DELIVERY_PINCODE_STORAGE_KEY) || '';
+    if (/^[1-9]\d{5}$/.test(savedPin)) return savedPin;
+  } catch (error) {
+    console.warn('Saved delivery pincode could not be loaded:', error);
+  }
+  return DEFAULT_DELIVERY_PINCODE;
+}
+
+function getPincodeLocation(pin: string) {
+  const found = PINCODE_DATABASE[pin];
+  if (found) return { city: found.city, state: found.state };
+  if (pin.startsWith('395') || pin.startsWith('394')) return { city: 'Surat', state: 'Gujarat' };
+  if (pin.startsWith('380') || pin.startsWith('382')) return { city: 'Ahmedabad', state: 'Gujarat' };
+  if (pin.startsWith('390') || pin.startsWith('391')) return { city: 'Vadodara', state: 'Gujarat' };
+  if (pin.startsWith('360')) return { city: 'Rajkot', state: 'Gujarat' };
+  if (pin.startsWith('400')) return { city: 'Mumbai', state: 'Maharashtra' };
+  if (pin.startsWith('110')) return { city: 'New Delhi', state: 'Delhi' };
+  return { city: 'City not verified', state: 'India' };
+}
+
+function createInitialPincodeInfo(pin: string): PinCodeInfo {
+  const location = getPincodeLocation(pin);
+  return {
+    pincode: pin,
+    ...location,
+    serviceable: false,
+    estimatedWorkingDays: getDeliveryEstimate(location.city).maxWorkingDays,
+    verified: false
+  };
+}
 
 interface AppContextType {
   products: Product[];
@@ -584,31 +620,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Dynamic Coupons & Offers Management State
-  const [coupons, setCoupons] = useState<CouponOffer[]>(() => {
-    try {
-      const saved = localStorage.getItem('mle_coupons');
-      if (saved && saved !== 'undefined' && saved !== 'null') {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Normalize: Enforce that LAUNCH150 and any SECRET_MANUAL_ONLY coupon is NOT publicly featured
-          return parsed.map((c: CouponOffer) => {
-            const code = (c.code || '').trim().toUpperCase();
-            if (code === 'LAUNCH150' || c.suggestionMode === 'SECRET_MANUAL_ONLY') {
-              return {
-                ...c,
-                isFeatured: false,
-                suggestionMode: 'SECRET_MANUAL_ONLY' as const
-              };
-            }
-            return c;
-          });
-        }
-      }
-    } catch (e) {
-      console.warn('Failed to parse mle_coupons, resetting:', e);
-    }
-    return INITIAL_COUPONS;
-  });
+  const [coupons, setCoupons] = useState<CouponOffer[]>([]);
 
   useEffect(() => {
     try {
@@ -628,13 +640,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       const json = await res.json();
       if (json?.success && Array.isArray(json.data)) {
-        setCoupons(json.data.map((coupon: CouponOffer) => ({
-          ...coupon,
-          isFeatured: coupon.code.toUpperCase() === 'LAUNCH150' ? false : coupon.isFeatured,
-          suggestionMode: coupon.code.toUpperCase() === 'LAUNCH150'
-            ? 'SECRET_MANUAL_ONLY'
-            : coupon.suggestionMode
-        })));
+        setCoupons(json.data.map((coupon: CouponOffer) => coupon.suggestionMode === 'SECRET_MANUAL_ONLY'
+          ? { ...coupon, isFeatured: false }
+          : coupon));
       } else {
         console.error('Coupon API returned an invalid response.');
       }
@@ -849,14 +857,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const [deliveryPincode, setDeliveryPincode] = useState<string>('395002');
-  const [deliveryInfo, setDeliveryInfo] = useState<PinCodeInfo | null>({
-    pincode: '395002',
-    city: 'Surat',
-    state: 'Gujarat',
-    serviceable: true,
-    estimatedDays: 7
-  });
+  const [deliveryPincode, setDeliveryPincode] = useState<string>(getSavedDeliveryPincode);
+  const [deliveryInfo, setDeliveryInfo] = useState<PinCodeInfo | null>(
+    () => createInitialPincodeInfo(deliveryPincode)
+  );
+  const pincodeCheckRequestId = useRef(0);
+  const initialPincodeToVerify = useRef(deliveryPincode);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DELIVERY_PINCODE_STORAGE_KEY, deliveryPincode);
+    } catch (error) {
+      console.warn('Delivery pincode could not be saved:', error);
+    }
+  }, [deliveryPincode]);
 
   // Mill Saver Bundle Config (Admin & Database Controllable)
   const defaultBundleOffer: BundleOfferConfig = {
@@ -1955,11 +1969,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const amountPaid = orderData.amountPaid !== undefined ? orderData.amountPaid : Math.max(0, cartTotal - pointsRedeemed);
     const isCod = orderData.paymentMethod === 'COD' || orderData.paymentMethod === 'PARTIAL_POINTS_COD';
 
-    const defaultTimelineDesc = orderData.timelineNote || (
+    const orderTimelineBase = orderData.timelineNote || (
       pointsRedeemed > 0
         ? `Order booked. 🪙 ${pointsRedeemed.toLocaleString('en-IN')} Mill Points redeemed (-₹${pointsRedeemed.toLocaleString('en-IN')}). Remaining balance ₹${amountPaid.toLocaleString('en-IN')} ${isCod ? 'payable on delivery (COD)' : 'paid via Razorpay'}.`
         : 'Order placed successfully. Allocated to Mahalaxmi Enterprise Ahmedabad Central Warehouse.'
     );
+    const deliveryEstimate = getDeliveryEstimate(deliveryInfo?.city || orderData.shippingAddress.city);
+    const defaultTimelineDesc = `${orderTimelineBase} ${DELIVERY_ESTIMATE_TEXT} ${AUTHENTICITY_CHECK_TEXT}`;
 
     const newOrder: Order = {
       id: `ord-${Date.now()}`,
@@ -1988,7 +2004,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       status: 'PLACED',
       shippingAddress: orderData.shippingAddress,
       billingAddress: orderData.billingAddress,
-      estimatedDelivery: new Date(Date.now() + 86400000 * (deliveryInfo?.estimatedDays || 3)).toISOString(),
+      estimatedDelivery: deliveryEstimate.latestDeliveryDate.toISOString(),
       timeline: [
         {
           status: 'PLACED',
@@ -2578,7 +2594,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       status: 'PLACED',
       shippingAddress: savedAddress,
       billingAddress: savedAddress,
-      estimatedDelivery: new Date(Date.now() + 86400000 * 5).toISOString(),
+      estimatedDelivery: getDeliveryEstimate().latestDeliveryDate.toISOString(),
       timeline: [
         {
           status: 'PLACED',
@@ -2687,86 +2703,65 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }).catch(() => {});
   };
 
-  // PIN code check (Integrated with Live Delhivery Logistics API)
-  const checkPincode = (pin: string): PinCodeInfo => {
+  const checkPincode = useCallback((pin: string, updateLocation = true): PinCodeInfo => {
     const cleanPin = pin.trim().replace(/\D/g, '');
-    setDeliveryPincode(cleanPin);
-
-    // Initial instant local estimate
-    const found = PINCODE_DATABASE[cleanPin];
-    const is6Digit = /^[1-9][0-9]{5}$/.test(cleanPin);
-
-    let detectedCity = found?.city;
-    let detectedState = found?.state;
-
-    if (!detectedCity && is6Digit) {
-      if (cleanPin.startsWith('395') || cleanPin.startsWith('394')) {
-        detectedCity = 'Surat';
-        detectedState = 'Gujarat';
-      } else if (cleanPin.startsWith('380') || cleanPin.startsWith('382')) {
-        detectedCity = 'Ahmedabad';
-        detectedState = 'Gujarat';
-      } else if (cleanPin.startsWith('390') || cleanPin.startsWith('391')) {
-        detectedCity = 'Vadodara';
-        detectedState = 'Gujarat';
-      } else if (cleanPin.startsWith('360')) {
-        detectedCity = 'Rajkot';
-        detectedState = 'Gujarat';
-      } else if (cleanPin.startsWith('400')) {
-        detectedCity = 'Mumbai';
-        detectedState = 'Maharashtra';
-      } else if (cleanPin.startsWith('110')) {
-        detectedCity = 'New Delhi';
-        detectedState = 'Delhi';
-      } else {
-        detectedCity = 'City not verified';
-        detectedState = 'India';
-      }
+    const requestId = ++pincodeCheckRequestId.current;
+    if (!/^[1-9]\d{5}$/.test(cleanPin)) {
+      return {
+        pincode: cleanPin,
+        city: 'Unknown',
+        state: 'India',
+        serviceable: false,
+        estimatedWorkingDays: 0,
+        verified: true
+      };
     }
 
-    const initialInfo: PinCodeInfo = {
-      pincode: cleanPin,
-      city: detectedCity || (is6Digit ? 'City not verified' : 'Unknown'),
-      state: detectedState || (is6Digit ? 'India' : 'Unknown'),
-      serviceable: false,
-      estimatedDays: 0
-    };
-    setDeliveryInfo(initialInfo);
-
-    // Verify delivery serviceability for the entered postal code.
-    if (cleanPin.length === 6) {
-      fetch(`/api/app-config?action=pincode&pincode=${cleanPin}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.success && data.serviceable) {
-            const city = cleanPin.startsWith('395') || cleanPin.startsWith('394')
-              ? 'Surat'
-              : data.city || initialInfo.city;
-            const deliveryEstimate = getDeliveryEstimate(city);
-            setDeliveryInfo({
-              pincode: cleanPin,
-              city,
-              state: cleanPin.startsWith('395') || cleanPin.startsWith('394') ? 'Gujarat' : (data.state || initialInfo.state),
-              serviceable: true,
-              estimatedDays: deliveryEstimate.maxDays,
-              verified: true
-            });
-          } else if (data && data.serviceable === false) {
-            setDeliveryInfo({
-              pincode: cleanPin,
-              city: initialInfo.city,
-              state: initialInfo.state,
-              serviceable: false,
-              estimatedDays: 0,
-              verified: true
-            });
-          }
-        })
-        .catch(() => {});
+    const initialInfo = createInitialPincodeInfo(cleanPin);
+    if (updateLocation) {
+      setDeliveryPincode(cleanPin);
+      setDeliveryInfo(initialInfo);
     }
+
+    fetch(`/api/app-config?action=pincode&pincode=${cleanPin}`)
+      .then(response => response.json())
+      .then(data => {
+        if (requestId !== pincodeCheckRequestId.current) return;
+        if (data?.success && data.serviceable) {
+          const hasKnownLocation = initialInfo.city !== 'City not verified';
+          const city = hasKnownLocation ? initialInfo.city : data.city || initialInfo.city;
+          const state = hasKnownLocation ? initialInfo.state : data.state || initialInfo.state;
+          setDeliveryInfo({
+            pincode: cleanPin,
+            city,
+            state,
+            serviceable: true,
+            estimatedWorkingDays: getDeliveryEstimate(city).maxWorkingDays,
+            verified: true
+          });
+        } else if (data?.serviceable === false) {
+          setDeliveryInfo({
+            ...initialInfo,
+            serviceable: false,
+            estimatedWorkingDays: 0,
+            verified: true
+          });
+        } else {
+          setDeliveryInfo({ ...initialInfo, verificationUnavailable: true });
+        }
+      })
+      .catch(error => {
+        if (requestId !== pincodeCheckRequestId.current) return;
+        console.warn('Pincode serviceability could not be verified:', error);
+        setDeliveryInfo({ ...initialInfo, verificationUnavailable: true });
+      });
 
     return initialInfo;
-  };
+  }, [setDeliveryPincode, setDeliveryInfo]);
+
+  useEffect(() => {
+    checkPincode(initialPincodeToVerify.current, false);
+  }, [checkPincode]);
 
   const addRecentSearch = (query: string) => {
     if (!query.trim()) return;

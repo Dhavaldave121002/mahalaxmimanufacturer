@@ -2,6 +2,7 @@ import { getDbPool } from '../database/db.js';
 import fs from 'fs';
 import path from 'path';
 import { requireAdminSession } from './_lib/admin-session.js';
+import { ensureCouponsTable } from './coupons.js';
 
 // Helper to read current public/app-config.json safely
 function readFallbackConfig() {
@@ -112,8 +113,7 @@ export default async function handler(req, res) {
             state = 'GJ';
           }
 
-          const isAhmedabad = /ahmedabad|ahmadabad/i.test(city);
-          const estDays = isAhmedabad ? '2-3 calendar days' : '5-7 calendar days';
+          const estDays = '5-7 working days total';
 
           return res.status(200).json({
             success: true,
@@ -134,14 +134,24 @@ export default async function handler(req, res) {
         }
       }
 
-      return res.status(200).json({
-        success: true,
-        serviceable: false,
-        verificationAvailable: true,
+      if (dRes.ok) {
+        return res.status(200).json({
+          success: true,
+          serviceable: false,
+          verificationAvailable: true,
+          pincode: cleanPin,
+          codAvailable: false,
+          prepaidAvailable: false,
+          message: `Delivery serviceability could not be confirmed for pincode ${cleanPin}.`
+        });
+      }
+
+      return res.status(502).json({
+        success: false,
+        serviceable: null,
+        verificationAvailable: false,
         pincode: cleanPin,
-        codAvailable: false,
-        prepaidAvailable: false,
-        message: `Delivery serviceability could not be confirmed for pincode ${cleanPin}.`
+        error: 'Live delivery verification is temporarily unavailable.'
       });
     } catch (dErr) {
       console.warn('Delhivery check error:', dErr.message);
@@ -551,9 +561,10 @@ export default async function handler(req, res) {
       let formattedCoupons = [];
       let couponsLoadedFromDatabase = false;
       try {
-        // Only return Public 1-Click coupons for Mobile App (exclude WEB_ONLY, exclude SECRET_MANUAL_ONLY, exclude LAUNCH150)
+        await ensureCouponsTable(pool);
+        // Only return active public 1-Click coupons for the mobile app.
         const [couponsRows] = await pool.query(
-          "SELECT * FROM coupons WHERE is_active = 1 AND (valid_until IS NULL OR valid_until >= UTC_TIMESTAMP()) AND (usage_limit IS NULL OR used_count < usage_limit) AND is_featured = 1 AND (suggestion_mode IS NULL OR suggestion_mode != 'SECRET_MANUAL_ONLY') AND (target_platform IS NULL OR target_platform != 'WEB_ONLY') AND UPPER(code) != 'LAUNCH150' ORDER BY created_at DESC"
+          "SELECT * FROM coupons WHERE is_active = 1 AND (valid_until IS NULL OR valid_until >= UTC_TIMESTAMP()) AND (usage_limit IS NULL OR used_count < usage_limit) AND is_featured = 1 AND (suggestion_mode IS NULL OR suggestion_mode != 'SECRET_MANUAL_ONLY') AND (target_platform IS NULL OR target_platform != 'WEB_ONLY') ORDER BY created_at DESC"
         );
         if (Array.isArray(couponsRows)) {
           couponsLoadedFromDatabase = true;
@@ -576,12 +587,12 @@ export default async function handler(req, res) {
           }));
         }
       } catch (coupErr) {
-        // quiet fallback
+        console.warn('Mobile app coupon sync failed:', coupErr.message);
       }
 
       const rawFallbackCoupons = readFallbackConfig()?.coupons || [];
       const fallbackCoupons = rawFallbackCoupons.filter(
-        c => c.isActive && c.isFeatured !== false && c.suggestionMode !== 'SECRET_MANUAL_ONLY' && (c.code || '').toUpperCase() !== 'LAUNCH150' && c.targetPlatform !== 'WEB_ONLY'
+        c => c.isActive && c.isFeatured !== false && c.suggestionMode !== 'SECRET_MANUAL_ONLY' && c.targetPlatform !== 'WEB_ONLY'
       );
 
       return res.status(200).json({

@@ -31,7 +31,7 @@ if (fs.existsSync(productModelPath)) {
       inStockCount: 200,
       material: '12 Swatches + 4 Product Minis + Lab Certificate',
       moq: '1 Kit (MOQ Bypassed)',
-      description: 'The ultimate procurement-grade sample bundle: 12 physical fabric swatches across Bedsheets, Towels, Canvas & Microfiber + 4 actual product minis + Mill Lab GSM Certificate + 100% Refund Voucher code (SAMPLE100) credited back on your first wholesale order.',
+      description: 'The ultimate procurement-grade sample bundle: 12 physical fabric swatches across Bedsheets, Towels, Canvas & Microfiber + 4 actual product minis + Mill Lab GSM Certificate.',
     ),
     const ProductModel(
       id: 'prod-swatch-box-01',
@@ -197,7 +197,7 @@ if (fs.existsSync(homeScreenPath)) {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
-                    '100% REBATE VOUCHER',
+                    'SAMPLE KIT',
                     style: TextStyle(
                       color: Color(0xFF34D399),
                       fontSize: 9.5,
@@ -221,7 +221,7 @@ if (fs.existsSync(homeScreenPath)) {
             ),
             const SizedBox(height: 4),
             const Text(
-              'Evaluate weave density, GSM weight & feel before placing bulk orders. 100% sample cost credited back on your first wholesale order (Code: SAMPLE100)!',
+              'Evaluate weave density, GSM weight & feel before placing bulk orders.',
               style: TextStyle(
                 color: Color(0xFFCBD5E1),
                 fontSize: 11.5,
@@ -460,13 +460,13 @@ if (fs.existsSync(detailsScreenPath)) {
                                       color: const Color(0xFF10B981),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
-                                    child: const Text('100% REFUNDABLE', style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold)),
+                                    child: const Text('SAMPLE KIT', style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold)),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 4),
                               const Text(
-                                'Want to evaluate all fabrics before bulk order? Get our 12 Swatches + 4 Product Minis testing box with ₹300 rebate voucher (SAMPLE100).',
+                                'Evaluate all fabrics with our 12 Swatches + 4 Product Minis testing box.',
                                 style: TextStyle(fontSize: 10.5, color: Color(0xFF4B5563)),
                               ),
                               const SizedBox(height: 8),
