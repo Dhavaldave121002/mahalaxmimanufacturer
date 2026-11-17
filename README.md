@@ -91,7 +91,7 @@ For Flutter Android-emulator testing, start the API server on the emulator-acces
 ```bash
 npm run dev:mobile
 ```
-The debug app connects to the host through `10.0.2.2:5173`. Production order placement and live online payments remain disabled until server-side payment verification is implemented.
+The debug app connects to the host through `10.0.2.2:5173`. Use Razorpay test credentials for local checkout; local development rejects live Razorpay keys to prevent accidental real charges. Production order placement and live online payments remain disabled until server-side payment verification is implemented.
 
 ### 4. Build for production
 ```bash

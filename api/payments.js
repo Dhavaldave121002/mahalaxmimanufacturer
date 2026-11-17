@@ -13,8 +13,11 @@ async function getPaymentUnavailableReason() {
   if (!keyId || !keySecret) {
     return 'Online payments are not configured. No payment was started.';
   }
-  if (isProduction && keyId.startsWith('rzp_test_')) {
+  if (isProduction && !keyId.startsWith('rzp_live_')) {
     return 'Live payments require live Razorpay credentials. No payment was started.';
+  }
+  if (!isProduction && !keyId.startsWith('rzp_test_')) {
+    return 'Local checkout requires Razorpay test credentials. No payment was started.';
   }
 
   try {
