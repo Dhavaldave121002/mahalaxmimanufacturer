@@ -458,7 +458,7 @@ export const ProductDetailPage: React.FC = () => {
   };
 
   const [activeTab, setActiveTab] = useState<'specs' | 'care' | 'reviews'>('specs');
-  const [activeProductFeatureTab, setActiveProductFeatureTab] = useState<'samples' | 'customization' | 'bundle'>('samples');
+  const [activeProductFeatureTab, setActiveProductFeatureTab] = useState<'samples' | 'customization' | 'bundle'>('customization');
   const [showReturnModal, setShowReturnModal] = useState(false);
 
   useEffect(() => {
@@ -838,20 +838,17 @@ export const ProductDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* Product verification notice */}
-            <div className="p-3 bg-ivory rounded-2xl border border-slate-200 text-xs text-slate-700 flex items-start gap-2.5 lg:col-span-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <div className="text-navy font-bold text-xs">
-                  {isImportedCatalogProduct ? 'Supplier Details Require Confirmation' : 'Ahmedabad Mill Quality Check'}
+            {!isImportedCatalogProduct && (
+              <div className="p-3 bg-ivory rounded-2xl border border-slate-200 text-xs text-slate-700 flex items-start gap-2.5 lg:col-span-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <div className="text-navy font-bold text-xs">Ahmedabad Mill Quality Check</div>
+                  <p className="text-slate-600 leading-relaxed text-[11px]">
+                    Strength, color and size checked before dispatch.
+                  </p>
                 </div>
-                <p className="text-slate-600 leading-relaxed text-[11px]">
-                  {isImportedCatalogProduct
-                    ? 'Confirm product specifications, price, tax and availability before placing an order.'
-                    : 'Strength, color and size checked before dispatch.'}
-                </p>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -1018,15 +1015,13 @@ export const ProductDetailPage: React.FC = () => {
                     <Building2 className="w-4 h-4 text-indigo" />
                     <span>Quantity-Based Wholesale Pricing Tiers</span>
                   </label>
-                  {isImportedCatalogProduct && (
+                  {isImportedCatalogProduct && !adminApprovedPrice && (
                     <p className="mt-1 text-[10px] text-slate-500">
-                      {adminApprovedPrice
-                        ? 'Admin-approved listed prices · supplier confirmation not recorded'
-                        : product.specifications?.['Source Price Status'] === 'Admin-set temporary price'
-                          ? 'Temporary tier rates · Admin editable'
-                          : product.specifications?.['Source Price Status'] === 'Supplier-confirmed'
-                            ? 'Supplier-confirmed prices'
-                            : 'Price status not recorded'}
+                      {product.specifications?.['Source Price Status'] === 'Admin-set temporary price'
+                        ? 'Temporary tier rates · Admin editable'
+                        : product.specifications?.['Source Price Status'] === 'Supplier-confirmed'
+                          ? 'Supplier-confirmed prices'
+                          : 'Price status not recorded'}
                     </p>
                   )}
                 </div>
@@ -1206,8 +1201,8 @@ export const ProductDetailPage: React.FC = () => {
               className={`grid ${hasBundleOffer ? 'grid-cols-3' : 'grid-cols-2'} gap-1 rounded-xl bg-slate-100 p-1`}
             >
               {([
-                { id: 'samples', label: 'Samples', mobileLabel: 'Sample' },
                 { id: 'customization', label: 'Customize', mobileLabel: 'Custom' },
+                { id: 'samples', label: 'Samples', mobileLabel: 'Sample' },
                 ...(hasBundleOffer ? [{ id: 'bundle' as const, label: 'Save with bundle', mobileLabel: 'Bundle' }] : [])
               ] as const).map(tab => (
                 <button

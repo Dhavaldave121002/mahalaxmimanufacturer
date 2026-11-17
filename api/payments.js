@@ -2,23 +2,38 @@ import { createRazorpayOrder } from './_lib/razorpay.js';
 import { getDbPool, testDbConnection } from '../database/db.js';
 import { calculateCheckoutQuote, CheckoutQuoteError } from './_lib/checkout-pricing.js';
 
-async function getPaymentUnavailableReason() {
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-  const isProduction = process.env.NODE_ENV === 'production';
+export function getRazorpayPaymentConfiguration(environment = process.env) {
+  const keyId = environment.RAZORPAY_KEY_ID;
+  const keySecret = environment.RAZORPAY_KEY_SECRET;
+  const isProduction = environment.NODE_ENV === 'production';
 
-  if (isProduction && process.env.RAZORPAY_CHECKOUT_ENABLED !== 'true') {
-    return 'Live online payments have not been enabled. No payment was started.';
+  if (isProduction && environment.RAZORPAY_CHECKOUT_ENABLED !== 'true') {
+    return { mode: null, localLivePayments: false, error: 'Live online payments have not been enabled. No payment was started.' };
   }
   if (!keyId || !keySecret) {
-    return 'Online payments are not configured. No payment was started.';
+    return { mode: null, localLivePayments: false, error: 'Online payments are not configured. No payment was started.' };
   }
   if (isProduction && !keyId.startsWith('rzp_live_')) {
-    return 'Live payments require live Razorpay credentials. No payment was started.';
+    return { mode: null, localLivePayments: false, error: 'Live payments require live Razorpay credentials. No payment was started.' };
   }
-  if (!isProduction && !keyId.startsWith('rzp_test_')) {
-    return 'Local checkout requires Razorpay test credentials. No payment was started.';
+  if (!isProduction && keyId.startsWith('rzp_live_') && environment.RAZORPAY_ALLOW_LIVE_LOCAL !== 'true') {
+    return {
+      mode: null,
+      localLivePayments: false,
+      error: 'Local live payments are disabled. Set RAZORPAY_ALLOW_LIVE_LOCAL=true only if you accept real charges.'
+    };
   }
+  if (!isProduction && !keyId.startsWith('rzp_test_') && !keyId.startsWith('rzp_live_')) {
+    return { mode: null, localLivePayments: false, error: 'Local checkout requires Razorpay test credentials. No payment was started.' };
+  }
+
+  const mode = keyId.startsWith('rzp_live_') ? 'live' : 'test';
+  return { mode, localLivePayments: !isProduction && mode === 'live', error: null };
+}
+
+async function getPaymentUnavailableReason() {
+  const paymentConfiguration = getRazorpayPaymentConfiguration();
+  if (paymentConfiguration.error) return paymentConfiguration.error;
 
   try {
     const database = await testDbConnection();
@@ -39,9 +54,13 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method === 'GET') {
     const error = await getPaymentUnavailableReason();
+    const paymentConfiguration = getRazorpayPaymentConfiguration();
     return res.status(error ? 503 : 200).json({
       success: !error,
-      ...(error ? { error } : {})
+      ...(error ? { error } : {
+        mode: paymentConfiguration.mode,
+        localLivePayments: paymentConfiguration.localLivePayments
+      })
     });
   }
   if (req.method !== 'POST') {
@@ -62,6 +81,7 @@ export default async function handler(req, res) {
         code: 'CHECKOUT_UNAVAILABLE'
       });
     }
+    const paymentConfiguration = getRazorpayPaymentConfiguration();
     const pool = getDbPool();
     if (!pool) {
       return res.status(503).json({ success: false, error: 'Order storage is unavailable. No payment was started.' });
@@ -107,7 +127,9 @@ export default async function handler(req, res) {
       orderId: order.id,
       amount: order.amount,
       currency: order.currency,
-      quote
+      quote,
+      mode: paymentConfiguration.mode,
+      localLivePayments: paymentConfiguration.localLivePayments
     });
   } catch (error) {
     console.error('Payment order request failed:', error.message);

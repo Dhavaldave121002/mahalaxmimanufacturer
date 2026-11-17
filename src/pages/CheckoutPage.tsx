@@ -181,6 +181,8 @@ export const CheckoutPage: React.FC = () => {
   const [orderSubmitError, setOrderSubmitError] = useState<string | null>(null);
   const [paymentReadiness, setPaymentReadiness] = useState<'checking' | 'ready' | 'unavailable'>('checking');
   const [paymentReadinessError, setPaymentReadinessError] = useState<string | null>(null);
+  const [paymentMode, setPaymentMode] = useState<'test' | 'live' | null>(null);
+  const [localLivePayments, setLocalLivePayments] = useState(false);
   const [paymentReadinessCheck, setPaymentReadinessCheck] = useState(0);
 
   useEffect(() => {
@@ -205,9 +207,25 @@ export const CheckoutPage: React.FC = () => {
             : 'Online payment service is not ready. No payment was started.';
           throw new Error(errorMessage);
         }
+        const paymentConfiguration = payload as {
+          mode?: unknown;
+          localLivePayments?: unknown;
+        };
+        if (
+          (paymentConfiguration.mode !== 'test' && paymentConfiguration.mode !== 'live') ||
+          typeof paymentConfiguration.localLivePayments !== 'boolean'
+        ) {
+          throw new Error('Payment service returned an unknown payment mode. No payment was started.');
+        }
+        if (active) {
+          setPaymentMode(paymentConfiguration.mode);
+          setLocalLivePayments(paymentConfiguration.localLivePayments);
+        }
         if (active) setPaymentReadiness('ready');
       } catch (error) {
         if (!active) return;
+        setPaymentMode(null);
+        setLocalLivePayments(false);
         setPaymentReadiness('unavailable');
         setPaymentReadinessError(
           controller.signal.aborted
@@ -521,7 +539,14 @@ export const CheckoutPage: React.FC = () => {
       return;
     }
 
-    let paymentOrder: { keyId: string; orderId: string; amount: number; currency: string };
+    let paymentOrder: {
+      keyId: string;
+      orderId: string;
+      amount: number;
+      currency: string;
+      mode: 'test' | 'live';
+      localLivePayments: boolean;
+    };
     let paymentResponseStatus: number | null = null;
     try {
       const response = await fetch('/api/payments', {
@@ -577,15 +602,22 @@ export const CheckoutPage: React.FC = () => {
         typeof paymentResponse.keyId !== 'string' ||
         typeof paymentResponse.orderId !== 'string' ||
         typeof paymentResponse.amount !== 'number' ||
-        typeof paymentResponse.currency !== 'string'
+        typeof paymentResponse.currency !== 'string' ||
+        (paymentResponse.mode !== 'test' && paymentResponse.mode !== 'live') ||
+        typeof paymentResponse.localLivePayments !== 'boolean'
       ) {
         throw new Error('Payment service returned incomplete order details. No payment was started.');
+      }
+      if (paymentResponse.mode !== paymentMode || paymentResponse.localLivePayments !== localLivePayments) {
+        throw new Error('Payment mode changed during checkout. Refresh checkout and confirm the payment mode before trying again; no payment was started.');
       }
       paymentOrder = {
         keyId: paymentResponse.keyId,
         orderId: paymentResponse.orderId,
         amount: paymentResponse.amount,
-        currency: paymentResponse.currency
+        currency: paymentResponse.currency,
+        mode: paymentResponse.mode,
+        localLivePayments: paymentResponse.localLivePayments
       };
       if (paymentOrder.amount !== Math.round(remainingPayable * 100) || paymentOrder.currency !== 'INR') {
         throw new Error('Server-verified price differs from the cart. Refresh checkout; no payment was started.');

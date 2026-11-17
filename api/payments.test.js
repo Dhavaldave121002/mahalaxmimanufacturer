@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import handler from './payments.js';
+import handler, { getRazorpayPaymentConfiguration } from './payments.js';
 
 function createResponse() {
   return {
@@ -23,7 +23,8 @@ async function getAvailabilityWithEnvironment(environment) {
     'NODE_ENV',
     'RAZORPAY_KEY_ID',
     'RAZORPAY_KEY_SECRET',
-    'RAZORPAY_CHECKOUT_ENABLED'
+    'RAZORPAY_CHECKOUT_ENABLED',
+    'RAZORPAY_ALLOW_LIVE_LOCAL'
   ];
   const originalValues = Object.fromEntries(
     keys.map(key => [key, process.env[key]])
@@ -52,7 +53,20 @@ test('checkout rejects live Razorpay keys in local development', async () => {
   });
 
   assert.equal(response.statusCode, 503);
-  assert.match(response.body.error, /test credentials/);
+  assert.match(response.body.error, /Local live payments are disabled/);
+});
+
+test('local live checkout requires an explicit opt-in', () => {
+  const configuration = getRazorpayPaymentConfiguration({
+    NODE_ENV: 'development',
+    RAZORPAY_KEY_ID: 'rzp_live_placeholder',
+    RAZORPAY_KEY_SECRET: 'placeholder',
+    RAZORPAY_ALLOW_LIVE_LOCAL: 'true'
+  });
+
+  assert.equal(configuration.error, null);
+  assert.equal(configuration.mode, 'live');
+  assert.equal(configuration.localLivePayments, true);
 });
 
 test('production checkout rejects Razorpay test keys', async () => {
@@ -65,4 +79,18 @@ test('production checkout rejects Razorpay test keys', async () => {
 
   assert.equal(response.statusCode, 503);
   assert.match(response.body.error, /live Razorpay credentials/);
+});
+
+test('production live credentials are not marked as local payments', () => {
+  const configuration = getRazorpayPaymentConfiguration({
+    NODE_ENV: 'production',
+    RAZORPAY_CHECKOUT_ENABLED: 'true',
+    RAZORPAY_KEY_ID: 'rzp_live_placeholder',
+    RAZORPAY_KEY_SECRET: 'placeholder',
+    RAZORPAY_ALLOW_LIVE_LOCAL: 'true'
+  });
+
+  assert.equal(configuration.error, null);
+  assert.equal(configuration.mode, 'live');
+  assert.equal(configuration.localLivePayments, false);
 });
