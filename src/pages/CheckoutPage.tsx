@@ -179,6 +179,54 @@ export const CheckoutPage: React.FC = () => {
   const [applyPoints, setApplyPoints] = useState<boolean>(isLoggedIn && (currentUser.walletBalance || 0) > 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSubmitError, setOrderSubmitError] = useState<string | null>(null);
+  const [paymentReadiness, setPaymentReadiness] = useState<'checking' | 'ready' | 'unavailable'>('checking');
+  const [paymentReadinessError, setPaymentReadinessError] = useState<string | null>(null);
+  const [paymentReadinessCheck, setPaymentReadinessCheck] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+    let active = true;
+
+    const checkPaymentReadiness = async () => {
+      try {
+        const response = await fetch('/api/payments', { signal: controller.signal });
+        const payload: unknown = await response.json().catch(() => null);
+        const success = payload !== null &&
+          typeof payload === 'object' &&
+          'success' in payload &&
+          payload.success === true;
+        if (!response.ok || !success) {
+          const errorMessage = payload !== null &&
+            typeof payload === 'object' &&
+            'error' in payload &&
+            typeof payload.error === 'string'
+            ? payload.error
+            : 'Online payment service is not ready. No payment was started.';
+          throw new Error(errorMessage);
+        }
+        if (active) setPaymentReadiness('ready');
+      } catch (error) {
+        if (!active) return;
+        setPaymentReadiness('unavailable');
+        setPaymentReadinessError(
+          controller.signal.aborted
+            ? 'Secure payment check timed out. No payment was started.'
+            : error instanceof Error
+            ? error.message
+            : 'Online payment service is not ready. No payment was started.'
+        );
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
+    };
+
+    void checkPaymentReadiness();
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [paymentReadinessCheck]);
 
   // Compute points and payable balance
   const pointsRedeemed = (isLoggedIn && applyPoints) ? Math.min(userWalletBalance, cartTotal) : 0;
@@ -390,6 +438,12 @@ export const CheckoutPage: React.FC = () => {
     e.preventDefault();
     if (isSubmitting) return;
     setOrderSubmitError(null);
+    if (!isFullyCoveredByPoints && paymentReadiness !== 'ready') {
+      setOrderSubmitError(
+        paymentReadinessError || 'Online payment service is not ready. No payment was started.'
+      );
+      return;
+    }
     if (pointsRedeemed > 0) {
       setOrderSubmitError('Wallet points cannot be redeemed during checkout yet. Turn off points and retry securely.');
       return;
@@ -468,6 +522,7 @@ export const CheckoutPage: React.FC = () => {
     }
 
     let paymentOrder: { keyId: string; orderId: string; amount: number; currency: string };
+    let paymentResponseStatus: number | null = null;
     try {
       const response = await fetch('/api/payments', {
         method: 'POST',
@@ -485,6 +540,7 @@ export const CheckoutPage: React.FC = () => {
           shippingState: activeAddress.state
         })
       });
+      paymentResponseStatus = response.status;
       const responseText = await response.text();
       let result: unknown;
       try {
@@ -503,6 +559,14 @@ export const CheckoutPage: React.FC = () => {
         error?: unknown;
       };
       if (!response.ok || paymentResponse.success !== true) {
+        if (response.status === 404 || response.status >= 500) {
+          setPaymentReadiness('unavailable');
+          setPaymentReadinessError(
+            typeof paymentResponse.error === 'string'
+              ? paymentResponse.error
+              : 'Online payment service is not ready. No payment was started.'
+          );
+        }
         throw new Error(
           typeof paymentResponse.error === 'string'
             ? paymentResponse.error
@@ -527,6 +591,18 @@ export const CheckoutPage: React.FC = () => {
         throw new Error('Server-verified price differs from the cart. Refresh checkout; no payment was started.');
       }
     } catch (error) {
+      if (
+        paymentResponseStatus === 404 ||
+        (paymentResponseStatus !== null && paymentResponseStatus >= 500) ||
+        error instanceof TypeError
+      ) {
+        setPaymentReadiness('unavailable');
+        setPaymentReadinessError(
+          error instanceof Error
+            ? error.message
+            : 'Online payment service could not be reached. No payment was started.'
+        );
+      }
       setOrderSubmitError(error instanceof Error ? error.message : 'Could not start secure payment.');
       setIsSubmitting(false);
       return;
@@ -1285,6 +1361,28 @@ export const CheckoutPage: React.FC = () => {
             </div>
 
             {/* Place Order CTA Button */}
+            {paymentReadiness !== 'ready' && !isFullyCoveredByPoints && (
+              <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+                <p>
+                  {paymentReadiness === 'checking'
+                    ? 'Checking secure payment availability...'
+                    : paymentReadinessError || 'Online payment service is not ready. No payment was started.'}
+                </p>
+                {paymentReadiness === 'unavailable' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentReadiness('checking');
+                      setPaymentReadinessError(null);
+                      setPaymentReadinessCheck(attempt => attempt + 1);
+                    }}
+                    className="mt-2 font-bold underline"
+                  >
+                    Check payment availability again
+                  </button>
+                )}
+              </div>
+            )}
             {orderSubmitError && (
               <div role="alert" className="rounded-xl border border-red-300 bg-red-50 p-3 text-xs text-red-800">
                 <strong>Order not placed:</strong> {orderSubmitError}
@@ -1292,9 +1390,9 @@ export const CheckoutPage: React.FC = () => {
             )}
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (!isFullyCoveredByPoints && paymentReadiness !== 'ready')}
               className={`flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-xs font-extrabold transition shadow-premium ${
-                isSubmitting
+                isSubmitting || (!isFullyCoveredByPoints && paymentReadiness !== 'ready')
                   ? 'cursor-not-allowed bg-slate-400 text-white'
                   : 'bg-indigo text-white hover:bg-indigo-dark'
               }`}

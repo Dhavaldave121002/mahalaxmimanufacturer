@@ -1,6 +1,13 @@
 import { validateCouponRecord } from './coupon-validation.js';
 import { ensureCouponsTable } from '../coupons.js';
 
+export class CheckoutQuoteError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'CheckoutQuoteError';
+  }
+}
+
 function parseJson(value, fallback) {
   if (typeof value !== 'string') return value || fallback;
   try {
@@ -19,7 +26,7 @@ export async function calculateCheckoutQuote(pool, {
 }) {
   if (!pool) throw new Error('Order database is unavailable.');
   if (!Array.isArray(items) || items.length === 0 || items.length > 100) {
-    throw new Error('Cart items are missing or invalid.');
+    throw new CheckoutQuoteError('Cart items are missing or invalid.');
   }
 
   const normalizedItems = items.map(item => ({
@@ -30,7 +37,7 @@ export async function calculateCheckoutQuote(pool, {
   if (normalizedItems.some(item =>
     !item.productId || !Number.isInteger(item.quantity) || item.quantity < 1
   )) {
-    throw new Error('Each cart item must have a product and valid quantity.');
+    throw new CheckoutQuoteError('Each cart item must have a product and valid quantity.');
   }
 
   const quantities = new Map();
@@ -45,7 +52,9 @@ export async function calculateCheckoutQuote(pool, {
     ids
   );
   const products = new Map(rows.map(product => [String(product.id), product]));
-  if (products.size !== ids.length) throw new Error('A cart product is no longer available.');
+  if (products.size !== ids.length) {
+    throw new CheckoutQuoteError('A cart product is no longer available. Refresh your cart and retry.');
+  }
 
   const lineItems = [];
   let subtotal = 0;
@@ -54,14 +63,14 @@ export async function calculateCheckoutQuote(pool, {
     const product = products.get(item.productId);
     const quantity = quantities.get(item.productId);
     if (Number(product.stock) < quantity) {
-      throw new Error(`${product.name} does not have enough confirmed stock.`);
+      throw new CheckoutQuoteError(`${product.name} does not have enough confirmed stock.`);
     }
     if (item.quantity < Number(product.moq || 1)) {
-      throw new Error(`${product.name} requires a minimum order of ${product.moq} units.`);
+      throw new CheckoutQuoteError(`${product.name} requires a minimum order of ${product.moq} units.`);
     }
     const specifications = parseJson(product.specifications, {});
     if (specifications['Source Price Status'] === 'Approximate - verify before sale') {
-      throw new Error(`${product.name} needs a verified price before online checkout.`);
+      throw new CheckoutQuoteError(`${product.name} needs a verified price before online checkout.`);
     }
 
     const tiers = parseJson(product.wholesale_tiers, []);
@@ -79,18 +88,20 @@ export async function calculateCheckoutQuote(pool, {
       const variant = Array.isArray(variants)
         ? variants.find(candidate => String(candidate.id) === item.variantId)
         : null;
-      if (!variant) throw new Error(`A selected option for ${product.name} is unavailable.`);
+      if (!variant) {
+        throw new CheckoutQuoteError(`A selected option for ${product.name} is unavailable.`);
+      }
       unitPrice += Number(variant.priceDelta || 0);
     }
     if (!Number.isFinite(unitPrice) || unitPrice < 0) {
-      throw new Error(`The current price for ${product.name} is invalid.`);
+      throw new CheckoutQuoteError(`The current price for ${product.name} is invalid.`);
     }
     unitPrice = Number(unitPrice.toFixed(2));
     const lineTotal = Number((unitPrice * item.quantity).toFixed(2));
     subtotal += lineTotal;
     const gstRate = Number(product.gst_rate ?? 0);
     if (!Number.isFinite(gstRate) || gstRate < 0) {
-      throw new Error(`The GST rate for ${product.name} is invalid.`);
+      throw new CheckoutQuoteError(`The GST rate for ${product.name} is invalid.`);
     }
     totalTax += lineTotal * gstRate / 100;
     lineItems.push({
@@ -119,7 +130,7 @@ export async function calculateCheckoutQuote(pool, {
       platform: source === 'FLUTTER_APP' ? 'APP' : 'WEB',
       customerType
     });
-    if (!validation.valid) throw new Error(validation.message);
+    if (!validation.valid) throw new CheckoutQuoteError(validation.message);
     discount = validation.discount;
   }
   const shippingCharge = 0;

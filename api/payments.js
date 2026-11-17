@@ -1,6 +1,33 @@
 import { createRazorpayOrder } from './_lib/razorpay.js';
-import { getDbPool } from '../database/db.js';
-import { calculateCheckoutQuote } from './_lib/checkout-pricing.js';
+import { getDbPool, testDbConnection } from '../database/db.js';
+import { calculateCheckoutQuote, CheckoutQuoteError } from './_lib/checkout-pricing.js';
+
+async function getPaymentUnavailableReason() {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (isProduction && process.env.RAZORPAY_CHECKOUT_ENABLED !== 'true') {
+    return 'Live online payments have not been enabled. No payment was started.';
+  }
+  if (!keyId || !keySecret) {
+    return 'Online payments are not configured. No payment was started.';
+  }
+  if (isProduction && keyId.startsWith('rzp_test_')) {
+    return 'Live payments require live Razorpay credentials. No payment was started.';
+  }
+
+  try {
+    const database = await testDbConnection();
+    if (!database.connected) {
+      return 'Order storage is unavailable. No payment was started.';
+    }
+  } catch {
+    return 'Order storage could not be checked. No payment was started.';
+  }
+
+  return null;
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -8,19 +35,10 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method === 'GET') {
-    const keyId = process.env.RAZORPAY_KEY_ID;
-    const isProduction = process.env.NODE_ENV === 'production';
-    const isLiveCheckoutEnabled =
-      !isProduction ||
-      (process.env.RAZORPAY_CHECKOUT_ENABLED === 'true' &&
-        Boolean(keyId) &&
-        !keyId.startsWith('rzp_test_'));
-    const isConfigured =
-      isLiveCheckoutEnabled &&
-      Boolean(keyId && process.env.RAZORPAY_KEY_SECRET);
-    return res.status(isConfigured ? 200 : 503).json({
-      success: isConfigured,
-      error: isConfigured ? undefined : 'Online payment is not configured.'
+    const error = await getPaymentUnavailableReason();
+    return res.status(error ? 503 : 200).json({
+      success: !error,
+      ...(error ? { error } : {})
     });
   }
   if (req.method !== 'POST') {
@@ -33,13 +51,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    if (
-      process.env.NODE_ENV === 'production' &&
-      process.env.RAZORPAY_CHECKOUT_ENABLED !== 'true'
-    ) {
+    const unavailableReason = await getPaymentUnavailableReason();
+    if (unavailableReason) {
       return res.status(503).json({
         success: false,
-        error: 'Live checkout has not been enabled by the production operator.'
+        error: unavailableReason,
+        code: 'CHECKOUT_UNAVAILABLE'
       });
     }
     const pool = getDbPool();
@@ -52,7 +69,19 @@ export default async function handler(req, res) {
         error: 'Wallet-point checkout is temporarily unavailable. No payment was started.'
       });
     }
-    const quote = await calculateCheckoutQuote(pool, req.body || {});
+    let quote;
+    try {
+      quote = await calculateCheckoutQuote(pool, req.body || {});
+    } catch (error) {
+      if (error instanceof CheckoutQuoteError) {
+        return res.status(409).json({
+          success: false,
+          error: error.message,
+          code: 'CART_REVIEW_REQUIRED'
+        });
+      }
+      throw error;
+    }
     if (req.body?.source === 'FLUTTER_APP' && req.body.expectedAmount !== undefined) {
       const expectedAmount = Number(req.body.expectedAmount);
       if (!Number.isFinite(expectedAmount) || expectedAmount < 0 ||
@@ -63,13 +92,6 @@ export default async function handler(req, res) {
           quote
         });
       }
-    }
-    if (process.env.NODE_ENV === 'production' &&
-        process.env.RAZORPAY_KEY_ID?.startsWith('rzp_test_')) {
-      return res.status(503).json({
-        success: false,
-        error: 'Live checkout is disabled while Razorpay is configured with test credentials.'
-      });
     }
     const amount = Math.round(quote.totalAmount * 100);
     if (!Number.isSafeInteger(amount) || amount < 100 || amount > 100000000) {
@@ -88,7 +110,8 @@ export default async function handler(req, res) {
     console.error('Payment order request failed:', error.message);
     return res.status(503).json({
       success: false,
-      error: 'Online payment is unavailable. No charge was started.'
+      error: 'Checkout could not verify current prices and stock. No payment was started.',
+      code: 'CHECKOUT_UNAVAILABLE'
     });
   }
 }
